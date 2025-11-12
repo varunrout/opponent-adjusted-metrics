@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from pydantic_settings import BaseSettings
 
 # Load environment variables from .env file
@@ -91,11 +91,7 @@ class Settings(BaseSettings):
     goal_post_left_y: float = 36.8
     goal_post_right_y: float = 43.2
 
-    class Config:
-        """Pydantic configuration."""
-
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
 
 # Global settings instance
