@@ -25,7 +25,7 @@ class Competition(Base):
 
     __tablename__ = "competitions"
 
-    statsbomb_competition_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
+    statsbomb_competition_id: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     season: Mapped[str] = mapped_column(String(50), nullable=False)
 
@@ -168,11 +168,132 @@ class Event(Base):
     match: Mapped["Match"] = relationship("Match", back_populates="events")
 
     __table_args__ = (
+        Index("ix_events_raw_event_id", "raw_event_id"),
         Index("ix_events_match_id", "match_id"),
         Index("ix_events_match_possession", "match_id", "possession"),
         Index("ix_events_team_id", "team_id"),
         Index("ix_events_type", "type"),
     )
+
+
+class PassEvent(Base):
+    """Pass detail table (1:1 with events of type 'Pass')."""
+
+    __tablename__ = "passes"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    length: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    angle: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    pass_height: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    pass_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    body_part: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    outcome: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    recipient_player_id: Mapped[Optional[int]] = mapped_column(ForeignKey("players.id"), nullable=True)
+    is_cross: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_through_ball: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (Index("ix_passes_event_id", "event_id"),)
+
+
+class DribbleEvent(Base):
+    """Dribble detail table (1:1 with events of type 'Dribble')."""
+
+    __tablename__ = "dribbles"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    outcome: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    overrun: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    nutmeg: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (Index("ix_dribbles_event_id", "event_id"),)
+
+
+class CarryEvent(Base):
+    """Carry detail table (StatsBomb 'Carry' events)."""
+
+    __tablename__ = "carries"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    start_x: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    start_y: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    end_x: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    end_y: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    length: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    __table_args__ = (Index("ix_carries_event_id", "event_id"),)
+
+
+class ClearanceEvent(Base):
+    """Clearance detail table."""
+
+    __tablename__ = "clearances"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    body_part: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    outcome: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    under_pressure: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (Index("ix_clearances_event_id", "event_id"),)
+
+
+class DuelEvent(Base):
+    """Duel detail table (tackles, aerials, etc.)."""
+
+    __tablename__ = "duels"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    duel_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    outcome: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    is_success: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (Index("ix_duels_event_id", "event_id"),)
+
+
+class BlockEvent(Base):
+    """Block detail table (shots or passes blocked)."""
+
+    __tablename__ = "blocks"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    block_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    is_deflection: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_save_block: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (Index("ix_blocks_event_id", "event_id"),)
+
+
+class InterceptionEvent(Base):
+    """Interception detail table."""
+
+    __tablename__ = "interceptions"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    outcome: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    is_success: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (Index("ix_interceptions_event_id", "event_id"),)
+
+
+class PressureEvent(Base):
+    """Pressure detail table."""
+
+    __tablename__ = "pressures"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    duration_seconds: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    __table_args__ = (Index("ix_pressures_event_id", "event_id"),)
+
+
+class BallReceiptEvent(Base):
+    """Ball receipt detail table (StatsBomb 'Ball Receipt' events)."""
+
+    __tablename__ = "ball_receipts"
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
+    clean_receipt: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (Index("ix_ball_receipts_event_id", "event_id"),)
 
 
 class Shot(Base):

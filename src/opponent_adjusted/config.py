@@ -55,12 +55,14 @@ class Settings(BaseSettings):
         "random_state": 42,
     }
 
-    # Competition IDs for StatsBomb Open Data
+    # Competition filters for StatsBomb Open Data
+    # Supports either name/season matching or explicit IDs.
+    # We default to explicit IDs for reproducibility.
     competitions: list = [
-        {"name": "FIFA World Cup", "season": "2018"},
-        {"name": "UEFA Euro", "season": "2020"},
-        {"name": "FIFA World Cup", "season": "2022"},
-        {"name": "UEFA Euro", "season": "2024"},
+        {"competition_id": 43, "season_id": 3},    # FIFA World Cup 2018
+        {"competition_id": 43, "season_id": 106},  # FIFA World Cup 2022
+        {"competition_id": 55, "season_id": 43},   # UEFA Euro 2020
+        {"competition_id": 55, "season_id": 282},  # UEFA Euro 2024
     ]
 
     # Zone definitions for opponent profiles
@@ -91,7 +93,7 @@ class Settings(BaseSettings):
     goal_post_left_y: float = 36.8
     goal_post_right_y: float = 43.2
 
-    model_config = ConfigDict(env_file=".env", case_sensitive=False)
+    model_config = ConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
 
 # Global settings instance

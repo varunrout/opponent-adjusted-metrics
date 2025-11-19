@@ -25,6 +25,31 @@ This project implements advanced football analytics metrics that account for:
 - PostgreSQL 12+
 - Poetry (for dependency management)
 
+### Running PostgreSQL via Docker (Recommended)
+
+You can spin up a local Postgres instance with Docker Compose:
+
+```bash
+cp .env.example .env  # populate defaults (edit if desired)
+docker compose up -d db
+```
+
+Health check the container:
+
+```bash
+docker compose ps
+docker logs -f opponent_metrics_db  # optional
+```
+
+If you run application code inside another container (e.g. in a future API compose setup), set `DATABASE_URL` host to `db` instead of `localhost`.
+
+Example alternative URL for intra-compose networking:
+
+```
+DATABASE_URL=postgresql+psycopg://app:app@db:5432/opponent_metrics
+```
+
+
 ### Installation
 
 1. Clone the repository:

@@ -1,7 +1,9 @@
 .PHONY: help install migrate-create migrate-up migrate-down \
-        ingest-competitions ingest-matches ingest-events \
-        build-features build-profiles train-cxg neutralize evaluate reports \
-        api test lint format clean
+	db-up db-down db-logs db-psql \
+	ingest-competitions ingest-matches ingest-events \
+	normalize-events \
+	build-features build-profiles train-cxg neutralize evaluate reports \
+	fetch-data api test lint format clean
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
@@ -13,6 +15,9 @@ help:  ## Show this help message
 install:  ## Install dependencies
 	poetry install
 
+fetch-data:  ## Download StatsBomb subset (competitions, matches, events)
+	poetry run python scripts/fetch_statsbomb_subset.py --events
+
 # Database
 migrate-create:  ## Create a new migration (use MSG="description")
 	poetry run alembic revision --autogenerate -m "$(MSG)"
@@ -22,6 +27,19 @@ migrate-up:  ## Run database migrations
 
 migrate-down:  ## Rollback last migration
 	poetry run alembic downgrade -1
+
+# Local Postgres (Docker)
+db-up:  ## Start Postgres in Docker
+	docker compose up -d db
+
+db-down:  ## Stop Postgres and remove container
+	docker compose down
+
+db-logs:  ## Tail Postgres logs
+	docker compose logs -f db
+
+db-psql:  ## Open psql shell in the Postgres container
+	docker exec -it opponent_metrics_db psql -U $${POSTGRES_USER:-app} -d $${POSTGRES_DB:-opponent_metrics}
 
 # Data Pipeline
 ingest-competitions:  ## Ingest competitions
@@ -34,6 +52,10 @@ ingest-events:  ## Ingest events
 	poetry run python scripts/ingest_events.py
 
 ingest-all: ingest-competitions ingest-matches ingest-events  ## Run full ingestion pipeline
+
+# Normalization
+normalize-events:  ## Normalize all raw events and populate detail tables
+	poetry run python scripts/normalize_events.py --only-missing --batch-size 20000 --fill-missing-detail
 
 # Features
 build-features:  ## Build shot features (VERSION=v1)

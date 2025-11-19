@@ -86,12 +86,14 @@ class StatsBombLoader:
         return events
 
     def discover_competitions(
-        self, competition_filters: Optional[List[Dict[str, str]]] = None
+        self, competition_filters: Optional[List[Dict[str, Any]]] = None
     ) -> List[Dict[str, Any]]:
         """Discover competitions matching filters.
 
-        Args:
-            competition_filters: List of dicts with 'name' and 'season' keys
+                Args:
+                        competition_filters: List of dicts. Each item may specify either
+                            - {'competition_id': int, 'season_id': int} for exact matching, or
+                            - {'name': str, 'season': str} for substring matching.
 
         Returns:
             List of filtered competition dictionaries
@@ -101,18 +103,29 @@ class StatsBombLoader:
         if not competition_filters:
             competition_filters = settings.competitions
 
-        filtered = []
+        filtered: List[Dict[str, Any]] = []
         for comp in all_competitions:
             comp_name = comp.get("competition_name", "")
             season_name = comp.get("season_name", "")
+            comp_id = comp.get("competition_id")
+            season_id = comp.get("season_id")
 
-            for filter_comp in competition_filters:
-                if (
-                    filter_comp["name"] in comp_name
-                    and filter_comp["season"] in season_name
-                ):
-                    filtered.append(comp)
-                    break
+            for flt in competition_filters:
+                # Exact ID match takes precedence if provided
+                if "competition_id" in flt and "season_id" in flt:
+                    try:
+                        if int(flt["competition_id"]) == comp_id and int(flt["season_id"]) == season_id:
+                            filtered.append(comp)
+                            break
+                    except (TypeError, ValueError):
+                        # Fall back to name/season if types are unexpected
+                        pass
+
+                # Fallback: name/season substring match
+                if "name" in flt and "season" in flt:
+                    if str(flt["name"]) in comp_name and str(flt["season"]) in season_name:
+                        filtered.append(comp)
+                        break
 
         logger.info(
             f"Discovered {len(filtered)} competitions matching filters: {competition_filters}"
