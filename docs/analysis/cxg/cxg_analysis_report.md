@@ -21,6 +21,9 @@ The pass-chain rollups (`csv/pass_value_chain_summary.csv`) paired with the comp
 
 The density and timeline plots (`pass_value_chain_counts.png`, `pass_value_chain_timeline.png`) show why: only ~4% of possessions end in a through-ball sequence, yet they drive ~13% of total goals. Volume-heavy chains (Carry + Ground Pass, Carry + Cross) drag down team averages despite their ubiquity.
 
+![Chain counts and timeline](../../../outputs/analysis/cxg/plots/pass_value_chain_counts.png)
+![Chain timeline evolution](../../../outputs/analysis/cxg/plots/pass_value_chain_timeline.png)
+
 ### 1.2 Sequences that burn value
 
 | Chain Archetype | Shots | Goal Rate | Mean xG | Lift |
@@ -33,6 +36,11 @@ The density and timeline plots (`pass_value_chain_counts.png`, `pass_value_chain
 
 Spatial maps (`pass_value_chain_pitch_*.png`) reinforce the pattern: switch-heavy sequences stall on the wings and often devolve into low-probability headers. The outcome mix chart (`pass_value_chain_outcome_mix.png`) shows 58% of these plays conclude with blocked or off-target shots.
 
+![Carry-Cross pitch density](../../../outputs/analysis/cxg/plots/pass_value_chain_pitch_carry-plus-cross.png)
+![Direct-GroundPass pitch density](../../../outputs/analysis/cxg/plots/pass_value_chain_pitch_direct-plus-ground-pass.png)
+![Outcome distribution by chain](../../../outputs/analysis/cxg/plots/pass_value_chain_outcome_mix.png)
+![xG distribution across chains](../../../outputs/analysis/cxg/plots/pass_value_chain_xg_distribution.png)
+
 ### 1.3 Solo vs assisted detail
 
 Unassisted shots remain the single largest bucket (47% of all attempts). The breakdown plot (`pass_value_chain_unassisted_breakdown.png`) highlights why their goal rate lags xG: 61% of these shots are taken outside the 18-yard box and 35% occur under defensive pressure. Integrating carry distance and pressure flags as multiplicative suppressors inside CxG will rein in these over-valued looks.
@@ -42,6 +50,10 @@ Unassisted shots remain the single largest bucket (47% of all attempts). The bre
 ## 2. Game-State Lens
 
 Score and minute context materially reshape the chain hierarchy. The heat/line plots (`game_state_score_goal_rates.png`, `game_state_score_minute_grid.png`, `game_state_state_distribution.png`) show that >40% of shots arrive while the match is level, yet the biggest mis-calibrations appear when teams chase or protect multi-goal margins.
+
+![Score state goal rates](../../../outputs/analysis/cxg/plots/game_state_score_goal_rates.png)
+![Match state distribution](../../../outputs/analysis/cxg/plots/game_state_state_distribution.png)
+![Minute heatmap by score](../../../outputs/analysis/cxg/plots/game_state_minute_heatmap.png)
 
 | Chain + Score State | Shots | Goal Rate | Lift vs xG |
 | --- | ---:| ---:| ---:|
@@ -94,7 +106,14 @@ The expanded set-piece notebook (`set_piece_lens`) now exports volume, spatial, 
 | Kick Off | 64 | 0.063 | 0.089 | −0.027 |
 | Other Restart | 320 | 0.156 | 0.131 | **+0.025** |
 
+![Set-piece goal rates by category](../../../outputs/analysis/cxg/plots/set_piece_goal_rates.png)
+![Set-piece shot volume](../../../outputs/analysis/cxg/plots/set_piece_shot_volume.png)
+
 Pitch maps (`set_piece_pitch_corner.png`, `set_piece_pitch_throw-in.png`, `set_piece_pitch_indirect-free-kick.png`) confirm that corners concentrate near the penalty spot while throw-ins attack deeper at the near-post, explaining their higher rebound lift.
+
+![Corner kick pitch density](../../../outputs/analysis/cxg/plots/set_piece_pitch_corner.png)
+![Throw-in pitch density](../../../outputs/analysis/cxg/plots/set_piece_pitch_throw-in.png)
+![Indirect free kick pitch density](../../../outputs/analysis/cxg/plots/set_piece_pitch_indirect-free-kick.png)
 
 ### First vs second phase
 
@@ -106,7 +125,9 @@ Pitch maps (`set_piece_pitch_corner.png`, `set_piece_pitch_throw-in.png`, `set_p
 | Goal Kick | 74.7% | 25.3% | 0.102 |
 | Other Restart | 76.9% | 23.1% | **0.176** |
 
-Second-phase throw-ins and “other restarts” convert at markedly higher rates—CxG should not value all set-piece rebounds equally. `set_piece_phase_distribution.png` visualises the conversion split.
+Second-phase throw-ins and "other restarts" convert at markedly higher rates—CxG should not value all set-piece rebounds equally. `set_piece_phase_distribution.png` visualises the conversion split.
+
+![Phase distribution across set pieces](../../../outputs/analysis/cxg/plots/set_piece_phase_distribution.png)
 
 ### Score & minute effects
 
@@ -158,6 +179,14 @@ Pressure splits show how quickly value evaporates:
 
 The pressure-specific goal-rate charts (`assist_context_goal_rates_pressure_*.png`) and pitch-density maps (`assist_context_pitch_ground-pass.png`, `assist_context_pitch_set-piece.png`, `assist_context_pitch_cross.png`) visually emphasise that clean service into Zone 14 is where CxG should spike. Footedness breakdowns (`assist_context_goal_rates_footedness_*.png`) add another lever: weak-foot finishes lose 6–9 percentage points of conversion relative to strong-foot strikes even after controlling for shot distance.
 
+![Pressure impact on goal rates](../../../outputs/analysis/cxg/plots/assist_context_goal_rates_pressure_not-under-pressure.png)
+![Under-pressure goal rates](../../../outputs/analysis/cxg/plots/assist_context_goal_rates_pressure_under-pressure.png)
+![Ground pass pitch density](../../../outputs/analysis/cxg/plots/assist_context_pitch_ground-pass.png)
+![Cross pitch density](../../../outputs/analysis/cxg/plots/assist_context_pitch_cross.png)
+![Strong-foot finishing](../../../outputs/analysis/cxg/plots/assist_context_goal_rates_footedness_strong-foot.png)
+![Weak-foot finishing](../../../outputs/analysis/cxg/plots/assist_context_goal_rates_footedness_weak-foot.png)
+![Distance curves by assist type](../../../outputs/analysis/cxg/plots/assist_context_distance_curves.png)
+
 ## 5. Shot Geometry & Distance
 
 Distance/angle bins (`csv/geometry_distance_bins.csv`) confirm that our baseline xG already captures the monotonic decay with range, but there are local mis-fits to exploit.
@@ -175,6 +204,11 @@ Distance/angle bins (`csv/geometry_distance_bins.csv`) confirm that our baseline
 
 `geometry_angle_distance_heatmap.png`, `geometry_pitch_goal_rate.png`, and `geometry_angle_vs_goal.png` reveal a ridge specifically for shots taken between 12–14 m at shallow angles (cutbacks). These coincide with the high-lift carry + cutback sequences from §1, reinforcing that spatial features plus chain identifiers should be fused, not treated independently.
 
+![Angle-distance heatmap](../../../outputs/analysis/cxg/plots/geometry_angle_distance_heatmap.png)
+![Pitch goal rate map](../../../outputs/analysis/cxg/plots/geometry_pitch_goal_rate.png)
+![Angle vs goal conversion](../../../outputs/analysis/cxg/plots/geometry_angle_vs_goal.png)
+![Distance vs goal conversion](../../../outputs/analysis/cxg/plots/geometry_distance_vs_goal.png)
+
 ## 6. Defensive Overlay
 
 The refreshed defensive overlay tables add quantitative context for how opponent actions within five seconds of the shot alter outcomes.
@@ -187,9 +221,17 @@ The refreshed defensive overlay tables add quantitative context for how opponent
 | Block (deflection) | 86 | 0.198 | 0.073 | **+0.125** |
 | No immediate trigger | 754 | 0.252 | 0.280 | −0.028 |
 
-The lift scatter and heatmap suite (`defensive_overlay_goal_rates.png`, `defensive_overlay_lift_scatter.png`, `defensive_overlay_heatmap_pressure.png`, `defensive_overlay_heatmap_block.png`, `defensive_overlay_time_gap_distribution.png`) show that when the defending team records both a pressure and recovery within the window, concede probability spikes by ~15%. Conversely, possessions without a logged defensive disruption trend toward speculative shots (higher xG, lower conversion), indicating that we should penalise “easy” looks that still miss.
+The lift scatter and heatmap suite (`defensive_overlay_goal_rates.png`, `defensive_overlay_lift_scatter.png`, `defensive_overlay_heatmap_pressure.png`, `defensive_overlay_heatmap_block.png`, `defensive_overlay_time_gap_distribution.png`) show that when the defending team records both a pressure and recovery within the window, concede probability spikes by ~15%. Conversely, possessions without a logged defensive disruption trend toward speculative shots (higher xG, lower conversion), indicating that we should penalise "easy" looks that still miss.
+
+![Defensive overlay goal rates](../../../outputs/analysis/cxg/plots/defensive_overlay_goal_rates.png)
+![Defensive trigger lift scatter](../../../outputs/analysis/cxg/plots/defensive_overlay_lift_scatter.png)
+![Pressure heatmap](../../../outputs/analysis/cxg/plots/defensive_overlay_heatmap_pressure.png)
+![Block deflection heatmap](../../../outputs/analysis/cxg/plots/defensive_overlay_heatmap_block.png)
+![Time gap distribution](../../../outputs/analysis/cxg/plots/defensive_overlay_time_gap_distribution.png)
 
 Opponent overlays (`defensive_overlay_opponent_impact.png`) identify teams whose defensive actions consistently suppress CxG (e.g., Denmark, Belgium) versus those who allow dangerous rebounds (Panama, Qatar). These priors can flow into opponent adjustment layers alongside the set-piece vulnerabilities documented earlier.
+
+![Opponent defensive impact](../../../outputs/analysis/cxg/plots/defensive_overlay_opponent_impact.png)
 
 ## 7. Modeling Recommendations
 
