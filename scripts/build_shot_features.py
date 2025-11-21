@@ -8,6 +8,7 @@ version tag.
 import argparse
 import sys
 from pathlib import Path
+from typing import Dict
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -22,6 +23,10 @@ from opponent_adjusted.db.models import (
     Match,
 )
 from opponent_adjusted.features.geometry import calculate_all_geometry_features
+from opponent_adjusted.features.context import (
+    calculate_game_state,
+    calculate_minute_bucket_label,
+)
 from opponent_adjusted.ingestion.statsbomb_io import (
     extract_shot_info,
     extract_event_location,
@@ -29,6 +34,68 @@ from opponent_adjusted.ingestion.statsbomb_io import (
 from opponent_adjusted.utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def populate_game_state_features(session, version: str) -> int:
+    """Backfill score differential, game state flags, and minute buckets."""
+
+    rows = (
+        session.query(ShotFeature, Shot, Event)
+        .join(Shot, ShotFeature.shot_id == Shot.id)
+        .join(Event, Shot.event_id == Event.id)
+        .filter(ShotFeature.version_tag == version)
+        .order_by(Shot.match_id, Event.period, Event.minute, Event.second, Event.id)
+        .all()
+    )
+
+    current_match_id = None
+    score_by_team: Dict[int, int] = {}
+    updates = 0
+
+    for feature, shot, event in rows:
+        if shot.match_id != current_match_id:
+            current_match_id = shot.match_id
+            score_by_team = {}
+
+        team_score = score_by_team.get(shot.team_id, 0)
+        opp_score = score_by_team.get(shot.opponent_team_id, 0)
+        score_diff = team_score - opp_score
+        game_state = calculate_game_state(score_diff)
+        minute_bucket = (
+            calculate_minute_bucket_label(int(event.minute))
+            if event.minute is not None
+            else None
+        )
+
+        changed = False
+        if feature.score_diff_at_shot != score_diff:
+            feature.score_diff_at_shot = score_diff
+            changed = True
+        if feature.is_leading != game_state["is_leading"]:
+            feature.is_leading = game_state["is_leading"]
+            changed = True
+        if feature.is_trailing != game_state["is_trailing"]:
+            feature.is_trailing = game_state["is_trailing"]
+            changed = True
+        if feature.is_drawing != game_state["is_drawing"]:
+            feature.is_drawing = game_state["is_drawing"]
+            changed = True
+        if minute_bucket and feature.minute_bucket != minute_bucket:
+            feature.minute_bucket = minute_bucket
+            changed = True
+
+        if changed:
+            updates += 1
+
+        outcome = (shot.outcome or "").strip().lower()
+        if outcome == "goal":
+            score_by_team[shot.team_id] = team_score + 1
+        else:
+            score_by_team.setdefault(shot.team_id, team_score)
+        score_by_team.setdefault(shot.opponent_team_id, opp_score)
+
+    logger.info("Updated %d shot features with game state context", updates)
+    return updates
 
 
 def get_or_create_event(session, raw_ev: RawEvent, team_id: int | None) -> Event:
@@ -159,6 +226,7 @@ def main():
 
     inserted = 0
     processed = 0
+    context_updates = 0
 
     with session_scope() as session:
         q = session.query(RawEvent).filter_by(type="Shot")
@@ -179,7 +247,13 @@ def main():
                     logger.info("Processed %d/%d shots; features inserted so far: %d", processed, total, inserted)
             offset += batch_size
 
-    logger.info("Shot feature build complete. Inserted: %d", inserted)
+        context_updates = populate_game_state_features(session, args.version)
+
+    logger.info(
+        "Shot feature build complete. Inserted: %d; context updates: %d",
+        inserted,
+        context_updates,
+    )
 
 
 if __name__ == "__main__":

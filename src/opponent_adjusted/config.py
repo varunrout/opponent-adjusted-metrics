@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Database
+    database_backend: str = Field(
+        default="postgres",
+        alias="DATABASE_BACKEND",
+        description="Primary DB backend: 'postgres' or 'sqlite'",
+    )
     database_url: str = Field(
         default="postgresql+psycopg://user:password@localhost:5432/opponent_metrics",
         alias="DATABASE_URL",
@@ -96,8 +101,30 @@ class Settings(BaseSettings):
     model_config = ConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
 
+def _compute_effective_database_url(raw_url: str, backend: str) -> str:
+    """Derive the effective SQLAlchemy URL from backend + base URL.
+
+    For Postgres, this is just `raw_url`. For SQLite, we ignore the host part
+    of `raw_url` and instead always point to the local dev DB file
+    `data/opponent_adjusted.db`.
+    """
+
+    if backend.lower() == "sqlite":
+        # Always use local dev DB file when sqlite backend is selected
+        return "sqlite:///data/opponent_adjusted.db"
+
+    # Default: assume raw_url already points at Postgres
+    return raw_url
+
+
 # Global settings instance
 settings = Settings()
+
+# Apply backend override to compute final database URL once at import time
+settings.database_url = _compute_effective_database_url(
+    raw_url=settings.database_url,
+    backend=settings.database_backend,
+)
 
 
 def ensure_directories() -> None:
