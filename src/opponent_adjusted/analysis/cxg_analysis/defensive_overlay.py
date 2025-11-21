@@ -722,6 +722,18 @@ def plot_gap_distribution(df: pd.DataFrame) -> None:
     save_figure(fig, analysis_type="cxg", name="defensive_overlay_time_gap_distribution")
 
 
+def build_overlay_dataset(feature_version: str = "v1") -> pd.DataFrame:
+    """Return per-shot defensive overlay features for modelling workflows."""
+
+    shots = load_shot_data(feature_version=feature_version)
+    if shots.empty:
+        return pd.DataFrame()
+
+    defensive = load_defensive_events(shots["match_id"], shots["team_id"])
+    enriched = classify_sequences(shots, defensive)
+    return enriched
+
+
 def run_defensive_overlay_analysis(feature_version: str = "v1") -> None:
     configure_matplotlib()
     shots = load_shot_data(feature_version=feature_version)
