@@ -55,6 +55,10 @@ reports/
 *.parquet
 *.json
 !db/seeds/*.json
+!outputs/analysis/cxg/csv/
+!outputs/analysis/cxg/csv/**
+!outputs/csv/
+!outputs/csv/**
 
 # Model artifacts
 *.joblib

@@ -1,0 +1,28 @@
+set_piece_category,set_piece_phase,shots,goals,goal_rate,shot_share
+Penalty,Direct,223,152,0.6816143497757847,1.0
+Penalty,First Phase,0,0,0.0,0.0
+Penalty,Second Phase,0,0,0.0,0.0
+Direct Free Kick,Direct,212,9,0.04245283018867924,1.0
+Direct Free Kick,First Phase,0,0,0.0,0.0
+Direct Free Kick,Second Phase,0,0,0.0,0.0
+Indirect Free Kick,Direct,0,0,0.0,0.0
+Indirect Free Kick,First Phase,639,62,0.09702660406885759,0.7438882421420256
+Indirect Free Kick,Second Phase,220,16,0.07272727272727272,0.2561117578579744
+Corner,Direct,0,0,0.0,0.0
+Corner,First Phase,677,51,0.07533234859675036,0.7263948497854077
+Corner,Second Phase,255,19,0.07450980392156863,0.27360515021459225
+Throw In,Direct,0,0,0.0,0.0
+Throw In,First Phase,781,64,0.08194622279129321,0.7694581280788177
+Throw In,Second Phase,234,31,0.13247863247863248,0.23054187192118228
+Goal Kick,Direct,0,0,0.0,0.0
+Goal Kick,First Phase,174,15,0.08620689655172414,0.7467811158798283
+Goal Kick,Second Phase,59,6,0.1016949152542373,0.2532188841201717
+Kick Off,Direct,0,0,0.0,0.0
+Kick Off,First Phase,44,4,0.09090909090909091,0.6875
+Kick Off,Second Phase,20,0,0.0,0.3125
+Other Restart,Direct,0,0,0.0,0.0
+Other Restart,First Phase,246,37,0.15040650406504066,0.76875
+Other Restart,Second Phase,74,13,0.17567567567567569,0.23125
+Open Play,Direct,0,0,0.0,0.0
+Open Play,First Phase,0,0,0.0,0.0
+Open Play,Second Phase,0,0,0.0,0.0
