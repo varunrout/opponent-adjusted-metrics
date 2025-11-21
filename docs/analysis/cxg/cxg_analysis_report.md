@@ -243,3 +243,185 @@ Opponent overlays (`defensive_overlay_opponent_impact.png`) identify teams whose
 6. **Defensive overlay multipliers**: integrate the pressure/recovery features as concede-probability boosts and opponent-level priors so the model reflects whether a defense typically turns scrambles into rebounds or clearances.
 
 Embedding these contextual insights should move CxG beyond geometry into a truly possession-aware, opponent-adjusted goal probability metric, while the referenced plots keep the analysis auditable for coaches and data scientists alike.
+
+---
+
+## Appendix A: Analysis Assumptions & Feature Engineering
+
+This section documents all key assumptions and derived features used throughout the CxG exploratory analysis pipeline. Each is tied to the relevant module in `src/opponent_adjusted/analysis/cxg_analysis/`.
+
+### A.1 Pass-Value Chain Detection (`pass_value_chain.py`)
+
+**Assumptions:**
+- **Minimum shot threshold**: Chains with fewer than 30 shots are excluded from summary tables (`CHAIN_MIN_SHOTS = 30`) to ensure statistical stability.
+- **Preceding event window**: Only the immediately preceding event (within the same possession) is considered for chain labelling. If no preceding event exists in the same possession, the chain is classified as "Direct + [Pass Style]".
+- **Preceding event types**: Only carries, dribbles, and duels count as chain starters. Other actions (e.g., headers, clearances) are ignored (`PRECEDING_TYPES = {"Carry", "Dribble", "Duel"}`).
+- **Assist detection**: Presence of a `key_pass_id` in the shot JSON indicates an assisted shot. Absence implies "Unassisted".
+- **Pass categorization**: Pass style is derived from StatsBomb event metadata in priority order: cutback > through-ball > switch > cross > height classification > pass type. If none match, classified as "Other Pass" or "Assist Unknown".
+
+**Derived Features:**
+- `chain_label`: Combined string of preceding action type + pass style (e.g., "Carry + Through Ball", "Direct + Cross", "Unassisted").
+- `pass_style`: Categorization of delivery type (Cutback, Through Ball, Switch, Cross, High Pass, Ground Pass, etc.).
+- `prev_type`: Type of preceding event (Carry, Dribble, Duel, or null for Direct).
+- `lift`: Goal rate minus mean StatsBomb xG; positive values indicate outperformance.
+
+**Output tables:**
+- `pass_value_chain_summary.csv`: aggregate shots, goals, mean xG, and lift per chain archetype.
+- `pass_value_chain_*.png`: density heatmaps on pitch, timeline plots, outcome distributions, xG scatter plots.
+
+---
+
+### A.2 Game-State Lens (`game_state_lens.py`)
+
+**Assumptions:**
+- **Score state bucketing**: Score differences are grouped into five bins: Trailing 2+, Trailing 1, Level (0), Leading 1, Leading 2+ (`SCORE_STATE_BUCKETS`).
+- **Minute bucketing**: Match time is divided into 15-minute windows: 0–15, 15–30, 30–45, 45–60, 60–75, 75–90, 90+ (`MINUTE_BUCKETS = [0, 15, 30, 45, 60, 75, 90, 121]`).
+- **State coherence**: `is_leading`, `is_trailing`, and `is_drawing` flags are presumed to be correctly computed upstream in the shot features pipeline (ShotFeature table). These are derived from the score state and clock at the time of the shot.
+- **Minimum sample per state**: States with fewer than 10 shots are filtered during analysis (`MIN_STATE_SHOTS = 10`) to avoid unreliable goal rate estimates.
+
+**Derived Features:**
+- `score_state`: Categorical bucket label (Trailing 2+, Trailing 1, Level, Leading 1, Leading 2+, or Unknown).
+- `simple_state`: Simplified state flag (Leading, Trailing, Drawing, or Unknown) based on boolean flags.
+- `minute_bucket_label`: Categorical label for match time window (0-15, 15-30, ..., 90+, or Unknown).
+- `state_share`: Fraction of shots in a given state belonging to a specific chain.
+- `chain_share`: Fraction of a chain's shots falling into a given state.
+
+**Output tables:**
+- `game_state_score_summary.csv`: shots, goals, mean xG, lift per chain + score state combination.
+- `game_state_minute_summary.csv`: shots, goals, mean xG, lift per chain + minute window combination.
+- `game_state_team_summary.csv`: per-team goal rate when leading vs trailing, with delta and persistence flags.
+- `game_state_*.png`: heatmaps, scatter plots, and timelines showing interactions.
+
+---
+
+### A.3 Set-Piece Classification (`set_piece_lens.py`)
+
+**Assumptions:**
+- **Shot type detection**: Shots are classified as set-pieces using StatsBomb's `play_pattern` metadata. Recognized patterns include "From Corner", "From Free Kick", "From Throw In", "From Goal Kick", "From Kick Off" (`SET_PIECE_PATTERN_MAP`).
+- **Direct vs restart**: Direct free kicks and penalties are classified as "Direct"; corners, throw-ins, etc. are "Restart".
+- **Phase detection**: First-phase (direct attempt) vs second-phase (rebound) classification is inferred from the presence of a `key_pass_id`. If present, the shot is "First Phase"; otherwise "Second Phase". Direct shots and penalties are flagged as "Direct" phase.
+- **Minimum category shots**: Set-piece categories with fewer than 15 shots are excluded from category-level reporting (`MIN_CATEGORY_SHOTS = 15`).
+- **Score/minute buckets**: Same 5-state score bucketing and 7 minute-window bucketing as game-state lens.
+
+**Derived Features:**
+- `set_piece_category`: Label (Penalty, Direct Free Kick, Indirect Free Kick, Corner, Throw In, Goal Kick, Kick Off, Other Restart, or Open Play).
+- `set_piece_phase`: Phase classification (Direct, First Phase, or Second Phase).
+- `shot_type`: Sub-type of set-piece or open-play shot (e.g., free kick, header, volley).
+
+**Output tables:**
+- `set_piece_category_summary.csv`: shots, goals, mean xG per set-piece category.
+- `set_piece_phase_summary.csv`: phase breakdown per category.
+- `set_piece_category_minute_summary.csv`: shots and goal rate per category + minute window.
+- `set_piece_category_score_summary.csv`: shots and goal rate per category + score state.
+- `set_piece_opponent_summary.csv`: opponent set-piece concession rates (goals allowed, xG allowed).
+- `set_piece_*.png`: goal rates, pitch density maps, team/opponent scatter plots, phase distribution.
+
+---
+
+### A.4 Assist & Receiver Context (`assist_context.py`)
+
+**Assumptions:**
+- **Assist classification**: Assist category is derived from `play_pattern` and pass metadata. Recognized categories include Counter Attack, Counter Through Ball, Counter (solo), Through Ball, Cutback, Cross, Ground Pass, High Pass, Set Piece, and Unassisted.
+- **Minimum category shots**: Assist categories with fewer than 40 shots are excluded from summary tables (`CATEGORY_MIN_SHOTS = 40`); distance curves require 200 shots (`CURVE_MIN_SHOTS = 200`).
+- **Pressure state splits**: Binary flag `under_pressure` is inherited from the Event record; shots are bucketed into "Under Pressure" and "Not under Pressure" subgroups.
+- **Body-part classification**: Shot body part (header, left foot, right foot, etc.) is extracted from StatsBomb event metadata. Footedness is inferred from body-part names (e.g., "Right Foot" → strong foot if player is right-footed; limited cross-reference data).
+- **Pass metadata enrichment**: Pass attributes (height, type, length, angle, endpoint) are loaded separately and merged via `key_pass_id`.
+
+**Derived Features:**
+- `assist_category`: Label (Set Piece, Ground Pass, Unassisted, Cross, Counter Attack, High Pass, Through Ball, etc.).
+- `pressure_state`: Binary classification (Not under pressure, Under pressure).
+- `shot_body_part`: Categorized body part (Header, Left Foot, Right Foot, Unknown).
+- `receiver_footedness`: Inferred strong-foot vs weak-foot finish (limited to heuristics on body-part name and player position data where available).
+- `pass_height`: Categorized pass delivery height (Low, Ground, High).
+- Distance curves: Empirical goal rate vs distance bin for high-volume assist categories.
+
+**Output tables:**
+- `assist_context_summary.csv`: shots, goals, mean xG, mean distance, mean angle per assist category.
+- `assist_context_by_pressure.csv`: assist category + pressure state combinations.
+- `assist_context_by_footedness.csv`: shots broken down by receiver footedness (header, strong foot, weak foot, unknown preference).
+- `assist_context_by_recipient_zone.csv`: zone-based aggregations (if applicable; references pitch bins).
+- `assist_context_*.png`: goal-rate bar charts, distance curves, pitch heatmaps by assist type, pressure-specific plots, footedness breakdowns.
+
+---
+
+### A.5 Shot Geometry & Distance (`geometry_vs_outcome.py`)
+
+**Assumptions:**
+- **Distance binning**: Shot distance is binned into 5-meter intervals: 0–5, 5–10, …, 35–40+ m (`bins = np.arange(0, 40 + 5, 5)`).
+- **Angle binning**: Shot angle is binned into 10 equal intervals across the radian range [0, π] (`bins = np.linspace(0, np.pi, 11)`).
+- **Pitch grid resolution**: Pitch heatmaps use 30×20 bins for shot location clustering (`PITCH_BINS = (30, 20)`).
+- **Missing data handling**: Shots with missing distance, angle, or location data are dropped from geometry analysis.
+- **Angle convention**: Shot angle is measured from the goal line (0 = directly in front of goal, π/2 = shot from goal line perpendicular to goal).
+
+**Derived Features:**
+- `distance_bin`: Categorical bin label (e.g., "[10, 15)").
+- `distance_mid`: Midpoint of the distance bin for plotting.
+- `angle_bin`: Categorical bin label for angle ranges.
+- `angle_mid`: Midpoint of the angle bin.
+- `lift`: Empirical goal rate minus mean StatsBomb xG for each bin.
+- Pitch grid cell: 2D position (x, y) aggregated into goal rate per cell.
+
+**Output tables:**
+- `geometry_distance_bins.csv`: shots, goals, mean xG per distance bin.
+- `geometry_*.png`: distance vs goal rate curves, angle vs goal rate curves, angle-distance heatmaps, pitch-wide goal-rate color maps.
+
+---
+
+### A.6 Defensive Overlay (`defensive_overlay.py`)
+
+**Assumptions:**
+- **Defensive event types**: Recognized opponent defensive actions include Pressure, Interception, Ball Recovery, Tackle, Block, Duel, Carry (by opponent to maintain possession), and Dribble (by opponent). (`DEFENSIVE_EVENT_TYPES` and `BALL_PROGRESS_EVENT_TYPES`).
+- **Time window**: Opponent defensive actions must occur within 5 seconds **before** the shot to be linked (`MAX_EVENT_TIME_GAP_SECONDS = 5`).
+- **Possession coherence**: A defensive action is matched to a shot only if both fall within the same possession or a recovery event occurs in the interim.
+- **Trigger labelling**: The dominant defensive action within the window is selected (e.g., if both a pressure and recovery occur, "Ball Recovery" may be the labelled trigger, or a combined label is used).
+- **Null trigger case**: If no qualifying defensive event is found, the shot is labelled as "No immediate defensive trigger" (`NO_IMMEDIATE_LABEL`).
+- **Minimum sequence shots**: Sequences (trigger type + outcome pairs) with fewer than 10 shots are excluded (`MIN_SEQUENCE_SHOTS = 10`).
+
+**Derived Features:**
+- `def_label`: Defensive trigger label (Pressure, Ball Recovery, Block, Block – Deflection, Carry, etc.).
+- `time_gap`: Time (in seconds) between the defensive event and the shot.
+- `possession_match`: Boolean flag indicating whether the defensive action and shot share the same possession record.
+- `lift`: Goal rate minus mean StatsBomb xG for each trigger type.
+- Opponent team priors: Per-opponent goal rate conceded (under- or over-performance vs xG).
+
+**Output tables:**
+- `defensive_overlay_summary.csv`: shots, goals, mean xG per defensive trigger.
+- `defensive_overlay_by_opponent.csv`: opponent team aggregations (concede rate, xG allowed, lift).
+- `defensive_overlay_possession_summary.csv`: aggregations conditioned on possession matching.
+- `defensive_overlay_*.png`: goal rates by trigger, lift scatter plots, heatmaps for pressure/block zones, time-gap distribution, opponent-level scatter plots.
+
+---
+
+### A.7 Cross-Module Features
+
+**Shared derived attributes:**
+- `lift_vs_xg`: Difference between empirical goal rate and mean StatsBomb xG (goal_rate − mean_xg).
+- `shot_id`: Unique identifier for each shot, enabling cross-table joins.
+- `match_id`, `team_id`, `opponent_team_id`: Foreign keys for match and team context.
+- `is_goal`: Binary indicator (outcome == "goal").
+- `statsbomb_xg`: StatsBomb's baseline expected goals value.
+
+**Data quality assumptions:**
+- StatsBomb data is assumed to be clean and complete for the sample (likely World Cup 2022 subset).
+- Player IDs, team IDs, and possession numbers are assumed to be correctly recorded and consistent across tables.
+- Timestamps (minute, second) are assumed to be reliable for sequence matching and time-gap calculations.
+- Shot outcomes (Goal, Saved, Blocked, Off Target, Wayward, Post) are mapped to simplified categories (Goal, On Target, Blocked, Off Target) for outcome analysis.
+
+---
+
+### A.8 Summary of Key Constants & Thresholds
+
+| Parameter | Value | Module(s) | Rationale |
+| --- | ---:| --- | --- |
+| `CHAIN_MIN_SHOTS` | 30 | `pass_value_chain` | Ensure stable empirical rates. |
+| `PRECEDING_TYPES` | {Carry, Dribble, Duel} | `pass_value_chain` | Define actionable chain starters. |
+| `MINUTE_BUCKETS` | [0,15,30,45,60,75,90,121] | `game_state_lens`, `set_piece_lens` | 15-minute intervals + stoppage. |
+| `MAX_EVENT_TIME_GAP_SECONDS` | 5 | `defensive_overlay` | Causal window for defensive actions. |
+| `MIN_SEQUENCE_SHOTS` | 10 | `defensive_overlay` | Minimum sample per trigger type. |
+| `PITCH_BINS` | (30, 20) | All spatial modules | Heatmap grid resolution. |
+| `SCORE_STATE_BUCKETS` | ±2, ±1, 0 | `game_state_lens`, `set_piece_lens` | Lead/trail severity thresholds. |
+| `MIN_CATEGORY_SHOTS` | 15–40 | `set_piece_lens`, `assist_context` | Suppress low-volume categories. |
+| `CATEGORY_MIN_SHOTS` | 40 | `assist_context` | Minimum for assist category summary. |
+| `CURVE_MIN_SHOTS` | 200 | `assist_context` | Minimum for distance-curve plotting. |
+
+These constants can be tuned in future analysis iterations to balance statistical power against category granularity.
