@@ -6,7 +6,9 @@ from pathlib import Path
 import json
 import os
 import re
+from datetime import datetime, timezone
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -223,7 +225,7 @@ def _fit_full_model(
     numeric_features: list[str],
     binary_features: list[str],
     categorical_features: list[str],
-) -> tuple[Pipeline, pd.DataFrame]:
+) -> tuple[Pipeline, pd.DataFrame, int]:
     pipeline = _build_pipeline(numeric_features, binary_features, categorical_features)
     target = df["is_goal"].astype(int)
     features = df[numeric_features + binary_features + categorical_features]
@@ -235,7 +237,41 @@ def _fit_full_model(
     coef_df = pd.DataFrame({"feature": feature_names, "coefficient": coefs})
     coef_df["abs_coefficient"] = coef_df["coefficient"].abs()
     coef_df = coef_df.sort_values("abs_coefficient", ascending=False)
-    return pipeline, coef_df
+    return pipeline, coef_df, int(len(target))
+
+
+def _save_model_artifacts(
+    pipeline: Pipeline,
+    run_label: str | None,
+    dataset_label: str,
+    metrics: dict,
+    numeric_features: list[str],
+    binary_features: list[str],
+    categorical_features: list[str],
+    trained_rows: int,
+) -> None:
+    model_dir = get_modeling_output_dir("cxg", subdir="models")
+    model_dir.mkdir(parents=True, exist_ok=True)
+    suffix = f"_{run_label}" if run_label else ""
+    model_path = model_dir / f"contextual_model{suffix}.joblib"
+    joblib.dump(pipeline, model_path)
+
+    metadata = {
+        "model_type": "contextual_logistic",
+        "run_label": run_label or "default",
+        "dataset_version": dataset_label,
+        "trained_rows": trained_rows,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "features": {
+            "numeric": numeric_features,
+            "binary": binary_features,
+            "categorical": categorical_features,
+        },
+        "metrics": metrics,
+    }
+    metadata_path = model_dir / f"contextual_model{suffix}.json"
+    with metadata_path.open("w", encoding="utf-8") as fp:
+        json.dump(metadata, fp, indent=2)
 
 
 def _plot_reliability(
@@ -300,11 +336,23 @@ def main() -> None:
         binary_features,
         categorical_features,
     )
-    _, coef_df = _fit_full_model(df, numeric_features, binary_features, categorical_features)
+    pipeline, coef_df, trained_rows = _fit_full_model(
+        df, numeric_features, binary_features, categorical_features
+    )
 
     plots_dir = get_modeling_output_dir("cxg", subdir="plots")
     _plot_reliability(y_true, y_pred, plots_dir, run_suffix)
     _save_metrics(metrics, coef_df, run_suffix)
+    _save_model_artifacts(
+        pipeline,
+        run_suffix,
+        dataset_label,
+        metrics,
+        numeric_features,
+        binary_features,
+        categorical_features,
+        trained_rows,
+    )
 
     label_msg = run_suffix or "default"
     print(f"Contextual model metrics (dataset={dataset_label}, run={label_msg}):")

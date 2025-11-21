@@ -19,13 +19,16 @@ from __future__ import annotations
 from pathlib import Path
 
 import json
+from datetime import datetime, timezone
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 from sklearn.model_selection import GroupKFold
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from opponent_adjusted.analysis.plot_utilities import configure_matplotlib
@@ -51,12 +54,27 @@ def _prepare_features(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndar
     return X, y, groups
 
 
+def _build_model() -> Pipeline:
+    return Pipeline(
+        steps=[
+            ("scaler", StandardScaler()),
+            (
+                "model",
+                LogisticRegression(
+                    penalty="l2",
+                    C=1.0,
+                    solver="lbfgs",
+                    max_iter=1000,
+                ),
+            ),
+        ]
+    )
+
+
 def _train_and_evaluate(df: pd.DataFrame, n_splits: int = 5) -> dict:
     X, y, groups = _prepare_features(df)
 
     gkf = GroupKFold(n_splits=n_splits)
-    scaler = StandardScaler()
-
     briers: list[float] = []
     log_losses: list[float] = []
     aucs: list[float] = []
@@ -64,25 +82,14 @@ def _train_and_evaluate(df: pd.DataFrame, n_splits: int = 5) -> dict:
     y_pred_all: list[np.ndarray] = []
 
     for train_idx, test_idx in gkf.split(X, y, groups):
-        X_train, X_test = X[train_idx], X[test_idx]
-        y_train, y_test = y[train_idx], y[test_idx]
+        model = _build_model()
+        model.fit(X[train_idx], y[train_idx])
+        probs = model.predict_proba(X[test_idx])[:, 1]
 
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-
-        model = LogisticRegression(
-            penalty="l2",
-            C=1.0,
-            solver="lbfgs",
-            max_iter=1000,
-        )
-        model.fit(X_train_scaled, y_train)
-        probs = model.predict_proba(X_test_scaled)[:, 1]
-
+        y_test = y[test_idx]
         briers.append(brier_score_loss(y_test, probs))
         log_losses.append(log_loss(y_test, probs))
         aucs.append(roc_auc_score(y_test, probs))
-
         y_true_all.append(y_test)
         y_pred_all.append(probs)
 
@@ -99,6 +106,27 @@ def _train_and_evaluate(df: pd.DataFrame, n_splits: int = 5) -> dict:
     }
 
     return metrics, y_true_concat, y_pred_concat
+
+
+def _fit_and_save_full_model(df: pd.DataFrame, out_dir: Path, metrics: dict) -> None:
+    X, y, _ = _prepare_features(df)
+    model = _build_model()
+    model.fit(X, y)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    model_path = out_dir / "baseline_geometry_model.joblib"
+    joblib.dump(model, model_path)
+
+    metadata = {
+        "model_type": "baseline_geometry",
+        "features": ["shot_distance", "shot_angle"],
+        "trained_rows": int(len(y)),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "metrics": metrics,
+    }
+    metadata_path = out_dir / "baseline_geometry_model.json"
+    with metadata_path.open("w", encoding="utf-8") as fp:
+        json.dump(metadata, fp, indent=2)
 
 
 def _plot_reliability(y_true: np.ndarray, y_pred: np.ndarray, out_dir: Path) -> None:
@@ -152,6 +180,9 @@ def main() -> None:
     # Plot reliability
     plots_dir = get_modeling_output_dir("cxg", subdir="plots")
     _plot_reliability(y_true, y_pred, plots_dir)
+
+    model_dir = get_modeling_output_dir("cxg", subdir="models")
+    _fit_and_save_full_model(df, model_dir, metrics)
 
     print("Baseline geometry model metrics:")
     print(json.dumps(metrics, indent=2))

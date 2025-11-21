@@ -59,12 +59,15 @@ reports/
 !outputs/analysis/cxg/csv/**
 !outputs/csv/
 !outputs/csv/**
+!outputs/modeling/
+!outputs/modeling/**
 
 # Model artifacts
 *.joblib
 *.pkl
 *.pickle
 artifacts/
+!outputs/modeling/**/*.joblib
 
 # Logs
 *.log

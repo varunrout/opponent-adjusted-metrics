@@ -1,0 +1,51 @@
+model,model_display,bin_center,empirical_goal_rate,sample_count
+provider,StatsBomb Provider xG,0.05,0.03837745931503522,4117
+provider,StatsBomb Provider xG,0.15000000000000002,0.1455981941309255,886
+provider,StatsBomb Provider xG,0.25,0.23469387755102042,294
+provider,StatsBomb Provider xG,0.35000000000000003,0.35833333333333334,120
+provider,StatsBomb Provider xG,0.45,0.4666666666666667,90
+provider,StatsBomb Provider xG,0.55,0.5609756097560976,41
+provider,StatsBomb Provider xG,0.6500000000000001,0.5,22
+provider,StatsBomb Provider xG,0.75,0.8,15
+provider,StatsBomb Provider xG,0.8500000000000001,0.9166666666666666,12
+provider,StatsBomb Provider xG,0.95,1.0,9
+baseline,Baseline Geometry,0.05,0.05136028476989575,3933
+baseline,Baseline Geometry,0.15000000000000002,0.14054514480408858,1174
+baseline,Baseline Geometry,0.25,0.2292817679558011,362
+baseline,Baseline Geometry,0.35000000000000003,0.35,80
+baseline,Baseline Geometry,0.45,0.45161290322580644,31
+baseline,Baseline Geometry,0.55,0.6363636363636364,11
+baseline,Baseline Geometry,0.6500000000000001,0.2,5
+baseline,Baseline Geometry,0.75,0.6,5
+baseline,Baseline Geometry,0.8500000000000001,0.75,4
+baseline,Baseline Geometry,0.95,1.0,1
+contextual_filtered,Contextual (Filtered),0.05,0.037776193870277974,4209
+contextual_filtered,Contextual (Filtered),0.15000000000000002,0.15024630541871922,812
+contextual_filtered,Contextual (Filtered),0.25,0.26907630522088355,249
+contextual_filtered,Contextual (Filtered),0.35000000000000003,0.3153153153153153,111
+contextual_filtered,Contextual (Filtered),0.45,0.4444444444444444,72
+contextual_filtered,Contextual (Filtered),0.55,0.5384615384615384,52
+contextual_filtered,Contextual (Filtered),0.6500000000000001,0.5277777777777778,36
+contextual_filtered,Contextual (Filtered),0.75,0.5909090909090909,22
+contextual_filtered,Contextual (Filtered),0.8500000000000001,0.7037037037037037,27
+contextual_filtered,Contextual (Filtered),0.95,0.8125,16
+contextual_raw,Contextual (Unfiltered),0.05,0.036762950584865124,4189
+contextual_raw,Contextual (Unfiltered),0.15000000000000002,0.15560916767189384,829
+contextual_raw,Contextual (Unfiltered),0.25,0.24096385542168675,249
+contextual_raw,Contextual (Unfiltered),0.35000000000000003,0.3543307086614173,127
+contextual_raw,Contextual (Unfiltered),0.45,0.45588235294117646,68
+contextual_raw,Contextual (Unfiltered),0.55,0.5833333333333334,60
+contextual_raw,Contextual (Unfiltered),0.6500000000000001,0.6666666666666666,162
+contextual_raw,Contextual (Unfiltered),0.75,0.6060606060606061,99
+contextual_raw,Contextual (Unfiltered),0.8500000000000001,0.7142857142857143,28
+contextual_raw,Contextual (Unfiltered),0.95,0.9444444444444444,18
+contextual_enriched,Contextual (Enriched Priors),0.05,0.030338942877459113,4219
+contextual_enriched,Contextual (Enriched Priors),0.15000000000000002,0.1518987341772152,711
+contextual_enriched,Contextual (Enriched Priors),0.25,0.234375,256
+contextual_enriched,Contextual (Enriched Priors),0.35000000000000003,0.3695652173913043,138
+contextual_enriched,Contextual (Enriched Priors),0.45,0.41379310344827586,87
+contextual_enriched,Contextual (Enriched Priors),0.55,0.49230769230769234,65
+contextual_enriched,Contextual (Enriched Priors),0.6500000000000001,0.5961538461538461,52
+contextual_enriched,Contextual (Enriched Priors),0.75,0.6923076923076923,26
+contextual_enriched,Contextual (Enriched Priors),0.8500000000000001,0.8461538461538461,26
+contextual_enriched,Contextual (Enriched Priors),0.95,0.8076923076923077,26
