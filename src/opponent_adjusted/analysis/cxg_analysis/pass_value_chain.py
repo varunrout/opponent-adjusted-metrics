@@ -9,6 +9,7 @@ plots under outputs/analysis/cxg/.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, Iterable, List, Optional
 
 import matplotlib.pyplot as plt
@@ -24,7 +25,7 @@ from opponent_adjusted.analysis.plot_utilities import (
     save_figure,
 )
 from opponent_adjusted.config import settings
-from opponent_adjusted.db.models import Event, RawEvent, Shot, ShotFeature
+from opponent_adjusted.db.models import Competition, Event, Match, RawEvent, Shot, ShotFeature
 from opponent_adjusted.db.session import SessionLocal
 
 CHAIN_MIN_SHOTS = 30
@@ -56,6 +57,7 @@ class ShotRecord:
     match_id: int
     team_id: int
     opponent_team_id: int
+    player_id: Optional[int]
     statsbomb_xg: float | None
     is_goal: bool
     shot_distance: float | None
@@ -74,6 +76,12 @@ class ShotRecord:
     is_trailing: Optional[bool]
     is_drawing: Optional[bool]
     feature_minute_bucket: Optional[str]
+    match_date: Optional[datetime]
+    competition_id: int
+    competition_name: str
+    competition_season: str
+    competition_statsbomb_id: int
+    is_home: Optional[bool]
 
 
 @dataclass
@@ -103,6 +111,7 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 Shot.match_id,
                 Shot.team_id,
                 Shot.opponent_team_id,
+                Shot.player_id,
                 Shot.statsbomb_xg,
                 Shot.outcome,
                 Shot.body_part,
@@ -120,10 +129,20 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 Event.under_pressure,
                 Event.minute,
                 RawEvent.raw_json.label("shot_raw_json"),
+                Match.id.label("match_row_id"),
+                Match.match_date,
+                Match.home_team_id,
+                Match.away_team_id,
+                Match.competition_id,
+                Competition.name.label("competition_name"),
+                Competition.season.label("competition_season"),
+                Competition.statsbomb_competition_id.label("competition_statsbomb_id"),
             )
             .join(ShotFeature, ShotFeature.shot_id == Shot.id)
             .join(Event, Event.id == Shot.event_id)
             .join(RawEvent, RawEvent.id == Event.raw_event_id)
+            .join(Match, Match.id == Shot.match_id)
+            .join(Competition, Competition.id == Match.competition_id)
             .where(ShotFeature.version_tag == feature_version)
         )
 
@@ -142,6 +161,7 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 match_id=row.match_id,
                 team_id=row.team_id,
                 opponent_team_id=row.opponent_team_id,
+                player_id=row.player_id,
                 statsbomb_xg=float(row.statsbomb_xg) if row.statsbomb_xg is not None else None,
                 is_goal=is_goal,
                 shot_distance=float(row.shot_distance) if row.shot_distance is not None else None,
@@ -162,6 +182,12 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 is_trailing=bool(row.is_trailing) if row.is_trailing is not None else None,
                 is_drawing=bool(row.is_drawing) if row.is_drawing is not None else None,
                 feature_minute_bucket=row.minute_bucket,
+                match_date=row.match_date,
+                competition_id=row.competition_id,
+                competition_name=row.competition_name,
+                competition_season=row.competition_season,
+                competition_statsbomb_id=row.competition_statsbomb_id,
+                is_home=(row.team_id == row.home_team_id)
             )
         )
 

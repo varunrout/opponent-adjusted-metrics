@@ -35,6 +35,13 @@ DEF_TIME_BINS = [0.0, 2.0, 5.0, 10.0, 30.0, float("inf")]
 DEF_TIME_LABELS = ["0-2s", "2-5s", "5-10s", "10-30s", "30s+"]
 
 
+def _normalize_home_flag(series: pd.Series) -> pd.Series:
+    mapping = {True: True, False: False, "True": True, "False": False, 1: True, 0: False}
+    normalized = series.map(mapping)
+    normalized = normalized.fillna(False)
+    return normalized.astype(bool)
+
+
 def _compose_bucket(df: pd.DataFrame, cols: Iterable[str], bucket_name: str) -> pd.DataFrame:
     subset = df[list(cols)].copy()
     for col in subset.columns:
@@ -57,14 +64,22 @@ def _merge_finishing_bias(df: pd.DataFrame) -> pd.DataFrame:
         df["finishing_bias_logit"] = 0.0
         df["finishing_bias_multiplier"] = 1.0
         return df
-    cols = ["team_id", "bias_logit", "odds_multiplier"]
-    priors = priors[cols].rename(
+    required_cols = {"match_id", "is_home"}
+    missing = required_cols.difference(df.columns)
+    if missing:
+        raise ValueError(f"CxG dataset missing columns for finishing priors merge: {sorted(missing)}")
+
+    priors = priors.rename(
         columns={
-            "bias_logit": "finishing_bias_logit",
-            "odds_multiplier": "finishing_bias_multiplier",
+            "finishing_bias_logit": "finishing_bias_logit",
+            "finishing_bias_multiplier": "finishing_bias_multiplier",
         }
     )
-    merged = df.merge(priors, on="team_id", how="left")
+
+    priors["is_home"] = _normalize_home_flag(priors["is_home"])
+    df = df.copy()
+    df["is_home"] = _normalize_home_flag(df["is_home"])
+    merged = df.merge(priors, on=["match_id", "is_home"], how="left")
     merged["finishing_bias_logit"] = merged["finishing_bias_logit"].fillna(0.0)
     merged["finishing_bias_multiplier"] = merged["finishing_bias_multiplier"].fillna(1.0)
     return merged
@@ -76,14 +91,24 @@ def _merge_concession_bias(df: pd.DataFrame) -> pd.DataFrame:
         df["concession_bias_logit"] = 0.0
         df["concession_bias_multiplier"] = 1.0
         return df
-    cols = ["opponent_team_id", "bias_logit", "odds_multiplier"]
-    priors = priors[cols].rename(
-        columns={
-            "bias_logit": "concession_bias_logit",
-            "odds_multiplier": "concession_bias_multiplier",
-        }
+    required_cols = {"match_id", "is_home"}
+    missing = required_cols.difference(df.columns)
+    if missing:
+        raise ValueError(f"CxG dataset missing columns for concession priors merge: {sorted(missing)}")
+
+    priors["is_home"] = _normalize_home_flag(priors["is_home"])
+    df = df.copy()
+    df["is_home"] = _normalize_home_flag(df["is_home"])
+    df["opponent_is_home"] = ~df["is_home"]
+
+    priors = priors.rename(columns={"is_home": "concession_is_home"})
+    merged = df.merge(
+        priors,
+        left_on=["match_id", "opponent_is_home"],
+        right_on=["match_id", "concession_is_home"],
+        how="left",
     )
-    merged = df.merge(priors, on="opponent_team_id", how="left")
+    merged = merged.drop(columns=["opponent_is_home", "concession_is_home"], errors="ignore")
     merged["concession_bias_logit"] = merged["concession_bias_logit"].fillna(0.0)
     merged["concession_bias_multiplier"] = merged["concession_bias_multiplier"].fillna(1.0)
     return merged

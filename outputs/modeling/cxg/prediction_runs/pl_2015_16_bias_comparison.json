@@ -1,0 +1,78 @@
+{
+  "exclude_pl1516": {
+    "match_metrics": {
+      "cxg_total": {
+        "mae": 0.7399289559223104,
+        "rmse": 0.9391367030233625,
+        "bias": 0.014023649232431674
+      },
+      "provider_xg": {
+        "mae": 0.7965306350852631,
+        "rmse": 0.9962216468739444,
+        "bias": 0.01824848535710527
+      }
+    },
+    "team_metrics": {
+      "cxg_for": {
+        "mae": 3.6298211690594355,
+        "rmse": 4.435151159641643,
+        "bias": 0.5328986708324033
+      },
+      "provider_xg_for": {
+        "mae": 3.60773456338,
+        "rmse": 4.316818126408697,
+        "bias": 0.6934424435700001
+      }
+    },
+    "totals": {
+      "cxg_for_sum": 903.3420265833519,
+      "provider_xg_for_sum": 900.1311511286,
+      "goals_for_sum": 914.0
+    },
+    "finishing_feature_stats": {
+      "finishing_bias_logit_mean": -0.08453850066961997,
+      "finishing_bias_logit_std": 0.3797296480076811,
+      "finishing_multiplier_mean": 0.9737539659217787,
+      "concession_bias_logit_mean": -0.15346568561670776,
+      "concession_multiplier_mean": 0.9475328563147931
+    }
+  },
+  "include_pl1516": {
+    "match_metrics": {
+      "cxg_total": {
+        "mae": 0.7398149681267323,
+        "rmse": 0.9390027297733565,
+        "bias": 0.014667181196275324
+      },
+      "provider_xg": {
+        "mae": 0.7965306350852631,
+        "rmse": 0.9962216468739444,
+        "bias": 0.01824848535710527
+      }
+    },
+    "team_metrics": {
+      "cxg_for": {
+        "mae": 3.5965248955565228,
+        "rmse": 4.388837257752748,
+        "bias": 0.5573528854584614
+      },
+      "provider_xg_for": {
+        "mae": 3.60773456338,
+        "rmse": 4.316818126408697,
+        "bias": 0.6934424435700001
+      }
+    },
+    "totals": {
+      "cxg_for_sum": 902.8529422908308,
+      "provider_xg_for_sum": 900.1311511286,
+      "goals_for_sum": 914.0
+    },
+    "finishing_feature_stats": {
+      "finishing_bias_logit_mean": -0.07478342010435535,
+      "finishing_bias_logit_std": 0.37949882046014904,
+      "finishing_multiplier_mean": 0.9830693872052397,
+      "concession_bias_logit_mean": -0.13220152693322473,
+      "concession_multiplier_mean": 0.9659686880174145
+    }
+  }
+}

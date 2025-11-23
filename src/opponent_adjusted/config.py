@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     # Supports either name/season matching or explicit IDs.
     # We default to explicit IDs for reproducibility.
     competitions: list = [
+        {"competition_id": 2, "season_id": 27},    # Premier League 2015/16
         {"competition_id": 43, "season_id": 3},    # FIFA World Cup 2018
         {"competition_id": 43, "season_id": 106},  # FIFA World Cup 2022
         {"competition_id": 55, "season_id": 43},   # UEFA Euro 2020
