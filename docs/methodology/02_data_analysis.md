@@ -127,19 +127,33 @@ The combination of a **Carry + Through Ball** is the most lethal sequence in the
 To support the "Neutral Priors" modeling approach, we must profile teams without using their names. We derive a "Style Vector" for every team in every match.
 
 ### 4.1 Style Metrics
-1.  **Possession Share:**
-    $$ P_{share} = \frac{\text{Team Duration}}{\text{Total Match Duration}} $$
-2.  **Press Intensity:** Defined as the number of `Pressure` events per minute of opponent possession. This proxies the team's defensive aggression.
-3.  **Defensive Line Height:** The average X-coordinate of defensive actions (tackles, interceptions). A high value (>50) indicates a High Line; a low value (<35) indicates a Low Block.
-4.  **Build-up Directness:** The ratio of forward distance to total distance in pass sequences.
+We construct a 5-dimensional "Style Vector" for every team in every match to capture their tactical identity. These features are normalized before clustering.
+
+1.  **Possession Share ($P_{share}$):**
+    $$ P_{share} = \frac{\text{Team Possession Duration}}{\text{Total Match Duration}} $$
+    *Proxy for dominance and ball control.*
+2.  **Press Intensity ($I_{press}$):**
+    $$ I_{press} = \frac{\text{Count(Pressure Events)}}{\text{Match Minutes}} $$
+    *Proxy for defensive aggression and work rate.*
+3.  **Defensive Line Height ($H_{def}$):** The average X-coordinate of all team events, normalized to $[0, 1]$.
+    $$ H_{def} = \frac{1}{N} \sum \frac{x_i}{120} $$
+    *Indicates whether a team plays a High Line or a Low Block.*
+4.  **Press Height ($H_{press}$):** The average X-coordinate specifically of `Pressure` events.
+    *Distinguishes between a "High Press" (pressing in the opponent's third) and a "Mid Block" (pressing in the middle third).*
+5.  **Average Shot Distance ($d_{avg}$):** The mean distance of shots taken by the team.
+    *Distinguishes between teams that work the ball into the box (e.g., Arsenal) and teams that rely on long shots.*
 
 ### 4.2 Clustering Analysis
-We apply **K-Means Clustering** to these style vectors to identify archetypes.
-*   **Cluster 1 (e.g., "Dominant Pressers"):** High possession, high line, high press (e.g., Man City, Bayern).
-*   **Cluster 2 (e.g., "Counter-Attackers"):** Low possession, deep line, high directness (e.g., Leicester 15/16).
-*   **Cluster 3 (e.g., "Passive Low Block"):** Low possession, deep line, low press.
+We apply **K-Means Clustering** ($k=6$) to these style vectors to identify tactical archetypes. This allows the model to learn interaction effects (e.g., "Counter-Attackers" scoring against "Dominant Pressers") without knowing the specific teams involved.
 
-These clusters allow the model to learn interaction effects (e.g., "Counter-Attackers" scoring against "Dominant Pressers") without knowing the specific teams involved.
+#### Cluster Interpretations (Archetypes)
+Based on the feature centroids, we identify the following archetypes:
+*   **Cluster 0: "Passive Low Block"** (Low $P_{share}$, Low $H_{def}$, Low $I_{press}$). Teams that sit deep and absorb pressure.
+*   **Cluster 1: "Dominant Pressers"** (High $P_{share}$, High $H_{press}$, High $I_{press}$). Elite teams that control the game and win the ball back high up the pitch (e.g., Man City, Bayern).
+*   **Cluster 2: "Direct Counter-Attackers"** (Low $P_{share}$, Low $H_{def}$, High $d_{avg}$). Teams that defend deep but transition quickly, often settling for longer range shots.
+*   **Cluster 3: "Mid-Block Possession"** (Medium $P_{share}$, Medium $H_{def}$). Balanced teams that control possession but do not press aggressively.
+*   **Cluster 4: "Aggressive Underdogs"** (Low $P_{share}$, High $I_{press}$). Teams that lack quality on the ball but compensate with extreme physical effort.
+*   **Cluster 5: "Box Crashers"** (High $P_{share}$, Low $d_{avg}$). Teams that dominate territory and refuse to shoot from distance.
 
 ## 5. Conclusion
 
