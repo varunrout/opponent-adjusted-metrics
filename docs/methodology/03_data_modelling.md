@@ -22,20 +22,37 @@ To create a "Neutral" baseline, we employ two strategies during training:
 1.  **ID Exclusion:** We explicitly exclude `team_id` and `player_id` from the feature set of the base model.
 2.  **Style Substitution:** Instead of team names, we use the "Style Clusters" defined in the Analysis phase (e.g., "High Pressing Opponent"). This allows the model to learn that shots against a "Low Block" are harder to convert due to density, without overfitting to specific teams like Burnley or Atletico Madrid.
 
-## 3. Model Architecture: Stacking Ensembles
+## 3. Model Architecture: Feature Stacking
 
-We do not rely on a single algorithm. Instead, we use a **Stacked Generalization** (Stacking) approach to capture different aspects of the game.
+We employ a **Stacked Generalization** approach where specialized "Submodels" first learn to predict outcomes based on specific domains (e.g., pressure, assist type). The outputs of these submodels (logits) are then fed as features into a final **Meta-Learner**.
 
-### 3.1 Level 0: The Submodels
-We train three distinct "weak learners" (all Logistic Regressions) on different feature subsets:
-*   **`GeomModel`:** Trained *only* on Distance and Angle. This captures the pure physics of the shot.
-*   **`ContextModel`:** Trained on Pressure, Body Part, and Pass Type. This captures the tactical context.
-*   **`StateModel`:** Trained on Score Differential and Time. This captures the psychological state.
+### 3.1 The Submodels (Priors)
+We train 6 distinct submodels. Each model focuses on a specific aspect of the game and produces a `logit` score that represents the log-odds of a goal given that specific context.
 
-### 3.2 Level 1: The Meta-Learner
-The predictions (probabilities) from the Level 0 models are fed as input features into a Level 1 Logistic Regression.
-$$ P(\text{Goal}) = \sigma(\beta_0 + \beta_1 \cdot \hat{y}_{geom} + \beta_2 \cdot \hat{y}_{context} + \beta_3 \cdot \hat{y}_{state}) $$
-This allows the model to weigh the components dynamically. For example, if the `GeomModel` says "easy goal" (close range) but `ContextModel` says "impossible" (3 defenders blocking), the Meta-Learner learns to trust the Context model.
+1.  **Finishing Bias Model:**
+    *   **Input:** Team Style Clusters (Attacking), Rolling Form.
+    *   **Purpose:** Captures the intrinsic finishing ability of the attacking team's archetype (e.g., "Do High-Pressing teams finish better?").
+2.  **Concession Bias Model:**
+    *   **Input:** Team Style Clusters (Defending), Rolling Form.
+    *   **Purpose:** Captures the intrinsic defensive weakness of the opponent's archetype (e.g., "Do Low-Block teams concede fewer goals from range?").
+3.  **Assist Quality Model:**
+    *   **Input:** `assist_type` (Cross, Cutback, Through Ball), `pass_height`, `pass_technique`.
+    *   **Purpose:** Quantifies the quality of the service. A "Cutback" has a much higher prior than a "High Cross".
+4.  **Pressure Influence Model:**
+    *   **Input:** `pressure_intensity`, `defender_count_in_cone`, `distance_to_nearest_defender`.
+    *   **Purpose:** Isolates the effect of defensive pressure on shot conversion.
+5.  **Defensive Trigger Model:**
+    *   **Input:** `time_since_turnover`, `defensive_disorganization_flag`.
+    *   **Purpose:** Identifies moments of defensive chaos (e.g., shots <5s after a high turnover).
+6.  **Set Piece Phase Model:**
+    *   **Input:** `set_piece_type` (Corner, Free Kick), `phase_of_play`.
+    *   **Purpose:** Handles the unique physics and tactical setups of set pieces.
+
+### 3.2 The Meta-Learner
+The final model is a Logistic Regression that combines the geometric features with the submodel logits.
+$$ P(\text{Goal}) = \sigma(\beta_0 + \beta_{geom} \cdot \text{Geometry} + \sum \beta_k \cdot \text{Logit}_k) $$
+
+Where $\text{Logit}_k$ represents the output from submodel $k$. This architecture allows the model to weigh conflicting signals. For example, if the **Geometry** suggests a low probability (long range) but the **Defensive Trigger** suggests high probability (empty net after turnover), the Meta-Learner can adjust the final prediction accordingly.
 
 ## 4. Opponent Adjustment Mechanism
 
