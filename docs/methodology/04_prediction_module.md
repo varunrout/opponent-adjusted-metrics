@@ -18,9 +18,10 @@ The inference process is designed to be stateless and idempotent. It is triggere
 1.  **Context Loading:** The system loads the trained Meta-Learner and Submodels from the `models/` directory using `joblib`. It also loads the `coefficients.json` map, which contains the $A_k$ (Attack) and $D_j$ (Defense) values for known teams.
 2.  **Data Ingestion (Micro-Batch):** The script accepts a `match_id`. It fetches the event data for that specific match from the raw data store (or API).
 3.  **Feature Transformation:** The raw events are passed through the *exact same* `build_shot_features` function used in training. This ensures feature parity (e.g., "Distance" is calculated identically).
-4.  **Neutral Prediction:** The features are fed into the Stacked Ensemble to generate $\text{xG}_{neutral}$.
+4.  **Neutral Prediction:** The features are fed into the Stacked Ensemble to generate $\text{xG}_{\text{neutral}}$.
 5.  **Adjustment Application:** The system looks up the Home and Away team IDs in the coefficient map and applies the adjustment formula:
-    $$ \text{xG}_{final} = \text{xG}_{neutral} + A_{team} + D_{opponent} $$
+    
+    $$\text{xG}_{\text{final}} = \text{xG}_{\text{neutral}} + A_{\text{team}} + D_{\text{opponent}}$$
 
 ### 2.2 Handling Unknown Entities (Cold Start)
 A critical challenge in production is encountering a team that was not in the training set (e.g., a newly promoted team).
@@ -73,9 +74,9 @@ This allows analysts to audit *why* a prediction was made.
 ### 4.2 Visualizations
 The module uses `matplotlib` to generate a "Shot Map" for the match.
 *   **Glyphs:** Shots are plotted as circles.
-*   **Size:** Proportional to $\text{xG}_{final}$.
+*   **Size:** Proportional to $\text{xG}_{\text{final}}$.
 *   **Color:** Green for Goal, Red for Miss, Blue for Blocked.
-*   **Annotations:** High-xG chances (>0.3) are annotated with the player name and minute.
+*   **Annotations:** High-xG chances ($> 0.3$) are annotated with the player name and minute.
 *   **Pitch Control:** (Optional) If tracking data is available, we overlay the pitch control surface to show space dominance.
 
 ## 5. Future Improvements: Real-Time Inference
@@ -83,7 +84,7 @@ The module uses `matplotlib` to generate a "Shot Map" for the match.
 Currently, the system operates in batch mode (post-match). To move to real-time (live betting or broadcast):
 1.  **Stream Processing:** Replace the file-based ingestion with a Kafka consumer reading live event feeds.
 2.  **State Management:** The "Game State" features (Score Differential) must be maintained in a state store (Redis) rather than calculated from a full match history.
-3.  **Latency:** The feature engineering pipeline must be optimized to run in <50ms per event.
+3.  **Latency:** The feature engineering pipeline must be optimized to run in $< 50$ ms per event.
 
 ## 6. Conclusion
 

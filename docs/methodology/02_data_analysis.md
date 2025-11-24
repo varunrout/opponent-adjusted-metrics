@@ -16,12 +16,16 @@ The feature engineering process is encapsulated in `scripts/build_shot_features.
 
 ### 2.1 Geometric Features
 
-The most fundamental predictors of goal probability are spatial. We define the goal mouth as a line segment on the goal line (x=120) spanning from y=36 to y=44 (8 yards wide).
+The most fundamental predictors of goal probability are spatial. We define the goal mouth as a line segment on the goal line ($x = 120$) spanning from $y = 36$ to $y = 44$ (8 yards wide).
 
 *   **Shot Distance ($d$):** Calculated as the Euclidean distance from the shot location $(x, y)$ to the center of the goal $(120, 40)$.
-    $$ d = \sqrt{(120 - x)^2 + (40 - y)^2} $$
+    
+    $$d = \sqrt{(120 - x)^2 + (40 - y)^2}$$
+    
 *   **Shot Angle ($\theta$):** The visible angle of the goal mouth from the shooter's perspective. This is calculated using the law of cosines or the `arctan` difference between the two goal posts.
-    $$ \theta = \arctan\left(\frac{y - 36}{120 - x}\right) - \arctan\left(\frac{y - 44}{120 - x}\right) $$
+    
+    $$\theta = \arctan\left(\frac{y - 36}{120 - x}\right) - \arctan\left(\frac{y - 44}{120 - x}\right)$$
+    
     *Note: We take the absolute value and normalize to degrees.*
 
 #### Empirical Analysis: The "Six-Yard" Cliff
@@ -45,8 +49,9 @@ Our analysis confirms the expected non-linear decay of goal probability as dista
 A key innovation of this project is the rigorous quantification of defensive pressure using "Freeze Frame" data.
 
 *   **Defender Density:** We define a "Shot Cone" as the triangular region formed by the ball and the two goal posts. We count the number of opponents within this cone and within a 5-yard radius of the shooter.
-*   **Pressure State:** StatsBomb provides a binary `under_pressure` flag. We augment this by calculating a continuous `pressure_intensity` score based on the inverse distance to the nearest defender ($d_{nearest}$):
-    $$ I_{pressure} = \frac{1}{1 + d_{nearest}} $$
+*   **Pressure State:** StatsBomb provides a binary `under_pressure` flag. We augment this by calculating a continuous `pressure_intensity` score based on the inverse distance to the nearest defender ($d_{\text{nearest}}$):
+    
+    $$I_{\text{pressure}} = \frac{1}{1 + d_{\text{nearest}}}$$
 
 #### Empirical Analysis: The Cost of Pressure
 Shots taken under "Pressure" have a conversion rate of **10.2%**, compared to **25.2%** for shots with "No immediate defensive trigger". Furthermore, when a defender is close enough to register a "Block" event, the conversion rate plummets to **0.3%**.
@@ -67,7 +72,9 @@ Shots taken under "Pressure" have a conversion rate of **10.2%**, compared to **
 Football is path-dependent; the current score influences tactical behavior.
 
 *   **Score Differential:** Defined from the perspective of the shooting team:
-    $$ \Delta S = \text{Goals}_{\text{For}} - \text{Goals}_{\text{Against}} $$
+    
+    $$\Delta S = \text{Goals}_{\text{For}} - \text{Goals}_{\text{Against}}$$
+    
 *   **Gamestate Flags:**
     -   `is_leading`: $\Delta S > 0$
     -   `is_drawing`: $\Delta S = 0$
@@ -129,31 +136,40 @@ To support the "Neutral Priors" modeling approach, we must profile teams without
 ### 4.1 Style Metrics
 We construct a 5-dimensional "Style Vector" for every team in every match to capture their tactical identity. These features are normalized before clustering.
 
-1.  **Possession Share ($P_{share}$):**
-    $$ P_{share} = \frac{\text{Team Possession Duration}}{\text{Total Match Duration}} $$
+1.  **Possession Share ($P_{\text{share}}$):**
+    
+    $$P_{\text{share}} = \frac{\text{Team Possession Duration}}{\text{Total Match Duration}}$$
+    
     *Proxy for dominance and ball control.*
-2.  **Press Intensity ($I_{press}$):**
-    $$ I_{press} = \frac{\text{Count(Pressure Events)}}{\text{Match Minutes}} $$
+    
+2.  **Press Intensity ($I_{\text{press}}$):**
+    
+    $$I_{\text{press}} = \frac{\text{Count(Pressure Events)}}{\text{Match Minutes}}$$
+    
     *Proxy for defensive aggression and work rate.*
-3.  **Defensive Line Height ($H_{def}$):** The average X-coordinate of all team events, normalized to $[0, 1]$.
-    $$ H_{def} = \frac{1}{N} \sum \frac{x_i}{120} $$
+    
+3.  **Defensive Line Height ($H_{\text{def}}$):** The average X-coordinate of all team events, normalized to $[0, 1]$.
+    
+    $$H_{\text{def}} = \frac{1}{N} \sum \frac{x_i}{120}$$
+    
     *Indicates whether a team plays a High Line or a Low Block.*
-4.  **Press Height ($H_{press}$):** The average X-coordinate specifically of `Pressure` events.
+    
+4.  **Press Height ($H_{\text{press}}$):** The average X-coordinate specifically of `Pressure` events.
     *Distinguishes between a "High Press" (pressing in the opponent's third) and a "Mid Block" (pressing in the middle third).*
-5.  **Average Shot Distance ($d_{avg}$):** The mean distance of shots taken by the team.
+5.  **Average Shot Distance ($d_{\text{avg}}$):** The mean distance of shots taken by the team.
     *Distinguishes between teams that work the ball into the box (e.g., Arsenal) and teams that rely on long shots.*
 
 ### 4.2 Clustering Analysis
-We apply **K-Means Clustering** ($k=6$) to these style vectors to identify tactical archetypes. This allows the model to learn interaction effects (e.g., "Counter-Attackers" scoring against "Dominant Pressers") without knowing the specific teams involved.
+We apply **K-Means Clustering** ($k = 6$) to these style vectors to identify tactical archetypes. This allows the model to learn interaction effects (e.g., "Counter-Attackers" scoring against "Dominant Pressers") without knowing the specific teams involved.
 
 #### Cluster Interpretations (Archetypes)
 Based on the feature centroids, we identify the following archetypes:
-*   **Cluster 0: "Passive Low Block"** (Low $P_{share}$, Low $H_{def}$, Low $I_{press}$). Teams that sit deep and absorb pressure.
-*   **Cluster 1: "Dominant Pressers"** (High $P_{share}$, High $H_{press}$, High $I_{press}$). Elite teams that control the game and win the ball back high up the pitch (e.g., Man City, Bayern).
-*   **Cluster 2: "Direct Counter-Attackers"** (Low $P_{share}$, Low $H_{def}$, High $d_{avg}$). Teams that defend deep but transition quickly, often settling for longer range shots.
-*   **Cluster 3: "Mid-Block Possession"** (Medium $P_{share}$, Medium $H_{def}$). Balanced teams that control possession but do not press aggressively.
-*   **Cluster 4: "Aggressive Underdogs"** (Low $P_{share}$, High $I_{press}$). Teams that lack quality on the ball but compensate with extreme physical effort.
-*   **Cluster 5: "Box Crashers"** (High $P_{share}$, Low $d_{avg}$). Teams that dominate territory and refuse to shoot from distance.
+*   **Cluster 0: "Passive Low Block"** (Low $P_{\text{share}}$, Low $H_{\text{def}}$, Low $I_{\text{press}}$). Teams that sit deep and absorb pressure.
+*   **Cluster 1: "Dominant Pressers"** (High $P_{\text{share}}$, High $H_{\text{press}}$, High $I_{\text{press}}$). Elite teams that control the game and win the ball back high up the pitch (e.g., Man City, Bayern).
+*   **Cluster 2: "Direct Counter-Attackers"** (Low $P_{\text{share}}$, Low $H_{\text{def}}$, High $d_{\text{avg}}$). Teams that defend deep but transition quickly, often settling for longer range shots.
+*   **Cluster 3: "Mid-Block Possession"** (Medium $P_{\text{share}}$, Medium $H_{\text{def}}$). Balanced teams that control possession but do not press aggressively.
+*   **Cluster 4: "Aggressive Underdogs"** (Low $P_{\text{share}}$, High $I_{\text{press}}$). Teams that lack quality on the ball but compensate with extreme physical effort.
+*   **Cluster 5: "Box Crashers"** (High $P_{\text{share}}$, Low $d_{\text{avg}}$). Teams that dominate territory and refuse to shoot from distance.
 
 ## 5. Conclusion
 

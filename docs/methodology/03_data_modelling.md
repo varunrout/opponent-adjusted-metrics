@@ -43,43 +43,52 @@ We train 6 distinct submodels. Each model focuses on a specific aspect of the ga
     *   **Purpose:** Isolates the effect of defensive pressure on shot conversion.
 5.  **Defensive Trigger Model:**
     *   **Input:** `time_since_turnover`, `defensive_disorganization_flag`.
-    *   **Purpose:** Identifies moments of defensive chaos (e.g., shots <5s after a high turnover).
+    *   **Purpose:** Identifies moments of defensive chaos (e.g., shots $< 5$ s after a high turnover).
 6.  **Set Piece Phase Model:**
     *   **Input:** `set_piece_type` (Corner, Free Kick), `phase_of_play`.
     *   **Purpose:** Handles the unique physics and tactical setups of set pieces.
 
 ### 3.2 The Meta-Learner
 The final model is a Logistic Regression that combines the geometric features with the submodel logits.
-$$ P(\text{Goal}) = \sigma(\beta_0 + \beta_{geom} \cdot \text{Geometry} + \sum \beta_k \cdot \text{Logit}_k) $$
+
+$$P(\text{Goal}) = \sigma(\beta_0 + \beta_{geom} \cdot \text{Geometry} + \sum \beta_k \cdot \text{Logit}_k)$$
 
 Where $\text{Logit}_k$ represents the output from submodel $k$. This architecture allows the model to weigh conflicting signals. For example, if the **Geometry** suggests a low probability (long range) but the **Defensive Trigger** suggests high probability (empty net after turnover), the Meta-Learner can adjust the final prediction accordingly.
 
 ## 4. Opponent Adjustment Mechanism
 
-Once the Neutral Base Model ($M_{neutral}$) is trained, we calculate the "Opponent Adjustment" factors.
+Once the Neutral Base Model ($M_{\text{neutral}}$) is trained, we calculate the "Opponent Adjustment" factors.
 
 ### 4.1 Residual Calculation
 For every shot $i$ in the training set, we calculate the residual:
-$$ r_i = y_i - \hat{p}_{neutral, i} $$
-Where $y_i$ is the actual outcome (1 for Goal, 0 for Miss) and $\hat{p}_{neutral}$ is the probability predicted by the base model.
+
+$$r_i = y_i - \hat{p}_{\text{neutral}, i}$$
+
+Where $y_i$ is the actual outcome (1 for Goal, 0 for Miss) and $\hat{p}_{\text{neutral}}$ is the probability predicted by the base model.
 
 ### 4.2 Defensive Strength Coefficient ($D_j$)
 For each defensive team $j$, we calculate the average residual of all shots conceded by them:
-$$ D_j = \frac{1}{N_j} \sum_{i \in \text{ShotsConceded}_j} r_i $$
+
+$$D_j = \frac{1}{N_j} \sum_{i \in \text{ShotsConceded}_j} r_i$$
+
 *   **Interpretation:**
     *   $D_j < 0$: The team concedes *fewer* goals than the model expects. They have a **Strong Defense** (or a great Goalkeeper).
     *   $D_j > 0$: The team concedes *more* goals than expected. They have a **Weak Defense**.
 
 ### 4.3 Attacking Skill Coefficient ($A_k$)
 Similarly, for each attacking team $k$:
-$$ A_k = \frac{1}{N_k} \sum_{i \in \text{ShotsTaken}_k} r_i $$
+
+$$A_k = \frac{1}{N_k} \sum_{i \in \text{ShotsTaken}_k} r_i$$
+
 *   **Interpretation:**
     *   $A_k > 0$: The team scores *more* than expected. They are **Clinical Finishers**.
     *   $A_k < 0$: The team scores *less* than expected. They are **Wasteful**.
 
 ### 4.4 The Final Prediction Equation
 For a new match between Attacking Team $A$ and Defending Team $D$, the final adjusted probability for a shot is:
-$$ \text{xG}_{adj} = \text{clip}(\text{xG}_{neutral} + A_{coeff} + D_{coeff}, 0, 1) $$
+
+$$\text{xG}_{\text{adj}} = \text{clip}(\text{xG}_{\text{neutral}} + A_{\text{coeff}} + D_{\text{coeff}}, 0, 1)$$
+
 *Note: We clip values to ensure valid probabilities $[0, 1]$.*
 
 ## 5. Training and Validation Strategy
@@ -107,10 +116,10 @@ We compared the performance of the "Neutral Priors" model against a standard bas
     *   *Reference Plot:* `outputs/modeling/cxg/modeling_charts/model_compare_brier_mean.png`
 
 ### 5.3 Calibration Analysis
-We plot Calibration Curves (Reliability Diagrams). A perfectly calibrated model lies on the $y=x$ diagonal. If our curve is S-shaped, it indicates under-confidence; if it is inverted S-shaped, it indicates over-confidence.
+We plot Calibration Curves (Reliability Diagrams). A perfectly calibrated model lies on the $y = x$ diagonal. If our curve is S-shaped, it indicates under-confidence; if it is inverted S-shaped, it indicates over-confidence.
 
 #### Empirical Results: Reliability Diagram
-The calibration plot for the Neutral Priors model shows strong alignment with the diagonal, particularly in the high-probability range (>0.3 xG), which is critical for accurately valuing "Big Chances".
+The calibration plot for the Neutral Priors model shows strong alignment with the diagonal, particularly in the high-probability range ($> 0.3$ xG), which is critical for accurately valuing "Big Chances".
 
 *Reference Plot:* `outputs/modeling/cxg/plots/contextual_model_reliability_neutral_priors_refresh.png`
 
