@@ -1,6 +1,6 @@
 # Methodology: Data Modelling and Opponent Adjustment
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Module:** Modeling & Inference  
 **Technical Stack:** Scikit-Learn, Statsmodels, Logistic Regression
 
@@ -82,8 +82,20 @@ We evaluate the model on two levels:
     *   **MAE (Mean Absolute Error):** The average difference between predicted xG totals and actual goals per match.
     *   **RMSE (Root Mean Squared Error):** Penalizes large misses more heavily.
 
+#### Empirical Results: Model Comparison
+We compared the performance of the "Neutral Priors" model against a standard baseline.
+*   **AUC-ROC:** The Neutral Priors model achieves a comparable AUC to the baseline, indicating that removing team IDs does not significantly degrade the ability to rank chances.
+    *   *Reference Plot:* `outputs/modeling/cxg/modeling_charts/model_compare_auc_mean.png`
+*   **Brier Score:** The Neutral Priors model shows excellent calibration, minimizing the mean squared error of predictions.
+    *   *Reference Plot:* `outputs/modeling/cxg/modeling_charts/model_compare_brier_mean.png`
+
 ### 5.3 Calibration Analysis
-We plot Calibration Curves (Reliability Diagrams). A perfectly calibrated model lies on the $y=x$ diagonal. If our curve is S-shaped, it indicates under-confidence; if it is inverted S-shaped, it indicates over-confidence. We use Isotonic Regression to calibrate the final probabilities if necessary.
+We plot Calibration Curves (Reliability Diagrams). A perfectly calibrated model lies on the $y=x$ diagonal. If our curve is S-shaped, it indicates under-confidence; if it is inverted S-shaped, it indicates over-confidence.
+
+#### Empirical Results: Reliability Diagram
+The calibration plot for the Neutral Priors model shows strong alignment with the diagonal, particularly in the high-probability range (>0.3 xG), which is critical for accurately valuing "Big Chances".
+
+*Reference Plot:* `outputs/modeling/cxg/plots/contextual_model_reliability_neutral_priors_refresh.png`
 
 ## 6. Conclusion
 

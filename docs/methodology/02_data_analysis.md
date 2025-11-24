@@ -1,6 +1,6 @@
 # Methodology: Data Analysis and Feature Engineering
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Module:** Analytics & Features  
 **Technical Stack:** Pandas, NumPy, Scikit-Learn
 
@@ -8,7 +8,7 @@
 
 ## 1. Abstract
 
-Following the ingestion of raw event data, the Data Analysis module is responsible for transforming atomic events into meaningful, predictive signals. This phase bridges the gap between raw telemetry (e.g., "Player X was at coordinate Y") and football intelligence (e.g., "The shooter was under high pressure in a transition phase"). This document outlines the mathematical definitions, heuristic algorithms, and feature engineering pipelines used to construct the analytical dataset.
+Following the ingestion of raw event data, the Data Analysis module is responsible for transforming atomic events into meaningful, predictive signals. This phase bridges the gap between raw telemetry (e.g., "Player X was at coordinate Y") and football intelligence (e.g., "The shooter was under high pressure in a transition phase"). This document outlines the mathematical definitions, heuristic algorithms, and feature engineering pipelines used to construct the analytical dataset, supported by empirical analysis of the PL 15/16 dataset.
 
 ## 2. Feature Engineering Framework
 
@@ -23,7 +23,22 @@ The most fundamental predictors of goal probability are spatial. We define the g
 *   **Shot Angle ($\theta$):** The visible angle of the goal mouth from the shooter's perspective. This is calculated using the law of cosines or the `arctan` difference between the two goal posts.
     $$ \theta = \arctan\left(\frac{y - 36}{120 - x}\right) - \arctan\left(\frac{y - 44}{120 - x}\right) $$
     *Note: We take the absolute value and normalize to degrees.*
-*   **Spatial Binning:** To capture non-linear effects (e.g., the sharp drop-off in conversion rate beyond 18 yards), we discretize these continuous variables into bins (e.g., `distance_bin`: "0-6y", "6-12y", "12-18y", "18+y").
+
+#### Empirical Analysis: The "Six-Yard" Cliff
+Our analysis confirms the expected non-linear decay of goal probability as distance increases. Goal probability drops precipitously outside the 6-yard box.
+
+**Table 1: Goal Rate by Distance Bin**
+
+| Distance Bin | Shots | Goals | Mean xG | Goal Rate |
+| :--- | :--- | :--- | :--- | :--- |
+| **[0, 5)** | 86 | 44 | 0.520 | **51.2%** |
+| **[5, 10)** | 868 | 167 | 0.197 | **19.2%** |
+| **[10, 15)** | 1353 | 283 | 0.230 | **20.9%** |
+| **[15, 20)** | 1086 | 88 | 0.083 | **8.1%** |
+| **[20, 25)** | 1033 | 40 | 0.044 | **3.9%** |
+| **[25, 30)** | 866 | 29 | 0.028 | **3.3%** |
+
+*Reference Plot:* `outputs/analysis/cxg/plots/geometry_distance_vs_goal.png`
 
 ### 2.2 Contextual Features: Pressure and Density
 
@@ -32,7 +47,20 @@ A key innovation of this project is the rigorous quantification of defensive pre
 *   **Defender Density:** We define a "Shot Cone" as the triangular region formed by the ball and the two goal posts. We count the number of opponents within this cone and within a 5-yard radius of the shooter.
 *   **Pressure State:** StatsBomb provides a binary `under_pressure` flag. We augment this by calculating a continuous `pressure_intensity` score based on the inverse distance to the nearest defender ($d_{nearest}$):
     $$ I_{pressure} = \frac{1}{1 + d_{nearest}} $$
-    This allows the model to distinguish between "loose marking" (2 yards away) and "tight marking" (contact).
+
+#### Empirical Analysis: The Cost of Pressure
+Shots taken under "Pressure" have a conversion rate of **10.2%**, compared to **25.2%** for shots with "No immediate defensive trigger". Furthermore, when a defender is close enough to register a "Block" event, the conversion rate plummets to **0.3%**.
+
+**Table 2: Impact of Defensive State**
+
+| Defensive Label | Shots | Goals | Mean xG | Goal Rate | Lift vs xG |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **No Trigger** | 754 | 190 | 0.280 | **25.2%** | -2.8% |
+| **Ball Recovery** | 472 | 80 | 0.147 | **16.9%** | +2.3% |
+| **Pressure** | 964 | 98 | 0.099 | **10.2%** | +0.2% |
+| **Block** | 1164 | 3 | 0.060 | **0.3%** | -5.8% |
+
+*Reference Plot:* `outputs/analysis/cxg/plots/defensive_overlay_goal_rates.png`
 
 ### 2.3 Game State Features
 
@@ -44,7 +72,11 @@ Football is path-dependent; the current score influences tactical behavior.
     -   `is_leading`: $\Delta S > 0$
     -   `is_drawing`: $\Delta S = 0$
     -   `is_trailing`: $\Delta S < 0$
-*   **Temporal Decay:** We include `minute` as a feature. Analysis shows that conversion rates for similar shots fluctuate slightly towards the end of halves due to fatigue and tactical desperation.
+
+#### Empirical Analysis: Composure vs. Desperation
+Teams "Leading by 1" convert **Carry + Ground Pass** shots at **8.3%**, whereas teams "Trailing by 1" convert the same shots at **4.7%**. This suggests a "Composure Bonus" for leading teams or a "Desperation Penalty" for trailing teams.
+
+*Reference Plot:* `outputs/analysis/cxg/plots/game_state_score_goal_rates.png`
 
 ## 3. Advanced Analysis: The Pass Value Chain
 
@@ -56,13 +88,39 @@ Not all assists are equal. A through-ball that splits the defense creates a high
     -   **Cross:** Pass from the wide channels into the box.
     -   **Cutback:** Pass from the byline backwards into the box (historically high conversion).
     -   **Through Ball:** Pass originating from central areas that penetrates the defensive line.
-*   **Pass Value:** We assign a heuristic "Threat Score" to the assist based on its origin and destination zones. This score feeds into the `assist_quality` submodel.
 
-### 3.2 Defensive Triggers
-We analyze the 10-second window preceding the shot to identify "Defensive Triggers"—moments of disorganization.
-*   **High Turnover:** A ball recovery in the attacking third.
-*   **Fast Break:** A sequence where the ball travels vertically >50 yards in <10 seconds.
-*   **Set Piece Aftermath:** Shots occurring within 5 seconds of a corner or free kick clearance (often chaotic).
+#### Empirical Analysis: The "Through Ball" Premium
+Through balls are the most dangerous assist type, generating shots with an average xG of **0.227** and a conversion rate of **29.7%**. Cutbacks also significantly outperform standard crosses (21.4% vs 14.8%).
+
+**Table 3: Goal Rate by Assist Type**
+
+| Assist Category | Shots | Goals | Mean xG | Goal Rate | Avg Distance |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Through Ball** | 64 | 19 | 0.227 | **29.7%** | 14.1y |
+| **Unassisted** | 672 | 200 | 0.324 | **29.8%** | 17.5y |
+| **Cutback** | 42 | 9 | 0.173 | **21.4%** | 12.6y |
+| **Cross** | 324 | 48 | 0.144 | **14.8%** | 11.5y |
+| **Ground Pass** | 1086 | 64 | 0.064 | **5.9%** | 22.9y |
+
+*Reference Plot:* `outputs/analysis/cxg/plots/assist_context_goal_rates.png`
+
+### 3.2 Sequence Analysis
+We analyze the two-event sequence leading to a shot (e.g., `Carry -> Through Ball -> Shot`).
+
+#### Empirical Analysis: Dynamic Playmakers
+The combination of a **Carry + Through Ball** is the most lethal sequence in the dataset, with a massive **+10.7%** lift over expected conversion. Conversely, **Carry + Switch** sequences show a negative lift (**-3.5%**), suggesting that allowing the defense to shift reduces shot quality.
+
+**Table 4: Sequence Value Lift**
+
+| Chain Label | Shots | Mean xG | Goal Rate | Lift |
+| :--- | :--- | :--- | :--- | :--- |
+| **Carry + Through Ball** | 72 | 0.213 | **31.9%** | **+10.7%** |
+| **Direct + Through Ball** | 78 | 0.214 | **28.2%** | **+6.8%** |
+| **Direct + Cross** | 333 | 0.147 | **15.3%** | +0.6% |
+| **Carry + Ground Pass** | 1203 | 0.065 | **6.2%** | -0.2% |
+| **Carry + Switch** | 155 | 0.067 | **3.2%** | **-3.5%** |
+
+*Reference Plot:* `outputs/analysis/cxg/plots/pass_value_chain_lift_scatter.png`
 
 ## 4. Team Style Profiling
 
@@ -83,21 +141,6 @@ We apply **K-Means Clustering** to these style vectors to identify archetypes.
 
 These clusters allow the model to learn interaction effects (e.g., "Counter-Attackers" scoring against "Dominant Pressers") without knowing the specific teams involved.
 
-## 5. Exploratory Data Analysis (EDA)
+## 5. Conclusion
 
-Before modeling, we validated the feature set through rigorous EDA.
-
-### 5.1 Correlation Analysis
-We examined the Pearson correlation coefficient between features to identify multicollinearity.
-*   **Finding:** `shot_distance` and `shot_angle` are correlated ($\rho \approx -0.7$), but not perfectly. A shot from the wing has a tight angle but medium distance; a shot from central deep has a wide angle but long distance. Both are retained.
-*   **Finding:** `pressure_state` is weakly correlated with `shot_distance`. This is intuitive; defenders close down shots in the box more aggressively than long-range efforts.
-
-### 5.2 Distribution Checks
-We verified that the distributions of key features matched football intuition:
-*   **Shot Distance:** Right-skewed (Gamma distribution), peaking around 12-15 yards.
-*   **Goal Rate vs. Distance:** Exponential decay.
-*   **Goal Rate vs. Angle:** Sigmoidal relationship (rapid increase as angle opens up).
-
-## 6. Conclusion
-
-The Data Analysis module transforms raw coordinates into a rich, semantic representation of the game. By engineering features that capture geometry, pressure, game state, and team style, we provide the downstream models with the necessary context to distinguish between a "statistically unlikely" goal and a "tactically created" high-quality chance.
+The Data Analysis module transforms raw coordinates into a rich, semantic representation of the game. By engineering features that capture geometry, pressure, game state, and team style, and validating them against empirical data, we provide the downstream models with the necessary context to distinguish between a "statistically unlikely" goal and a "tactically created" high-quality chance.
