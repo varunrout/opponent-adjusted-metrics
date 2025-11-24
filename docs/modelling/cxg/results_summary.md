@@ -1,12 +1,16 @@
 # CxG Modelling Results Summary
 
-_Revision: 22 Nov 2025_
+_Revision: 24 Nov 2025_
 
 ## 1. Runs Covered
 - **Baseline Geometry:** Logistic regression on distance & angle (5-fold, match-stratified).
 - **Contextual (Filtered):** Contextual pipeline trained on filtered dataset (excludes low-signal events).
 - **Contextual (Enriched Priors):** Same architecture with sub-model priors (finishing, set-piece, assist, pressure, defensive triggers).
+- **Contextual (Neutral Priors Refresh):** Retrained contextual model that consumes the new neutral finishing/concession priors (match/side keyed, no team IDs) generated on the WC/Euro corpus (`contextual_model_neutral_priors_refresh`).
+- **Contextual (Neutral Priors + PL15/16 Finishing Bias):** Same as above but with `CXG_INCLUDE_PL1516_PRIORS=1` so the finishing bias submodel can learn directly from Premier League 2015/16 match-sides; downstream contextual artifact is `contextual_model_neutral_priors_refresh_plfb`.
 - **StatsBomb Provider xG:** Raw `statsbomb_xg` probabilities evaluated on the same sample.
+
+The neutral priors refresh replaces team identifiers with rolling form, style clusters, and player-level lifts. Use it for any competitions where you want neutralized opponent context without leaking explicit club features.
 
 ## 2. Aggregate Metrics
 | Model | ROC AUC | Brier Score | Log Loss |
@@ -71,6 +75,22 @@ df.assign(cxg_pred=scores).to_parquet("/path/to/new_scores.parquet", index=False
 ```
 
 - **Data prep:** For new competitions run `build_cxg_dataset.py` → `enrich_cxg_with_submodels.py` to emit the enriched schema before inference.
+
+### 6.0 Neutral Priors Workflow Cheat Sheet
+- **Toggle PL training data:** Set `CXG_INCLUDE_PL1516_PRIORS=1` when running `train_finishing_bias_model.py` if you want those match-sides included. Omit or set to `0`/`false` to keep the WC/Euro-only baseline. Each run emits metrics in `outputs/modeling/cxg/submodels/finishing_bias_model_metrics*.json` so you can verify which mode was used (`include_pl1516_in_priors`).
+- **Regenerate priors + enriched dataset:**
+	```bash
+	poetry run python -m opponent_adjusted.modeling.cxg.submodels.train_finishing_bias_model
+	poetry run python -m opponent_adjusted.modeling.cxg.enrich_cxg_with_submodels
+	```
+	Save copies of the CSV/Parquet outputs if you need to swap between modes quickly (see `outputs/modeling/cxg/submodels/*_include_pl1516.csv`).
+- **Train contextual model with a run label:**
+	```bash
+	CXG_CONTEXTUAL_RUN_NAME=neutral_priors_refresh \
+		poetry run python -m opponent_adjusted.modeling.cxg.contextual_model
+	```
+	Repeat with `neutral_priors_refresh_plfb` (or any slug) once you rebuild priors that include PL match-sides.
+- **Score downstream competitions:** call `prediction.run_pipeline` with `--model-label contextual_model_neutral_priors_refresh` (or `_plfb`) so the inference stage uses the matching artifact+feature contract.
 
 ### 6.1 Prediction Module Workflow
 1. **Fetch & ingest** the target competition so the database mirrors StatsBomb open data:
@@ -143,6 +163,21 @@ This emits PL-only artifacts under `outputs/modeling/cxg/prediction_runs/pl_2015
 - **Match-level diagnostics:** Each row of `match_aggregates.csv` contains CxG, goals, provider xG, and the deltas (`cxg_delta`, `provider_delta`) for both teams, enabling fixture-by-fixture storytelling (e.g., Leicester opening the campaign with ~2.23 CxG but no goals vs Bournemouth).
 
 Because the contextual model was trained on neutralized WC/Euro data and simply applied to PL shots, differences highlight how Premier League chance quality compares to that international baseline without any retraining. The workflow above can be repeated for any competition by swapping the ingest filters and dataset slice.
+
+#### Neutral vs PL-inclusive finishing priors
+We ran the PL 2015/16 scoring pipeline twice — once with the WC/Euro-only finishing priors (`pl_2015_16_exclude`) and once with PL match-sides allowed into the finishing bias fit (`pl_2015_16_plfb`). Aggregate deltas are saved in `outputs/modeling/cxg/prediction_runs/pl_2015_16_bias_comparison.json` for reproducibility.
+
+| Scope | Variant | CxG MAE | CxG RMSE | Provider MAE | Provider RMSE | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| Match | Exclude PL | 0.740 | 0.939 | 0.797 | 0.996 | Baseline neutral priors trained on WC/Euro only |
+| Match | Include PL | 0.740 | 0.939 | 0.797 | 0.996 | Identical match error; priors shift per-team calibration |
+| Team season totals | Exclude PL | 3.63 | 4.44 | 3.61 | 4.32 | Goals − CxG bias: +0.53 |
+| Team season totals | Include PL | **3.60** | **4.39** | 3.61 | 4.32 | Goals − CxG bias: +0.56 |
+
+Key takeaways:
+- Including PL match-sides in the finishing bias submodel barely changes match-level accuracy but softens the priors (finishing multipliers rise from 0.974 → 0.983 on average), making the contextual model less conservative for PL teams.
+- Provider metrics stay constant between runs, so any change in MAE/RMSE is attributable to the neutral priors adjustments.
+- Keep both runs handy if you need to explain differences in club narratives; the JSON comparison plus the `team_aggregates.csv` files contain the raw numbers cited above.
 
 ### 6.4 Visualization Toolkit
 - **Script:** `poetry run python -m opponent_adjusted.prediction.plot_reports <team_csv> [--output-dir <dir>] [--top-n 12]`
