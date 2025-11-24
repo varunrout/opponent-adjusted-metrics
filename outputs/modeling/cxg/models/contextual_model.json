@@ -1,0 +1,59 @@
+{
+  "model_type": "contextual_logistic",
+  "run_label": "default",
+  "dataset_version": "enriched",
+  "trained_rows": 5606,
+  "created_at": "2025-11-21T19:04:52.036007+00:00",
+  "features": {
+    "numeric": [
+      "shot_distance",
+      "shot_angle",
+      "statsbomb_xg",
+      "score_diff_at_shot",
+      "minute",
+      "time_gap_seconds",
+      "finishing_bias_logit",
+      "finishing_bias_multiplier",
+      "concession_bias_logit",
+      "concession_bias_multiplier",
+      "set_piece_logit",
+      "set_piece_multiplier",
+      "set_piece_modeled_prob",
+      "assist_quality_logit",
+      "assist_quality_multiplier",
+      "assist_quality_modeled_prob",
+      "pressure_logit",
+      "pressure_multiplier",
+      "pressure_modeled_prob",
+      "def_trigger_logit",
+      "def_trigger_multiplier",
+      "def_trigger_modeled_prob"
+    ],
+    "binary": [
+      "is_leading",
+      "is_trailing",
+      "is_drawing",
+      "possession_match"
+    ],
+    "categorical": [
+      "chain_label",
+      "pass_style",
+      "score_state",
+      "simple_state",
+      "minute_bucket_label",
+      "assist_category",
+      "pressure_state",
+      "set_piece_category",
+      "set_piece_phase",
+      "def_label"
+    ]
+  },
+  "metrics": {
+    "brier_mean": 0.06311927512187394,
+    "brier_std": 0.008531860191886797,
+    "log_loss_mean": 0.2188411383237141,
+    "log_loss_std": 0.02708212389948563,
+    "auc_mean": 0.8646164574543509,
+    "auc_std": 0.01988169638578067
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "model_type": "contextual_logistic",
+  "run_label": "raw",
+  "dataset_version": "raw",
+  "trained_rows": 5829,
+  "created_at": "2025-11-21T19:06:33.558751+00:00",
+  "features": {
+    "numeric": [
+      "shot_distance",
+      "shot_angle",
+      "statsbomb_xg",
+      "score_diff_at_shot",
+      "minute",
+      "time_gap_seconds"
+    ],
+    "binary": [
+      "is_leading",
+      "is_trailing",
+      "is_drawing",
+      "possession_match"
+    ],
+    "categorical": [
+      "chain_label",
+      "pass_style",
+      "score_state",
+      "simple_state",
+      "minute_bucket_label",
+      "assist_category",
+      "pressure_state",
+      "set_piece_category",
+      "set_piece_phase",
+      "def_label"
+    ]
+  },
+  "metrics": {
+    "brier_mean": 0.07318913014106673,
+    "brier_std": 0.0044121088633145705,
+    "log_loss_mean": 0.2512918879189253,
+    "log_loss_std": 0.014006722761501937,
+    "auc_mean": 0.8554557232983646,
+    "auc_std": 0.012960945904275843
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "total_rows": 1219,
+  "finishing_bias_logit_mean": -0.115808923058405,
+  "concession_bias_logit_mean": -0.20650006478932395,
+  "rolling_windows": [
+    3,
+    5,
+    8
+  ],
+  "player_window": 35,
+  "player_coverage": 0.0,
+  "excluded_pl1516_rows": 760,
+  "include_pl1516_in_priors": true,
+  "cluster_count": 6,
+  "inertia": 1866.957367292167
+}

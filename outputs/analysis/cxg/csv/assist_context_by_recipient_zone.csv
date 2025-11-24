@@ -1,0 +1,61 @@
+assist_category,recipient_zone,shots,goals,mean_xg,goal_rate
+Counter (solo),Final third - Central,17,1,0.0771088338235294,0.058823529411764705
+Counter (solo),Final third - Left,1,0,0.023947677,0.0
+Counter (solo),Final third - Right,5,0,0.0218849824,0.0
+Counter (solo),Penalty area,25,8,0.3230151338,0.32
+Counter Attack,Build-up third - Central,2,0,0.01606186935,0.0
+Counter Attack,Final third - Central,43,4,0.10522489065116279,0.09302325581395349
+Counter Attack,Final third - Left,33,3,0.07674475503030304,0.09090909090909091
+Counter Attack,Final third - Right,20,0,0.042127810665,0.0
+Counter Attack,Middle third - Central,15,3,0.08881148006666666,0.2
+Counter Attack,Middle third - Left,10,2,0.1221866269,0.2
+Counter Attack,Middle third - Right,7,0,0.11165741242857143,0.0
+Counter Attack,Penalty area,33,8,0.2552744947878788,0.24242424242424243
+Counter Through Ball,Final third - Central,7,1,0.20340344,0.14285714285714285
+Counter Through Ball,Final third - Left,2,1,0.21217336,0.5
+Counter Through Ball,Final third - Right,3,1,0.08410740766666668,0.3333333333333333
+Counter Through Ball,Middle third - Left,1,1,0.21495746,1.0
+Counter Through Ball,Middle third - Right,1,0,0.28799564,0.0
+Counter Through Ball,Penalty area,4,2,0.25091860499999996,0.5
+Cross,Final third - Central,16,1,0.069308296375,0.0625
+Cross,Final third - Left,7,0,0.08737854942857141,0.0
+Cross,Final third - Right,5,1,0.028756703,0.2
+Cross,Penalty area,296,46,0.15087459630743244,0.1554054054054054
+Cutback,Final third - Central,2,0,0.0484110655,0.0
+Cutback,Final third - Left,2,0,0.042262677,0.0
+Cutback,Final third - Right,1,0,0.10190532,0.0
+Cutback,Penalty area,37,9,0.18838943875675676,0.24324324324324326
+Ground Pass,Build-up third - Central,1,0,0.0070581385,0.0
+Ground Pass,Final third - Central,412,27,0.054373805719417474,0.06553398058252427
+Ground Pass,Final third - Left,239,11,0.03928700290167364,0.04602510460251046
+Ground Pass,Final third - Right,194,7,0.0370165333257732,0.03608247422680412
+Ground Pass,Middle third - Central,44,1,0.03322409122045455,0.022727272727272728
+Ground Pass,Middle third - Left,26,1,0.042818829392307696,0.038461538461538464
+Ground Pass,Middle third - Right,15,0,0.024967317746666665,0.0
+Ground Pass,Penalty area,155,17,0.1806874542064516,0.10967741935483871
+High Pass,Build-up third - Central,1,0,0.042004354,0.0
+High Pass,Final third - Central,29,3,0.09249600337931034,0.10344827586206896
+High Pass,Final third - Left,28,0,0.04174841728571428,0.0
+High Pass,Final third - Right,31,2,0.04182710651612903,0.06451612903225806
+High Pass,Middle third - Central,1,0,0.025520865,0.0
+High Pass,Middle third - Left,5,0,0.0451975184,0.0
+High Pass,Middle third - Right,3,0,0.055624523333333335,0.0
+High Pass,Penalty area,63,6,0.14558507798412698,0.09523809523809523
+Set Piece,Build-up third - Left,1,0,0.030134441,0.0
+Set Piece,Final third - Central,990,44,0.05118465764585858,0.044444444444444446
+Set Piece,Final third - Left,412,13,0.032059485575485436,0.03155339805825243
+Set Piece,Final third - Right,339,14,0.035599991544837756,0.04129793510324484
+Set Piece,Middle third - Central,39,0,0.02991378523589744,0.0
+Set Piece,Middle third - Left,22,1,0.03030924404090909,0.045454545454545456
+Set Piece,Middle third - Right,14,0,0.03059286807142857,0.0
+Set Piece,Penalty area,1434,201,0.14813361316875873,0.1401673640167364
+Through Ball,Final third - Central,20,4,0.2364809945,0.2
+Through Ball,Final third - Left,10,1,0.10730167719999999,0.1
+Through Ball,Final third - Right,8,2,0.140608731625,0.25
+Through Ball,Penalty area,26,12,0.2912781020769231,0.46153846153846156
+Unassisted,Final third - Central,203,11,0.04490172189408867,0.054187192118226604
+Unassisted,Final third - Left,44,3,0.020067897975000002,0.06818181818181818
+Unassisted,Final third - Right,39,1,0.02820958759230769,0.02564102564102564
+Unassisted,Middle third - Central,3,0,0.013052912333333333,0.0
+Unassisted,Middle third - Left,1,0,0.006804785,0.0
+Unassisted,Penalty area,382,185,0.5406833049568063,0.48429319371727747
