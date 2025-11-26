@@ -8,7 +8,7 @@
 
 ## 1. Abstract
 
-Following the ingestion of raw event data, the Data Analysis module is responsible for transforming atomic events into meaningful, predictive signals. This phase bridges the gap between raw telemetry (e.g., "Player X was at coordinate Y") and football intelligence (e.g., "The shooter was under high pressure in a transition phase"). This document outlines the mathematical definitions, heuristic algorithms, and feature engineering pipelines used to construct the analytical dataset, supported by empirical analysis of the PL 15/16 dataset.
+Following the ingestion of raw event data, the Data Analysis module transforms atomic events into meaningful, predictive signals. This phase bridges the gap between raw telemetry (e.g., "Player X was at coordinate Y") and football intelligence (e.g., "The shooter was under high pressure in a transition phase"). This document outlines the mathematical definitions, heuristic algorithms, and feature engineering pipelines used to construct the analytical dataset, supported by empirical analysis of the Premier League 2015/16 dataset.
 
 ## 2. Feature Engineering Framework
 
@@ -43,9 +43,9 @@ Our analysis confirms the expected non-linear decay of goal probability as dista
 | **[25, 30)** | 866 | 29 | 0.028 | **3.3%** |
 
 **Key Insights:**
-*   **Non-linear decay:** The relationship between distance and goal probability is not linear. The drop from 0-5 yards (51.2%) to 5-10 yards (19.2%) is dramatic, representing a **62% reduction** in conversion rate
-*   **Penalty spot premium:** The slight uptick at 10-15 yards (20.9%) is driven by penalty kicks and high-quality cutbacks to the penalty spot
-*   **Volume vs quality trade-off:** Long-range shots (20-30 yards) represent **19.8%** of all attempts but only **3.1%** conversion rate, suggesting teams take low-quality shots when unable to penetrate the defense
+*   **Non-linear decay:** The relationship between distance and goal probability is not linear. The drop from 0-5 yards (51.2%) to 5-10 yards (19.2%) is dramatic, representing a **62% reduction** in conversion rate.
+*   **Penalty spot premium:** The slight uptick at 10-15 yards (20.9%) is driven by penalty kicks and high-quality cutbacks to the penalty spot.
+*   **Volume vs. quality trade-off:** Long-range shots (20-30 yards) represent **19.8%** of all attempts but only **3.1%** conversion rate, suggesting teams take low-quality shots when unable to penetrate the defense.
 
 <div align="center">
   <img src="../../outputs/analysis/cxg/plots/geometry_distance_vs_goal.png" alt="Distance vs Goal Probability" width="800"/>
@@ -149,9 +149,9 @@ Football is path-dependent; the current score influences tactical behavior.
 Teams "Leading by 1" convert **Carry + Ground Pass** shots at **8.3%**, whereas teams "Trailing by 1" convert the same shots at **4.7%**. This suggests a "Composure Bonus" for leading teams or a "Desperation Penalty" for trailing teams.
 
 **Key Insights:**
-*   **Score differential matters:** Leading teams demonstrate better shot selection and composure, converting at higher rates even from similar positions
-*   **Trailing team pressure:** Teams behind in score take more shots but often from worse positions or under greater defensive pressure
-*   **Drawing state baseline:** Level scores serve as the neutral baseline, with leading/trailing states showing systematic deviations
+*   **Score differential matters:** Leading teams demonstrate better shot selection and composure, converting at higher rates even from similar positions.
+*   **Trailing team pressure:** Teams behind in score take more shots but often from worse positions or under greater defensive pressure.
+*   **Drawing state baseline:** Level scores serve as the neutral baseline, with leading/trailing states showing systematic deviations.
 
 <div align="center">
   <img src="../../outputs/analysis/cxg/plots/game_state_score_goal_rates.png" alt="Game State Goal Rates" width="800"/>
@@ -202,11 +202,11 @@ Through balls are the most dangerous assist type, generating shots with an avera
 | **Ground Pass** | 1086 | 64 | 0.064 | **5.9%** | 22.9y |
 
 **Key Insights:**
-*   **Through balls are elite:** Despite similar distances to other assisted shots, through balls convert at **5x the rate** of ground passes, indicating they split defensive lines
-*   **Cutback efficiency:** Low volume (42 shots) but high conversion (21.4%), making them the highest-value cross type
-*   **Standard crosses struggle:** Traditional crosses into the box have a poor **14.8%** conversion rate, often contested aerially
-*   **Unassisted paradox:** High conversion rate (29.8%) includes penalties, rebounds, and individual skill plays
-*   **Ground passes from deep:** Most common assist type (1,086 shots) but lowest conversion (5.9%), suggesting predictable build-up play
+*   **Through balls are elite:** Despite similar distances to other assisted shots, through balls convert at **5x the rate** of ground passes, indicating they split defensive lines.
+*   **Cutback efficiency:** Low volume (42 shots) but high conversion (21.4%), making them the highest-value cross type.
+*   **Standard crosses struggle:** Traditional crosses into the box have a poor **14.8%** conversion rate, often contested aerially.
+*   **Unassisted paradox:** High conversion rate (29.8%) includes penalties, rebounds, and individual skill plays.
+*   **Ground passes from deep:** Most common assist type (1,086 shots) but lowest conversion (5.9%), suggesting predictable build-up play.
 
 <div align="center">
   <img src="../../outputs/analysis/cxg/plots/assist_context_goal_rates.png" alt="Assist Context Goal Rates" width="800"/>
@@ -427,9 +427,9 @@ Based on the feature centroids, we identify the following archetypes:
 *   **Cluster 5: "Box Crashers"** (High $P_{\text{share}}$, Low $d_{\text{avg}}$). Teams that dominate territory and refuse to shoot from distance.
 
 **Interpretation Notes:**
-*   These clusters are **match-specific**, not team-specific. The same team can adopt different styles based on opponent, venue, and score state
-*   Clustering enables the model to learn **tactical matchups** without overfitting to specific teams
-*   The "Neutral Priors" approach uses these clusters instead of team IDs during training, improving generalization
+*   These clusters are **match-specific**, not team-specific. The same team can adopt different styles based on opponent, venue, and score state.
+*   Clustering enables the model to learn **tactical matchups** without overfitting to specific teams.
+*   The "Neutral Priors" approach uses these clusters instead of team IDs during training, improving generalization.
 
 ## 5. Implementation Pipeline
 

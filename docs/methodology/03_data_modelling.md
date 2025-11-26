@@ -63,7 +63,7 @@ Each submodel is independently validated to ensure it contributes meaningful sig
 
 **Feature Importance from Meta-Learner:**
 
-When all submodels feed into the final Meta-Learner, we can analyze which contextual factors have the strongest impact:
+When all submodels feed into the final Meta-Learner, we analyze which contextual factors have the strongest impact:
 
 **Top 20 Most Important Features (by absolute coefficient):**
 
@@ -202,10 +202,10 @@ We compared the performance of the "Neutral Priors" model against a standard bas
 | **Baseline Geometry** | 0.0757 | 0.2717 | 0.7368 | ~30 sec | Minimum viable model |
 
 **Key Insights:**
-*   The **Neutral Priors** model achieves strong performance while maintaining generalization to unseen teams
-*   Adding submodel features (Enriched) provides **10% relative improvement** in Brier Score
-*   All contextual models **significantly outperform** StatsBomb's provider xG
-*   Training time is acceptable for daily retraining workflows
+*   The **Neutral Priors** model achieves strong performance while maintaining generalization to unseen teams.
+*   Adding submodel features (Enriched) provides **10% relative improvement** in Brier Score.
+*   All contextual models **significantly outperform** StatsBomb's provider xG.
+*   Training time is acceptable for daily retraining workflows.
 
 ### 5.3 Calibration Analysis
 We plot Calibration Curves (Reliability Diagrams). A perfectly calibrated model lies on the $y = x$ diagonal. If our curve is S-shaped, it indicates under-confidence; if it is inverted S-shaped, it indicates over-confidence.
@@ -270,10 +270,10 @@ The final production model employs a three-tier architecture:
 3.  **Tier 3: Meta-Learner** - Logistic regression combines all signals into final probability
 
 This architecture achieves:
-*   **21% improvement** in Brier Score over geometric baseline
-*   **19% improvement** in AUC-ROC over geometric baseline  
-*   **Excellent calibration** across all probability ranges (ECE = 0.0056)
-*   **Generalization** to unseen teams via neutral priors strategy
+*   **21% improvement** in Brier Score over geometric baseline.
+*   **19% improvement** in AUC-ROC over geometric baseline.
+*   **Excellent calibration** across all probability ranges (ECE = 0.0056).
+*   **Generalization** to unseen teams via neutral priors strategy.
 
 ### 6.2 Training and Inference Workflow
 

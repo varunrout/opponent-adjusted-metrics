@@ -85,27 +85,27 @@ Six specialized submodels provide domain-specific probability adjustments:
 The inference workflow consists of five sequential stages:
 
 1.  **Context Loading:** 
-    *   Load serialized model from `models/` using `joblib.load()`
-    *   Load coefficient maps containing $A_k$ (Attack) and $D_j$ (Defense) values for all teams
-    *   Load submodel artifacts (6 models) if using enriched predictions
+    *   Load serialized model from `models/` using `joblib.load()`.
+    *   Load coefficient maps containing $A_k$ (Attack) and $D_j$ (Defense) values for all teams.
+    *   Load submodel artifacts (6 models) if using enriched predictions.
     
 2.  **Data Ingestion (Micro-Batch):** 
-    *   Accept `match_id` or fetch shots from database
-    *   Query raw events via SQLAlchemy ORM (`Event`, `Shot` tables)
-    *   Join match context (`teams`, `players`, `competitions`)
+    *   Accept `match_id` or fetch shots from database.
+    *   Query raw events via SQLAlchemy ORM (`Event`, `Shot` tables).
+    *   Join match context (`teams`, `players`, `competitions`).
     
 3.  **Feature Transformation:** 
-    *   Apply `build_shot_features` pipeline (identical to training)
-    *   Compute geometric features (distance, angle)
-    *   Extract contextual features (pressure, assist type, game state)
-    *   Join submodel predictions (logits/multipliers from 6 specialized models)
+    *   Apply `build_shot_features` pipeline (identical to training).
+    *   Compute geometric features (distance, angle).
+    *   Extract contextual features (pressure, assist type, game state).
+    *   Join submodel predictions (logits/multipliers from 6 specialized models).
     
 4.  **Neutral Prediction:** 
-    *   Feed features into Stacked Ensemble to generate $\text{xG}_{\text{neutral}}$
-    *   Ensemble combines geometric baseline + 6 submodel logits
+    *   Feed features into Stacked Ensemble to generate $\text{xG}_{\text{neutral}}$.
+    *   Ensemble combines geometric baseline + 6 submodel logits.
     
 5.  **Adjustment Application:** 
-    *   Lookup team IDs in coefficient map
+    *   Lookup team IDs in coefficient map.
     *   Apply adjustment formula:
     
     $$\text{xG}_{\text{final}} = \text{xG}_{\text{neutral}} + A_{\text{team}} + D_{\text{opponent}}$$
@@ -138,9 +138,9 @@ Training metrics from GroupKFold cross-validation (grouped by `match_id`):
 *Source: `evaluation/summary.json`, `contextual_metrics_*.json`*
 
 **Key Insights:**
-*   The **Enriched Priors** model achieves the best calibration (lowest Brier Score) and discrimination (highest AUC)
-*   Our models **significantly outperform** the StatsBomb provider xG by $-11.7\%$ Brier Score and $+9.9\%$ AUC
-*   The Neutral Priors variant (used in production) trades $1.5\%$ AUC for better generalization to new teams
+*   The **Enriched Priors** model achieves the best calibration (lowest Brier Score) and discrimination (highest AUC).
+*   Our models **significantly outperform** the StatsBomb provider xG by $-11.7\%$ Brier Score and $+9.9\%$ AUC.
+*   The Neutral Priors variant (used in production) trades $1.5\%$ AUC for better generalization to new teams.
 
 ### 3.2 Slice-Level Performance
 
@@ -166,9 +166,9 @@ The system evaluates models across 12 tactical slices to ensure robust performan
 *Source: `evaluation/slice_metrics.csv`*
 
 **Interpretation:**
-*   **Close Range** shots have higher absolute error (Brier = 0.106) due to inherent variance in high-probability events
-*   Model maintains strong discrimination (AUC $> 0.82$) across all slices
-*   **Expected Calibration Error (ECE)** stays below $0.015$ for all slices, indicating reliable probability estimates
+*   **Close Range** shots have higher absolute error (Brier = 0.106) due to inherent variance in high-probability events.
+*   Model maintains strong discrimination (AUC $> 0.82$) across all slices.
+*   **Expected Calibration Error (ECE)** stays below $0.015$ for all slices, indicating reliable probability estimates.
 
 ### 3.3 Calibration Analysis
 
@@ -332,9 +332,9 @@ For every shot, the system can export:
 ```
 
 This granular output enables:
-*   **Auditing:** Trace why a prediction was made
-*   **Feature ablation:** Quantify contribution of each submodel
-*   **Scouting:** Identify undervalued shot creation patterns
+*   **Auditing:** Trace why a prediction was made.
+*   **Feature ablation:** Quantify contribution of each submodel.
+*   **Scouting:** Identify undervalued shot creation patterns.
 
 ### 5.2 Visualizations
 
@@ -347,10 +347,10 @@ This granular output enables:
 *   `contextual_model_reliability_filtered.png` - Pre-enrichment baseline
 
 **Interpretation Guide:**
-*   Perfect calibration: Points lie on $y = x$ diagonal
-*   Above diagonal: Model is underconfident (predicts lower than observed)
-*   Below diagonal: Model is overconfident (predicts higher than observed)
-*   Production model achieves near-perfect calibration in $0.1 - 0.4$ xG range (most shots)
+*   Perfect calibration: Points lie on $y = x$ diagonal.
+*   Above diagonal: Model is underconfident (predicts lower than observed).
+*   Below diagonal: Model is overconfident (predicts higher than observed).
+*   Production model achieves near-perfect calibration in $0.1 - 0.4$ xG range (most shots).
 
 #### 5.2.2 Model Comparison Charts (`modeling_charts/`)
 
@@ -514,19 +514,19 @@ The system implements a model versioning strategy for reproducibility:
 Currently, the system operates in batch mode (post-match). To move to real-time (live betting, broadcast graphics):
 
 1.  **Stream Processing:** 
-    *   Replace file-based ingestion with Kafka consumer reading live event feeds
-    *   Implement change-data-capture (CDC) from StatsBomb API
-    *   Buffer events with < 5s latency tolerance
+    *   Replace file-based ingestion with Kafka consumer reading live event feeds.
+    *   Implement change-data-capture (CDC) from StatsBomb API.
+    *   Buffer events with < 5s latency tolerance.
     
 2.  **State Management:** 
-    *   Maintain "Game State" features (Score Differential, minute, possession) in Redis
-    *   Cache team coefficients for sub-millisecond lookup
-    *   Implement efficient feature vector assembly (no Pandas overhead)
+    *   Maintain "Game State" features (Score Differential, minute, possession) in Redis.
+    *   Cache team coefficients for sub-millisecond lookup.
+    *   Implement efficient feature vector assembly (no Pandas overhead).
     
 3.  **Latency Optimization:** 
-    *   Current pipeline: ~200ms per shot (dominated by Pandas operations)
-    *   Target: $< 50$ ms per event for broadcast-grade latency
-    *   Strategies: NumPy vectorization, feature pre-computation, model quantization
+    *   Current pipeline: ~200ms per shot (dominated by Pandas operations).
+    *   Target: $< 50$ ms per event for broadcast-grade latency.
+    *   Strategies: NumPy vectorization, feature pre-computation, model quantization.
 
 ### 8.2 Enhanced Visualizations
 
@@ -537,16 +537,16 @@ Currently, the system operates in batch mode (post-match). To move to real-time 
 
 ### 8.3 Model Improvements
 
-*   **Tracking Data Integration:** Incorporate player velocities, distances to goal, defensive line height from tracking data
-*   **Goalkeeper Model:** Dedicated submodel for GK positioning, reach, shot-stopping skill
-*   **Neural Network Baseline:** Replace geometric logistic with deep learning spatial model (CNN over pitch grid)
-*   **Uncertainty Quantification:** Bayesian inference to provide confidence intervals on xG predictions
+*   **Tracking Data Integration:** Incorporate player velocities, distances to goal, defensive line height from tracking data.
+*   **Goalkeeper Model:** Dedicated submodel for GK positioning, reach, shot-stopping skill.
+*   **Neural Network Baseline:** Replace geometric logistic with deep learning spatial model (CNN over pitch grid).
+*   **Uncertainty Quantification:** Bayesian inference to provide confidence intervals on xG predictions.
 
 ### 8.4 Operational Monitoring
 
-*   **Drift Detection:** Monitor feature distributions in production vs training (KL divergence tests)
-*   **Concept Drift:** Track model performance metrics over time; trigger retraining when Brier Score degrades $> 5\%$
-*   **A/B Testing Framework:** Shadow mode deployment for new models before promoting to production
+*   **Drift Detection:** Monitor feature distributions in production vs training (KL divergence tests).
+*   **Concept Drift:** Track model performance metrics over time; trigger retraining when Brier Score degrades $> 5\%$.
+*   **A/B Testing Framework:** Shadow mode deployment for new models before promoting to production.
 
 ## 9. Performance Benchmarks
 
@@ -583,18 +583,18 @@ Currently, the system operates in batch mode (post-match). To move to real-time 
 
 ### 10.1 Temporal Holdout
 
-The most rigorous test: Train on competitions *except* PL 15/16, test on PL 15/16:
+The most rigorous test: Train on competitions *except* Premier League 2015/16, test on Premier League 2015/16:
 
-*   **Baseline Geometry:** Brier = 0.0757, AUC = 0.7368 (slightly worse than CV)
-*   **Contextual Enriched:** Brier = 0.0599, AUC = 0.8787 (no degradation!)
-*   **Interpretation:** Model generalizes well to unseen temporal period, validating that features are robust
+*   **Baseline Geometry:** Brier = 0.0757, AUC = 0.7368 (slightly worse than CV).
+*   **Contextual Enriched:** Brier = 0.0599, AUC = 0.8787 (no degradation!).
+*   **Interpretation:** Model generalizes well to unseen temporal period, validating that features are robust.
 
 ### 10.2 Cross-Competition Validation
 
 Testing on different competitions (La Liga, Bundesliga, Serie A):
-*   Ongoing work documented in `prediction_runs/pl_2015_16_plfb/`
-*   Preliminary results suggest Brier Score increases by ~0.008 (acceptable)
-*   Team bias coefficients need league-specific shrinkage (European clubs have limited shot samples)
+*   Ongoing work documented in `prediction_runs/pl_2015_16_plfb/`.
+*   Preliminary results suggest Brier Score increases by ~0.008 (acceptable).
+*   Team bias coefficients need league-specific shrinkage (European clubs have limited shot samples).
 
 ### 10.3 Player-Level Validation
 
