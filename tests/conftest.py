@@ -1,11 +1,44 @@
 """Pytest configuration and fixtures."""
 
-import pytest
-from pathlib import Path
+import os
 import sys
+from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+import pytest
+
+
+# Ensure the src directory is on the path so that the
+# `opponent_adjusted` package can be imported in tests.
+SRC_ROOT = Path(__file__).parent.parent / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from opponent_adjusted.config import settings, ensure_directories
+
+
+@pytest.fixture(scope="session")
+def e2e_test_env(tmp_path_factory):
+    """Configure a lightweight SQLite-backed environment for end-to-end tests.
+
+    This fixture:
+    - Points DATA_ROOT to a temporary directory under pytest's control
+    - Forces DATABASE_BACKEND=sqlite so the project uses the local dev DB file
+    - Ensures all required data / reports directories exist
+
+    Returns the resolved data root path for further use in tests.
+    """
+
+    data_root = tmp_path_factory.mktemp("e2e_data")
+
+    # Point config to the temporary data root and SQLite backend
+    os.environ["DATA_ROOT"] = str(data_root)
+    os.environ["DATABASE_BACKEND"] = "sqlite"
+
+    # Re-run directory setup for the new data root
+    settings.data_root = data_root
+    ensure_directories()
+
+    return data_root
 
 
 @pytest.fixture

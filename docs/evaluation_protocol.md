@@ -284,8 +284,10 @@ All evaluation must be:
 
 ## Example Evaluation Command
 
+The project will ultimately expose a dedicated evaluation entry point (e.g., a module under `opponent_adjusted.evaluation`). Until that module is implemented, the command below should be treated as illustrative rather than copy‑paste runnable:
+
 ```bash
-poetry run python scripts/evaluate_cxg.py \
+poetry run python -m opponent_adjusted.evaluation.cxg_evaluate \
   --model cxg_v1 \
   --features v1 \
   --output-dir reports/evaluation/cxg_v1 \
@@ -293,7 +295,7 @@ poetry run python scripts/evaluate_cxg.py \
   --bootstrap-ci
 ```
 
-Output:
+Expected outputs for a conforming evaluator:
 - `reports/evaluation/cxg_v1/summary.json`
 - `reports/evaluation/cxg_v1/calibration_plots/`
 - `reports/evaluation/cxg_v1/slice_metrics.csv`

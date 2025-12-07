@@ -1,47 +1,47 @@
 [
   {
-    "model": "contextual_enriched",
-    "model_display": "Contextual (Enriched Priors)",
-    "brier": 0.05994287776138831,
-    "log_loss": 0.20722402751769775,
-    "auc": 0.878686426893466,
-    "ece": 0.005554179686952705,
-    "count": 5606
-  },
-  {
     "model": "contextual_filtered",
     "model_display": "Contextual (Filtered)",
-    "brier": 0.06502025674864124,
-    "log_loss": 0.2273501874260411,
-    "auc": 0.8431683823993024,
-    "ece": 0.010433062680065934,
-    "count": 5606
+    "brier": 0.06763226410235287,
+    "log_loss": 0.23497082302707964,
+    "auc": 0.8359346171618592,
+    "ece": 0.008138510504116861,
+    "count": 15423
   },
   {
     "model": "provider_xg",
     "model_display": "StatsBomb Provider xG",
-    "brier": 0.06790051712796516,
-    "log_loss": 0.24479563077025077,
-    "auc": 0.79907747700075,
-    "ece": 0.006649472527470569,
-    "count": 5606
+    "brier": 0.06954906166258504,
+    "log_loss": 0.2499380081608729,
+    "auc": 0.7965410289733416,
+    "ece": 0.0024202702825390616,
+    "count": 15423
   },
   {
     "model": "contextual_raw",
     "model_display": "Contextual (Raw)",
-    "brier": 0.07104727179710464,
-    "log_loss": 0.24319555432516693,
-    "auc": 0.8689298303801257,
-    "ece": 0.01034574563327698,
-    "count": 5829
+    "brier": 0.0705247534464118,
+    "log_loss": 0.24271868279038017,
+    "auc": 0.8531728764215473,
+    "ece": 0.008270283792755373,
+    "count": 15737
+  },
+  {
+    "model": "contextual_enriched",
+    "model_display": "Contextual (Enriched Priors)",
+    "brier": 0.07113423073619143,
+    "log_loss": 0.2587016206329611,
+    "auc": 0.8045639604516136,
+    "ece": 0.02748573242666637,
+    "count": 15423
   },
   {
     "model": "baseline_geometry",
     "model_display": "Baseline Geometry",
-    "brier": 0.07573648282150659,
-    "log_loss": 0.27166844681020663,
-    "auc": 0.7367917985233599,
-    "ece": 0.0029829052173130683,
-    "count": 5606
+    "brier": 0.07736480401610009,
+    "log_loss": 0.2763626256908813,
+    "auc": 0.7347741918039054,
+    "ece": 0.005201791119152873,
+    "count": 15423
   }
 ]

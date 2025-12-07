@@ -378,14 +378,21 @@ def _fill_missing_details(session, batch_size: int, limit: Optional[int]) -> int
     return filled
 
 
-def main():
+def main(argv: list[str] | None = None) -> None:
+    """CLI entrypoint for normalizing events.
+
+    Accepts an optional ``argv`` list so that callers (like tests) can
+    invoke this function without `argparse` trying to parse pytest's
+    command line arguments.
+    """
+
     parser = argparse.ArgumentParser(description="Normalize raw events to normalized tables")
     parser.add_argument("--only-missing", dest="only_missing", action="store_true", default=True, help="Process only raw events missing in events table")
     parser.add_argument("--from-id", type=int, default=None, help="Start from raw_event id >= N")
     parser.add_argument("--limit", type=int, default=None, help="Process at most N raw events")
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Batch size for processing")
     parser.add_argument("--fill-missing-detail", action="store_true", help="Also fill missing specialized detail rows for already-normalized events")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     with session_scope() as session:
         total_raw = session.query(RawEvent).count()
