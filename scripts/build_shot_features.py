@@ -219,10 +219,17 @@ def upsert_shot_and_features(session, raw_ev: RawEvent, version: str) -> bool:
     return False
 
 
-def main():
+def main(argv: list[str] | None = None) -> None:
+    """CLI entrypoint for building shot features.
+
+    Accepts an optional ``argv`` list so that tests or other callers
+    can invoke it without `argparse` attempting to parse their
+    command-line arguments.
+    """
+
     parser = argparse.ArgumentParser(description="Build shot features")
     parser.add_argument("--version", default="v1", help="Feature version tag (default: v1)")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     inserted = 0
     processed = 0
