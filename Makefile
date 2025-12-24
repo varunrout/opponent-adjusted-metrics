@@ -2,7 +2,7 @@
 	db-up db-down db-logs db-psql \
 	ingest-competitions ingest-matches ingest-events \
 	normalize-events \
-	build-features build-profiles train-cxg neutralize evaluate reports \
+	build-features build-profiles build-cxa-baselines train-cxg neutralize evaluate reports \
 	fetch-data api test lint format clean
 
 help:  ## Show this help message
@@ -63,6 +63,16 @@ build-features:  ## Build shot features (VERSION=v1)
 
 build-profiles:  ## Build opponent profiles (VERSION=v1)
 	poetry run python scripts/build_opponent_profiles.py --version $(or $(VERSION),v1)
+
+# CxA
+build-cxa-baselines:  ## Build cxA baselines (DATABASE_URL=..., MODEL_NAME=cxg, VERSION=, K_ACTIONS=3, DECAY=0.6, LIMIT_SHOTS=)
+	poetry run python scripts/build_cxa_baselines.py \
+		--database-url $(or $(DATABASE_URL),$(DATABASE_URL)) \
+		--model-name $(or $(MODEL_NAME),cxg) \
+		$(if $(VERSION),--version $(VERSION),) \
+		--k-actions $(or $(K_ACTIONS),3) \
+		--decay $(or $(DECAY),0.6) \
+		$(if $(LIMIT_SHOTS),--limit-shots $(LIMIT_SHOTS),)
 
 # Training
 train-cxg:  ## Train CxG model (FEATURES=v1, VERSION=cxg_v1)

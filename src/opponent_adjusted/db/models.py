@@ -184,6 +184,8 @@ class PassEvent(Base):
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
     length: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     angle: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    end_x: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    end_y: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     pass_height: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     pass_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     body_part: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)

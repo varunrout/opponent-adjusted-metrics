@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+import sqlalchemy as sa
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -133,6 +135,9 @@ def _populate_pass(session, ev: Event, raw_json: dict):
     if session.query(PassEvent).filter_by(event_id=ev.id).first():
         return
     p = raw_json.get("pass", {})
+    end_loc = p.get("end_location") or [None, None]
+    end_x = end_loc[0] if isinstance(end_loc, list) and len(end_loc) >= 2 else None
+    end_y = end_loc[1] if isinstance(end_loc, list) and len(end_loc) >= 2 else None
     recipient_id = None
     rec = p.get("recipient") or {}
     if rec.get("id") is not None:
@@ -142,6 +147,8 @@ def _populate_pass(session, ev: Event, raw_json: dict):
         event_id=ev.id,
         length=p.get("length"),
         angle=p.get("angle"),
+        end_x=end_x,
+        end_y=end_y,
         pass_height=(p.get("height") or {}).get("name"),
         pass_type=(p.get("type") or {}).get("name"),
         body_part=(p.get("body_part") or {}).get("name"),
@@ -151,6 +158,60 @@ def _populate_pass(session, ev: Event, raw_json: dict):
         is_through_ball=bool(p.get("through_ball", False)),
     )
     session.add(obj)
+
+
+def _fill_missing_pass_end_locations(session, batch_size: int, limit: Optional[int]) -> int:
+    """Backfill PassEvent end_x/end_y for existing rows.
+
+    This is needed when end_x/end_y were added after passes were already normalized.
+    """
+
+    filled = 0
+
+    q = (
+        session.query(Event.id, RawEvent.raw_json)
+        .join(RawEvent, Event.raw_event_id == RawEvent.id)
+        .join(PassEvent, PassEvent.event_id == Event.id)
+        .filter(RawEvent.type == "Pass")
+        .filter(sa.or_(PassEvent.end_x.is_(None), PassEvent.end_y.is_(None)))
+        .order_by(Event.id)
+    )
+
+    while True:
+        take = batch_size if limit is None else max(0, min(batch_size, limit - filled))
+        if take == 0:
+            break
+        batch = q.limit(take).all()
+        if not batch:
+            break
+
+        for ev_id, raw_json in batch:
+            p = (raw_json or {}).get("pass", {})
+            end_loc = p.get("end_location") or [None, None]
+            end_x = end_loc[0] if isinstance(end_loc, list) and len(end_loc) >= 2 else None
+            end_y = end_loc[1] if isinstance(end_loc, list) and len(end_loc) >= 2 else None
+
+            row = session.query(PassEvent).filter_by(event_id=ev_id).first()
+            if row is None:
+                continue
+            if row.end_x is None:
+                row.end_x = end_x
+            if row.end_y is None:
+                row.end_y = end_y
+            filled += 1
+            if limit is not None and filled >= limit:
+                break
+
+        session.commit()
+
+        last_id = batch[-1][0]
+        q = q.filter(Event.id > last_id)
+        if limit is not None and filled >= limit:
+            break
+
+    if filled:
+        logger.info("Backfilled end_x/end_y for %d pass rows", filled)
+    return filled
 
 
 def _populate_dribble(session, ev: Event, raw_json: dict):
@@ -392,6 +453,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--limit", type=int, default=None, help="Process at most N raw events")
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Batch size for processing")
     parser.add_argument("--fill-missing-detail", action="store_true", help="Also fill missing specialized detail rows for already-normalized events")
+    parser.add_argument(
+        "--fill-missing-pass-end-location",
+        action="store_true",
+        help="Backfill end_x/end_y for existing pass detail rows",
+    )
     args = parser.parse_args(argv)
 
     with session_scope() as session:
@@ -432,8 +498,11 @@ def main(argv: list[str] | None = None) -> None:
         logger.info("Normalized %d new base events", processed)
 
         filled = 0
+        if args.fill_missing_pass_end_location:
+            filled += _fill_missing_pass_end_locations(session, args.batch_size, args.limit)
+
         if args.fill_missing_detail:
-            filled = _fill_missing_details(session, args.batch_size, args.limit)
+            filled += _fill_missing_details(session, args.batch_size, args.limit)
             logger.info("Filled %d missing detail rows", filled)
 
         after_events = session.query(Event).count()
