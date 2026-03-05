@@ -1,0 +1,36 @@
+# cXA Phase 3 — xA+ Passes attribution
+
+## Summary
+
+Goal sequences: 360
+Total xA+ credit assigned: 360.0
+Credit to assist passes: 199.0 (55.3%)
+
+## Credit by pass position
+
+|   pass_num |   credit |    share |
+|-----------:|---------:|---------:|
+|          1 | 178.797  | 0.496658 |
+|          2 | 101.013  | 0.280593 |
+|          3 |  80.1896 | 0.222749 |
+
+
+## Top players (xA+ Passes)
+
+|   player_id | player_name                    |   passes_in_goal_sequences |   assist_passes |   xa_plus |   xa_plus_mean |   xa_plus_minus_assists |
+|------------:|:-------------------------------|---------------------------:|----------------:|----------:|---------------:|------------------------:|
+|         226 | Antoine Griezmann              |                          8 |               5 |   4.89331 |       0.611663 |               -0.106693 |
+|         336 | Luke Shaw                      |                          8 |               6 |   4.36645 |       0.545806 |               -1.63355  |
+|         385 | Daniel Olmo Carvajal           |                          8 |               3 |   3.95742 |       0.494678 |                0.957424 |
+|         146 | Memphis Depay                  |                         10 |               5 |   3.91453 |       0.391453 |               -1.08547  |
+|          11 | Xherdan Shaqiri                |                          6 |               4 |   3.75952 |       0.626587 |               -0.240476 |
+|           8 | Granit Xhaka                   |                          8 |               6 |   3.75368 |       0.46921  |               -2.24632  |
+|         516 | Kevin De Bruyne                |                         10 |               3 |   3.27009 |       0.327009 |                0.270094 |
+|         236 | Kylian Mbappé Lottin           |                          9 |               2 |   3.02445 |       0.336051 |                1.02445  |
+|          41 | Lionel Andrés Messi Cuccittini |                          8 |               4 |   2.89832 |       0.36229  |               -1.10168  |
+|         361 | Ivan Perišić                   |                          6 |               2 |   2.84963 |       0.474939 |                0.849635 |
+|         515 | Thomas Meunier                 |                          6 |               3 |   2.76764 |       0.461274 |               -0.232358 |
+|         200 | Raphaël Adelino José Guerreiro |                          6 |               4 |   2.72325 |       0.453875 |               -1.27675  |
+|         352 | Mateo Kovačić                  |                          6 |               2 |   2.65916 |       0.443194 |                0.659165 |
+|          83 | Neymar da Silva Santos Junior  |                          6 |               2 |   2.60247 |       0.433746 |                0.602475 |
+|         729 | Steven Zuber                   |                          5 |               2 |   2.58326 |       0.516651 |                0.583257 |

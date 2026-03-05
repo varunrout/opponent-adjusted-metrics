@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     model_artifacts_path: Path = Field(
         default=Path("./data/artifacts"), alias="MODEL_ARTIFACTS_PATH"
     )
+    feature_store_path: Path = Field(
+        default=Path("./feature_store"), alias="FEATURE_STORE_PATH"
+    )
 
     # API
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
@@ -134,6 +137,10 @@ def ensure_directories() -> None:
         settings.data_root,
         settings.statsbomb_data_path,
         settings.model_artifacts_path,
+        settings.feature_store_path,
+        settings.feature_store_path / "cxa",
+        settings.feature_store_path / "cxg",
+        settings.feature_store_path / "cxt",
         settings.data_root / "reports" / "calibration",
         settings.data_root / "reports" / "slices",
         settings.data_root / "reports" / "feature_importance",

@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.db.models import Shot, ShotFeature, OpponentDefProfile
-from opponent_adjusted.features.geometry import assign_zone
+from opponent_adjusted.features.cxg.geometry import assign_zone
 from opponent_adjusted.utils.logging import get_logger
 
 logger = get_logger(__name__)
