@@ -11,14 +11,10 @@ Writes rows into `opponent_def_profile` with:
 """
 
 import argparse
-import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Tuple
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.db.models import Shot, ShotFeature, OpponentDefProfile

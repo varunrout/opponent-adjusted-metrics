@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from opponent_adjusted.analysis.cxg_analysis import (
+from opponent_adjusted.analysis.cxg import (
     pass_value_chain as pvc,
     game_state_lens as gsl,
     set_piece_lens as spl,

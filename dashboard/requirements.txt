@@ -1,5 +1,7 @@
 # Dashboard Requirements
-# Additional dependencies for the Streamlit dashboard
+# These are now also declared in pyproject.toml under [tool.poetry.group.dashboard].
+# Install via: poetry install --with dashboard
+# This file is kept for standalone deployment (e.g., Docker, Streamlit Cloud).
 
 streamlit>=1.28.0
 mplsoccer>=1.2.0

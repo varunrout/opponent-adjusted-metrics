@@ -18,9 +18,6 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
 from opponent_adjusted.config import settings
 from opponent_adjusted.utils.logging import get_logger
 

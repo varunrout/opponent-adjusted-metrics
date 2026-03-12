@@ -1,10 +1,6 @@
 """Script to ingest competitions from StatsBomb Open Data."""
 
-import sys
 from pathlib import Path
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from opponent_adjusted.config import settings
 from opponent_adjusted.db.models import Competition

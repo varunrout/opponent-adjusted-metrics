@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         default=Path("./data/statsbomb"), alias="STATSBOMB_DATA_PATH"
     )
     model_artifacts_path: Path = Field(
-        default=Path("./data/artifacts"), alias="MODEL_ARTIFACTS_PATH"
+        default=Path("./outputs/modeling"), alias="MODEL_ARTIFACTS_PATH"
     )
     feature_store_path: Path = Field(
         default=Path("./feature_store"), alias="FEATURE_STORE_PATH"
@@ -141,9 +141,9 @@ def ensure_directories() -> None:
         settings.feature_store_path / "cxa",
         settings.feature_store_path / "cxg",
         settings.feature_store_path / "cxt",
-        settings.data_root / "reports" / "calibration",
-        settings.data_root / "reports" / "slices",
-        settings.data_root / "reports" / "feature_importance",
+        settings.data_root.parent / "outputs" / "reports" / "calibration",
+        settings.data_root.parent / "outputs" / "reports" / "slices",
+        settings.data_root.parent / "outputs" / "reports" / "feature_importance",
     ]
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)

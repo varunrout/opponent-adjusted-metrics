@@ -36,6 +36,12 @@ ruff = "^0.2.0"
 mypy = "^1.8.0"
 httpx = "^0.28.1"
 
+[tool.poetry.group.dashboard]
+optional = true
+
+[tool.poetry.group.dashboard.dependencies]
+streamlit = "^1.28.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -4,12 +4,8 @@ Optional flags:
     --limit N   Only process first N matches (useful for quick tests)
 """
 
-import sys
 import argparse
 from pathlib import Path
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from opponent_adjusted.db.models import Match, RawEvent
 from opponent_adjusted.db.session import session_scope

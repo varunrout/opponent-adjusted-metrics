@@ -10,14 +10,10 @@ Usage:
 """
 
 import argparse
-import sys
 from pathlib import Path
 from typing import Optional
 
 import sqlalchemy as sa
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.db.models import (

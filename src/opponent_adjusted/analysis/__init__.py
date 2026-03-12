@@ -5,7 +5,7 @@ core data model and prediction tables. These are intended for notebooks,
 exploratory scripts, and reporting tools rather than the core API.
 """
 
-from .cxg_analysis import (
+from .cxg import (
     ShotLevelCxGRecord,
     PlayerCxGSummary,
     TeamCxGSummary,

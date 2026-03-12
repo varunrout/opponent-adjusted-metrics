@@ -1,13 +1,11 @@
 """Get examples for xA metric explanation."""
-import sys
-sys.path.insert(0, '.')
 
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
-from src.opponent_adjusted.features.cxa.xa_baseline import compute_xa_baseline
-from src.opponent_adjusted.features.cxa.xa_plus_passes import compute_xa_plus_passes
+from opponent_adjusted.features.cxa.xa_baseline import compute_xa_baseline
+from opponent_adjusted.features.cxa.xa_plus_passes import compute_xa_plus_passes
 
 passes = pd.read_parquet('feature_store/cxa/pass_sequences.parquet')
 passes_baseline, _ = compute_xa_baseline(passes)

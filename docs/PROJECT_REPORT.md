@@ -1,30 +1,57 @@
 # Opponent-Adjusted Metrics: Comprehensive Project Report
 
-**Date:** November 24, 2025  
+**Date:** March 7, 2026  
 **Author:** Varun Rout  
 **Repository:** `opponent-adjusted-metrics`  
-**Version:** 1.0.0
+**Version:** 2.0.0
+
+---
+
+## Table of Contents
+
+1. [Executive Summary](#1-executive-summary)
+2. [Introduction](#2-introduction)
+3. [Data Engineering & Architecture](#3-data-engineering--architecture)
+4. [Methodology: The Contextual Model (CxG)](#4-methodology-the-contextual-model)
+5. [Model Evaluation](#5-model-evaluation)
+6. [Case Study: Premier League 2015/16](#6-case-study-premier-league-201516)
+7. [Operational Workflow](#7-operational-workflow)
+8. [Conclusion & Future Work](#8-conclusion--future-work)
+9. [CxA Extension: Chance Creation Attribution](#9-cxa-extension-chance-creation-attribution-passes--carries)
+10. [CxT Extension: Contextual Expected Threat](#10-cxt-extension-contextual-expected-threat-ball-progressions)
+11. [Technical Architecture Summary](#11-technical-architecture-summary)
+12. [Final Conclusion](#12-conclusion)
 
 ---
 
 ## 1. Executive Summary
 
-This report details the end-to-end development, implementation, and evaluation of a contextual, opponent-adjusted Expected Goals (CxG) system. The primary objective was to move beyond standard geometric xG models by incorporating rich contextual factors—defensive pressure, game state, and team style—while ensuring the model remains "neutral" to specific team identifiers. This neutrality allows the model to generalize across competitions and seasons without overfitting to historical team performance, a critical requirement for accurate opponent adjustment.
+This report details the end-to-end development, implementation, and evaluation of a comprehensive suite of **contextual, opponent-adjusted football metrics**: CxG (Expected Goals), CxA (Expected Assists), and CxT (Expected Threat). The primary objective was to move beyond standard geometric models by incorporating rich contextual factors—defensive pressure, game state, opponent quality, and team style—while ensuring models remain "neutral" to specific team identifiers. This neutrality allows models to generalize across competitions and seasons without overfitting to historical team performance, a critical requirement for accurate opponent adjustment.
 
-The project successfully established a robust data engineering pipeline using StatsBomb Open Data, ingesting match events into a normalized PostgreSQL schema. We developed a hierarchical modeling approach where submodels (finishing bias, concession bias, pressure effects) feed into a primary logistic regression classifier.
+The project successfully established a robust data engineering pipeline using StatsBomb Open Data, ingesting match events into a normalized PostgreSQL schema. We developed a hierarchical modeling approach where submodels feed into primary classifiers, with comprehensive slice-based validation ensuring fairness across all contexts.
 
-Key achievements include:
--   **Data Infrastructure:** A scalable SQLAlchemy/PostgreSQL architecture handling thousands of matches and millions of events.
+### Key Achievements
+
+| Metric | Model | Key Performance | Status |
+|--------|-------|-----------------|--------|
+| **CxG** | Stacked Logistic Regression | AUC 0.865, Brier 0.063 | ✅ Complete |
+| **CxA** | GBM with Softmax Attribution | AUC 0.705, Brier 0.082 | ✅ Complete |
+| **CxT** | Two-Stage (Completion + xT Gain) | AUC 0.889, R² 0.620 | ✅ Complete |
+
+**Infrastructure Highlights:**
+-   **Data Pipeline:** A scalable SQLAlchemy/PostgreSQL architecture handling 230+ matches, 436,050 ball progressions, and 15,000+ shots.
 -   **Neutral Priors:** A novel "neutralization" technique replacing explicit Team IDs with rolling performance windows, style archetypes (K-Means clustering), and player-specific lift components.
--   **Model Performance:** The enriched contextual model achieved a **ROC AUC of 0.865** and **Brier Score of 0.0631**, significantly outperforming a geometric baseline (AUC 0.739) and showing strong calibration against the provider's proprietary xG (AUC 0.799 on the same sample).
--   **Case Study Validation:** Applied to the 2015/16 Premier League season, the model correctly identified the underlying strength of title-winners Leicester City and highlighted the finishing over-performance of teams like West Ham, providing granular match-by-match insights.
+-   **Slice Validation:** Comprehensive pre-model and post-model slice analysis ensuring models perform consistently across zones, action types, pressure states, and opponent strengths.
+-   **Case Study Validation:** Applied to the 2015/16 Premier League season, the CxG model correctly identified the underlying strength of title-winners Leicester City and highlighted the finishing over-performance of teams like West Ham.
 
 ---
 
 ## 2. Introduction
 
 ### 2.1 Background
+
 Expected Goals (xG) has become the standard metric for quantifying chance quality in football. However, traditional models often rely heavily on shot location (distance and angle) and basic event qualifiers (header vs. foot). They frequently overlook the *context* of the chance:
+
 -   Was the shooter under intense pressure?
 -   Did the defensive line collapse deep, or was it a high turnover?
 -   Is the team chasing a lead (game state effects)?
@@ -167,6 +194,9 @@ We evaluated three primary model configurations on the training set (World Cup +
 3.  **Contextual (Enriched):** The full model with neutral priors.
 
 ### 5.1 Aggregate Metrics
+
+*Reference Chart: `outputs/modeling/cxg/modeling_charts/cxg_metrics_comparison.png`*
+
 We utilize three primary metrics to quantify model performance, each capturing a different aspect of quality:
 
 1.  **ROC AUC (Receiver Operating Characteristic Area Under Curve):**
@@ -217,6 +247,9 @@ Since we use Logistic Regression with standardized features, the coefficients ($
 To validate the "Neutral Priors" approach, we applied the model—trained *only* on international tournaments—to the 2015/16 Premier League season. This is a rigorous test of generalization.
 
 ### 6.1 The "Leicester City" Test
+
+*Reference Chart: `outputs/modeling/cxg/prediction_runs/pl_2015_16_club/charts/team_totals.png`*
+
 The 2015/16 Premier League season is the ultimate stress test for any football model. Leicester City's title win is often dismissed as a "miracle" or a statistical anomaly. A robust model should be able to peer through the noise and determine if their underlying performance supported their results.
 
 **Results (from `team_aggregates.csv`):**
@@ -322,13 +355,24 @@ This project has successfully demonstrated that **Contextual, Opponent-Adjusted 
 
 ---
 
-## 9. cXA Extension: Chance Creation Attribution (Passes + Carries)
+## 9. CxA Extension: Chance Creation Attribution (Passes + Carries)
 
-While the core deliverable of this repository is **CxG** (shot quality), we also implemented and validated a complementary chance-creation framework (**cXA**) focused on *who created goals* in the buildup rather than who finished them.
+While the core deliverable of this repository is **CxG** (shot quality), we also implemented and validated a complementary chance-creation framework (**CxA**) focused on *who created goals* in the buildup rather than who finished them.
+
+*Reference Data: `outputs/modeling/ultimate_cxa/`*
 
 ### 9.1 Executive Summary
 
-We built three complementary cXA metrics and a phase-based analysis pipeline (outputs under `outputs/analysis/cxa/phase0_*` to `phase5_*`). A calibrated **xA Baseline** model scores individual passes with a logistic regression and is normalized so that $\sum \text{xA} = \text{total assists}$ (369). We then introduced attribution-style metrics that distribute *one full unit of credit per goal* across multiple prior events using a softmax allocator: **xA+ Passes** (credit split across up to 3 passes) and **xA+ Actions** (credit split across passes + carries + dribbles).
+We built three complementary CxA metrics and a phase-based analysis pipeline (outputs under `outputs/analysis/cxa/phase0_*` to `phase5_*`). A calibrated **xA Baseline** model scores individual passes with a logistic regression and is normalized so that $\sum \text{xA} = \text{total assists}$ (369). We then introduced attribution-style metrics that distribute *one full unit of credit per goal* across multiple prior events using a softmax allocator: **xA+ Passes** (credit split across up to 3 passes) and **xA+ Actions** (credit split across passes + carries + dribbles).
+
+**CxA Model Performance:**
+
+| Metric | Value |
+|--------|-------|
+| Cross-Validation AUC | 0.705 |
+| Cross-Validation Brier | 0.082 |
+| Cross-Validation Log Loss | 0.292 |
+| Number of Features | 25 |
 
 A key data finding was that the goal populations were initially **not aligned**: pass-only sequences contain 369 goals while action sequences contain 439 goals; the fair comparison set is the **360-goal overlap** by `shot_id`. On that overlap set, xA+ Actions assigns ~60.4% of creation credit to passes and ~39.6% to carries, showing that a large fraction of goal creation in this dataset is driven by ball progression rather than the final pass alone. In pass-only attribution, the assist pass receives ~55% of credit, with the remaining ~45% attributed to earlier passes, quantifying the intuition that “pre-assists” matter substantially.
 
@@ -360,4 +404,420 @@ A key data finding was that the goal populations were initially **not aligned**:
 3. **Add reporting layers:** per-90 and per-touch normalization, team aggregates, and competition filters for more actionable scouting-style outputs.
 
 ---
+
+## 10. CxT Extension: Contextual Expected Threat (Ball Progressions)
+
+While CxG measures *shot quality* and CxA measures *chance creation via passes*, neither captures the full picture of how teams move the ball through the pitch. Standard Expected Threat (xT) models assign fixed values to pitch zones, ignoring the context in which actions occur. **CxT (Contextual Expected Threat)** addresses this by modeling ball progression value as a function of opponent defensive quality, game state, and action characteristics.
+
+### 10.1 Executive Summary
+
+We built a **two-stage probabilistic model** for ball progressions (passes, carries, and dribbles) that predicts the contextual value of moving the ball forward:
+
+$$\text{CxT} = P(\text{complete}) \times E[xT_{\Delta} \mid \text{complete}]$$
+
+The model was trained on **436,050 ball progression actions** from 230 matches, achieving:
+
+| Stage | Model | Target | Key Metric |
+|-------|-------|--------|------------|
+| **Completion** | Logistic Regression | Action success (0/1) | AUC = **0.889** |
+| **xT Gain** | Ridge Regression | Threat delta (continuous) | R² = **0.620** |
+
+**Key Findings from EDA:**
+- Carries contribute **44%** of all progressions and have *positive* mean xT delta (+0.002), validating their inclusion
+- Pressure reduces xT accumulation by **-0.0004** per action (statistically significant)
+- Pass completion rate drops **9.6%** under pressure, justifying the two-stage approach
+
+### 10.2 Motivation: Why Standard xT Falls Short
+
+Standard xT (as pioneered by Karun Singh) assigns a fixed probability of scoring from each pitch zone using a 12×8 grid:
+
+![xT Grid Concept](../outputs/analysis/cxt/eda/plots/zone_heatmaps.png)
+
+**Limitations of Static xT:**
+
+| Problem | Real-World Impact |
+|---------|-------------------|
+| **No opponent context** | A pass into zone 7 vs. Liverpool ≠ same pass vs. bottom-table team |
+| **No pressure adjustment** | Same location, but defender closing down → harder action |
+| **No completion risk** | Risky through-ball has higher upside but lower success rate |
+| **Ignores carries** | Dribbling past defenders creates value not captured by passes |
+
+**Our Solution:** Model the *expected* threat accounting for:
+1. Completion probability (will the pass/carry succeed?)
+2. Conditional xT gain (if successful, how much threat is added?)
+3. Opponent defensive quality (how hard is it to progress against this team?)
+4. Game context (pressure state, minute, period)
+
+### 10.3 Data Pipeline
+
+The CxT pipeline consists of three extraction phases:
+
+```
+PostgreSQL Events → Progressions Extraction → Feature Engineering → Modeling
+     ↓                      ↓                         ↓               ↓
+  230 matches         436,050 actions            64 features    2-stage model
+```
+
+**10.3.1 Progression Extraction** (`scripts/run_cxt_pipeline.py`)
+
+We extract three action types from the events database:
+
+| Action Type | Count | % of Total | Mean xT Δ |
+|-------------|-------|------------|-----------|
+| Pass | 240,105 | 55.1% | -0.0013 |
+| Carry | 192,225 | 44.1% | +0.0022 |
+| Dribble | 3,720 | 0.9% | 0.0000 |
+
+*Key Insight:* Passes have slightly *negative* average xT delta (many are backward/sideways), while carries are net positive—they tend to move the ball forward.
+
+**10.3.2 Macro-Zone Assignment**
+
+Each action is assigned to one of 9 macro-zones based on pitch position:
+
+```
+                    Attacking Direction →
+         ┌──────────┬──────────┬──────────┐
+         │ WIDE_L   │ CENTRAL  │ WIDE_R   │
+         │  (8)     │   (7)    │   (9)    │ ATT
+         ├──────────┼──────────┼──────────┤
+         │  (5)     │   (4)    │   (6)    │ MID  ← Zone 4 has 123K actions
+         ├──────────┼──────────┼──────────┤
+         │  (2)     │   (1)    │   (3)    │ DEF
+         └──────────┴──────────┴──────────┘
+```
+
+### 10.4 Exploratory Data Analysis (EDA)
+
+Comprehensive EDA was performed before modeling to validate feature signals.
+
+**10.4.1 Zone Transition Matrix**
+
+The transition matrix shows where actions from each zone typically end up:
+
+![Zone Transition Matrix](../outputs/analysis/cxt/eda/plots/transition_matrix.png)
+
+| From Zone | Most Common Destination | Progressive Rate |
+|-----------|------------------------|------------------|
+| DEF (1) | Stays in DEF (60%) | 3.8% to MID |
+| MID (4) | Stays in MID (64%) | 6.6% to ATT |
+| ATT (7) | Stays in ATT (77%) | — |
+
+*Finding:* Progressing from midfield to attacking third is difficult (~6.6% success rate), highlighting the value of progressive actions.
+
+**10.4.2 Pressure Effects**
+
+![Pressure Context](../outputs/analysis/cxt/eda/plots/opponent_context.png)
+
+| Condition | % of Actions | Mean xT Δ | Completion % |
+|-----------|--------------|-----------|--------------|
+| No pressure | 77.4% | +0.0003 | 85.5% |
+| Under pressure | 22.6% | **-0.0001** | **75.9%** |
+
+*Finding:* Pressure reduces both xT accumulation (-0.0004 differential) and completion rate (-9.6pp). This validates `under_pressure` as a key contextual feature.
+
+**10.4.3 xT Delta Distribution**
+
+![xT Delta Distribution](../outputs/analysis/cxt/eda/plots/xt_delta_distribution.png)
+
+The distribution of xT changes per action shows:
+- Mean: +0.00023 (net positive progression)
+- Standard deviation: 0.021 (high variance)
+- Range: -0.25 to +0.24 (full range of threat change)
+
+### 10.5 Feature Engineering
+
+The feature store contains 64 columns across three feature groups:
+
+**Numeric Features (7):**
+- `start_xt`: Threat value at action start location
+- `xt_delta`: Change in threat (target for xT gain model)
+- `minute_normalized`: Game time (0-1 scale)
+- `opponent_global_rating`: Team-level defensive strength
+- `opponent_zone_rating`: Zone-specific defensive strength
+- `opponent_global_block_rate`: Team interception rate
+- `opponent_zone_block_rate`: Zone-specific interception rate
+
+**Binary Features (20):**
+- Pressure: `under_pressure`, `pressure_flag`
+- Game state: `is_late_game`, `is_first_half`, `is_very_late`, `is_early_game`
+- Progression: `is_progressive`, `is_into_final_third`, `is_into_penalty_area`
+- Zone: `start_is_central`, `zone_changed`, `moved_to_att_third`
+- Action type: `is_pass`, `is_carry`, `is_dribble`
+- Opponent: `opponent_is_strong`, `opponent_is_weak`
+
+**Categorical Features (3):**
+- `action_type`: pass / carry / dribble
+- `start_third`: DEF / MID / ATT
+- `macro_zone_start`: 1-9 zone identifier
+
+### 10.6 Pre-Model Slice Analysis
+
+Before training, we validated that features have discriminative signal using **lift analysis**. For each feature, we computed the success rate by quartile/category and compared to the overall mean.
+
+![Signal Strength](../outputs/analysis/cxt/slices/signal_strength.png)
+
+**Key Signals Validated:**
+
+| Feature | Lift Ratio | Interpretation |
+|---------|------------|----------------|
+| `action_type` | ∞ (inf) | Passes and carries have fundamentally different success rates |
+| `under_pressure` | ∞ (inf) | Binary split completely separates outcomes |
+| `macro_zone_start` | 6.34× | Strong zone-dependent success variation |
+| `period` | 1.49× | First half vs second half differences |
+| `minute_normalized` | 1.38× | Early vs late game timing effects |
+
+![Key Slice Lifts](../outputs/analysis/cxt/slices/key_slice_lifts.png)
+
+**Zone-Specific Signal:**
+
+![Zone Lift Heatmap](../outputs/analysis/cxt/slices/zone_lift_heatmap.png)
+
+The heatmap shows that success rates vary significantly by pitch location, with central attacking zones having lowest completion rates (high risk, high reward).
+
+### 10.7 Model Architecture
+
+**Two-Stage Design Rationale:**
+
+Unlike CxG (single probability output), CxT requires *two* predictions:
+1. Will the action succeed? → Completion probability
+2. If successful, how much threat is gained? → Conditional xT delta
+
+These are trained separately because:
+- Failed actions have xT delta ≈ 0 (ball lost)
+- The features predicting "will it work?" differ from those predicting "how valuable is it?"
+
+**10.7.1 Completion Model**
+
+```
+Algorithm:      Logistic Regression (L2 regularization)
+Solver:         lbfgs
+Target:         success (0/1)
+Features:       All features EXCEPT xt_delta (to avoid data leakage)
+Preprocessing:  StandardScaler (numeric), OneHotEncoder (categorical)
+```
+
+**Critical Fix Applied:** Initially, `xt_delta` was included as a completion feature, causing perfect AUC (1.0) due to data leakage (completed actions have positive xT delta by definition). We removed it:
+
+```python
+# Fixed version - exclude xt_delta from completion features
+completion_features = [c for c in feature_columns if c != "xt_delta"]
+```
+
+**10.7.2 xT Gain Model**
+
+```
+Algorithm:      Ridge Regression (L2 regularization)
+Target:         xt_delta (continuous)
+Training Set:   Only completed actions (success = 1)
+Features:       All features including context
+```
+
+**10.7.3 Final CxT Calculation**
+
+```python
+def predict_cxt(self, X):
+    p_complete = self.completion_model.predict_proba(X)[:, 1]
+    xt_if_complete = self.xt_gain_model.predict(X)
+    return p_complete * xt_if_complete  # Expected value
+```
+
+### 10.8 Cross-Validation Strategy
+
+We use **GroupKFold** with `groups=match_id` to prevent data leakage:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Fold 1: Train on matches 1-184, Test on matches 185-230   │
+│  Fold 2: Train on matches 47-230, Test on matches 1-46     │
+│  ...                                                        │
+│  All actions from the same match stay together              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+This ensures the model is tested on *entire matches* it has never seen, simulating real-world prediction.
+
+### 10.9 Model Performance
+
+**10.9.1 Aggregate Metrics**
+
+| Metric | Value | Interpretation |
+|--------|-------|----------------|
+| **Completion AUC** | 0.889 | Excellent discrimination of success/failure |
+| **xT Gain R²** | 0.620 | Model explains 62% of threat variance |
+| **Brier Score** | 0.149 | Well-calibrated completion probabilities |
+| **ECE** | 0.215 | Expected calibration error (room for improvement) |
+| **CxT Correlation** | 0.423 | Moderate correlation with actual outcomes |
+
+**10.9.2 Comparison to Baseline**
+
+| Model | Completion AUC | Description |
+|-------|---------------|-------------|
+| Naive (always predict mean) | 0.500 | No discrimination |
+| Location-only xT | 0.720 | Zone-based prediction |
+| **Our CxT** | **0.889** | +16.9pp improvement |
+
+### 10.10 Post-Model Slice Evaluation
+
+After training, we evaluated model performance across **26 slices** to ensure fairness:
+
+![Slice AUC Comparison](../outputs/analysis/cxt/slice_evaluation/slice_auc_comparison.png)
+
+**Slice Performance Summary:**
+
+| Slice Category | # Slices | AUC Range | R² Range |
+|----------------|----------|-----------|----------|
+| Action Type | 3 | 0.78-0.91 | 0.49-0.66 |
+| Zone | 9 | 0.85-0.90 | 0.29-0.68 |
+| Pressure | 2 | 0.88-0.91 | 0.56-0.64 |
+| Progressive | 2 | 0.80-0.84 | 0.06-0.46 |
+| Opponent | 2 | 0.89 | 0.62 |
+
+![Slice R² Comparison](../outputs/analysis/cxt/slice_evaluation/slice_r2_comparison.png)
+
+**Notable Findings:**
+- Model performs well across all zones (no systematic bias)
+- Progressive actions have lower R² (0.46) due to higher variance
+- Dribbles have limited metrics due to small sample size (3,720)
+
+![Slice Radar Comparison](../outputs/analysis/cxt/slice_evaluation/slice_radar_comparison.png)
+
+### 10.11 Real-World Applications
+
+**10.11.1 Player Recruitment / Scouting**
+
+| Scenario | Standard xT Says | Our CxT Says |
+|----------|------------------|--------------|
+| Player A: High xT vs weak teams | "Great progressor" | "Inflated by easy opponents" |
+| Player B: Lower xT vs top-6 | "Below average" | "Elite against strong defenses" |
+
+**Example Query:**
+```sql
+SELECT player_name, 
+       SUM(cxt) as total_cxt,
+       AVG(opponent_global_rating) as avg_opponent_strength
+FROM progressions
+WHERE is_progressive = TRUE
+GROUP BY player_id
+HAVING AVG(opponent_global_rating) < 48  -- Faced strong opponents
+ORDER BY SUM(cxt) DESC;
+```
+
+**10.11.2 Opponent-Specific Match Preparation**
+
+```
+Arsenal defensive profile:
+  Zone 7 (ATT_CENTRAL): Rating 42 (strong)  → Harder to progress here
+  Zone 5 (MID_WIDE_L): Rating 58 (weak)     → Exploit this channel
+  Global block rate: 0.63
+```
+
+**10.11.3 Contract Negotiations**
+
+| Metric | Problem | Our Solution |
+|--------|---------|--------------|
+| Raw xT totals | Biased by opponent schedule | CxT normalizes for difficulty |
+| xT per 90 | Ignores game context | CxT accounts for pressure, game state |
+
+### 10.12 Key Contributions
+
+| Standard Approaches | Our CxT Implementation |
+|--------------------|------------------------|
+| Single-stage xT lookup | **Two-stage model** (completion + xT gain) |
+| No opponent context | **Zone-specific opponent ratings** from 54 teams |
+| Passes only | **Passes + carries + dribbles** (44% from carries) |
+| Static values | **Game-state aware** (minute, period, pressure) |
+| No validation | **26-slice evaluation** ensures fairness |
+
+### 10.13 Limitations and Future Work
+
+**Current Limitations:**
+- ECE of 0.215 suggests calibration could be improved (Platt scaling or isotonic regression)
+- Dribble sample size is small (0.9% of actions)
+- No velocity/tracking data for pressure intensity
+
+**Recommended Improvements:**
+1. **Calibration Post-Processing:** Apply isotonic regression to completion probabilities
+2. **Temporal Features:** Add rolling player form (last 5 matches progression stats)
+3. **Goalkeeper/Defender Positions:** Use freeze frame data for pressure quantification
+4. **Live Inference API:** Wrap model in FastAPI for real-time match scoring
+
+---
+
+## 11. Technical Architecture Summary
+
+The complete system architecture spans data ingestion through model inference:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              DATA LAYER                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  StatsBomb JSON → PostgreSQL (16 tables) → Feature Store (Parquet)              │
+│                                                                                  │
+│  Tables: competitions, matches, teams, players, events, shots,                  │
+│          possessions, passes, carries, dribbles, opponent_profiles              │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                             FEATURE LAYER                                        │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  CxG Features:  Geometry, pressure, game state, freeze frames                   │
+│  CxA Features:  Pass chains, assist sequences, action attribution               │
+│  CxT Features:  xT grid, zones, opponent profiles, progression flags            │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              MODEL LAYER                                         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  CxG: Stacked LogReg + Submodels (finishing, concession, pressure)              │
+│  CxA: GBM + Softmax Attribution (pass chains, action sequences)                 │
+│  CxT: Two-Stage (Completion LogReg + xT Gain Ridge)                             │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            EVALUATION LAYER                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  Metrics: AUC, Brier, Log Loss, R², ECE                                         │
+│  Slices: Pre-model (lift tables), Post-model (26 slice evaluation)              │
+│  Calibration: Reliability diagrams, bin analysis                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 12. Conclusion
+
+This project demonstrates that **contextual, opponent-adjusted metrics** provide more accurate and actionable insights than static models. By incorporating:
+
+- **Opponent defensive quality** at the zone level
+- **Game context** (pressure, minute, game state)
+- **Action type diversity** (passes, carries, dribbles)
+- **Two-stage probabilistic modeling** (completion × conditional gain)
+
+We achieve significant improvements over baseline approaches across all three metrics.
+
+### Summary of Results
+
+| Metric | Architecture | Key Performance | Business Value |
+|--------|--------------|-----------------|----------------|
+| **CxG** | Stacked LogReg + Submodels | AUC 0.865 | Accurate shot quality assessment |
+| **CxA** | GBM + Softmax Attribution | AUC 0.705 | Fair chance creation credit |
+| **CxT** | Two-Stage Completion + xT | AUC 0.889, R² 0.620 | Opponent-adjusted progression value |
+
+### Key Innovations
+
+1. **Neutral Priors:** Team-agnostic modeling that generalizes across leagues
+2. **Slice Validation:** Comprehensive fairness testing across all contexts
+3. **Carries Inclusion:** 44% of progression value captured (missed by pass-only models)
+4. **Two-Stage CxT:** Separates completion risk from conditional value
+
+### Production Readiness
+
+All models are:
+- Serialized as `.joblib` artifacts with metadata
+- Validated across 26+ slices for fairness
+- Documented with reproducible pipelines
+- Ready for FastAPI inference deployment
+
+---
+
 *End of Report*

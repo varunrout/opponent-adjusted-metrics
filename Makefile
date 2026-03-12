@@ -2,7 +2,8 @@
 	db-up db-down db-logs db-psql \
 	ingest-competitions ingest-matches ingest-events \
 	normalize-events \
-	build-features build-profiles build-cxa-baselines train-cxg neutralize evaluate reports \
+	build-features build-profiles \
+	run-cxa-pipeline run-cxg-pipeline run-cxg-analysis run-cxt-pipeline train-cxt evaluate-cxt \
 	fetch-data api test lint format clean
 
 help:  ## Show this help message
@@ -65,28 +66,25 @@ build-profiles:  ## Build opponent profiles (VERSION=v1)
 	poetry run python scripts/build_opponent_profiles.py --version $(or $(VERSION),v1)
 
 # CxA
-build-cxa-baselines:  ## Build cxA baselines (DATABASE_URL=..., MODEL_NAME=cxg, VERSION=, K_ACTIONS=3, DECAY=0.6, LIMIT_SHOTS=)
-	poetry run python scripts/build_cxa_baselines.py \
-		--database-url $(or $(DATABASE_URL),$(DATABASE_URL)) \
-		--model-name $(or $(MODEL_NAME),cxg) \
-		$(if $(VERSION),--version $(VERSION),) \
-		--k-actions $(or $(K_ACTIONS),3) \
-		--decay $(or $(DECAY),0.6) \
-		$(if $(LIMIT_SHOTS),--limit-shots $(LIMIT_SHOTS),)
+run-cxa-pipeline:  ## Run CxA pipeline
+	poetry run python scripts/run_cxa_pipeline.py
 
-# Training
-train-cxg:  ## Train CxG model (FEATURES=v1, VERSION=cxg_v1)
-	poetry run python scripts/train_cxg.py --features $(or $(FEATURES),v1) --version $(or $(VERSION),cxg_v1)
+# CxG
+run-cxg-pipeline:  ## Run CxG pipeline
+	poetry run python scripts/run_cxg_pipeline.py
 
-neutralize:  ## Generate neutralized predictions (MODEL=cxg_v1, FEATURES=v1)
-	poetry run python scripts/neutralize_cxg.py --model $(or $(MODEL),cxg_v1) --features $(or $(FEATURES),v1)
+run-cxg-analysis:  ## Run CxG analysis
+	poetry run python scripts/run_cxg_analysis.py
 
-# Evaluation
-evaluate:  ## Evaluate model (MODEL=cxg_v1, FEATURES=v1)
-	poetry run python scripts/evaluate_cxg.py --model $(or $(MODEL),cxg_v1) --features $(or $(FEATURES),v1)
+# CxT
+run-cxt-pipeline:  ## Run CxT pipeline
+	poetry run python scripts/run_cxt_pipeline.py
 
-reports:  ## Export reports (MODEL=cxg_v1, FEATURES=v1)
-	poetry run python scripts/export_reports.py --model $(or $(MODEL),cxg_v1) --features $(or $(FEATURES),v1)
+train-cxt:  ## Train CxT model
+	poetry run python scripts/train_cxt_model.py
+
+evaluate-cxt:  ## Evaluate CxT model
+	poetry run python scripts/evaluate_cxt_final.py
 
 # API
 api:  ## Start API server
@@ -115,4 +113,4 @@ clean:  ## Clean generated files
 	rm -rf .pytest_cache .coverage htmlcov .mypy_cache .ruff_cache
 
 # Full pipeline
-pipeline: ingest-all build-features build-profiles train-cxg neutralize evaluate reports  ## Run complete pipeline
+pipeline: ingest-all build-features build-profiles run-cxg-pipeline run-cxt-pipeline  ## Run complete pipeline

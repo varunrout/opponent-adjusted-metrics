@@ -20,9 +20,6 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
 from opponent_adjusted.config import settings, ensure_directories
 from opponent_adjusted.db.session import get_session
 from opponent_adjusted.features.cxa.opposition_context import build_opposition_context

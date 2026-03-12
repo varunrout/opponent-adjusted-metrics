@@ -48,25 +48,32 @@ poetry.lock
 *.sqlite
 *.sqlite3
 
-# Data
+# Data (raw input data — tracked selectively)
 data/
-reports/
+!data/statsbomb/
+!data/statsbomb/**
+
+# Feature store (intermediate parquets — generated, not tracked)
+feature_store/
+
+# Output artifacts
 *.csv
 *.parquet
 *.json
-!db/seeds/*.json
+!data/statsbomb/**/*.json
 !outputs/analysis/cxg/csv/
 !outputs/analysis/cxg/csv/**
 !outputs/csv/
 !outputs/csv/**
 !outputs/modeling/
 !outputs/modeling/**
+!outputs/reports/
+!outputs/reports/**
 
 # Model artifacts
 *.joblib
 *.pkl
 *.pickle
-artifacts/
 !outputs/modeling/**/*.joblib
 
 # Logs
@@ -83,11 +90,7 @@ htmlcov/
 # Jupyter
 .ipynb_checkpoints/
 
-
 # Temporary files
 tmp/
 temp/
 *.tmp
-
-# Alembic
-alembic.ini
