@@ -12,6 +12,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import func
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
@@ -80,17 +82,13 @@ def _count_rows(session: Any) -> dict[str, int]:
 
 def _event_type_counts(session: Any, limit: int = 25) -> list[dict[str, Any]]:
     rows = (
-        session.query(RawEvent.type, RawEvent.id)
-        .order_by(RawEvent.type)
+        session.query(RawEvent.type, func.count(RawEvent.id))
+        .group_by(RawEvent.type)
+        .order_by(func.count(RawEvent.id).desc())
+        .limit(limit)
         .all()
     )
-    counts: dict[str, int] = {}
-    for event_type, _ in rows:
-        counts[event_type] = counts.get(event_type, 0) + 1
-    return [
-        {"event_type": event_type, "count": count}
-        for event_type, count in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:limit]
-    ]
+    return [{"event_type": event_type, "count": int(count)} for event_type, count in rows]
 
 
 def build_report() -> dict[str, Any]:
