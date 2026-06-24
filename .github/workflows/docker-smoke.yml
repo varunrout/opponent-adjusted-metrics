@@ -1,0 +1,55 @@
+name: Docker smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  postgres-migration-smoke:
+    name: Postgres migration smoke test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Create environment file
+        run: cp .env.example .env
+
+      - name: Start Postgres
+        run: docker compose up -d db
+
+      - name: Wait for Postgres healthcheck
+        run: |
+          for i in {1..30}; do
+            if docker compose ps db | grep -q healthy; then
+              echo "Postgres is healthy"
+              exit 0
+            fi
+            docker compose ps db
+            sleep 2
+          done
+          docker compose logs db
+          exit 1
+
+      - name: Run migrations
+        env:
+          DATABASE_BACKEND: postgres
+          DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/opponent_metrics
+        run: poetry run alembic upgrade head
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
