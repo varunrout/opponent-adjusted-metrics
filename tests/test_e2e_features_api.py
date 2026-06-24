@@ -76,14 +76,18 @@ def test_features_and_api_wiring(e2e_test_env):
     resp = client.post(
         "/predict/cxg",
         json={
-            "x": 102.0,
-            "y": 40.0,
-            "score_diff_at_shot": 0,
+            "location_x": 102.0,
+            "location_y": 40.0,
+            "body_part": "Right Foot",
+            "technique": "Normal",
+            "shot_type": "Open Play",
+            "first_time": False,
             "minute": 55,
-            "minute_bucket": "46-60",
+            "score_diff": 0,
             "under_pressure": False,
-            "opponent_def_rating_global": 0.0,
-            "opponent_def_zone_rating": 0.0,
+            "opponent_team_id": 1,
+            "possession_duration": 8.5,
+            "possession_length": 5,
         },
     )
     assert resp.status_code == 501
