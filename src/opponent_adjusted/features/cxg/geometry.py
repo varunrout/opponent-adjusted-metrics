@@ -24,7 +24,7 @@ def calculate_distance(
     if target_y is None:
         target_y = settings.goal_center_y
 
-    return np.sqrt((target_x - x) ** 2 + (target_y - y) ** 2)
+    return float(np.sqrt((target_x - x) ** 2 + (target_y - y) ** 2))
 
 
 def calculate_shot_angle(x: float, y: float) -> float:
