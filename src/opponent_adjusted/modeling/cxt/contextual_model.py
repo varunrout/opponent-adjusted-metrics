@@ -33,7 +33,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +188,13 @@ def build_preprocessor(
     if binary_features:
         binary_transformer = Pipeline(
             [
+                (
+                    "to_numeric",
+                    FunctionTransformer(
+                        lambda x: x.astype(float),
+                        feature_names_out="one-to-one",
+                    ),
+                ),
                 ("imputer", SimpleImputer(strategy="most_frequent")),
             ]
         )
