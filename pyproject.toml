@@ -2,7 +2,7 @@
 name = "opponent-adjusted-metrics"
 version = "0.1.0"
 description = "End-to-end contextual, opponent-adjusted football metrics using StatsBomb Open Data"
-authors = ["Your Name <you@example.com>"]
+authors = ["Varun Rout"]
 readme = "README.md"
 packages = [{include = "opponent_adjusted", from = "src"}]
 
@@ -35,6 +35,7 @@ black = "^24.1.0"
 ruff = "^0.2.0"
 mypy = "^1.8.0"
 httpx = "^0.28.1"
+pre-commit = "^3.7.0"
 
 [tool.poetry.group.dashboard]
 optional = true
