@@ -1,292 +1,101 @@
-# Project Status and Next Steps
-
-## Current Status: Infrastructure Complete ✅
-
-This repository contains a **complete, production-ready infrastructure** for building contextual, opponent-adjusted football metrics using StatsBomb Open Data and PostgreSQL.
-
-### What's Implemented
-
-#### ✅ Project Infrastructure (100%)
-- Poetry-based dependency management
-- Complete directory structure
-- Environment configuration with pydantic-settings
-- Logging, timing, and batching utilities
-- Makefile with pipeline commands
-- .gitignore and .env.example
-
-#### ✅ Database Architecture (100%)
-- 16 SQLAlchemy 2.x models covering all aspects:
-  - Reference tables (competitions, teams, players)
-  - Match data (matches, events, raw_events, possessions)
-  - Shot analysis (shots, shot_features)
-  - Opponent profiles (opponent_def_profile)
-  - Model registry and predictions
-  - Aggregates (player and team level)
-  - Evaluation metrics
-- Alembic migration system configured
-- Complete initial migration (001_initial_schema.py)
-- Optimized indices for performance
-
-#### ✅ Feature Engineering (100%)
-- Geometric features (distance, angle, centrality, zones)
-- Contextual features (game state, possession patterns)
-- Pressure features (under pressure, defensive actions, composite score)
-- Opponent profile framework (zone-based ratings)
-
-#### ✅ Data Ingestion Framework (100%)
-- StatsBomb data loader with discovery and filtering
-- Sample ingestion script (competitions)
-- Event parsing utilities
-- Extensible architecture for full pipeline
-
-#### ✅ API Service (100%)
-- FastAPI application with uvicorn
-- Health check endpoint
-- Model version endpoint
-- Prediction endpoint (placeholder)
-- Player/team aggregates endpoints
-- Pydantic schemas for validation
-
-#### ✅ Documentation (100%)
-- Comprehensive README with quickstart
-- Metric definitions (CxG, CxA, CxT, C-OBV)
-- Complete data dictionary
-- Evaluation protocol with acceptance criteria
-- Inline code documentation
-
-#### ✅ Testing & Quality (100%)
-- 11 passing unit tests
-- Test fixtures and configuration
-- CodeQL security scan (0 issues)
-- Linting and formatting setup (black, ruff, mypy)
-
----
-
-## What's NOT Implemented (Requires Actual Data)
-
-The following components require **actual StatsBomb data** and a **running PostgreSQL database** to implement:
-
-### 🔲 Data Ingestion Pipeline
-**Requirements**: StatsBomb Open Data downloaded locally
-- Full event normalization (parse all event types)
-- Possessions table builder
-- Data validation and quality checks
-- Match and event ingestion scripts
-
-### 🔲 Feature Generation
-**Requirements**: Ingested data in database
-- Shot features script (build_shot_features.py)
-- Opponent profile builder (build_opponent_profiles.py)
-- Join logic for training datasets
-
-### 🔲 Model Training
-**Requirements**: Features generated and stored
-- LightGBM CxG trainer
-- Post-hoc calibration (isotonic regression)
-- Model artifact serialization
-- Registry persistence
-
-### 🔲 Neutralization
-**Requirements**: Trained CxG model
-- Reference context application
-- Neutral prediction generation
-- Opponent-adjusted diff/ratio calculation
-
-### 🔲 Evaluation & Reporting
-**Requirements**: Predictions generated
-- Calibration metrics (Brier, LogLoss, ECE, AUC)
-- Slice-based evaluation
-- Calibration plots (matplotlib/seaborn)
-- Feature importance reports
-- Aggregate computation
-
----
-
-## How to Complete the Implementation
-
-### Prerequisites
-
-1. **PostgreSQL Database**
-   ```bash
-   # Create database
-   createdb opponent_metrics
-   
-   # Set DATABASE_URL in .env
-   DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/opponent_metrics
-   ```
-
-2. **StatsBomb Open Data**
-   ```bash
-   # Clone StatsBomb's open-data repository
-   git clone https://github.com/statsbomb/open-data data/statsbomb
-   
-   # Or download manually to data/statsbomb/
-   ```
-
-### Step-by-Step Pipeline
-
-#### Step 1: Database Setup
-```bash
-# Run migrations
-make migrate-up
-```
-
-#### Step 2: Data Ingestion
-```bash
-# Ingest competitions, matches, and events
-make ingest-all
-```
-
-#### Step 3: Feature Engineering
-```bash
-# Build shot features
-make build-features VERSION=v1
-
-# Build opponent profiles
-make build-profiles VERSION=v1
-```
-
-#### Step 4: Model Training
-```bash
-# Train CxG model
-make train-cxg FEATURES=v1 VERSION=cxg_v1
-
-# Generate neutralized predictions
-make neutralize MODEL=cxg_v1 FEATURES=v1
-```
-
-#### Step 5: Evaluation
-```bash
-# Evaluate model
-make evaluate MODEL=cxg_v1 FEATURES=v1
-
-# Export reports
-make reports MODEL=cxg_v1 FEATURES=v1
-```
-
-#### Step 6: API Service
-```bash
-# Start API server
-make api
-```
-
----
-
-## Implementation Effort Estimates
-
-Based on the existing infrastructure:
-
-| Component | Effort | Notes |
-|-----------|--------|-------|
-| Data Ingestion | 2-3 days | Parse all StatsBomb event types, handle edge cases |
-| Feature Generation | 1-2 days | Implement join logic, batch processing |
-| Opponent Profiles | 1 day | Logistic ridge, zone residuals, shrinkage |
-| CxG Training | 1-2 days | Hyperparameter tuning, calibration |
-| Neutralization | 0.5 days | Apply reference context |
-| Evaluation | 1-2 days | Metrics, plots, slice analysis |
-| **Total** | **7-11 days** | For experienced ML engineer |
-
----
-
-## Architecture Decisions
-
-### Why These Technologies?
-
-1. **Poetry**: Modern Python dependency management with lock files
-2. **SQLAlchemy 2.x**: Type-safe ORM with async support
-3. **Alembic**: Industry-standard migrations
-4. **FastAPI**: High-performance async API with automatic docs
-5. **LightGBM**: Fast, accurate gradient boosting for tabular data
-6. **Pydantic**: Runtime validation with excellent FastAPI integration
-
-### Design Patterns
-
-1. **Versioned Features**: Enables experimentation and rollback
-2. **Model Registry**: Track all models with lineage
-3. **Separation of Concerns**: Clear boundaries between ingestion, features, modeling
-4. **Idempotent Scripts**: Safe to re-run, upserts instead of inserts
-5. **Context Managers**: Proper resource cleanup (DB sessions)
-
----
-
-## Alternative Approaches Considered
-
-### Why Not Deep Learning?
-- No tracking/360 data available in StatsBomb Open Data
-- Tabular features → gradient boosting typically optimal
-- Easier interpretation and debugging
-- Can upgrade to neural nets if tracking data added
-
-### Why Not Real-time Streaming?
-- Tournament data is batch-friendly
-- Simpler architecture for analytics use case
-- Can add Kafka/streaming later if needed
-
-### Why Not Bayesian from Day 1?
-- LightGBM + calibration achieves acceptance criteria
-- Bayesian models have longer iteration cycles
-- Can upgrade if per-opponent sample sizes too small
-
----
-
-## Known Limitations
-
-1. **No 360/Tracking Data**: Pressure features are proxies
-2. **Tournament Data Only**: Limited to 4 competitions
-3. **English Names**: StatsBomb data is English-only
-4. **Goalkeeper Actions**: Not fully modeled (keeper xG save models possible future work)
-5. **Set Pieces**: Currently included; may want separate models
-
----
-
-## Extensions and Future Work
-
-### Phase 2: Advanced Metrics
-- **CxA**: Pass completion → shot generation chain
-- **CxT**: State-based expected threat with MDP
-- **C-OBV**: Comprehensive on-ball value
-
-### Phase 3: Enhancements
-- Bayesian hierarchical models for opponent effects
-- SHAP explanations for predictions
-- Interactive dashboards (Streamlit/Dash)
-- Multi-competition cross-validation
-
-### Phase 4: Production
-- Docker containerization
-- CI/CD with GitHub Actions
-- Monitoring and alerting
-- Scheduled retraining pipeline
-
----
-
-## Contact and Contribution
-
-### Questions?
-Open an issue in the GitHub repository with questions about:
-- Implementation details
-- Architecture decisions
-- Data requirements
-
-### Contributions Welcome!
-We welcome PRs for:
-- Bug fixes
-- Documentation improvements
-- New feature implementations
-- Test coverage
-
----
-
-## Acknowledgments
-
-- **StatsBomb** for providing open football event data
-- **Friends of Tracking** for methodological foundations
-- The football analytics research community
-
----
-
-## License
-
-This project uses StatsBomb Open Data under their [open data license](https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf).
-
-Project code is available under the MIT License (see LICENSE file).
+# Project Status
+
+This document is the source of truth for the current completion state of `opponent-adjusted-metrics`.
+
+## Current status
+
+The repository has a strong foundation for an opponent-adjusted football analytics system, but it should not yet be described as fully complete or production-ready.
+
+The project currently contains:
+
+- Python package structure for football analytics workflows.
+- PostgreSQL-oriented database models and migrations.
+- StatsBomb ingestion and normalisation scripts.
+- CxG, CxA and CxT modelling/analysis modules.
+- API routes for health, model metadata and aggregates.
+- Dashboard/reporting material.
+- Unit and e2e-style tests.
+
+The project still needs final completion work in CI/CD, reproducibility, model-contract validation, API inference, CxT leakage resolution and documentation consistency.
+
+## Implementation status matrix
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| Project structure | Mostly complete | Good package and script layout exists. |
+| Dependency management | Mostly complete | Poetry is configured. CI install validation still needed. |
+| Database schema | Mostly complete | SQLAlchemy/Alembic foundation exists. Needs automated Postgres smoke test. |
+| Data ingestion | Partial | Scripts exist, but fresh-clone reproducibility and idempotency need verification. |
+| Event normalisation | Partial | Normalisation path exists. Needs row-count and integrity reporting. |
+| Feature engineering | Partial | Feature modules exist. Needs formal contracts and leakage gates. |
+| CxG modelling | Partial to mostly complete | Modelling artifacts and reports exist. Needs one-command reproducible training/evaluation and API wiring. |
+| CxG neutralisation | Partial | Needs consolidated run path and registry linkage. |
+| CxA modelling | Partial | Analysis and methodology exist. Needs final public methodology and reproducible sequence scoring. |
+| CxT modelling | Partial | Evaluation exists, but leakage warning must be resolved. |
+| API | Partial | Health/model/aggregate routes exist. `/predict/cxg` still needs real artifact-backed inference. |
+| Dashboard | Partial | Dashboard material exists. Needs stable output contracts and screenshots. |
+| Tests | Partial | Tests exist. Needs CI enforcement and broader smoke coverage. |
+| CI/CD | Missing | GitHub Actions workflows need to be added. |
+| Documentation | Partial | Documentation is extensive but inconsistent in completion claims. |
+
+## Completion blockers
+
+The repository cannot be treated as complete until these are resolved:
+
+1. CI/CD workflows are added and passing.
+2. Fresh-clone setup is tested against Docker Postgres.
+3. Feature contracts exist for CxG, CxA and CxT.
+4. CxG can train, evaluate, neutralise and export outputs through a single reproducible path.
+5. `/predict/cxg` returns real model-backed predictions when an artifact is configured.
+6. CxT leakage warning is fixed and the report is regenerated.
+7. README, project status and implementation docs are aligned.
+8. Dashboard reads stable generated outputs.
+9. Model cards and limitations are present for each metric family.
+
+## Active roadmap
+
+The completion roadmap is tracked in [`docs/ROADMAP.md`](./ROADMAP.md).
+
+Recommended PR sequence:
+
+1. Audit and roadmap.
+2. CI/CD and repository hygiene.
+3. Data ingestion reproducibility.
+4. Feature contracts and quality gates.
+5. CxG end-to-end completion.
+6. API inference completion.
+7. CxA completion.
+8. CxT leakage fix and completion.
+9. Dashboard and storytelling.
+10. v1 release packaging.
+
+## Definition of complete
+
+The project reaches v1 complete when a reviewer can:
+
+1. Clone the repository.
+2. Install dependencies.
+3. Start Postgres.
+4. Run migrations.
+5. Fetch a configured StatsBomb subset.
+6. Ingest and normalise events.
+7. Build feature tables.
+8. Train and evaluate CxG.
+9. Generate neutralised/opponent-adjusted outputs.
+10. Run CxA and CxT pipelines without unresolved leakage warnings.
+11. Query real predictions through the API.
+12. Open a dashboard backed by generated outputs.
+13. See CI passing on pull requests.
+14. Read consistent documentation that separates implemented work from future extensions.
+
+## Known limitations
+
+- StatsBomb Open Data coverage is limited and competition-dependent.
+- Some pressure and opponent-quality signals are proxies rather than tracking-data measures.
+- CxA and CxT require careful validation because sequence/action attribution is sensitive to label design.
+- CxT must be revalidated after leakage-prone features are removed.
+- API inference depends on stable model artifact and feature-contract handling.
+
+## Next milestone
+
+The next milestone after this status cleanup is to add CI/CD workflows and repository hygiene so all later completion work lands through tested pull requests.

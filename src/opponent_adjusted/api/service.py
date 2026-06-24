@@ -1,8 +1,7 @@
 """FastAPI service for opponent-adjusted metrics inference."""
 
-from typing import List, Optional
+from typing import List
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
 
 from opponent_adjusted.config import settings
 from opponent_adjusted.api.schemas import (
@@ -16,7 +15,6 @@ from opponent_adjusted.api.schemas import (
 from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.db.models import (
     ModelRegistry,
-    ShotPrediction,
     AggregatesPlayer,
     AggregatesTeam,
     Player,
@@ -82,11 +80,7 @@ async def get_player_aggregates(
     """Get player-level aggregates."""
     with session_scope() as session:
         # Get model
-        model_obj = (
-            session.query(ModelRegistry)
-            .filter(ModelRegistry.version == model)
-            .first()
-        )
+        model_obj = session.query(ModelRegistry).filter(ModelRegistry.version == model).first()
 
         if not model_obj:
             raise HTTPException(status_code=404, detail=f"Model {model} not found")
@@ -126,11 +120,7 @@ async def get_team_aggregates(
     """Get team-level aggregates."""
     with session_scope() as session:
         # Get model
-        model_obj = (
-            session.query(ModelRegistry)
-            .filter(ModelRegistry.version == model)
-            .first()
-        )
+        model_obj = session.query(ModelRegistry).filter(ModelRegistry.version == model).first()
 
         if not model_obj:
             raise HTTPException(status_code=404, detail=f"Model {model} not found")

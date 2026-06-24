@@ -6,14 +6,13 @@ from pathlib import Path
 
 import pytest
 
-
 # Ensure the src directory is on the path so that the
 # `opponent_adjusted` package can be imported in tests.
 SRC_ROOT = Path(__file__).parent.parent / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from opponent_adjusted.config import settings, ensure_directories
+from opponent_adjusted.config import settings, ensure_directories  # noqa: E402
 
 
 @pytest.fixture(scope="session")

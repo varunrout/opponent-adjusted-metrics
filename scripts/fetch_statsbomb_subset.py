@@ -23,8 +23,8 @@ from urllib.request import Request, urlopen
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from opponent_adjusted.config import settings
-from opponent_adjusted.utils.logging import get_logger
+from opponent_adjusted.config import settings  # noqa: E402
+from opponent_adjusted.utils.logging import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -57,10 +57,7 @@ def _load_subset_config(path: Path) -> dict:
 
 
 def _filter_competitions(all_competitions: list[dict], configured: list[dict]) -> list[dict]:
-    wanted = {
-        (int(item["competition_id"]), int(item["season_id"]))
-        for item in configured
-    }
+    wanted = {(int(item["competition_id"]), int(item["season_id"])) for item in configured}
     return [
         comp
         for comp in all_competitions
@@ -68,7 +65,9 @@ def _filter_competitions(all_competitions: list[dict], configured: list[dict]) -
     ]
 
 
-def _fetch_with_retries(url: str, *, retries: int = 3, backoff_seconds: float = 0.8) -> list | dict | None:
+def _fetch_with_retries(
+    url: str, *, retries: int = 3, backoff_seconds: float = 0.8
+) -> list | dict | None:
     for attempt in range(1, retries + 1):
         try:
             return _load_json_url(url)
@@ -142,7 +141,8 @@ def fetch_subset(config_path: Path, output_dir: Path, *, include_events: bool, f
             (
                 bool(item.get("include_events", True))
                 for item in competitions_config
-                if int(item["competition_id"]) == competition_id and int(item["season_id"]) == season_id
+                if int(item["competition_id"]) == competition_id
+                and int(item["season_id"]) == season_id
             ),
             True,
         )

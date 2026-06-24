@@ -1,6 +1,6 @@
 """CxT Analysis Module.
 
-Provides EDA, visualization, and slice analysis for 
+Provides EDA, visualization, and slice analysis for
 Contextual Expected Threat (CxT) modeling.
 
 Components:

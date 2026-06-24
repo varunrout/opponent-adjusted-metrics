@@ -15,19 +15,23 @@ def _load_scored_dataset(path: Path) -> pd.DataFrame:
 
 def aggregate_to_matches(scored_path: Path, output_path: Path) -> pd.DataFrame:
     df = _load_scored_dataset(scored_path)
-    required = {"match_id", "team_id", "opponent_team_id", "is_goal", "cxg_prediction", "statsbomb_xg"}
+    required = {
+        "match_id",
+        "team_id",
+        "opponent_team_id",
+        "is_goal",
+        "cxg_prediction",
+        "statsbomb_xg",
+    }
     missing = required - set(df.columns)
     if missing:
         raise KeyError(f"Missing columns in scored dataset: {missing}")
 
-    grouped = (
-        df.groupby(["match_id", "team_id", "opponent_team_id"], as_index=False)
-        .agg(
-            cxg_total=("cxg_prediction", "sum"),
-            goals=("is_goal", "sum"),
-            provider_xg=("statsbomb_xg", "sum"),
-            shots=("shot_id", "count"),
-        )
+    grouped = df.groupby(["match_id", "team_id", "opponent_team_id"], as_index=False).agg(
+        cxg_total=("cxg_prediction", "sum"),
+        goals=("is_goal", "sum"),
+        provider_xg=("statsbomb_xg", "sum"),
+        shots=("shot_id", "count"),
     )
     grouped["cxg_delta"] = grouped["goals"] - grouped["cxg_total"]
     grouped["provider_delta"] = grouped["goals"] - grouped["provider_xg"]

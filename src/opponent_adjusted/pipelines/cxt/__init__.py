@@ -1,6 +1,6 @@
 """CxT Pipeline Module.
 
-Provides data extraction and feature engineering pipelines for 
+Provides data extraction and feature engineering pipelines for
 Contextual Expected Threat (CxT) modeling.
 
 Components:

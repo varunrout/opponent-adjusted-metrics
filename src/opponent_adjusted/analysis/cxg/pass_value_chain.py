@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Iterable, List, Optional
+from typing import Iterable, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -175,9 +175,9 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 minute=int(row.minute) if row.minute is not None else None,
                 shot_body_part=row.body_part,
                 shot_outcome=row.outcome,
-                score_diff_at_shot=int(row.score_diff_at_shot)
-                if row.score_diff_at_shot is not None
-                else None,
+                score_diff_at_shot=(
+                    int(row.score_diff_at_shot) if row.score_diff_at_shot is not None else None
+                ),
                 is_leading=bool(row.is_leading) if row.is_leading is not None else None,
                 is_trailing=bool(row.is_trailing) if row.is_trailing is not None else None,
                 is_drawing=bool(row.is_drawing) if row.is_drawing is not None else None,
@@ -187,7 +187,7 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 competition_name=row.competition_name,
                 competition_season=row.competition_season,
                 competition_statsbomb_id=row.competition_statsbomb_id,
-                is_home=(row.team_id == row.home_team_id)
+                is_home=(row.team_id == row.home_team_id),
             )
         )
 
@@ -324,27 +324,25 @@ def classify_chains(shots: pd.DataFrame) -> pd.DataFrame:
         merged["team_id_pass"].fillna(merged["team_id"]), errors="coerce"
     ).astype("Int64")
     merged["chain_possession"] = merged["possession"].fillna(merged["shot_possession"])
-    merged["chain_possession"] = pd.to_numeric(merged["chain_possession"], errors="coerce").astype("Int64")
+    merged["chain_possession"] = pd.to_numeric(merged["chain_possession"], errors="coerce").astype(
+        "Int64"
+    )
 
     match_ids = merged["chain_match_id"].dropna().unique()
     prev_df = _load_preceding_events(match_ids)
 
     if not prev_df.empty:
-        prev_df = prev_df.rename(
-            columns={"match_id": "chain_match_id", "team_id": "chain_team_id"}
-        )
+        prev_df = prev_df.rename(columns={"match_id": "chain_match_id", "team_id": "chain_team_id"})
         prev_df["chain_match_id"] = pd.to_numeric(
             prev_df["chain_match_id"], errors="coerce"
         ).astype("Int64")
-        prev_df["chain_team_id"] = pd.to_numeric(
-            prev_df["chain_team_id"], errors="coerce"
-        ).astype("Int64")
-        prev_df["chain_possession"] = pd.to_numeric(
-            prev_df["possession"], errors="coerce"
-        ).astype("Int64")
-        prev_df = prev_df.dropna(
-            subset=["chain_match_id", "chain_team_id", "chain_possession"]
+        prev_df["chain_team_id"] = pd.to_numeric(prev_df["chain_team_id"], errors="coerce").astype(
+            "Int64"
         )
+        prev_df["chain_possession"] = pd.to_numeric(prev_df["possession"], errors="coerce").astype(
+            "Int64"
+        )
+        prev_df = prev_df.dropna(subset=["chain_match_id", "chain_team_id", "chain_possession"])
         prev_df["chain_match_id"] = prev_df["chain_match_id"].astype(int)
         prev_df["chain_team_id"] = prev_df["chain_team_id"].astype(int)
         prev_df["chain_possession"] = prev_df["chain_possession"].astype(int)
@@ -474,7 +472,11 @@ def _top_chain_labels(summary: pd.DataFrame, include_unassisted: bool = True) ->
         .loc[:, "chain_label"]
         .tolist()
     )
-    if include_unassisted and "Unassisted" not in labels and "Unassisted" in summary["chain_label"].values:
+    if (
+        include_unassisted
+        and "Unassisted" not in labels
+        and "Unassisted" in summary["chain_label"].values
+    ):
         labels.append("Unassisted")
     return labels
 
@@ -488,7 +490,9 @@ def plot_chain_pitch_heatmaps(df: pd.DataFrame, summary: pd.DataFrame) -> None:
         return
     labels = _top_chain_labels(summary)
     for label in labels:
-        subset = df[(df["chain_label"] == label) & df["location_x"].notna() & df["location_y"].notna()]
+        subset = df[
+            (df["chain_label"] == label) & df["location_x"].notna() & df["location_y"].notna()
+        ]
         if subset.empty:
             continue
         stat = pitch.bin_statistic(
@@ -557,7 +561,8 @@ def plot_unassisted_breakdowns(df: pd.DataFrame) -> None:
     axes[0, 1].set_title("Angle distribution")
 
     body_counts = (
-        unassisted["shot_body_part"].fillna("Unknown")
+        unassisted["shot_body_part"]
+        .fillna("Unknown")
         .value_counts()
         .head(5)
         .sort_values(ascending=False)
@@ -586,7 +591,9 @@ def plot_xg_distribution(df: pd.DataFrame, summary: pd.DataFrame) -> None:
     data = []
     final_labels: List[str] = []
     for label in labels:
-        values = df.loc[(df["chain_label"] == label) & df["statsbomb_xg"].notna(), "statsbomb_xg"].values
+        values = df.loc[
+            (df["chain_label"] == label) & df["statsbomb_xg"].notna(), "statsbomb_xg"
+        ].values
         if len(values) < 5:
             continue
         data.append(values)
@@ -639,9 +646,7 @@ def plot_outcome_mix(df: pd.DataFrame, summary: pd.DataFrame) -> None:
     df = df.copy()
     df["outcome_group"] = df["shot_outcome"].map(OUTCOME_MAP).fillna("Other")
     pivot = (
-        df.groupby(["chain_label", "outcome_group"], observed=False)
-        .size()
-        .unstack(fill_value=0)
+        df.groupby(["chain_label", "outcome_group"], observed=False).size().unstack(fill_value=0)
     )
     pivot = pivot.reindex(labels).dropna(how="all")
     if pivot.empty:
