@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -36,10 +35,13 @@ DEF_TIME_LABELS = ["0-2s", "2-5s", "5-10s", "10-30s", "30s+"]
 
 
 def _normalize_home_flag(series: pd.Series) -> pd.Series:
-    mapping = {True: True, False: False, "True": True, "False": False, 1: True, 0: False}
-    normalized = series.map(mapping)
-    normalized = normalized.fillna(False)
-    return normalized.astype(bool)
+    normalized = (
+        series.astype(str)
+        .str.strip()
+        .str.lower()
+        .map({"true": True, "1": True, "yes": True, "false": False, "0": False, "no": False})
+    )
+    return normalized.fillna(False).astype(bool)
 
 
 def _compose_bucket(df: pd.DataFrame, cols: Iterable[str], bucket_name: str) -> pd.DataFrame:
@@ -67,7 +69,9 @@ def _merge_finishing_bias(df: pd.DataFrame) -> pd.DataFrame:
     required_cols = {"match_id", "is_home"}
     missing = required_cols.difference(df.columns)
     if missing:
-        raise ValueError(f"CxG dataset missing columns for finishing priors merge: {sorted(missing)}")
+        raise ValueError(
+            f"CxG dataset missing columns for finishing priors merge: {sorted(missing)}"
+        )
 
     priors = priors.rename(
         columns={
@@ -94,7 +98,9 @@ def _merge_concession_bias(df: pd.DataFrame) -> pd.DataFrame:
     required_cols = {"match_id", "is_home"}
     missing = required_cols.difference(df.columns)
     if missing:
-        raise ValueError(f"CxG dataset missing columns for concession priors merge: {sorted(missing)}")
+        raise ValueError(
+            f"CxG dataset missing columns for concession priors merge: {sorted(missing)}"
+        )
 
     priors["is_home"] = _normalize_home_flag(priors["is_home"])
     df = df.copy()
@@ -122,12 +128,14 @@ def _merge_set_piece(df: pd.DataFrame) -> pd.DataFrame:
         df["set_piece_modeled_prob"] = np.nan
         return df
     priors = _compose_bucket(priors, SET_PIECE_BUCKET_COLS, "set_piece_bucket")
-    priors = priors[[
-        "set_piece_bucket",
-        "bucket_logit",
-        "odds_multiplier",
-        "modeled_prob",
-    ]].rename(
+    priors = priors[
+        [
+            "set_piece_bucket",
+            "bucket_logit",
+            "odds_multiplier",
+            "modeled_prob",
+        ]
+    ].rename(
         columns={
             "bucket_logit": "set_piece_logit",
             "odds_multiplier": "set_piece_multiplier",
@@ -149,12 +157,14 @@ def _merge_assist_quality(df: pd.DataFrame) -> pd.DataFrame:
         df["assist_quality_modeled_prob"] = np.nan
         return df
     priors = _compose_bucket(priors, ASSIST_BUCKET_COLS, "assist_bucket")
-    priors = priors[[
-        "assist_bucket",
-        "bucket_logit",
-        "odds_multiplier",
-        "modeled_prob",
-    ]].rename(
+    priors = priors[
+        [
+            "assist_bucket",
+            "bucket_logit",
+            "odds_multiplier",
+            "modeled_prob",
+        ]
+    ].rename(
         columns={
             "bucket_logit": "assist_quality_logit",
             "odds_multiplier": "assist_quality_multiplier",
@@ -196,12 +206,14 @@ def _merge_pressure(df: pd.DataFrame) -> pd.DataFrame:
         df["pressure_modeled_prob"] = np.nan
         return df
     priors = _compose_bucket(priors, PRESSURE_BUCKET_COLS, "pressure_bucket")
-    priors = priors[[
-        "pressure_bucket",
-        "bucket_logit",
-        "odds_multiplier",
-        "modeled_prob",
-    ]].rename(
+    priors = priors[
+        [
+            "pressure_bucket",
+            "bucket_logit",
+            "odds_multiplier",
+            "modeled_prob",
+        ]
+    ].rename(
         columns={
             "bucket_logit": "pressure_logit",
             "odds_multiplier": "pressure_multiplier",
@@ -243,12 +255,14 @@ def _merge_defensive_trigger(df: pd.DataFrame) -> pd.DataFrame:
         df["def_trigger_modeled_prob"] = np.nan
         return df
     priors = _compose_bucket(priors, DEF_TRIGGER_BUCKET_COLS, "def_trigger_bucket")
-    priors = priors[[
-        "def_trigger_bucket",
-        "bucket_logit",
-        "odds_multiplier",
-        "modeled_prob",
-    ]].rename(
+    priors = priors[
+        [
+            "def_trigger_bucket",
+            "bucket_logit",
+            "odds_multiplier",
+            "modeled_prob",
+        ]
+    ].rename(
         columns={
             "bucket_logit": "def_trigger_logit",
             "odds_multiplier": "def_trigger_multiplier",
@@ -285,8 +299,7 @@ def main() -> None:
     enriched.to_csv(csv_path, index=False)
 
     print(
-        "Wrote enriched CxG dataset with "
-        f"{len(enriched)} rows to {parquet_path} and {csv_path}"
+        "Wrote enriched CxG dataset with " f"{len(enriched)} rows to {parquet_path} and {csv_path}"
     )
 
 

@@ -12,9 +12,18 @@ def test_settings_load():
 
 def test_competition_filters():
     """Test competition filters configuration."""
-    assert len(settings.competitions) == 4
-    assert any(c["name"] == "FIFA World Cup" and c["season"] == "2018" for c in settings.competitions)
-    assert any(c["name"] == "UEFA Euro" and c["season"] == "2020" for c in settings.competitions)
+    configured_competitions = {
+        (competition["competition_id"], competition["season_id"])
+        for competition in settings.competitions
+    }
+
+    assert configured_competitions == {
+        (2, 27),
+        (43, 3),
+        (43, 106),
+        (55, 43),
+        (55, 282),
+    }
 
 
 def test_zone_definitions():

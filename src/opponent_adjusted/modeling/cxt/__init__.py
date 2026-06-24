@@ -17,7 +17,7 @@ from opponent_adjusted.modeling.cxt.cxt_api import (
 __all__ = [
     # Core model
     "train_cxt_model",
-    "evaluate_cxt_model", 
+    "evaluate_cxt_model",
     "CxTModel",
     # API
     "CxTPredictor",

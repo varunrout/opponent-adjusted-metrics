@@ -75,9 +75,7 @@ def prepare_game_state_features(df: pd.DataFrame) -> pd.DataFrame:
     enriched["score_state"] = enriched["score_diff_at_shot"].apply(_assign_score_state)
     enriched["simple_state"] = enriched.apply(_assign_simple_state, axis=1)
     enriched["minute_bucket_label"] = enriched["minute"].apply(_assign_minute_bucket)
-    enriched.loc[
-        enriched["minute_bucket_label"].isna(), "minute_bucket_label"
-    ] = enriched.loc[
+    enriched.loc[enriched["minute_bucket_label"].isna(), "minute_bucket_label"] = enriched.loc[
         enriched["minute_bucket_label"].isna(), "feature_minute_bucket"
     ].fillna("Unknown")
     enriched["score_state"] = pd.Categorical(
@@ -191,12 +189,9 @@ def plot_score_state_goal_rates(score_summary: pd.DataFrame) -> None:
 def plot_score_state_heatmap(score_summary: pd.DataFrame) -> None:
     labels = _top_chain_labels(score_summary)
     filtered = score_summary[
-        (score_summary["chain_label"].isin(labels))
-        & (score_summary["score_state"] != "Unknown")
+        (score_summary["chain_label"].isin(labels)) & (score_summary["score_state"] != "Unknown")
     ]
-    pivot = filtered.pivot(
-        index="chain_label", columns="score_state", values="lift_vs_xg"
-    )
+    pivot = filtered.pivot(index="chain_label", columns="score_state", values="lift_vs_xg")
     if pivot.empty:
         return
     valid_states = [state for state in SCORE_STATE_ORDER if state in pivot.columns]
@@ -228,7 +223,9 @@ def plot_minute_heatmap(minute_summary: pd.DataFrame) -> None:
     minute_columns = [label for label in MINUTE_LABELS if label in pivot.columns]
     pivot = pivot.reindex(index=labels, columns=minute_columns)
     fig, ax = plt.subplots(figsize=(STYLE.fig_width * 1.2, STYLE.fig_height))
-    im = ax.imshow(pivot.values, cmap="viridis", aspect="auto", vmin=0, vmax=np.nanmax(pivot.values))
+    im = ax.imshow(
+        pivot.values, cmap="viridis", aspect="auto", vmin=0, vmax=np.nanmax(pivot.values)
+    )
     ax.set_xticks(range(pivot.shape[1]))
     ax.set_xticklabels(pivot.columns, rotation=30, ha="right")
     ax.set_yticks(range(pivot.shape[0]))
@@ -268,9 +265,7 @@ def plot_state_distribution(score_summary: pd.DataFrame) -> None:
 
 
 def plot_score_minute_grid(df: pd.DataFrame) -> None:
-    filtered = df[
-        (df["score_state"] != "Unknown") & (df["minute_bucket_label"] != "Unknown")
-    ]
+    filtered = df[(df["score_state"] != "Unknown") & (df["minute_bucket_label"] != "Unknown")]
     if filtered.empty:
         return
     summary = (
@@ -279,9 +274,7 @@ def plot_score_minute_grid(df: pd.DataFrame) -> None:
         .reset_index()
     )
     summary["goal_rate"] = summary["goals"] / summary["shots"].clip(lower=1)
-    pivot = summary.pivot(
-        index="score_state", columns="minute_bucket_label", values="goal_rate"
-    )
+    pivot = summary.pivot(index="score_state", columns="minute_bucket_label", values="goal_rate")
     pivot = pivot.reindex([s for s in SCORE_STATE_ORDER if s in pivot.index])
     pivot = pivot.reindex(columns=[m for m in MINUTE_LABELS if m in pivot.columns])
     if pivot.empty:
@@ -300,9 +293,7 @@ def plot_score_minute_grid(df: pd.DataFrame) -> None:
 def plot_team_state_scatter(team_summary: pd.DataFrame) -> None:
     if team_summary.empty:
         return
-    pivot = team_summary.pivot(
-        index="team_name", columns="simple_state", values="goal_rate"
-    )
+    pivot = team_summary.pivot(index="team_name", columns="simple_state", values="goal_rate")
     required = {"Leading", "Trailing"}
     if not required.issubset(pivot.columns):
         return
@@ -319,16 +310,20 @@ def plot_team_state_scatter(team_summary: pd.DataFrame) -> None:
     ax.set_title("Team finishing by game state")
     delta = (subset["Trailing"] - subset["Leading"]).abs().sort_values(ascending=False)
     for team in delta.head(6).index:
-        ax.annotate(team, (subset.loc[team, "Leading"], subset.loc[team, "Trailing"]), textcoords="offset points", xytext=(4, 4), fontsize=STYLE.font_size_small)
+        ax.annotate(
+            team,
+            (subset.loc[team, "Leading"], subset.loc[team, "Trailing"]),
+            textcoords="offset points",
+            xytext=(4, 4),
+            fontsize=STYLE.font_size_small,
+        )
     save_figure(fig, analysis_type="cxg", name="game_state_team_scatter")
 
 
 def plot_team_state_delta(team_summary: pd.DataFrame) -> None:
     if team_summary.empty:
         return
-    pivot = team_summary.pivot(
-        index="team_name", columns="simple_state", values="goal_rate"
-    )
+    pivot = team_summary.pivot(index="team_name", columns="simple_state", values="goal_rate")
     if not {"Leading", "Trailing"}.issubset(pivot.columns):
         return
     pivot = pivot.dropna(subset=["Leading", "Trailing"])
@@ -337,7 +332,11 @@ def plot_team_state_delta(team_summary: pd.DataFrame) -> None:
     pivot["delta"] = pivot["Leading"] - pivot["Trailing"]
     top = pivot.reindex(pivot["delta"].abs().sort_values(ascending=False).head(10).index)
     fig, ax = plt.subplots(figsize=(STYLE.fig_width * 1.2, STYLE.fig_height))
-    ax.barh(top.index, top["delta"], color=np.where(top["delta"] >= 0, STYLE.primary_color, STYLE.secondary_color))
+    ax.barh(
+        top.index,
+        top["delta"],
+        color=np.where(top["delta"] >= 0, STYLE.primary_color, STYLE.secondary_color),
+    )
     ax.axvline(0, color=STYLE.grid_color, linestyle="--", linewidth=0.8)
     ax.set_xlabel("Goal rate delta (leading - trailing)")
     ax.set_title("Teams: finishing edge leading vs trailing")
@@ -356,9 +355,9 @@ def run_game_state_analysis(feature_version: str = "v1") -> None:
     team_lookup = _load_team_lookup()
     enriched["team_name"] = enriched["team_id"].map(team_lookup)
     missing_mask = enriched["team_name"].isna() & enriched["team_id"].notna()
-    enriched.loc[missing_mask, "team_name"] = (
-        "Team " + enriched.loc[missing_mask, "team_id"].astype(str)
-    )
+    enriched.loc[missing_mask, "team_name"] = "Team " + enriched.loc[
+        missing_mask, "team_id"
+    ].astype(str)
     score_summary = summarize_by_score_state(enriched)
     minute_summary = summarize_by_minute_bucket(enriched)
     team_summary = summarize_team_simple_state(enriched)

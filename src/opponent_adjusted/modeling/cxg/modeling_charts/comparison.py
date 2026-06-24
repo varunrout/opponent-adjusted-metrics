@@ -56,9 +56,7 @@ def _load_all_metrics(base_dir: Path) -> dict[str, dict]:
             continue
         metrics[label] = load_metrics_json(path)
     if missing:
-        raise FileNotFoundError(
-            "Missing metrics files: " + ", ".join(missing)
-        )
+        raise FileNotFoundError("Missing metrics files: " + ", ".join(missing))
     return metrics
 
 

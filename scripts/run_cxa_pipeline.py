@@ -62,18 +62,18 @@ def save_parquet(df, name: str, output_dir: Path) -> Path:
 def run_pipeline(competition_id: int = None, force: bool = False) -> dict:
     """
     Run the full cxA pipeline.
-    
+
     Args:
         competition_id: Filter to specific competition (None = all competitions)
         force: Overwrite existing files
-        
+
     Returns:
         Dictionary of output file paths
     """
     ensure_directories()
     output_dir = get_feature_store_path()
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     logger.info("=" * 70)
     logger.info("CxA PIPELINE")
     logger.info("=" * 70)
@@ -81,67 +81,72 @@ def run_pipeline(competition_id: int = None, force: bool = False) -> dict:
     logger.info(f"Output directory: {output_dir}")
     logger.info(f"Database: {settings.database_url}")
     logger.info("=" * 70)
-    
+
     outputs = {}
-    
+
     with get_session() as session:
         # 1. Lineups
         logger.info("\n[1/8] Building lineup dataset...")
         lineups_df = build_lineup_dataset(session, competition_id=competition_id)
         outputs["lineups"] = save_parquet(lineups_df, "lineups", output_dir)
-        
+
         # 2. Passes
         logger.info("\n[2/8] Building pass dataset...")
         passes_df = build_pass_dataset(session, competition_id=competition_id)
-        
+
         # Add xT features if available
         try:
             from opponent_adjusted.features.cxt.xt_model import add_xt_features
+
             passes_df = add_xt_features(passes_df)
             logger.info("Added xT features to passes")
         except ImportError:
             logger.warning("xT features not available")
-        
+
         outputs["passes"] = save_parquet(passes_df, "passes", output_dir)
-        
+
         # 3. Shots
         logger.info("\n[3/8] Building shot dataset...")
         shots_df = build_shot_dataset(session, competition_id=competition_id)
         outputs["shots"] = save_parquet(shots_df, "shots", output_dir)
-        
+
         # 4. Pass sequences (attribute passes to shots)
         logger.info("\n[4/8] Building pass sequences...")
         pass_sequences_df = build_pass_sequences(passes_df, shots_df, k=3)
         outputs["pass_sequences"] = save_parquet(pass_sequences_df, "pass_sequences", output_dir)
-        
+
         # 5. Possessions
         logger.info("\n[5/8] Building possession dataset...")
         possessions_df = build_possession_dataset(pass_sequences_df, shots_df)
         outputs["possessions"] = save_parquet(possessions_df, "possessions", output_dir)
-        
+
         # 6. Sequences (sequence-level, one row per assist sequence)
         logger.info("\n[6/8] Building sequence dataset...")
         sequences_df = build_sequence_dataset(pass_sequences_df, shots_df, k=3)
         outputs["sequences"] = save_parquet(sequences_df, "sequences", output_dir)
-        
+
         # 7. Action sequences (full chains including carries/dribbles)
         logger.info("\n[7/8] Building action sequences (passes + carries + dribbles)...")
         action_sequences_df = build_action_sequences(session, competition_id=competition_id, k=5)
-        outputs["action_sequences"] = save_parquet(action_sequences_df, "action_sequences", output_dir)
-        
+        outputs["action_sequences"] = save_parquet(
+            action_sequences_df, "action_sequences", output_dir
+        )
+
         # 8. Opposition context (enrich action sequences with opponent metrics)
         logger.info("\n[8/8] Building opposition context features...")
         # Load opponent profiles from CxG feature store
         cxg_profiles_path = settings.feature_store_path / "cxg" / "opponent_profiles.parquet"
         if cxg_profiles_path.exists():
             import pandas as pd
+
             opponent_profiles_df = pd.read_parquet(cxg_profiles_path)
             logger.info(f"Loaded {len(opponent_profiles_df):,} opponent profiles")
         else:
             import pandas as pd
+
             opponent_profiles_df = pd.DataFrame()
             logger.warning("Opponent profiles not found, run CxG pipeline first")
-        
+
         opposition_df = build_opposition_context(
             action_sequences_df=action_sequences_df,
             opponent_profiles_df=opponent_profiles_df,
@@ -150,7 +155,7 @@ def run_pipeline(competition_id: int = None, force: bool = False) -> dict:
         outputs["action_sequences_opposition"] = save_parquet(
             opposition_df, "action_sequences_opposition", output_dir
         )
-    
+
     # Save metadata
     metadata = {
         "pipeline": "cxa",
@@ -168,39 +173,37 @@ def run_pipeline(competition_id: int = None, force: bool = False) -> dict:
             "action_sequences_opposition": len(opposition_df) if not opposition_df.empty else 0,
         },
     }
-    
+
     import json
+
     metadata_path = output_dir / "pipeline_metadata.json"
     with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
     logger.info(f"\nSaved metadata: {metadata_path}")
-    
+
     logger.info("\n" + "=" * 70)
     logger.info("PIPELINE COMPLETE")
     logger.info("=" * 70)
     logger.info("Output files:")
     for name, path in outputs.items():
         logger.info(f"  {name}: {path}")
-    
+
     return outputs
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run cxA pipeline")
     parser.add_argument(
-        "--competition-id", "-c",
+        "--competition-id",
+        "-c",
         type=int,
         default=None,
-        help="Competition ID to process (default: None = all competitions)"
+        help="Competition ID to process (default: None = all competitions)",
     )
-    parser.add_argument(
-        "--force", "-f",
-        action="store_true",
-        help="Overwrite existing files"
-    )
-    
+    parser.add_argument("--force", "-f", action="store_true", help="Overwrite existing files")
+
     args = parser.parse_args()
-    
+
     try:
         run_pipeline(
             competition_id=args.competition_id,

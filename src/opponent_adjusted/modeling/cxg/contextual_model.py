@@ -27,7 +27,6 @@ from opponent_adjusted.modeling.modeling_utilities import (
     load_dataset_from_versions,
 )
 
-
 DATASET_ENV_VAR = "CXG_DATASET_VERSION"
 RUN_NAME_ENV_VAR = "CXG_CONTEXTUAL_RUN_NAME"
 
@@ -85,6 +84,7 @@ CATEGORICAL_FEATURES = [
     "set_piece_phase",
     "def_label",
 ]
+
 
 def _slugify(value: str | None) -> str:
     if not value:
@@ -306,7 +306,9 @@ def _plot_reliability(
     ax.set_title("CxG contextual model reliability")
     ax.legend()
     for x, n in zip(centers, counts):
-        ax.annotate(str(n), (x, 0), xytext=(0, -12), textcoords="offset points", ha="center", fontsize=6)
+        ax.annotate(
+            str(n), (x, 0), xytext=(0, -12), textcoords="offset points", ha="center", fontsize=6
+        )
     fig.tight_layout()
     suffix = f"_{run_label}" if run_label else ""
     fig.savefig(out_dir / f"contextual_model_reliability{suffix}.png", dpi=150)
