@@ -1,6 +1,7 @@
 """Pytest configuration and fixtures."""
 
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -13,29 +14,47 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from opponent_adjusted.config import settings, ensure_directories  # noqa: E402
+from opponent_adjusted.db.base import Base  # noqa: E402
+from opponent_adjusted.db import session as db_session  # noqa: E402
 
 
-@pytest.fixture(scope="session")
-def e2e_test_env(tmp_path_factory):
-    """Configure a lightweight SQLite-backed environment for end-to-end tests.
+@pytest.fixture
+def e2e_test_env(tmp_path):
+    """Configure a fixture-backed SQLite environment for end-to-end tests.
 
     This fixture:
-    - Points DATA_ROOT to a temporary directory under pytest's control
-    - Forces DATABASE_BACKEND=sqlite so the project uses the local dev DB file
+    - Copies the tiny committed StatsBomb fixture subset into pytest temp data
+    - Points DATA_ROOT and STATSBOMB_DATA_PATH to that temporary copy
+    - Forces DATABASE_BACKEND=sqlite and binds the DB session to a temp DB file
     - Ensures all required data / reports directories exist
 
     Returns the resolved data root path for further use in tests.
     """
 
-    data_root = tmp_path_factory.mktemp("e2e_data")
+    data_root = tmp_path / "e2e_data"
+    statsbomb_path = data_root / "statsbomb"
+    db_path = data_root / "opponent_adjusted.db"
+    fixture_statsbomb_path = Path(__file__).parent / "fixtures" / "statsbomb"
 
-    # Point config to the temporary data root and SQLite backend
+    data_root.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(fixture_statsbomb_path, statsbomb_path)
+
     os.environ["DATA_ROOT"] = str(data_root)
+    os.environ["STATSBOMB_DATA_PATH"] = str(statsbomb_path)
     os.environ["DATABASE_BACKEND"] = "sqlite"
+    os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
 
-    # Re-run directory setup for the new data root
     settings.data_root = data_root
+    settings.statsbomb_data_path = statsbomb_path
+    settings.database_backend = "sqlite"
+    settings.database_url = f"sqlite:///{db_path}"
     ensure_directories()
+
+    db_session.engine.dispose()
+    db_session.engine = db_session.create_engine(settings.database_url, echo=False)
+    db_session.SessionLocal.configure(bind=db_session.engine)
+    Base.metadata.drop_all(bind=db_session.engine)
+    Base.metadata.create_all(bind=db_session.engine)
 
     return data_root
 
