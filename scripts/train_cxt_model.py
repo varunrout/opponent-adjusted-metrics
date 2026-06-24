@@ -54,9 +54,9 @@ def main() -> int:
         help="Random state for reproducibility",
     )
     args = parser.parse_args()
-    
+
     start_time = datetime.now()
-    
+
     logger.info("=" * 70)
     logger.info("CxT MODEL TRAINING")
     logger.info("=" * 70)
@@ -64,16 +64,16 @@ def main() -> int:
     logger.info(f"Output: {args.output_dir}")
     logger.info(f"CV Folds: {args.cv_folds}")
     logger.info("=" * 70)
-    
+
     # Load data
     logger.info("\nLoading featured data...")
     if not args.input.exists():
         logger.error(f"Input file not found: {args.input}")
         return 1
-    
+
     df = pd.read_parquet(args.input)
     logger.info(f"Loaded {len(df):,} rows, {len(df.columns)} columns")
-    
+
     # Train model
     logger.info("\nTraining model...")
     model, metrics = train_cxt_model(
@@ -81,39 +81,40 @@ def main() -> int:
         n_splits=args.cv_folds,
         random_state=args.random_state,
     )
-    
+
     # Evaluate on full dataset
     logger.info("\nFinal evaluation...")
     eval_metrics = evaluate_cxt_model(model, df)
-    
+
     # Save model
     run_dir = args.output_dir / f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     model.save(run_dir)
-    
+
     # Save latest symlink/copy
     latest_dir = args.output_dir / "latest"
     if latest_dir.exists():
         import shutil
+
         shutil.rmtree(latest_dir)
     model.save(latest_dir)
-    
+
     # Generate predictions
     logger.info("\nGenerating predictions...")
     df["cxt_completion_prob"] = model.predict_completion_prob(df)
     df["cxt_expected_xt_gain"] = model.predict_xt_gain(df)
     df["cxt_value"] = model.predict_cxt(df)
-    
+
     # Save predictions
     pred_path = run_dir / "predictions.parquet"
     df.to_parquet(pred_path, index=False)
     logger.info(f"Predictions saved: {pred_path}")
-    
+
     # Generate report
     report_path = run_dir / "training_report.md"
     _generate_report(model, metrics, eval_metrics, report_path)
-    
+
     elapsed = datetime.now() - start_time
-    
+
     logger.info("\n" + "=" * 70)
     logger.info("TRAINING COMPLETE")
     logger.info("=" * 70)
@@ -123,7 +124,7 @@ def main() -> int:
     logger.info(f"Model saved: {run_dir}")
     logger.info(f"Elapsed time: {elapsed}")
     logger.info("=" * 70)
-    
+
     return 0
 
 
@@ -134,7 +135,7 @@ def _generate_report(
     output_path: Path,
 ) -> None:
     """Generate training report."""
-    
+
     lines = [
         "# CxT Model Training Report",
         "",
@@ -155,24 +156,24 @@ def _generate_report(
         "",
         "### Completion Model",
         "",
-        f"| Metric | Mean | Std |",
-        f"|--------|------|-----|",
+        "| Metric | Mean | Std |",
+        "|--------|------|-----|",
         f"| AUC | {cv_metrics['completion']['auc_mean']:.3f} | {cv_metrics['completion']['auc_std']:.3f} |",
         f"| Brier | {cv_metrics['completion']['brier_mean']:.4f} | {cv_metrics['completion']['brier_std']:.4f} |",
         f"| Log Loss | {cv_metrics['completion']['logloss_mean']:.4f} | {cv_metrics['completion']['logloss_std']:.4f} |",
         "",
         "### xT Gain Model",
         "",
-        f"| Metric | Mean | Std |",
-        f"|--------|------|-----|",
+        "| Metric | Mean | Std |",
+        "|--------|------|-----|",
         f"| R² | {cv_metrics['xt_gain']['r2_mean']:.3f} | {cv_metrics['xt_gain']['r2_std']:.3f} |",
         f"| MAE | {cv_metrics['xt_gain']['mae_mean']:.4f} | {cv_metrics['xt_gain']['mae_std']:.4f} |",
         f"| RMSE | {cv_metrics['xt_gain']['rmse_mean']:.4f} | {cv_metrics['xt_gain']['rmse_std']:.4f} |",
         "",
         "## Final Evaluation",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Completion AUC | {eval_metrics['completion_auc']:.3f} |",
         f"| Completion Brier | {eval_metrics['completion_brier']:.4f} |",
         f"| xT Gain R² | {eval_metrics['xt_gain_r2']:.3f} |",
@@ -188,40 +189,46 @@ def _generate_report(
         "### Numeric Features",
         "",
     ]
-    
+
     for feat in model.numeric_features:
         lines.append(f"- {feat}")
-    
-    lines.extend([
-        "",
-        "### Binary Features",
-        "",
-    ])
-    
+
+    lines.extend(
+        [
+            "",
+            "### Binary Features",
+            "",
+        ]
+    )
+
     for feat in model.binary_features[:10]:  # First 10
         lines.append(f"- {feat}")
     if len(model.binary_features) > 10:
         lines.append(f"- ... and {len(model.binary_features) - 10} more")
-    
-    lines.extend([
-        "",
-        "### Categorical Features",
-        "",
-    ])
-    
+
+    lines.extend(
+        [
+            "",
+            "### Categorical Features",
+            "",
+        ]
+    )
+
     for feat in model.categorical_features:
         lines.append(f"- {feat}")
-    
-    lines.extend([
-        "",
-        "## Interpretation",
-        "",
-        "- **CxT > 0**: Action expected to add threat (positive progression)",
-        "- **CxT < 0**: Action expected to reduce threat (negative progression)",
-        "- Higher CxT indicates more dangerous progressions considering context",
-        "",
-    ])
-    
+
+    lines.extend(
+        [
+            "",
+            "## Interpretation",
+            "",
+            "- **CxT > 0**: Action expected to add threat (positive progression)",
+            "- **CxT < 0**: Action expected to reduce threat (negative progression)",
+            "- Higher CxT indicates more dangerous progressions considering context",
+            "",
+        ]
+    )
+
     output_path.write_text("\n".join(lines), encoding="utf-8")
     logger.info(f"Report saved: {output_path}")
 

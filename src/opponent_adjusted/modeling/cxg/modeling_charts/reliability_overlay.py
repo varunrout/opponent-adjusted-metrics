@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,7 +17,6 @@ from opponent_adjusted.modeling.modeling_utilities import (
     load_dataset_from_versions,
 )
 from opponent_adjusted.modeling.plot_utilities import configure_modeling_style
-
 
 CONTEXTUAL_VARIANTS = {
     "filtered": contextual_model.DATASET_FILE_MAP["filtered"],
@@ -69,7 +68,9 @@ class ReliabilityCurve:
         )
 
 
-def _compute_reliability(y_true: np.ndarray, y_pred: np.ndarray, bins: int = 10) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _compute_reliability(
+    y_true: np.ndarray, y_pred: np.ndarray, bins: int = 10
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     clipped = np.clip(y_pred, 0.0, 1.0)
     edges = np.linspace(0.0, 1.0, bins + 1)
     ids = np.digitize(clipped, edges) - 1
@@ -92,7 +93,9 @@ def _run_baseline_curve() -> ReliabilityCurve:
     df = baseline_geometry._load_dataset()
     _, y_true, y_pred = baseline_geometry._train_and_evaluate(df)
     centers, observed, counts = _compute_reliability(y_true, y_pred)
-    return ReliabilityCurve("baseline", DISPLAY_NAMES["baseline"], LINE_COLORS["baseline"], centers, observed, counts)
+    return ReliabilityCurve(
+        "baseline", DISPLAY_NAMES["baseline"], LINE_COLORS["baseline"], centers, observed, counts
+    )
 
 
 def _run_contextual_curve(dataset_key: str, label: str) -> ReliabilityCurve:
@@ -107,7 +110,9 @@ def _run_contextual_curve(dataset_key: str, label: str) -> ReliabilityCurve:
         categorical,
     )
     centers, observed, counts = _compute_reliability(y_true, y_pred)
-    return ReliabilityCurve(label, DISPLAY_NAMES[label], LINE_COLORS[label], centers, observed, counts)
+    return ReliabilityCurve(
+        label, DISPLAY_NAMES[label], LINE_COLORS[label], centers, observed, counts
+    )
 
 
 def _run_provider_curve() -> ReliabilityCurve:
@@ -124,7 +129,9 @@ def _run_provider_curve() -> ReliabilityCurve:
     y_true = subset["is_goal"].astype(int).to_numpy()
     y_pred = subset["statsbomb_xg"].astype(float).to_numpy()
     centers, observed, counts = _compute_reliability(y_true, y_pred)
-    return ReliabilityCurve("provider", DISPLAY_NAMES["provider"], LINE_COLORS["provider"], centers, observed, counts)
+    return ReliabilityCurve(
+        "provider", DISPLAY_NAMES["provider"], LINE_COLORS["provider"], centers, observed, counts
+    )
 
 
 def _plot_curves(curves: Iterable[ReliabilityCurve], out_path: Path) -> None:

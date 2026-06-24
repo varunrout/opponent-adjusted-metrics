@@ -61,8 +61,8 @@ def _load_passes(path: Path) -> pd.DataFrame:
 def _ensure_assist_flag(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     if "is_assist" not in out.columns:
-        out["is_assist"] = (out["is_key_pass"] == True) & (
-            out["sequence_resulted_goal"] == True
+        out["is_assist"] = (out["is_key_pass"].fillna(False).astype(bool)) & (
+            out["sequence_resulted_goal"].fillna(False).astype(bool)
         )
     return out
 
@@ -111,9 +111,7 @@ def _player_leaderboard(df: pd.DataFrame) -> pd.DataFrame:
     grouped["assist_rate_per_key_pass"] = grouped["assists"] / grouped["key_passes"].replace(
         0, np.nan
     )
-    grouped["xa_per_key_pass"] = grouped["xa_baseline"] / grouped["key_passes"].replace(
-        0, np.nan
-    )
+    grouped["xa_per_key_pass"] = grouped["xa_baseline"] / grouped["key_passes"].replace(0, np.nan)
 
     grouped = grouped.sort_values("xa_baseline", ascending=False)
     return grouped
@@ -136,8 +134,12 @@ def _spatial_heatmap(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     # Bin centers for reference
-    heatmap["x_center"] = heatmap["x_bin"].apply(lambda i: (x_bins[i] + x_bins[i + 1]) / 2 if pd.notnull(i) else np.nan)
-    heatmap["y_center"] = heatmap["y_bin"].apply(lambda i: (y_bins[i] + y_bins[i + 1]) / 2 if pd.notnull(i) else np.nan)
+    heatmap["x_center"] = heatmap["x_bin"].apply(
+        lambda i: (x_bins[i] + x_bins[i + 1]) / 2 if pd.notnull(i) else np.nan
+    )
+    heatmap["y_center"] = heatmap["y_bin"].apply(
+        lambda i: (y_bins[i] + y_bins[i + 1]) / 2 if pd.notnull(i) else np.nan
+    )
     return heatmap
 
 

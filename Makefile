@@ -1,7 +1,7 @@
 .PHONY: help install migrate-create migrate-up migrate-down \
 	db-up db-down db-logs db-psql \
 	ingest-competitions ingest-matches ingest-events \
-	normalize-events \
+	normalize-events ingestion-report data-smoke \
 	build-features build-profiles \
 	run-cxa-pipeline run-cxg-pipeline run-cxg-analysis run-cxt-pipeline train-cxt evaluate-cxt \
 	fetch-data api test lint format clean
@@ -16,8 +16,8 @@ help:  ## Show this help message
 install:  ## Install dependencies
 	poetry install
 
-fetch-data:  ## Download StatsBomb subset (competitions, matches, events)
-	poetry run python scripts/fetch_statsbomb_subset.py --events
+fetch-data:  ## Download configured StatsBomb subset (CONFIG=..., FORCE=1 optional)
+	poetry run python scripts/fetch_statsbomb_subset.py --events --config $(or $(CONFIG),configs/statsbomb_subset.json) $(if $(FORCE),--force,)
 
 # Database
 migrate-create:  ## Create a new migration (use MSG="description")
@@ -49,14 +49,19 @@ ingest-competitions:  ## Ingest competitions
 ingest-matches:  ## Ingest matches
 	poetry run python scripts/ingest_matches.py
 
-ingest-events:  ## Ingest events
-	poetry run python scripts/ingest_events.py
+ingest-events:  ## Ingest events (LIMIT=10 optional)
+	poetry run python scripts/ingest_events.py $(if $(LIMIT),--limit $(LIMIT),)
 
 ingest-all: ingest-competitions ingest-matches ingest-events  ## Run full ingestion pipeline
 
 # Normalization
 normalize-events:  ## Normalize all raw events and populate detail tables
 	poetry run python scripts/normalize_events.py --only-missing --batch-size 20000 --fill-missing-detail
+
+ingestion-report:  ## Write database ingestion status report
+	poetry run python scripts/report_ingestion_status.py
+
+data-smoke: fetch-data ingest-all normalize-events ingestion-report  ## Fetch, ingest, normalize and report data status
 
 # Features
 build-features:  ## Build shot features (VERSION=v1)
@@ -113,4 +118,4 @@ clean:  ## Clean generated files
 	rm -rf .pytest_cache .coverage htmlcov .mypy_cache .ruff_cache
 
 # Full pipeline
-pipeline: ingest-all build-features build-profiles run-cxg-pipeline run-cxt-pipeline  ## Run complete pipeline
+pipeline: ingest-all normalize-events build-features build-profiles run-cxg-pipeline run-cxt-pipeline ingestion-report  ## Run complete pipeline

@@ -33,10 +33,11 @@ logger = logging.getLogger(__name__)
 def main():
     parser = argparse.ArgumentParser(description="Run cxG pipeline")
     parser.add_argument(
-        "--competition-id", "-c",
+        "--competition-id",
+        "-c",
         type=int,
         default=None,
-        help="Competition ID to process (default: None = all competitions)"
+        help="Competition ID to process (default: None = all competitions)",
     )
 
     args = parser.parse_args()

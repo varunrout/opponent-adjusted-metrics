@@ -43,7 +43,6 @@ import logging
 from pathlib import Path
 from typing import Dict, List
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -158,7 +157,13 @@ def run_phase5_joined_xap_comparison() -> Dict[str, object]:
     joined = joined.merge(pas, on=["player_id", "player_name"], how="left")
     joined = joined.merge(carry, on=["player_id", "player_name"], how="left")
 
-    for col in ["xa_plus_passes", "xa_plus_actions", "assist_passes", "pass_credit", "carry_credit"]:
+    for col in [
+        "xa_plus_passes",
+        "xa_plus_actions",
+        "assist_passes",
+        "pass_credit",
+        "carry_credit",
+    ]:
         if col in joined.columns:
             joined[col] = joined[col].fillna(0.0)
 
@@ -168,19 +173,28 @@ def run_phase5_joined_xap_comparison() -> Dict[str, object]:
     top_gainers = joined.sort_values("delta_actions_minus_passes", ascending=False)
     top_losers = joined.sort_values("delta_actions_minus_passes", ascending=True)
 
-    top_carry = (
-        joined.sort_values("carry_credit", ascending=False)
-        [["player_id", "player_name", "carry_credit", "xa_plus_actions", "xa_plus_passes", "delta_actions_minus_passes"]]
-    )
+    top_carry = joined.sort_values("carry_credit", ascending=False)[
+        [
+            "player_id",
+            "player_name",
+            "carry_credit",
+            "xa_plus_actions",
+            "xa_plus_passes",
+            "delta_actions_minus_passes",
+        ]
+    ]
 
-    top_pass_only = (
-        joined.sort_values("xa_plus_passes", ascending=False)
-        [["player_id", "player_name", "xa_plus_passes", "assist_passes"]]
-    )
+    top_pass_only = joined.sort_values("xa_plus_passes", ascending=False)[
+        ["player_id", "player_name", "xa_plus_passes", "assist_passes"]
+    ]
 
     # Summary
-    action_pass_share = float(p4_type_totals.loc[p4_type_totals["action_type"] == "Pass", "share"].iloc[0])
-    action_carry_share = float(p4_type_totals.loc[p4_type_totals["action_type"] == "Carry", "share"].iloc[0])
+    action_pass_share = float(
+        p4_type_totals.loc[p4_type_totals["action_type"] == "Pass", "share"].iloc[0]
+    )
+    action_carry_share = float(
+        p4_type_totals.loc[p4_type_totals["action_type"] == "Carry", "share"].iloc[0]
+    )
 
     overlap_goals = int(float(p4_summary["num_goals"].iloc[0]))
 

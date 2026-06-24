@@ -128,9 +128,7 @@ class Possession(Base):
     match_id: Mapped[int] = mapped_column(ForeignKey("matches.id"), nullable=False)
     possession_number: Mapped[int] = mapped_column(Integer, nullable=False)
     team_id: Mapped[int] = mapped_column(ForeignKey("teams.id"), nullable=False)
-    start_event_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("events.id"), nullable=True
-    )
+    start_event_id: Mapped[Optional[int]] = mapped_column(ForeignKey("events.id"), nullable=True)
     end_event_id: Mapped[Optional[int]] = mapped_column(ForeignKey("events.id"), nullable=True)
     start_minute: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     end_minute: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -190,7 +188,9 @@ class PassEvent(Base):
     pass_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     body_part: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     outcome: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    recipient_player_id: Mapped[Optional[int]] = mapped_column(ForeignKey("players.id"), nullable=True)
+    recipient_player_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("players.id"), nullable=True
+    )
     is_cross: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_through_ball: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
@@ -303,9 +303,7 @@ class Shot(Base):
 
     __tablename__ = "shots"
 
-    event_id: Mapped[int] = mapped_column(
-        ForeignKey("events.id"), unique=True, nullable=False
-    )
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=True, nullable=False)
     match_id: Mapped[int] = mapped_column(ForeignKey("matches.id"), nullable=False)
     team_id: Mapped[int] = mapped_column(ForeignKey("teams.id"), nullable=False)
     player_id: Mapped[Optional[int]] = mapped_column(ForeignKey("players.id"), nullable=True)
@@ -435,9 +433,7 @@ class ShotPrediction(Base):
     model: Mapped["ModelRegistry"] = relationship("ModelRegistry", back_populates="predictions")
 
     __table_args__ = (
-        UniqueConstraint(
-            "shot_id", "model_id", "is_neutralized", name="uq_shot_prediction"
-        ),
+        UniqueConstraint("shot_id", "model_id", "is_neutralized", name="uq_shot_prediction"),
         Index("ix_shot_predictions_model_id", "model_id"),
         Index("ix_shot_predictions_shot_id", "shot_id"),
     )

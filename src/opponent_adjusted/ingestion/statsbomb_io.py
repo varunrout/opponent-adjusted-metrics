@@ -114,7 +114,10 @@ class StatsBombLoader:
                 # Exact ID match takes precedence if provided
                 if "competition_id" in flt and "season_id" in flt:
                     try:
-                        if int(flt["competition_id"]) == comp_id and int(flt["season_id"]) == season_id:
+                        if (
+                            int(flt["competition_id"]) == comp_id
+                            and int(flt["season_id"]) == season_id
+                        ):
                             filtered.append(comp)
                             break
                     except (TypeError, ValueError):

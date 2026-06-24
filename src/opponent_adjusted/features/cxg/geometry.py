@@ -1,12 +1,13 @@
 """Geometric feature calculations for shots."""
 
 import numpy as np
-from typing import Optional, Tuple
 
 from opponent_adjusted.config import settings
 
 
-def calculate_distance(x: float, y: float, target_x: float = None, target_y: float = None) -> float:
+def calculate_distance(
+    x: float, y: float, target_x: float | None = None, target_y: float | None = None
+) -> float:
     """Calculate Euclidean distance from (x, y) to target point.
 
     Args:
@@ -23,7 +24,7 @@ def calculate_distance(x: float, y: float, target_x: float = None, target_y: flo
     if target_y is None:
         target_y = settings.goal_center_y
 
-    return np.sqrt((target_x - x) ** 2 + (target_y - y) ** 2)
+    return float(np.sqrt((target_x - x) ** 2 + (target_y - y) ** 2))
 
 
 def calculate_shot_angle(x: float, y: float) -> float:
@@ -121,9 +122,7 @@ def assign_zone(distance: float, centrality: float) -> str:
             return "F"
 
 
-def calculate_all_geometry_features(
-    x: float, y: float
-) -> dict:
+def calculate_all_geometry_features(x: float, y: float) -> dict:
     """Calculate all geometric features for a shot.
 
     Args:

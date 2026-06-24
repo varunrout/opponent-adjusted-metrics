@@ -5,7 +5,6 @@ from datetime import datetime
 from sqlalchemy import MetaData, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-
 # Naming convention for constraints
 convention = {
     "ix": "ix_%(column_0_label)s",
