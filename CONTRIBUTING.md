@@ -24,6 +24,8 @@ poetry run pytest -v
 
 Full-repo MyPy currently has a known typing backlog. New stable modules should be added to the typed-core MyPy scope once they are clean.
 
+E2E tests currently require local StatsBomb data and database setup, so normal CI excludes them until fixture-backed E2E tests are added. `pip-audit` is currently advisory while vulnerable dependency upgrades are handled in a separate hardening PR.
+
 For database-related changes, also run:
 
 ```bash

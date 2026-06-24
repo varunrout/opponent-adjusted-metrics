@@ -45,7 +45,7 @@ jobs:
         run: poetry run black --check src scripts tests
 
       # MyPy is intentionally scoped while the full-repo typing backlog is paid down.
-      # Ruff, Black, and Pytest still run across the full repo.
+      # Ruff and Black still run across the full repo.
       - name: MyPy
         run: >
           poetry run mypy
@@ -55,5 +55,7 @@ jobs:
           src/opponent_adjusted/features/context.py
           src/opponent_adjusted/features/geometry.py
 
+      # Normal CI runs deterministic non-E2E tests. Data-dependent E2E tests
+      # require fixture/data setup and are covered by Database Smoke or future hardening.
       - name: Pytest
-        run: poetry run pytest -v
+        run: poetry run pytest -v -m "not e2e"
