@@ -23,7 +23,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from opponent_adjusted.utils.logging import get_logger
+from opponent_adjusted.utils.logging import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -69,7 +69,9 @@ def _read_table(path: Path) -> pd.DataFrame:
     raise ValueError(f"Unsupported data format: {path.suffix}")
 
 
-def validate(contract_path: Path, data_path: Path, *, allow_forbidden: bool = False) -> dict[str, Any]:
+def validate(
+    contract_path: Path, data_path: Path, *, allow_forbidden: bool = False
+) -> dict[str, Any]:
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
     data = _read_table(data_path)
     actual_columns = set(data.columns)
@@ -92,7 +94,9 @@ def validate(contract_path: Path, data_path: Path, *, allow_forbidden: bool = Fa
         "missing_required": missing_required,
         "present_forbidden": present_forbidden,
         "missing_split_group": missing_split_group,
-        "valid": not missing_required and not missing_split_group and (allow_forbidden or not present_forbidden),
+        "valid": not missing_required
+        and not missing_split_group
+        and (allow_forbidden or not present_forbidden),
     }
     return report
 
@@ -100,7 +104,9 @@ def validate(contract_path: Path, data_path: Path, *, allow_forbidden: bool = Fa
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate data against a feature contract")
     parser.add_argument("--contract", type=Path, required=True, help="Feature contract JSON path")
-    parser.add_argument("--data", type=Path, required=True, help="CSV, JSON, JSONL, or parquet data path")
+    parser.add_argument(
+        "--data", type=Path, required=True, help="CSV, JSON, JSONL, or parquet data path"
+    )
     parser.add_argument(
         "--allow-forbidden",
         action="store_true",
