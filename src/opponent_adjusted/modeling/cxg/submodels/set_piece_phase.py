@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import pandas as pd
 
@@ -10,7 +9,6 @@ from opponent_adjusted.modeling.modeling_utilities import (
     get_modeling_output_dir,
     load_cxg_modeling_dataset,
 )
-
 
 COLUMNS = [
     "set_piece_category",
@@ -34,7 +32,9 @@ def _summarize(df: pd.DataFrame) -> pd.DataFrame:
     summary["goal_rate"] = summary["goals"] / summary["shots"].clip(lower=1)
     summary["xg_per_shot"] = summary["xg_total"] / summary["shots"].clip(lower=1)
     summary["lift_vs_xg"] = summary["goal_rate"] - summary["xg_per_shot"]
-    summary = summary.sort_values(["set_piece_category", "set_piece_phase", "lift_vs_xg"], ascending=[True, True, False])
+    summary = summary.sort_values(
+        ["set_piece_category", "set_piece_phase", "lift_vs_xg"], ascending=[True, True, False]
+    )
     return summary
 
 

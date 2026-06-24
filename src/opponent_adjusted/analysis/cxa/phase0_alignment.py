@@ -51,7 +51,7 @@ def _safe_goal_shot_ids(df: pd.DataFrame, label: str) -> Set[int]:
     if missing:
         raise ValueError(f"{label} is missing required columns: {sorted(missing)}")
 
-    goals = df[df["is_goal"] == True]
+    goals = df[df["is_goal"].fillna(False).astype(bool)]
     shot_ids = goals["shot_id"].dropna().astype(int).tolist()
     return set(shot_ids)
 
@@ -67,12 +67,14 @@ def _write_markdown_report(
     lines: List[str] = []
     lines.append("# cXA Phase 0 — Goal Population Alignment")
     lines.append("")
-    lines.append("This report aligns goal/assist populations between pass-only sequences and action sequences.")
+    lines.append(
+        "This report aligns goal/assist populations between pass-only sequences and action sequences."
+    )
     lines.append("")
     lines.append("## Counts")
     lines.append("")
-    lines.append(f"| Dataset | Goals |")
-    lines.append(f"|---------|-------|")
+    lines.append("| Dataset | Goals |")
+    lines.append("|---------|-------|")
     lines.append(f"| sequences.parquet | **{sequences_goals}** |")
     lines.append(f"| action_sequences.parquet | **{actions_goals}** |")
     lines.append(f"| Overlap (common `shot_id`) | **{overlap}** |")
@@ -80,7 +82,9 @@ def _write_markdown_report(
     lines.append("## Alignment Status")
     lines.append("")
     if sequences_goals == actions_goals and overlap == sequences_goals:
-        lines.append("✅ **ALIGNED** — Goal populations match. You can compare xA+ Passes and xA+ Actions directly.")
+        lines.append(
+            "✅ **ALIGNED** — Goal populations match. You can compare xA+ Passes and xA+ Actions directly."
+        )
     else:
         lines.append("⚠️ **NOT ALIGNED** — Goal populations differ.")
         lines.append("")
@@ -106,7 +110,9 @@ def _write_markdown_report(
     lines.append("")
     lines.append(f"Count: **{len(extra_in_actions)}**")
     lines.append("")
-    lines.append("These are likely goals with no passes in buildup (solo runs, direct shots after winning ball).")
+    lines.append(
+        "These are likely goals with no passes in buildup (solo runs, direct shots after winning ball)."
+    )
 
     out_path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -116,13 +122,20 @@ def _plot_counts(out_png: Path, counts: pd.DataFrame) -> None:
 
     fig, ax = plt.subplots(figsize=(8, 5))
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
-    bars = ax.bar(counts["dataset"], counts["goals"], color=colors[:len(counts)], alpha=0.85)
+    bars = ax.bar(counts["dataset"], counts["goals"], color=colors[: len(counts)], alpha=0.85)
     ax.set_title("Goal Population Counts (Phase 0 Alignment)", fontsize=12, fontweight="bold")
     ax.set_ylabel("# Goals (is_goal=True)")
     ax.set_xlabel("")
 
     for bar, v in zip(bars, counts["goals"]):
-        ax.text(bar.get_x() + bar.get_width()/2, v + 5, str(int(v)), ha="center", va="bottom", fontsize=11)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            v + 5,
+            str(int(v)),
+            ha="center",
+            va="bottom",
+            fontsize=11,
+        )
 
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
@@ -136,11 +149,11 @@ def run_phase0_alignment(
     output_path: Path | None = None,
 ) -> dict:
     """Run Phase 0 alignment analysis.
-    
+
     Args:
         feature_store_path: Path to feature_store/cxa/ (default: auto-detect)
         output_path: Path to output folder (default: outputs/analysis/cxa/phase0_alignment/)
-    
+
     Returns:
         dict with alignment summary
     """
@@ -171,24 +184,34 @@ def run_phase0_alignment(
     extra_in_actions = sorted(act_goal_ids - seq_goal_ids)
 
     # Save CSVs
-    counts = pd.DataFrame([
-        {"dataset": "sequences.parquet", "goals": len(seq_goal_ids)},
-        {"dataset": "action_sequences.parquet", "goals": len(act_goal_ids)},
-        {"dataset": "overlap", "goals": len(overlap_ids)},
-    ])
+    counts = pd.DataFrame(
+        [
+            {"dataset": "sequences.parquet", "goals": len(seq_goal_ids)},
+            {"dataset": "action_sequences.parquet", "goals": len(act_goal_ids)},
+            {"dataset": "overlap", "goals": len(overlap_ids)},
+        ]
+    )
 
-    overlap_summary = pd.DataFrame([{
-        "sequences_goals": len(seq_goal_ids),
-        "actions_goals": len(act_goal_ids),
-        "overlap_goals": len(overlap_ids),
-        "missing_in_actions": len(missing_in_actions),
-        "extra_in_actions": len(extra_in_actions),
-    }])
+    overlap_summary = pd.DataFrame(
+        [
+            {
+                "sequences_goals": len(seq_goal_ids),
+                "actions_goals": len(act_goal_ids),
+                "overlap_goals": len(overlap_ids),
+                "missing_in_actions": len(missing_in_actions),
+                "extra_in_actions": len(extra_in_actions),
+            }
+        ]
+    )
 
     counts.to_csv(out_data / "goal_counts.csv", index=False)
     overlap_summary.to_csv(out_data / "overlap_summary.csv", index=False)
-    pd.DataFrame({"shot_id": missing_in_actions}).to_csv(out_data / "shot_ids_missing_in_actions.csv", index=False)
-    pd.DataFrame({"shot_id": extra_in_actions}).to_csv(out_data / "shot_ids_extra_in_actions.csv", index=False)
+    pd.DataFrame({"shot_id": missing_in_actions}).to_csv(
+        out_data / "shot_ids_missing_in_actions.csv", index=False
+    )
+    pd.DataFrame({"shot_id": extra_in_actions}).to_csv(
+        out_data / "shot_ids_extra_in_actions.csv", index=False
+    )
 
     # Plot
     try:

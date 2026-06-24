@@ -89,7 +89,9 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
 
     df = pd.DataFrame([r.__dict__ for r in records])
     # Drop rows without geometry or location
-    df = df.dropna(subset=["shot_distance", "shot_angle", "location_x", "location_y"]).reset_index(drop=True)
+    df = df.dropna(subset=["shot_distance", "shot_angle", "location_x", "location_y"]).reset_index(
+        drop=True
+    )
     return df
 
 
@@ -112,7 +114,9 @@ def bin_and_aggregate_distance(df: pd.DataFrame) -> pd.DataFrame:
     agg["goal_rate"] = agg["goals"] / agg["shots"].clip(lower=1)
     # Bin midpoint for plotting
     agg["distance_mid"] = agg["distance_bin"].apply(
-        lambda interval: (interval.left + interval.right) / 2.0 if interval is not np.nan else np.nan
+        lambda interval: (
+            (interval.left + interval.right) / 2.0 if interval is not np.nan else np.nan
+        )
     )
     return agg
 
@@ -134,7 +138,9 @@ def bin_and_aggregate_angle(df: pd.DataFrame) -> pd.DataFrame:
     )
     agg["goal_rate"] = agg["goals"] / agg["shots"].clip(lower=1)
     agg["angle_mid"] = agg["angle_bin"].apply(
-        lambda interval: (interval.left + interval.right) / 2.0 if interval is not np.nan else np.nan
+        lambda interval: (
+            (interval.left + interval.right) / 2.0 if interval is not np.nan else np.nan
+        )
     )
     return agg
 

@@ -34,7 +34,7 @@ pytest-cov = "^4.1.0"
 black = "^24.1.0"
 ruff = "^0.2.0"
 mypy = "^1.8.0"
-httpx = "^0.28.1"
+httpx = ">=0.27,<0.28"
 
 [tool.poetry.group.dashboard]
 optional = true
@@ -65,3 +65,4 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = ["e2e: marks end-to-end smoke tests"]

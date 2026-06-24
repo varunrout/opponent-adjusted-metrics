@@ -64,26 +64,26 @@ def run_pipeline(
 ) -> dict:
     """
     Run the CxT data extraction pipeline.
-    
+
     Args:
         competition_id: Filter to specific competition (None = all competitions)
         force: Overwrite existing files
         include_dribbles: Whether to include dribbles (default True)
-        
+
     Returns:
         Dictionary of output file paths and statistics
     """
     ensure_directories()
     output_dir = get_feature_store_path()
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Check for existing files
     progressions_file = output_dir / "progressions.parquet"
     if progressions_file.exists() and not force:
         logger.warning(f"Output file exists: {progressions_file}")
         logger.warning("Use --force to overwrite")
         return {"skipped": True, "reason": "file exists"}
-    
+
     logger.info("=" * 70)
     logger.info("CxT PIPELINE")
     logger.info("=" * 70)
@@ -92,11 +92,11 @@ def run_pipeline(
     logger.info(f"Output directory: {output_dir}")
     logger.info(f"Database: {settings.database_url}")
     logger.info("=" * 70)
-    
+
     start_time = datetime.now()
     outputs = {}
     stats = {}
-    
+
     with get_session() as session:
         # Build progressions dataset
         logger.info("\n[1/1] Building progressions dataset...")
@@ -105,13 +105,15 @@ def run_pipeline(
             competition_id=competition_id,
             include_dribbles=include_dribbles,
         )
-        
+
         # Collect statistics
         stats = {
             "total_actions": len(progressions_df),
             "passes": int((progressions_df["action_type"] == "pass").sum()),
             "carries": int((progressions_df["action_type"] == "carry").sum()),
-            "dribbles": int((progressions_df["action_type"] == "dribble").sum()) if include_dribbles else 0,
+            "dribbles": (
+                int((progressions_df["action_type"] == "dribble").sum()) if include_dribbles else 0
+            ),
             "matches": int(progressions_df["match_id"].nunique()),
             "teams": int(progressions_df["team_id"].nunique()),
             "players": int(progressions_df["player_id"].nunique()),
@@ -119,13 +121,13 @@ def run_pipeline(
             "mean_xt_delta": float(progressions_df["xt_delta"].mean()),
             "progressive_actions_pct": float((progressions_df["is_progressive"]).mean() * 100),
         }
-        
+
         # Save output
         outputs["progressions"] = save_parquet(progressions_df, "progressions", output_dir)
-    
+
     # Calculate elapsed time
     elapsed = datetime.now() - start_time
-    
+
     # Save metadata
     metadata = {
         "pipeline": "cxt",
@@ -140,7 +142,7 @@ def run_pipeline(
         "statistics": stats,
     }
     save_metadata(metadata, output_dir)
-    
+
     # Print summary
     logger.info("\n" + "=" * 70)
     logger.info("PIPELINE COMPLETE")
@@ -155,7 +157,7 @@ def run_pipeline(
     logger.info(f"Mean xT delta: {stats['mean_xt_delta']:.6f}")
     logger.info(f"Elapsed time: {elapsed}")
     logger.info("=" * 70)
-    
+
     return {
         "outputs": outputs,
         "statistics": stats,
@@ -185,19 +187,19 @@ def main():
         action="store_true",
         help="Exclude dribbles from the dataset",
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         result = run_pipeline(
             competition_id=args.competition_id,
             force=args.force,
             include_dribbles=not args.no_dribbles,
         )
-        
+
         if result.get("skipped"):
             sys.exit(0)
-            
+
     except Exception as e:
         logger.error(f"Pipeline failed: {e}", exc_info=True)
         sys.exit(1)

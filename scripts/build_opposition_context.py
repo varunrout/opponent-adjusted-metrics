@@ -15,10 +15,8 @@ from __future__ import annotations
 
 import logging
 import sys
-import json
 import pandas as pd
 from pathlib import Path
-from datetime import datetime
 
 from opponent_adjusted.config import settings, ensure_directories
 from opponent_adjusted.db.session import get_session
@@ -48,20 +46,20 @@ def main():
     logger.info("=" * 70)
     logger.info("BUILDING OPPOSITION CONTEXT FEATURES")
     logger.info("=" * 70)
-    
+
     ensure_directories()
     cxa_path = get_cxa_path()
     cxg_path = get_cxg_path()
-    
+
     # Load action sequences
     action_seq_path = cxa_path / "action_sequences.parquet"
     if not action_seq_path.exists():
         raise FileNotFoundError(f"Action sequences not found at {action_seq_path}")
-    
+
     logger.info(f"\nLoading action sequences from {action_seq_path}...")
     action_sequences_df = pd.read_parquet(action_seq_path)
     logger.info(f"Loaded {len(action_sequences_df):,} action sequences")
-    
+
     # Load opponent profiles
     profiles_path = cxg_path / "opponent_profiles.parquet"
     logger.info(f"\nLoading opponent profiles from {profiles_path}...")
@@ -71,7 +69,7 @@ def main():
     else:
         logger.warning("Opponent profiles not found, using empty DataFrame")
         opponent_profiles_df = pd.DataFrame()
-    
+
     # Build opposition context
     logger.info("\n" + "-" * 50)
     with get_session() as session:
@@ -80,13 +78,13 @@ def main():
             opponent_profiles_df=opponent_profiles_df,
             session=session,
         )
-    
+
     # Save
     output_path = cxa_path / "action_sequences_opposition.parquet"
     df.to_parquet(output_path, index=False, engine="pyarrow")
     logger.info(f"\nSaved: {output_path}")
     logger.info(f"Shape: {df.shape}")
-    
+
     # Summary
     logger.info("\n" + "=" * 70)
     logger.info("OPPOSITION CONTEXT SUMMARY")

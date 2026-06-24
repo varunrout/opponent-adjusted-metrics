@@ -162,9 +162,7 @@ def _extract_key_pass_ids(session: Session, df: pd.DataFrame) -> pd.DataFrame:
         if (i + batch_size) % 1000 == 0 or (i + batch_size) >= total_ids:
             logger.info(f"  Processed {min(i + batch_size, total_ids):,}/{total_ids:,}")
 
-    df["key_pass_id"] = df["raw_event_id"].map(
-        lambda x: key_pass_map.get(x, {}).get("key_pass_id")
-    )
+    df["key_pass_id"] = df["raw_event_id"].map(lambda x: key_pass_map.get(x, {}).get("key_pass_id"))
     df["play_pattern"] = df["raw_event_id"].map(
         lambda x: key_pass_map.get(x, {}).get("play_pattern", "Unknown")
     )
@@ -174,7 +172,9 @@ def _extract_key_pass_ids(session: Session, df: pd.DataFrame) -> pd.DataFrame:
 
     # Count shots with key passes
     shots_with_assist = df["key_pass_id"].notna().sum()
-    logger.info(f"Shots with key_pass_id: {shots_with_assist:,} ({100*shots_with_assist/len(df):.1f}%)")
+    logger.info(
+        f"Shots with key_pass_id: {shots_with_assist:,} ({100*shots_with_assist/len(df):.1f}%)"
+    )
 
     return df
 
@@ -222,9 +222,7 @@ def _add_predictions(
         }
 
     df["cxg_raw"] = df["shot_id"].map(lambda x: pred_map.get(x, {}).get("cxg_raw"))
-    df["cxg_neutral"] = df["shot_id"].map(
-        lambda x: pred_map.get(x, {}).get("cxg_neutral")
-    )
+    df["cxg_neutral"] = df["shot_id"].map(lambda x: pred_map.get(x, {}).get("cxg_neutral"))
 
     return df
 
@@ -245,9 +243,7 @@ def _add_entity_names(session: Session, df: pd.DataFrame) -> pd.DataFrame:
     df["shooter_name"] = df["player_id"].map(player_map)
 
     # Team names
-    team_ids = list(set(
-        df["team_id"].tolist() + df["opponent_team_id"].tolist()
-    ))
+    team_ids = list(set(df["team_id"].tolist() + df["opponent_team_id"].tolist()))
     team_map = {}
     if team_ids:
         stmt = select(Team.id, Team.name).where(Team.id.in_(team_ids))
@@ -318,9 +314,8 @@ def link_shots_to_passes(
         return pass_df
 
     # Map UUID to raw_event_id
-    stmt = (
-        select(RawEvent.id, RawEvent.statsbomb_event_id)
-        .where(RawEvent.statsbomb_event_id.in_(key_pass_uuids))
+    stmt = select(RawEvent.id, RawEvent.statsbomb_event_id).where(
+        RawEvent.statsbomb_event_id.in_(key_pass_uuids)
     )
     uuid_to_raw_id = {}
     for raw_id, uuid in session.execute(stmt).all():

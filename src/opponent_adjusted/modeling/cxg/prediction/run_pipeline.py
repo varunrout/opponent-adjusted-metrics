@@ -8,7 +8,10 @@ from pathlib import Path
 from typing import Optional
 
 from opponent_adjusted.modeling.modeling_utilities import get_modeling_output_dir
-from opponent_adjusted.modeling.cxg.prediction.aggregate_reports import aggregate_to_matches, aggregate_to_table
+from opponent_adjusted.modeling.cxg.prediction.aggregate_reports import (
+    aggregate_to_matches,
+    aggregate_to_table,
+)
 from opponent_adjusted.modeling.cxg.prediction.score_dataset import score_dataset
 
 PREDICTION_OUTPUT_ROOT = get_modeling_output_dir("cxg", subdir="prediction_runs")

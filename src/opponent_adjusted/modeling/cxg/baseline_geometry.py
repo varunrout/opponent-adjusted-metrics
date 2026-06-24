@@ -158,7 +158,9 @@ def _plot_reliability(y_true: np.ndarray, y_pred: np.ndarray, out_dir: Path) -> 
     ax.legend()
 
     for x, n in zip(bin_centers, counts):
-        ax.annotate(str(n), (x, 0), xytext=(0, -12), textcoords="offset points", ha="center", fontsize=6)
+        ax.annotate(
+            str(n), (x, 0), xytext=(0, -12), textcoords="offset points", ha="center", fontsize=6
+        )
 
     fig.tight_layout()
     fig_path = out_dir / "baseline_geometry_reliability.png"
