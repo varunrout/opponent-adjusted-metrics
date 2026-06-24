@@ -1,0 +1,77 @@
+{
+  "metric": "cxa",
+  "version": "v1",
+  "description": "Feature contract for sequence-adjusted expected assist modelling.",
+  "grain": "one row per attacking action in a shot-linked sequence",
+  "identity_columns": [
+    "sequence_id",
+    "action_id",
+    "match_id",
+    "team_id",
+    "player_id",
+    "possession"
+  ],
+  "target_columns": [
+    "shot_created",
+    "resulting_shot_cxg"
+  ],
+  "required_numeric_features": [
+    "start_x",
+    "start_y",
+    "end_x",
+    "end_y",
+    "length",
+    "angle",
+    "minute",
+    "action_position",
+    "sequence_length",
+    "progressive_distance",
+    "x_progression",
+    "y_progression",
+    "start_xt",
+    "end_xt",
+    "xt_delta",
+    "contribution_score",
+    "estimated_defenders_bypassed"
+  ],
+  "required_binary_features": [
+    "under_pressure",
+    "is_pass",
+    "is_carry",
+    "is_dribble",
+    "is_cross",
+    "is_through_ball",
+    "is_progressive",
+    "is_highly_progressive",
+    "breaks_line",
+    "breaks_into_box",
+    "enters_zone14",
+    "enters_half_space"
+  ],
+  "required_categorical_features": [
+    "action_type",
+    "start_zone",
+    "end_zone",
+    "start_third",
+    "end_third",
+    "game_state"
+  ],
+  "forbidden_training_features": [
+    "goal_outcome_after_shot",
+    "shot_outcome",
+    "shooter_name",
+    "assisted_shot_outcome",
+    "post_shot_xg"
+  ],
+  "nullable_columns": [
+    "player_id",
+    "resulting_shot_cxg",
+    "estimated_defenders_bypassed"
+  ],
+  "split_group_column": "match_id",
+  "notes": [
+    "Public-facing methodology should use sequence-adjusted CxA rather than True xA.",
+    "Shot-quality labels should come from the CxG pipeline, not post-shot outcomes.",
+    "Credit distribution should be computed after shot creation and shot quality prediction."
+  ]
+}
