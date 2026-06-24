@@ -100,6 +100,7 @@ def test_features_and_api_wiring(e2e_test_env):
         },
     )
     assert resp.status_code == 501
+    assert "trained model artefact" in resp.json()["detail"]
 
     # Aggregates endpoints should 404 for an unknown / missing model
     resp = client.get("/aggregates/player", params={"model": "cxg_v1"})
