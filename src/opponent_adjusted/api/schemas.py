@@ -30,18 +30,18 @@ class ShotPredictionRequest(BaseModel):
     location_y: float = Field(..., ge=0, le=80, description="Y coordinate (0-80)")
 
     # Shot characteristics
-    body_part: str = Field(..., description="Body part (e.g., 'Right Foot')")
-    technique: str = Field(..., description="Technique (e.g., 'Normal', 'Volley')")
-    shot_type: str = Field(..., description="Shot type (e.g., 'Open Play')")
+    body_part: str = Field(..., description="Body part, for example 'Right Foot'")
+    technique: str = Field(..., description="Technique, for example 'Normal' or 'Volley'")
+    shot_type: str = Field(..., description="Shot type, for example 'Open Play'")
     first_time: bool = Field(False, description="First-time shot")
 
     # Context
     minute: int = Field(..., ge=0, le=120, description="Match minute")
-    score_diff: int = Field(..., description="Team goals - opponent goals")
-    under_pressure: bool = Field(False, description="Under defensive pressure")
+    score_diff: int = Field(..., description="Team goals minus opponent goals")
+    under_pressure: bool = Field(False, description="Whether shot was under defensive pressure")
 
     # Opponent
-    opponent_team_id: int = Field(..., description="Opponent team ID")
+    opponent_team_id: int = Field(..., description="Internal opponent team ID")
 
     # Optional possession context
     possession_duration: Optional[float] = Field(None, ge=0, description="Possession duration")
@@ -53,10 +53,13 @@ class ShotPredictionResponse(BaseModel):
 
     raw_probability: float = Field(..., description="Raw CxG probability")
     neutral_probability: float = Field(..., description="Neutralized CxG probability")
-    opponent_adjusted_diff: float = Field(..., description="Raw - neutral difference")
-    opponent_adjusted_ratio: float = Field(..., description="Raw / neutral ratio")
+    opponent_adjusted_diff: float = Field(..., description="Raw minus neutral difference")
+    opponent_adjusted_ratio: float = Field(..., description="Raw divided by neutral probability")
 
-    # Feature contributions (optional)
+    model_version: Optional[str] = Field(None, description="Model registry version if available")
+    model_path: Optional[str] = Field(None, description="Resolved local model artefact path")
+
+    # Feature contributions (optional future extension)
     geometry_score: Optional[float] = None
     context_score: Optional[float] = None
     opponent_effect: Optional[float] = None
