@@ -1,8 +1,6 @@
 """Configuration module for opponent-adjusted metrics project."""
 
-import os
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic import Field, ConfigDict
@@ -28,15 +26,11 @@ class Settings(BaseSettings):
 
     # Data paths
     data_root: Path = Field(default=Path("./data"), alias="DATA_ROOT")
-    statsbomb_data_path: Path = Field(
-        default=Path("./data/statsbomb"), alias="STATSBOMB_DATA_PATH"
-    )
+    statsbomb_data_path: Path = Field(default=Path("./data/statsbomb"), alias="STATSBOMB_DATA_PATH")
     model_artifacts_path: Path = Field(
         default=Path("./outputs/modeling"), alias="MODEL_ARTIFACTS_PATH"
     )
-    feature_store_path: Path = Field(
-        default=Path("./feature_store"), alias="FEATURE_STORE_PATH"
-    )
+    feature_store_path: Path = Field(default=Path("./feature_store"), alias="FEATURE_STORE_PATH")
 
     # API
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
@@ -67,10 +61,10 @@ class Settings(BaseSettings):
     # Supports either name/season matching or explicit IDs.
     # We default to explicit IDs for reproducibility.
     competitions: list = [
-        {"competition_id": 2, "season_id": 27},    # Premier League 2015/16
-        {"competition_id": 43, "season_id": 3},    # FIFA World Cup 2018
+        {"competition_id": 2, "season_id": 27},  # Premier League 2015/16
+        {"competition_id": 43, "season_id": 3},  # FIFA World Cup 2018
         {"competition_id": 43, "season_id": 106},  # FIFA World Cup 2022
-        {"competition_id": 55, "season_id": 43},   # UEFA Euro 2020
+        {"competition_id": 55, "season_id": 43},  # UEFA Euro 2020
         {"competition_id": 55, "season_id": 282},  # UEFA Euro 2024
     ]
 

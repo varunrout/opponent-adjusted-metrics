@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import pandas as pd
 
@@ -35,7 +34,9 @@ def _summarize(df: pd.DataFrame, group_col: str, label: str) -> pd.DataFrame:
     agg["lift_vs_xg"] = agg["goal_rate"] - agg["xg_per_shot"]
     lookup = _team_lookup()
     agg[label] = agg[group_col].map(lookup)
-    agg = agg[[label, group_col, "shots", "goals", "xg_total", "goal_rate", "xg_per_shot", "lift_vs_xg"]]
+    agg = agg[
+        [label, group_col, "shots", "goals", "xg_total", "goal_rate", "xg_per_shot", "lift_vs_xg"]
+    ]
     agg = agg.sort_values("lift_vs_xg", ascending=False)
     return agg
 

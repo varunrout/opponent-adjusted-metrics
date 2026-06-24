@@ -1,7 +1,6 @@
 """Time utilities for the opponent-adjusted metrics project."""
 
 from datetime import datetime, timedelta
-from typing import Optional
 
 
 def parse_statsbomb_timestamp(timestamp: str) -> datetime:

@@ -5,7 +5,6 @@ Optional flags:
 """
 
 import argparse
-from pathlib import Path
 
 from opponent_adjusted.db.models import Match, RawEvent
 from opponent_adjusted.db.session import session_scope

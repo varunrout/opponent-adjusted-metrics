@@ -13,8 +13,7 @@ Writes rows into `opponent_def_profile` with:
 import argparse
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.db.models import Shot, ShotFeature, OpponentDefProfile

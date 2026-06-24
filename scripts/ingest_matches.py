@@ -1,7 +1,6 @@
 """Script to ingest matches for filtered competitions from StatsBomb Open Data."""
 
 from datetime import datetime
-from pathlib import Path
 
 from opponent_adjusted.config import settings
 from opponent_adjusted.db.models import Competition, Match, Team
@@ -18,16 +17,8 @@ def _get_or_create_team(session, team_dict: dict, role: str) -> Team:
     Handles home_team / away_team naming differences.
     """
     # StatsBomb match JSON uses home_team_id / away_team_id, not nested id
-    team_id = (
-        team_dict.get(f"{role}_team_id")
-        or team_dict.get("team_id")
-        or team_dict.get("id")
-    )
-    name = (
-        team_dict.get(f"{role}_team_name")
-        or team_dict.get("team_name")
-        or team_dict.get("name")
-    )
+    team_id = team_dict.get(f"{role}_team_id") or team_dict.get("team_id") or team_dict.get("id")
+    name = team_dict.get(f"{role}_team_name") or team_dict.get("team_name") or team_dict.get("name")
 
     if team_id is None or name is None:
         raise ValueError(f"Missing team identifiers for role={role}: {team_dict.keys()}")
@@ -97,9 +88,7 @@ def ingest_matches() -> None:
             for m in matches:
                 sb_match_id = m.get("match_id")
                 # Deduplicate
-                existing = (
-                    session.query(Match).filter_by(statsbomb_match_id=sb_match_id).first()
-                )
+                existing = session.query(Match).filter_by(statsbomb_match_id=sb_match_id).first()
                 if existing:
                     skipped += 1
                     continue
@@ -125,9 +114,7 @@ def ingest_matches() -> None:
                     # Some datasets have 'kick_off' as HH:MM:SS
                     if m.get("kick_off"):
                         # Use today's date just to keep it as a datetime if time only
-                        kickoff = datetime.fromisoformat(
-                            f"1970-01-01T{m['kick_off']}"
-                        )
+                        kickoff = datetime.fromisoformat(f"1970-01-01T{m['kick_off']}")
                 except Exception:
                     pass
 

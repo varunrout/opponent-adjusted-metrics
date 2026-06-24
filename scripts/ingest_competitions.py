@@ -1,7 +1,5 @@
 """Script to ingest competitions from StatsBomb Open Data."""
 
-from pathlib import Path
-
 from opponent_adjusted.config import settings
 from opponent_adjusted.db.models import Competition
 from opponent_adjusted.db.session import session_scope
@@ -26,9 +24,7 @@ def ingest_competitions():
             "No competitions found. Make sure StatsBomb data is downloaded to: "
             f"{settings.statsbomb_data_path}"
         )
-        logger.info(
-            "To get StatsBomb data, clone: https://github.com/statsbomb/open-data"
-        )
+        logger.info("To get StatsBomb data, clone: https://github.com/statsbomb/open-data")
         return
 
     # Insert competitions
@@ -38,7 +34,6 @@ def ingest_competitions():
     with session_scope() as session:
         for comp in competitions:
             comp_id = comp["competition_id"]
-            season_id = comp["season_id"]
             comp_name = comp.get("competition_name", "")
             season_name = comp.get("season_name", "")
 
