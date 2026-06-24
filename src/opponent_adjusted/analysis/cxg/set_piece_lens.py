@@ -55,7 +55,13 @@ CATEGORY_GROUP_MAP = {
 HEATMAP_MAX_PANELS = 3
 TEAM_ANNOTATION_LIMIT = 6
 MIN_CATEGORY_SHOTS = 15
-SCORE_STATE_BUCKETS = [(-99, -2, "Trailing 2+"), (-1, -1, "Trailing 1"), (0, 0, "Level"), (1, 1, "Leading 1"), (2, 99, "Leading 2+")]
+SCORE_STATE_BUCKETS = [
+    (-99, -2, "Trailing 2+"),
+    (-1, -1, "Trailing 1"),
+    (0, 0, "Level"),
+    (1, 1, "Leading 1"),
+    (2, 99, "Leading 2+"),
+]
 SCORE_STATE_ORDER = [bucket[2] for bucket in SCORE_STATE_BUCKETS]
 MINUTE_BUCKETS = [0, 15, 30, 45, 60, 75, 90, 121]
 MINUTE_LABELS = ["0-15", "15-30", "30-45", "45-60", "60-75", "75-90", "90+"]
@@ -153,22 +159,14 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 "match_id": row.match_id,
                 "team_id": row.team_id,
                 "opponent_team_id": row.opponent_team_id,
-                "statsbomb_xg": float(row.statsbomb_xg)
-                if row.statsbomb_xg is not None
-                else np.nan,
+                "statsbomb_xg": float(row.statsbomb_xg) if row.statsbomb_xg is not None else np.nan,
                 "is_goal": is_goal,
-                "shot_distance": float(row.shot_distance)
-                if row.shot_distance is not None
-                else np.nan,
-                "shot_angle": float(row.shot_angle)
-                if row.shot_angle is not None
-                else np.nan,
-                "location_x": float(row.location_x)
-                if row.location_x is not None
-                else np.nan,
-                "location_y": float(row.location_y)
-                if row.location_y is not None
-                else np.nan,
+                "shot_distance": (
+                    float(row.shot_distance) if row.shot_distance is not None else np.nan
+                ),
+                "shot_angle": float(row.shot_angle) if row.shot_angle is not None else np.nan,
+                "location_x": float(row.location_x) if row.location_x is not None else np.nan,
+                "location_y": float(row.location_y) if row.location_y is not None else np.nan,
                 "minute": row.minute,
                 "second": row.second,
                 "under_pressure": bool(row.under_pressure),
@@ -205,8 +203,8 @@ def prepare_set_piece_features(df: pd.DataFrame) -> pd.DataFrame:
     enriched = df.copy()
     enriched["set_piece_category"] = enriched.apply(_classify_set_piece, axis=1)
     enriched["is_set_piece"] = enriched["set_piece_category"] != "Open Play"
-    enriched["set_piece_group"] = enriched["set_piece_category"].map(CATEGORY_GROUP_MAP).fillna(
-        "Open Play"
+    enriched["set_piece_group"] = (
+        enriched["set_piece_category"].map(CATEGORY_GROUP_MAP).fillna("Open Play")
     )
     enriched["set_piece_category"] = pd.Categorical(
         enriched["set_piece_category"], categories=CATEGORY_ORDER, ordered=True
@@ -215,18 +213,16 @@ def prepare_set_piece_features(df: pd.DataFrame) -> pd.DataFrame:
     enriched["team_name"] = enriched["team_id"].map(team_lookup)
     enriched["opponent_name"] = enriched["opponent_team_id"].map(team_lookup)
     missing_mask = enriched["team_name"].isna() & enriched["team_id"].notna()
-    enriched.loc[missing_mask, "team_name"] = (
-        "Team " + enriched.loc[missing_mask, "team_id"].astype(str)
-    )
+    enriched.loc[missing_mask, "team_name"] = "Team " + enriched.loc[
+        missing_mask, "team_id"
+    ].astype(str)
     opp_missing = enriched["opponent_name"].isna() & enriched["opponent_team_id"].notna()
-    enriched.loc[opp_missing, "opponent_name"] = (
-        "Team " + enriched.loc[opp_missing, "opponent_team_id"].astype(str)
-    )
+    enriched.loc[opp_missing, "opponent_name"] = "Team " + enriched.loc[
+        opp_missing, "opponent_team_id"
+    ].astype(str)
     enriched["score_state"] = enriched["score_diff_at_shot"].apply(_assign_score_state)
     enriched["minute_bucket"] = enriched["minute"].apply(_assign_minute_bucket)
-    enriched.loc[
-        enriched["minute_bucket"].isna(), "minute_bucket"
-    ] = "Unknown"
+    enriched.loc[enriched["minute_bucket"].isna(), "minute_bucket"] = "Unknown"
     enriched["score_state"] = pd.Categorical(
         enriched["score_state"], categories=SCORE_STATE_ORDER + ["Unknown"], ordered=True
     )
@@ -313,7 +309,9 @@ def summarize_category_score_state(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def summarize_category_phase(df: pd.DataFrame) -> pd.DataFrame:
-    subset = df[df["set_piece_category"].isin(CATEGORY_ORDER) & (df["set_piece_category"] != "Open Play")]
+    subset = df[
+        df["set_piece_category"].isin(CATEGORY_ORDER) & (df["set_piece_category"] != "Open Play")
+    ]
     if subset.empty:
         return pd.DataFrame()
     summary = (
@@ -374,7 +372,9 @@ def export_tables(
     if not category_score_summary.empty:
         category_score_summary.to_csv(out_dir / "set_piece_category_score_summary.csv", index=False)
     if not category_minute_summary.empty:
-        category_minute_summary.to_csv(out_dir / "set_piece_category_minute_summary.csv", index=False)
+        category_minute_summary.to_csv(
+            out_dir / "set_piece_category_minute_summary.csv", index=False
+        )
     if not phase_summary.empty:
         phase_summary.to_csv(out_dir / "set_piece_phase_summary.csv", index=False)
     if not opponent_summary.empty:
@@ -408,25 +408,23 @@ def plot_category_volume(summary: pd.DataFrame) -> None:
 
 
 def _slugify(value: str) -> str:
-    return (
-        value.lower()
-        .replace("+", " plus ")
-        .replace("/", "-")
-        .replace(" ", "-")
-    )
+    return value.lower().replace("+", " plus ").replace("/", "-").replace(" ", "-")
 
 
 def plot_set_piece_heatmaps(df: pd.DataFrame) -> None:
     counts = (
         df[df["set_piece_category"] != "Open Play"]
-        .groupby("set_piece_category", observed=False)
-        ["shot_id"]
+        .groupby("set_piece_category", observed=False)["shot_id"]
         .count()
         .sort_values(ascending=False)
     )
     top_categories = counts.head(HEATMAP_MAX_PANELS).index
     for category in top_categories:
-        subset = df[(df["set_piece_category"] == category) & df["location_x"].notna() & df["location_y"].notna()]
+        subset = df[
+            (df["set_piece_category"] == category)
+            & df["location_x"].notna()
+            & df["location_y"].notna()
+        ]
         if subset.empty or counts.loc[category] < MIN_CATEGORY_SHOTS:
             continue
         stat = pitch.bin_statistic(
@@ -465,7 +463,9 @@ def plot_team_share_vs_goal_rate(team_totals: pd.DataFrame) -> None:
     mean_goal_rate = team_totals["goal_rate"].mean()
     ax.axvline(mean_share, color=STYLE.grid_color, linestyle="--", linewidth=0.8)
     ax.axhline(mean_goal_rate, color=STYLE.grid_color, linestyle="--", linewidth=0.8)
-    annotate_candidates = team_totals.sort_values("shots", ascending=False).head(TEAM_ANNOTATION_LIMIT)
+    annotate_candidates = team_totals.sort_values("shots", ascending=False).head(
+        TEAM_ANNOTATION_LIMIT
+    )
     for _, row in annotate_candidates.iterrows():
         ax.annotate(
             row["team_name"],
@@ -511,7 +511,9 @@ def plot_category_minute_heatmap(category_minute_summary: pd.DataFrame) -> None:
     if pivot.empty:
         return
     fig, ax = plt.subplots(figsize=(STYLE.fig_width * 1.2, STYLE.fig_height))
-    im = ax.imshow(pivot.values, cmap="viridis", aspect="auto", vmin=0, vmax=np.nanmax(pivot.values))
+    im = ax.imshow(
+        pivot.values, cmap="viridis", aspect="auto", vmin=0, vmax=np.nanmax(pivot.values)
+    )
     ax.set_xticks(range(len(pivot.columns)))
     ax.set_xticklabels(pivot.columns, rotation=30, ha="right")
     ax.set_yticks(range(len(pivot.index)))

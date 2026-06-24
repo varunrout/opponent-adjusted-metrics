@@ -89,7 +89,9 @@ def plot_cxg_vs_provider_scatter(df: pd.DataFrame, out_path: Path) -> None:
     logger.info("Saved scatter chart -> %s", out_path)
 
 
-def generate_prediction_charts(team_csv: Path, output_dir: Optional[Path] = None, top_n: int = 10) -> None:
+def generate_prediction_charts(
+    team_csv: Path, output_dir: Optional[Path] = None, top_n: int = 10
+) -> None:
     df = pd.read_csv(team_csv)
     df = _ensure_team_names(df)
 
@@ -106,7 +108,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Plot prediction summaries")
     parser.add_argument("team_csv", type=Path, help="Path to team_aggregates.csv")
     parser.add_argument("--output-dir", type=Path, default=None, help="Directory for charts")
-    parser.add_argument("--top-n", type=int, default=10, help="Number of teams to show in bar charts")
+    parser.add_argument(
+        "--top-n", type=int, default=10, help="Number of teams to show in bar charts"
+    )
     return parser.parse_args()
 
 

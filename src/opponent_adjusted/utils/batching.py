@@ -1,6 +1,6 @@
 """Batching utilities for efficient database operations."""
 
-from typing import Any, Generator, List, TypeVar
+from typing import Generator, List, TypeVar
 
 T = TypeVar("T")
 

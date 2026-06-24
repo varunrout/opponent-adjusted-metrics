@@ -142,13 +142,9 @@ def load_shot_data(feature_version: str = "v1") -> pd.DataFrame:
                 team_name=row.team_name,
                 opponent_team_id=row.opponent_team_id,
                 opponent_team_name=row.opponent_team_name,
-                statsbomb_xg=float(row.statsbomb_xg)
-                if row.statsbomb_xg is not None
-                else None,
+                statsbomb_xg=float(row.statsbomb_xg) if row.statsbomb_xg is not None else None,
                 is_goal=is_goal,
-                shot_distance=float(row.shot_distance)
-                if row.shot_distance is not None
-                else None,
+                shot_distance=float(row.shot_distance) if row.shot_distance is not None else None,
                 shot_angle=float(row.shot_angle) if row.shot_angle is not None else None,
                 shot_event_id=row.event_id,
                 shot_possession=row.possession,
@@ -316,9 +312,9 @@ def classify_sequences(shots: pd.DataFrame, defensive_events: pd.DataFrame) -> p
         return df
 
     defensive_events = defensive_events.copy()
-    defensive_events["def_event_seconds"] = (
-        defensive_events["def_minute"].fillna(0) * 60 + defensive_events["def_second"].fillna(0)
-    )
+    defensive_events["def_event_seconds"] = defensive_events["def_minute"].fillna(
+        0
+    ) * 60 + defensive_events["def_second"].fillna(0)
     defensive_events = defensive_events.sort_values(
         ["match_id", "def_event_seconds", "def_event_id"]
     )
@@ -390,24 +386,19 @@ def classify_sequences(shots: pd.DataFrame, defensive_events: pd.DataFrame) -> p
         if bool_col in merged.columns:
             merged[bool_col] = merged[bool_col].astype("boolean")
 
-    merged["seconds_since_def_action"] = (
-        merged["shot_seconds"] - merged["def_event_seconds"]
-    )
+    merged["seconds_since_def_action"] = merged["shot_seconds"] - merged["def_event_seconds"]
     merged.loc[merged["seconds_since_def_action"] < 0, "seconds_since_def_action"] = np.nan
 
     if "pos_event_seconds" not in merged.columns:
         merged["pos_event_seconds"] = np.nan
 
-    merged["seconds_since_possession_event"] = (
-        merged["shot_seconds"] - merged["pos_event_seconds"]
+    merged["seconds_since_possession_event"] = merged["shot_seconds"] - merged["pos_event_seconds"]
+    merged.loc[merged["seconds_since_possession_event"] < 0, "seconds_since_possession_event"] = (
+        np.nan
     )
-    merged.loc[
-        merged["seconds_since_possession_event"] < 0, "seconds_since_possession_event"
-    ] = np.nan
 
-    mask_valid = (
-        (~merged["def_event_id"].isna())
-        & (merged["seconds_since_def_action"] <= MAX_EVENT_TIME_GAP_SECONDS)
+    mask_valid = (~merged["def_event_id"].isna()) & (
+        merged["seconds_since_def_action"] <= MAX_EVENT_TIME_GAP_SECONDS
     )
     immediate_cols = [
         "def_event_id",
@@ -523,7 +514,9 @@ def summarize_by_opponent(df: pd.DataFrame) -> pd.DataFrame:
         )
         .reset_index()
     )
-    opponent_summary["goal_rate"] = opponent_summary["goals"] / opponent_summary["shots"].clip(lower=1)
+    opponent_summary["goal_rate"] = opponent_summary["goals"] / opponent_summary["shots"].clip(
+        lower=1
+    )
     opponent_summary = opponent_summary.sort_values("xg_total", ascending=False)
     return opponent_summary
 
@@ -654,9 +647,11 @@ def plot_possession_lift(summary: pd.DataFrame) -> None:
 
 
 def _top_labels(summary: pd.DataFrame) -> List[str]:
-    labels = summary[summary["def_label"] != "No immediate defensive trigger"].head(4)[
-        "def_label"
-    ].tolist()
+    labels = (
+        summary[summary["def_label"] != "No immediate defensive trigger"]
+        .head(4)["def_label"]
+        .tolist()
+    )
     if (
         "No immediate defensive trigger" in summary["def_label"].values
         and "No immediate defensive trigger" not in labels

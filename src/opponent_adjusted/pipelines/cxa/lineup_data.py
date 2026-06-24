@@ -49,14 +49,11 @@ def build_lineup_dataset(
     logger.info("Building lineup dataset...")
 
     # Query Starting XI events
-    stmt = (
-        select(
-            RawEvent.id,
-            RawEvent.match_id,
-            RawEvent.raw_json,
-        )
-        .where(RawEvent.type == "Starting XI")
-    )
+    stmt = select(
+        RawEvent.id,
+        RawEvent.match_id,
+        RawEvent.raw_json,
+    ).where(RawEvent.type == "Starting XI")
 
     if match_ids:
         stmt = stmt.where(RawEvent.match_id.in_(match_ids))
@@ -84,17 +81,19 @@ def build_lineup_dataset(
             player_data = player_entry.get("player", {})
             position_data = player_entry.get("position", {})
 
-            lineup_rows.append({
-                "match_id": match_id,
-                "team_statsbomb_id": team_sb_id,
-                "team_name": team_name,
-                "player_statsbomb_id": player_data.get("id"),
-                "player_name": player_data.get("name"),
-                "tactical_position": position_data.get("name"),
-                "tactical_position_id": position_data.get("id"),
-                "formation": formation,
-                "jersey_number": player_entry.get("jersey_number"),
-            })
+            lineup_rows.append(
+                {
+                    "match_id": match_id,
+                    "team_statsbomb_id": team_sb_id,
+                    "team_name": team_name,
+                    "player_statsbomb_id": player_data.get("id"),
+                    "player_name": player_data.get("name"),
+                    "tactical_position": position_data.get("name"),
+                    "tactical_position_id": position_data.get("id"),
+                    "formation": formation,
+                    "jersey_number": player_entry.get("jersey_number"),
+                }
+            )
 
     df = pd.DataFrame(lineup_rows)
 
@@ -253,12 +252,8 @@ def enrich_passes_with_lineup(
     pass_df["tactical_group"] = pass_df.apply(
         lambda r: get_lineup_info(r, "position_group"), axis=1
     )
-    pass_df["tactical_code"] = pass_df.apply(
-        lambda r: get_lineup_info(r, "position_code"), axis=1
-    )
-    pass_df["formation"] = pass_df.apply(
-        lambda r: get_lineup_info(r, "formation"), axis=1
-    )
+    pass_df["tactical_code"] = pass_df.apply(lambda r: get_lineup_info(r, "position_code"), axis=1)
+    pass_df["formation"] = pass_df.apply(lambda r: get_lineup_info(r, "formation"), axis=1)
 
     # Fill unknowns
     pass_df["tactical_position"] = pass_df["tactical_position"].fillna("Unknown")

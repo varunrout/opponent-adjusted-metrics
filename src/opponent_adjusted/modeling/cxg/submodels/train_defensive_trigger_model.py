@@ -42,7 +42,9 @@ def _prepare(df: pd.DataFrame) -> pd.DataFrame:
     )
     subset = subset.dropna(subset=["time_gap_bucket"])
     subset["time_gap_bucket"] = subset["time_gap_bucket"].astype(str)
-    subset["possession_state"] = subset["possession_match"].map(lambda val: "Same" if bool(val) else "Different")
+    subset["possession_state"] = subset["possession_match"].map(
+        lambda val: "Same" if bool(val) else "Different"
+    )
     subset[GROUP_COLS] = subset[GROUP_COLS].fillna("Unknown")
     subset[BUCKET_COL] = subset[GROUP_COLS].agg("|".join, axis=1)
     subset = subset.dropna(subset=["statsbomb_xg", BUCKET_COL])

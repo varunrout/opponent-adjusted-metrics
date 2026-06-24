@@ -10,7 +10,6 @@ Usage:
 """
 
 import argparse
-from pathlib import Path
 from typing import Optional
 
 import sqlalchemy as sa
@@ -334,7 +333,9 @@ POPULATORS = {
 }
 
 
-def _normalize_missing_events(session, batch_size: int, start_id: Optional[int], limit: Optional[int]) -> int:
+def _normalize_missing_events(
+    session, batch_size: int, start_id: Optional[int], limit: Optional[int]
+) -> int:
     processed = 0
     # Build backlog query: only raw events without normalized Event
     q = (
@@ -401,7 +402,6 @@ def _fill_missing_details(session, batch_size: int, limit: Optional[int]) -> int
             .filter(RawEvent.type == evt_type, detail_model.event_id.is_(None))
             .order_by(Event.id)
         )
-        fetched = 0
         while True:
             bq = q.limit(batch_size)
             batch = bq.all()
@@ -444,11 +444,23 @@ def main(argv: list[str] | None = None) -> None:
     """
 
     parser = argparse.ArgumentParser(description="Normalize raw events to normalized tables")
-    parser.add_argument("--only-missing", dest="only_missing", action="store_true", default=True, help="Process only raw events missing in events table")
+    parser.add_argument(
+        "--only-missing",
+        dest="only_missing",
+        action="store_true",
+        default=True,
+        help="Process only raw events missing in events table",
+    )
     parser.add_argument("--from-id", type=int, default=None, help="Start from raw_event id >= N")
     parser.add_argument("--limit", type=int, default=None, help="Process at most N raw events")
-    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Batch size for processing")
-    parser.add_argument("--fill-missing-detail", action="store_true", help="Also fill missing specialized detail rows for already-normalized events")
+    parser.add_argument(
+        "--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Batch size for processing"
+    )
+    parser.add_argument(
+        "--fill-missing-detail",
+        action="store_true",
+        help="Also fill missing specialized detail rows for already-normalized events",
+    )
     parser.add_argument(
         "--fill-missing-pass-end-location",
         action="store_true",
@@ -464,7 +476,9 @@ def main(argv: list[str] | None = None) -> None:
         processed = 0
 
         if args.only_missing:
-            processed = _normalize_missing_events(session, args.batch_size, args.from_id, args.limit)
+            processed = _normalize_missing_events(
+                session, args.batch_size, args.from_id, args.limit
+            )
         else:
             # Fallback: iterate all raw events but _ensure_event makes it idempotent
             logger.info("Scanning all raw events (idempotent mode)...")
@@ -473,7 +487,11 @@ def main(argv: list[str] | None = None) -> None:
                 q = q.filter(RawEvent.id >= args.from_id)
             fetched = 0
             while True:
-                take = args.batch_size if args.limit is None else max(0, min(args.batch_size, args.limit - fetched))
+                take = (
+                    args.batch_size
+                    if args.limit is None
+                    else max(0, min(args.batch_size, args.limit - fetched))
+                )
                 if take == 0:
                     break
                 batch = q.limit(take).all()

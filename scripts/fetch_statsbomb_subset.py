@@ -66,7 +66,7 @@ def fetch_matches_for_filters(base_raw: str, out_root: Path, filters: list[dict]
         if "competition_id" not in flt or "season_id" not in flt:
             continue
         comp_id = int(flt["competition_id"])
-        season_id = int(flt["season_id"]) 
+        season_id = int(flt["season_id"])
         url = f"{base_raw}/matches/{comp_id}/{season_id}.json"
         dest = out_root / "matches" / str(comp_id) / f"{season_id}.json"
         if _fetch_to_file(url, dest):

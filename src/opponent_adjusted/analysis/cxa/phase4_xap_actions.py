@@ -30,13 +30,12 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set
 
 import matplotlib
 
 matplotlib.use("Agg")
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -61,7 +60,7 @@ def _load_parquet(path: Path) -> pd.DataFrame:
 def _goal_shot_ids_sequences(sequences_df: pd.DataFrame) -> Set[int]:
     df = sequences_df.copy()
     if "is_goal" in df.columns:
-        df = df[df["is_goal"] == True]
+        df = df[df["is_goal"].fillna(False).astype(bool)]
     if "shot_id" not in df.columns:
         return set()
     ids = set(df["shot_id"].dropna().astype(int).tolist())
@@ -70,7 +69,7 @@ def _goal_shot_ids_sequences(sequences_df: pd.DataFrame) -> Set[int]:
 
 def _credit_by_action_type(actions_long: pd.DataFrame) -> pd.DataFrame:
     df = actions_long.copy()
-    df = df[df["is_goal"] == True]
+    df = df[df["is_goal"].fillna(False).astype(bool)]
 
     grouped = (
         df.groupby("action_type")
@@ -88,7 +87,7 @@ def _credit_by_action_type(actions_long: pd.DataFrame) -> pd.DataFrame:
 
 def _credit_by_action_position(sequences_with_credit: pd.DataFrame) -> pd.DataFrame:
     df = sequences_with_credit.copy()
-    df = df[df["is_goal"] == True]
+    df = df[df["is_goal"].fillna(False).astype(bool)]
 
     cols = [c for c in df.columns if c.startswith("xa_plus_action")]
     totals = []
@@ -96,13 +95,15 @@ def _credit_by_action_position(sequences_with_credit: pd.DataFrame) -> pd.DataFr
     for col in sorted(cols, key=lambda s: int(s.replace("xa_plus_action", ""))):
         idx = int(col.replace("xa_plus_action", ""))
         credit = float(df[col].sum())
-        totals.append({"action_num": idx, "credit": credit, "share": credit / max(total_credit, 1e-9)})
+        totals.append(
+            {"action_num": idx, "credit": credit, "share": credit / max(total_credit, 1e-9)}
+        )
     return pd.DataFrame(totals)
 
 
 def _player_leaderboard(actions_long: pd.DataFrame) -> pd.DataFrame:
     df = actions_long.copy()
-    df = df[df["is_goal"] == True]
+    df = df[df["is_goal"].fillna(False).astype(bool)]
 
     grouped = (
         df.groupby(["player_id", "player_name"])  # type: ignore[pd]
@@ -197,7 +198,9 @@ def _write_outputs(
     data_dir.mkdir(parents=True, exist_ok=True)
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    goal_sequences = sequences_with_credit[sequences_with_credit["is_goal"] == True]
+    goal_sequences = sequences_with_credit[
+        sequences_with_credit["is_goal"].fillna(False).astype(bool)
+    ]
     total_credit = float(goal_sequences["xa_plus_total"].sum())
 
     type_df = _credit_by_action_type(actions_long)
@@ -205,7 +208,7 @@ def _write_outputs(
     players = _player_leaderboard(actions_long)
 
     # Player credit by action type
-    goal_actions = actions_long[actions_long["is_goal"] == True].copy()
+    goal_actions = actions_long[actions_long["is_goal"].fillna(False).astype(bool)].copy()
     if "player_id" in goal_actions.columns and "action_type" in goal_actions.columns:
         by_type = (
             goal_actions.groupby(["player_id", "player_name", "action_type"])  # type: ignore[pd]
@@ -214,7 +217,9 @@ def _write_outputs(
         )
         by_type = by_type.sort_values("xa_plus", ascending=False)
     else:
-        by_type = pd.DataFrame(columns=["player_id", "player_name", "action_type", "xa_plus", "actions"])
+        by_type = pd.DataFrame(
+            columns=["player_id", "player_name", "action_type", "xa_plus", "actions"]
+        )
 
     summary = {
         "num_goals": float(goal_sequences.shape[0]),
@@ -229,9 +234,21 @@ def _write_outputs(
     by_type.to_csv(data_dir / "player_credit_by_action_type.csv", index=False)
 
     if generate_plots:
-        _plot_type_share(type_df, plots_dir / "credit_by_action_type.png", f"xA+ Actions: credit by type {title_suffix}")
-        _plot_position_share(pos_df, plots_dir / "credit_by_action_position.png", f"xA+ Actions: credit by position {title_suffix}")
-        _plot_top_players(players, plots_dir / "top_players_xa_plus.png", f"Top players by xA+ Actions {title_suffix}")
+        _plot_type_share(
+            type_df,
+            plots_dir / "credit_by_action_type.png",
+            f"xA+ Actions: credit by type {title_suffix}",
+        )
+        _plot_position_share(
+            pos_df,
+            plots_dir / "credit_by_action_position.png",
+            f"xA+ Actions: credit by position {title_suffix}",
+        )
+        _plot_top_players(
+            players,
+            plots_dir / "top_players_xa_plus.png",
+            f"Top players by xA+ Actions {title_suffix}",
+        )
 
     _write_report(
         out_dir / report_name,
@@ -264,7 +281,9 @@ def run_phase4_xap_actions(temperature: float = 1.0) -> Dict[str, Any]:
     action_sequences = _load_parquet(action_sequences_path)
 
     logger.info("Computing xA+ Actions once (fit on full action_sequences)...")
-    seq_with_credit, actions_long, _model = compute_xa_plus_actions(action_sequences, temperature=temperature)
+    seq_with_credit, actions_long, _model = compute_xa_plus_actions(
+        action_sequences, temperature=temperature
+    )
 
     logger.info("Writing full outputs...")
     full_res: Dict[str, Any] = _write_outputs(
@@ -306,8 +325,12 @@ def run_phase4_xap_actions(temperature: float = 1.0) -> Dict[str, Any]:
     print("=" * 72)
     print("cXA Phase 4 — xA+ Actions Summary")
     print("=" * 72)
-    print(f"Full goals: {int(full_res['summary']['num_goals'])} | credit: {full_res['summary']['total_credit']:.1f}")
-    print(f"Overlap goals: {int(overlap_res['summary']['num_goals'])} | credit: {overlap_res['summary']['total_credit']:.1f}")
+    print(
+        f"Full goals: {int(full_res['summary']['num_goals'])} | credit: {full_res['summary']['total_credit']:.1f}"
+    )
+    print(
+        f"Overlap goals: {int(overlap_res['summary']['num_goals'])} | credit: {overlap_res['summary']['total_credit']:.1f}"
+    )
     print(f"Outputs: {output_root}")
 
     return {

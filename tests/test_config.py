@@ -13,7 +13,9 @@ def test_settings_load():
 def test_competition_filters():
     """Test competition filters configuration."""
     assert len(settings.competitions) == 4
-    assert any(c["name"] == "FIFA World Cup" and c["season"] == "2018" for c in settings.competitions)
+    assert any(
+        c["name"] == "FIFA World Cup" and c["season"] == "2018" for c in settings.competitions
+    )
     assert any(c["name"] == "UEFA Euro" and c["season"] == "2020" for c in settings.competitions)
 
 

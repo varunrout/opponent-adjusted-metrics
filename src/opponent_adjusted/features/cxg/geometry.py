@@ -1,7 +1,6 @@
 """Geometric feature calculations for shots."""
 
 import numpy as np
-from typing import Optional, Tuple
 
 from opponent_adjusted.config import settings
 
@@ -121,9 +120,7 @@ def assign_zone(distance: float, centrality: float) -> str:
             return "F"
 
 
-def calculate_all_geometry_features(
-    x: float, y: float
-) -> dict:
+def calculate_all_geometry_features(x: float, y: float) -> dict:
     """Calculate all geometric features for a shot.
 
     Args:

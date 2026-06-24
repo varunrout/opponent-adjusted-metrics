@@ -109,8 +109,12 @@ def load_shot_and_assist_data(feature_version: str = "v1") -> pd.DataFrame:
                 {
                     "shot_id": row.shot_id,
                     "is_goal": is_goal,
-                    "statsbomb_xg": float(row.statsbomb_xg) if row.statsbomb_xg is not None else np.nan,
-                    "shot_distance": float(row.shot_distance) if row.shot_distance is not None else np.nan,
+                    "statsbomb_xg": (
+                        float(row.statsbomb_xg) if row.statsbomb_xg is not None else np.nan
+                    ),
+                    "shot_distance": (
+                        float(row.shot_distance) if row.shot_distance is not None else np.nan
+                    ),
                     "shot_angle": float(row.shot_angle) if row.shot_angle is not None else np.nan,
                     "location_x": float(row.location_x) if row.location_x is not None else np.nan,
                     "location_y": float(row.location_y) if row.location_y is not None else np.nan,
@@ -131,10 +135,7 @@ def load_shot_and_assist_data(feature_version: str = "v1") -> pd.DataFrame:
         return df
 
     if pass_meta:
-        pass_records = [
-            {"key_pass_id": pid, **meta}
-            for pid, meta in pass_meta.items()
-        ]
+        pass_records = [{"key_pass_id": pid, **meta} for pid, meta in pass_meta.items()]
         pass_df = pd.DataFrame(pass_records)
         df = df.merge(pass_df, how="left", on="key_pass_id")
     pass_value_cols = [
@@ -161,9 +162,7 @@ def load_shot_and_assist_data(feature_version: str = "v1") -> pd.DataFrame:
             )
 
     df["assist_category"] = df.apply(_categorize_assist, axis=1)
-    df["pressure_state"] = np.where(
-        df["under_pressure"], "Under pressure", "Not under pressure"
-    )
+    df["pressure_state"] = np.where(df["under_pressure"], "Under pressure", "Not under pressure")
     foot_pref = _infer_player_strong_foot(df)
     df["foot_finish_group"] = df.apply(
         lambda row: _categorize_foot_finish(row, foot_pref),
@@ -244,10 +243,7 @@ def _categorize_assist(row: pd.Series) -> str:
 
 
 def _infer_player_strong_foot(df: pd.DataFrame) -> Dict[int, str]:
-    mask = (
-        df["shot_body_part"].isin({"Left Foot", "Right Foot"})
-        & df["player_id"].notna()
-    )
+    mask = df["shot_body_part"].isin({"Left Foot", "Right Foot"}) & df["player_id"].notna()
     foot_df = df[mask].copy()
     if foot_df.empty:
         return {}
@@ -273,7 +269,11 @@ def _categorize_foot_finish(row: pd.Series, preferences: Dict[int, str]) -> str:
     body_part = (row.get("shot_body_part") or "Unknown").strip()
     if body_part in {"Left Foot", "Right Foot"}:
         player_id = row.get("player_id")
-        pref = preferences.get(int(player_id)) if player_id is not None and not pd.isna(player_id) else None
+        pref = (
+            preferences.get(int(player_id))
+            if player_id is not None and not pd.isna(player_id)
+            else None
+        )
         if pref is None:
             return "Footed shot (unknown preference)"
         return "Strong Foot" if body_part == pref else "Weak Foot"

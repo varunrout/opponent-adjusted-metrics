@@ -17,10 +17,9 @@ Example usage (from project root):
 from __future__ import annotations
 
 import argparse
-from typing import Optional
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from opponent_adjusted.analysis import (
     compute_shot_level_cxg,

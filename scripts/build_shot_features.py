@@ -6,7 +6,6 @@ version tag.
 """
 
 import argparse
-from pathlib import Path
 from typing import Dict
 
 from opponent_adjusted.db.session import session_scope
@@ -58,9 +57,7 @@ def populate_game_state_features(session, version: str) -> int:
         score_diff = team_score - opp_score
         game_state = calculate_game_state(score_diff)
         minute_bucket = (
-            calculate_minute_bucket_label(int(event.minute))
-            if event.minute is not None
-            else None
+            calculate_minute_bucket_label(int(event.minute)) if event.minute is not None else None
         )
 
         changed = False
@@ -247,7 +244,12 @@ def main(argv: list[str] | None = None) -> None:
                     inserted += 1
                 processed += 1
                 if processed % 5000 == 0:
-                    logger.info("Processed %d/%d shots; features inserted so far: %d", processed, total, inserted)
+                    logger.info(
+                        "Processed %d/%d shots; features inserted so far: %d",
+                        processed,
+                        total,
+                        inserted,
+                    )
             offset += batch_size
 
         context_updates = populate_game_state_features(session, args.version)

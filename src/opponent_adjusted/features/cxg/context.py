@@ -1,6 +1,5 @@
 """Context feature calculations for shots."""
 
-from typing import Optional
 from opponent_adjusted.utils.time import get_minute_bucket
 
 
