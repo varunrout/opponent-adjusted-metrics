@@ -136,11 +136,12 @@ def load_latest_cxg_model() -> LoadedCxGModel:
         try:
             model = joblib.load(model_path)
             metadata = _load_metadata(model_path)
+            version = metadata.get("model_version") or metadata.get("version") or registry_version
             return LoadedCxGModel(
                 model=model,
                 metadata=metadata,
                 model_path=model_path,
-                version=registry_version,
+                version=version,
             )
         except Exception as exc:
             logger.warning("Could not load CxG model from %s: %s", model_path, exc)

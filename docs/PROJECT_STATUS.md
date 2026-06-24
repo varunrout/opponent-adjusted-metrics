@@ -28,11 +28,11 @@ The project still needs final completion work in CI/CD, reproducibility, model-c
 | Data ingestion | Partial | Scripts exist, but fresh-clone reproducibility and idempotency need verification. |
 | Event normalisation | Partial | Normalisation path exists. Needs row-count and integrity reporting. |
 | Feature engineering | Partial | Feature modules exist. Needs formal contracts and leakage gates. |
-| CxG modelling | Partial to mostly complete | Modelling artifacts and reports exist. Needs one-command reproducible training/evaluation and API wiring. |
-| CxG neutralisation | Partial | Needs consolidated run path and registry linkage. |
+| CxG modelling | Mostly complete | One-command end-to-end training/evaluation/export now exists; further calibration and production monitoring remain future work. |
+| CxG neutralisation | Mostly complete | End-to-end runner exports raw, neutral and opponent-adjusted shot scores plus player/team aggregates. |
 | CxA modelling | Partial | Analysis and methodology exist. Needs final public methodology and reproducible sequence scoring. |
 | CxT modelling | Partial | Evaluation exists, but leakage warning must be resolved. |
-| API | Partial | Health/model/aggregate routes exist. `/predict/cxg` still needs real artifact-backed inference. |
+| API | Partial | Health/model/aggregate routes exist and `/predict/cxg` can load the emitted CxG artifact; registry-backed aggregate serving still needs completion. |
 | Dashboard | Partial | Dashboard material exists. Needs stable output contracts and screenshots. |
 | Tests | Partial | Tests exist. Needs CI enforcement and broader smoke coverage. |
 | CI/CD | Missing | GitHub Actions workflows need to be added. |
@@ -45,8 +45,8 @@ The repository cannot be treated as complete until these are resolved:
 1. CI/CD workflows are added and passing.
 2. Fresh-clone setup is tested against Docker Postgres.
 3. Feature contracts exist for CxG, CxA and CxT.
-4. CxG can train, evaluate, neutralise and export outputs through a single reproducible path.
-5. `/predict/cxg` returns real model-backed predictions when an artifact is configured.
+4. CxG needs further calibration/monitoring beyond the reproducible baseline path.
+5. Registry-backed aggregate serving needs final wiring beyond file exports.
 6. CxT leakage warning is fixed and the report is regenerated.
 7. README, project status and implementation docs are aligned.
 8. Dashboard reads stable generated outputs.
@@ -62,7 +62,7 @@ Recommended PR sequence:
 2. CI/CD and repository hygiene.
 3. Data ingestion reproducibility.
 4. Feature contracts and quality gates.
-5. CxG end-to-end completion.
+5. CxG end-to-end completion (baseline runner implemented; calibration refinements remain).
 6. API inference completion.
 7. CxA completion.
 8. CxT leakage fix and completion.
