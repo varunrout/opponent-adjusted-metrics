@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-from sqlalchemy import select, and_
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from opponent_adjusted.db.models import (
@@ -103,9 +103,7 @@ def build_pass_dataset(
         )
 
     if not include_incomplete:
-        stmt = stmt.where(
-            PassEvent.outcome.is_(None) | (PassEvent.outcome == "Complete")
-        )
+        stmt = stmt.where(PassEvent.outcome.is_(None) | (PassEvent.outcome == "Complete"))
 
     # Order for sequence analysis
     stmt = stmt.order_by(Event.match_id, Event.period, Event.minute, Event.second)
@@ -153,7 +151,7 @@ def _enrich_with_raw_data(session: Session, df: pd.DataFrame) -> pd.DataFrame:
     for i in range(0, len(raw_event_ids), batch_size):
         batch_ids = raw_event_ids[i : i + batch_size]
         stmt = select(
-            RawEvent.id, 
+            RawEvent.id,
             RawEvent.statsbomb_event_id,
             RawEvent.raw_json,
         ).where(RawEvent.id.in_(batch_ids))
@@ -227,16 +225,13 @@ def _add_match_context(session: Session, df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Adding match context for {len(match_ids):,} matches...")
 
     # Query match info
-    stmt = (
-        select(
-            Match.id,
-            Match.home_team_id,
-            Match.away_team_id,
-            Match.competition_id,
-            Match.match_date,
-        )
-        .where(Match.id.in_(match_ids))
-    )
+    stmt = select(
+        Match.id,
+        Match.home_team_id,
+        Match.away_team_id,
+        Match.competition_id,
+        Match.match_date,
+    ).where(Match.id.in_(match_ids))
 
     match_data = {}
     for row in session.execute(stmt).mappings().all():
@@ -253,10 +248,9 @@ def _add_match_context(session: Session, df: pd.DataFrame) -> pd.DataFrame:
     df["_away_team_id"] = df["match_id"].map(away_map)
 
     import numpy as np
+
     df["opponent_team_id"] = np.where(
-        df["team_id"] == df["_home_team_id"],
-        df["_away_team_id"],
-        df["_home_team_id"]
+        df["team_id"] == df["_home_team_id"], df["_away_team_id"], df["_home_team_id"]
     )
 
     # Drop helper columns
@@ -276,31 +270,30 @@ def _derive_fields(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Deriving additional fields...")
 
     # Pass completion flag
-    df["is_complete"] = (
-        df["pass_outcome"].isna() | (df["pass_outcome"] == "Complete")
-    ).astype(bool)
+    df["is_complete"] = (df["pass_outcome"].isna() | (df["pass_outcome"] == "Complete")).astype(
+        bool
+    )
 
     # Broad position groups (for on-pitch analysis) - vectorized
     df["on_pitch_zone"] = pd.cut(
-        df["end_x"].fillna(0),
-        bins=[-1, 40, 80, 121],
-        labels=["Defensive", "Middle", "Attacking"]
+        df["end_x"].fillna(0), bins=[-1, 40, 80, 121], labels=["Defensive", "Middle", "Attacking"]
     ).astype(str)
     df.loc[df["end_x"].isna(), "on_pitch_zone"] = "Unknown"
 
     # Set piece flag
-    df["is_set_piece"] = df["play_pattern"].isin([
-        "From Corner",
-        "From Free Kick",
-        "From Throw In",
-        "From Goal Kick",
-        "From Kick Off",
-    ])
+    df["is_set_piece"] = df["play_pattern"].isin(
+        [
+            "From Corner",
+            "From Free Kick",
+            "From Throw In",
+            "From Goal Kick",
+            "From Kick Off",
+        ]
+    )
 
     # Progressive pass (moves ball significantly toward goal) - vectorized
-    df["is_progressive"] = (
-        ((df["end_x"].fillna(0) - df["start_x"].fillna(0)) >= 10) &
-        (df["end_x"].fillna(0) >= 48)
+    df["is_progressive"] = ((df["end_x"].fillna(0) - df["start_x"].fillna(0)) >= 10) & (
+        df["end_x"].fillna(0) >= 48
     )
 
     # Final third pass
@@ -308,9 +301,9 @@ def _derive_fields(df: pd.DataFrame) -> pd.DataFrame:
 
     # Into box pass (approximation: x > 102, 18 < y < 62)
     df["is_into_box"] = (
-        (df["end_x"].fillna(0) >= 102) &
-        (df["end_y"].fillna(0) >= 18) &
-        (df["end_y"].fillna(0) <= 62)
+        (df["end_x"].fillna(0) >= 102)
+        & (df["end_y"].fillna(0) >= 18)
+        & (df["end_y"].fillna(0) <= 62)
     )
 
     return df

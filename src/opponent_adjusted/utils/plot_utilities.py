@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Tuple, Any
+from typing import Mapping, Any
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -21,7 +21,6 @@ import pandas as pd
 import seaborn as sns
 
 from opponent_adjusted.config import settings
-
 
 # ---------------------------------------------------------------------------
 # Global style configuration

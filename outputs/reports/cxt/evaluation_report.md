@@ -4,7 +4,7 @@ Generated: 2026-03-06 12:28:06
 
 ## Executive Summary
 
-The CxT (Contextual xT) model predicts expected threat value for ball progression actions 
+The CxT (Contextual xT) model predicts expected threat value for ball progression actions
 (passes, carries, dribbles), adjusted for opponent defensive quality and game context.
 
 ### Key Results
@@ -29,9 +29,13 @@ CxT uses a two-stage model:
 
 ### Features Used
 
-- **Numeric**: start_xt, xt_delta, minute_normalized, opponent ratings
+- **Numeric**: start_xt, minute_normalized, opponent ratings
 - **Binary**: under_pressure, is_progressive, zone flags, action types
 - **Categorical**: action_type, start_third, macro_zone_start
+
+### Leakage Control
+
+`xt_delta` is excluded from completion-model inputs. It is used only as the regression target for the value-gain model on completed actions. This control is documented in `docs/modeling/cxt/leakage_controls.md`.
 
 ## 2. Discrimination Performance
 
@@ -45,8 +49,7 @@ CxT uses a two-stage model:
 | Sample Size | 436,050 |
 | Positive Rate | 90.6% |
 
-**Note**: Perfect AUC indicates potential feature leakage from xt_delta.
-In practice, this could be addressed by excluding xt_delta from completion features.
+**Note**: The completion model should be reviewed using the saved model configuration to confirm that all post-action fields are excluded. The current guardrail explicitly removes `xt_delta` from completion features.
 
 ### 2.2 xT Gain Model
 
@@ -146,21 +149,23 @@ See calibration plot in outputs/analysis/cxt/evaluation/
 
 ### Strengths
 
-- xT Gain R² of 0.62 shows meaningful predictive power
-- Opponent context features improve predictions
-- Model handles different action types appropriately
+- xT Gain R² of 0.62 shows meaningful predictive power.
+- Opponent context features improve predictions.
+- Model handles different action types appropriately.
+- The completion feature set excludes `xt_delta` as a leakage control.
 
 ### Limitations
 
-- Perfect completion AUC suggests feature leakage (xt_delta implies completion)
-- Limited to StatsBomb Open Data coverage
-- No available match score data for game state features
+- Limited to StatsBomb Open Data coverage.
+- No available match score data for richer game-state features.
+- CxT should still receive final fixture-backed tests that assert leakage-sensitive columns are absent from saved model configuration.
 
 ### Recommendations
 
-1. For production, exclude xt_delta from completion model features
-2. Consider separate models for each action type
-3. Add more granular opponent zone defensive metrics
+1. Add tests that assert `xt_delta`, post-action outcome fields, and target columns are absent from completion features.
+2. Consider separate models for each action type.
+3. Add more granular opponent zone defensive metrics.
+4. Regenerate this report after final CxT completion and model-card work.
 
 ## Appendix: Model Artifacts
 

@@ -12,7 +12,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from sqlalchemy import select
 
@@ -25,7 +24,6 @@ from opponent_adjusted.features.cxg.geometry import (
     calculate_centrality,
 )
 from opponent_adjusted.features.cxg.context import (
-    calculate_game_state,
     calculate_minute_bucket_label,
 )
 
@@ -127,12 +125,8 @@ def add_geometric_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.copy()
 
-    df["shot_distance"] = df.apply(
-        lambda r: calculate_distance(r["shot_x"], r["shot_y"]), axis=1
-    )
-    df["shot_angle"] = df.apply(
-        lambda r: calculate_shot_angle(r["shot_x"], r["shot_y"]), axis=1
-    )
+    df["shot_distance"] = df.apply(lambda r: calculate_distance(r["shot_x"], r["shot_y"]), axis=1)
+    df["shot_angle"] = df.apply(lambda r: calculate_shot_angle(r["shot_x"], r["shot_y"]), axis=1)
     df["centrality"] = df["shot_y"].apply(calculate_centrality)
     df["distance_to_goal_line"] = settings.goal_center_x - df["shot_x"]
 
@@ -220,9 +214,7 @@ def build_opponent_profiles(shot_features_df: pd.DataFrame, session) -> pd.DataF
         logger.warning("No opponent_team_id in data, skipping profiles")
         return pd.DataFrame()
 
-    df["zone"] = df.apply(
-        lambda r: assign_zone(r["shot_distance"], r["centrality"]), axis=1
-    )
+    df["zone"] = df.apply(lambda r: assign_zone(r["shot_distance"], r["centrality"]), axis=1)
 
     team_ids = df["opponent_team_id"].dropna().unique().tolist()
     if team_ids:
@@ -246,17 +238,19 @@ def build_opponent_profiles(shot_features_df: pd.DataFrame, session) -> pd.DataF
         block_rate = n_blocked / n_total if n_total > 0 else 0
         global_rating = -mean_xg
 
-        profiles.append({
-            "team_id": team_id,
-            "team_name": team_name,
-            "zone_id": None,
-            "global_rating": global_rating,
-            "zone_rating": None,
-            "block_rate": block_rate,
-            "shots_conceded": n_total,
-            "goals_conceded": int(group["is_goal"].sum()) if "is_goal" in group.columns else 0,
-            "mean_xg_conceded": mean_xg,
-        })
+        profiles.append(
+            {
+                "team_id": team_id,
+                "team_name": team_name,
+                "zone_id": None,
+                "global_rating": global_rating,
+                "zone_rating": None,
+                "block_rate": block_rate,
+                "shots_conceded": n_total,
+                "goals_conceded": int(group["is_goal"].sum()) if "is_goal" in group.columns else 0,
+                "mean_xg_conceded": mean_xg,
+            }
+        )
 
         for zone in ["A", "B", "C", "D", "E", "F"]:
             zone_group = group[group["zone"] == zone]
@@ -264,7 +258,9 @@ def build_opponent_profiles(shot_features_df: pd.DataFrame, session) -> pd.DataF
 
             if n_zone > 0:
                 mean_zone_xg = zone_group["statsbomb_xg"].mean()
-                zone_blocked = zone_group["is_blocked"].sum() if "is_blocked" in zone_group.columns else 0
+                zone_blocked = (
+                    zone_group["is_blocked"].sum() if "is_blocked" in zone_group.columns else 0
+                )
                 zone_block_rate = zone_blocked / n_zone
             else:
                 mean_zone_xg = mean_xg
@@ -273,17 +269,23 @@ def build_opponent_profiles(shot_features_df: pd.DataFrame, session) -> pd.DataF
             shrunk_xg = _shrink(mean_zone_xg, n_zone, mean_xg, prior=50.0)
             zone_rating = -shrunk_xg
 
-            profiles.append({
-                "team_id": team_id,
-                "team_name": team_name,
-                "zone_id": zone,
-                "global_rating": None,
-                "zone_rating": zone_rating,
-                "block_rate": zone_block_rate,
-                "shots_conceded": n_zone,
-                "goals_conceded": int(zone_group["is_goal"].sum()) if n_zone > 0 and "is_goal" in zone_group.columns else 0,
-                "mean_xg_conceded": mean_zone_xg if n_zone > 0 else None,
-            })
+            profiles.append(
+                {
+                    "team_id": team_id,
+                    "team_name": team_name,
+                    "zone_id": zone,
+                    "global_rating": None,
+                    "zone_rating": zone_rating,
+                    "block_rate": zone_block_rate,
+                    "shots_conceded": n_zone,
+                    "goals_conceded": (
+                        int(zone_group["is_goal"].sum())
+                        if n_zone > 0 and "is_goal" in zone_group.columns
+                        else 0
+                    ),
+                    "mean_xg_conceded": mean_zone_xg if n_zone > 0 else None,
+                }
+            )
 
     profiles_df = pd.DataFrame(profiles)
 
@@ -359,8 +361,14 @@ def run_pipeline(competition_id: int = None) -> dict:
         "summary": {
             "total_shots": len(shots_df),
             "goals": int(shots_df["is_goal"].sum()) if "is_goal" in shots_df.columns else 0,
-            "mean_xg": float(shots_df["statsbomb_xg"].mean()) if "statsbomb_xg" in shots_df.columns else 0,
-            "teams_profiled": int(opponent_profiles_df["team_id"].nunique()) if not opponent_profiles_df.empty else 0,
+            "mean_xg": (
+                float(shots_df["statsbomb_xg"].mean()) if "statsbomb_xg" in shots_df.columns else 0
+            ),
+            "teams_profiled": (
+                int(opponent_profiles_df["team_id"].nunique())
+                if not opponent_profiles_df.empty
+                else 0
+            ),
         },
     }
 

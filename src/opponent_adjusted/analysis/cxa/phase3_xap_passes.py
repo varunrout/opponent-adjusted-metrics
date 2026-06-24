@@ -64,7 +64,7 @@ def _load_parquet(path: Path) -> pd.DataFrame:
 def _goal_shot_ids_sequences(sequences_df: pd.DataFrame) -> set[int]:
     df = sequences_df.copy()
     if "is_goal" in df.columns:
-        df = df[df["is_goal"] == True]
+        df = df[df["is_goal"].fillna(False).astype(bool)]
     if "shot_id" not in df.columns:
         return set()
     return set(df["shot_id"].dropna().astype(int).tolist())
@@ -84,9 +84,11 @@ def _write_outputs(
     data_dir.mkdir(parents=True, exist_ok=True)
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    goal_sequences = sequences[sequences["is_goal"] == True]
+    goal_sequences = sequences[sequences["is_goal"].fillna(False).astype(bool)]
     total_credit = float(goal_sequences["xa_plus_total"].sum())
-    assist_credit = float(passes_long[passes_long["is_assist"] == True]["xa_plus"].sum())
+    assist_credit = float(
+        passes_long[passes_long["is_assist"].fillna(False).astype(bool)]["xa_plus"].sum()
+    )
 
     summary = {
         "num_goals": float(goal_sequences.shape[0]),
@@ -156,7 +158,7 @@ def _credit_by_pass_position(sequences_with_credit: pd.DataFrame) -> pd.DataFram
 
 def _player_leaderboard(passes_long: pd.DataFrame) -> pd.DataFrame:
     df = passes_long.copy()
-    df = df[df["is_goal"] == True]
+    df = df[df["is_goal"].fillna(False).astype(bool)]
 
     grouped = (
         df.groupby(["player_id", "player_name"])  # type: ignore[pd]
@@ -176,8 +178,12 @@ def _player_leaderboard(passes_long: pd.DataFrame) -> pd.DataFrame:
 
 def _assist_pass_credit_distribution(passes_long: pd.DataFrame) -> pd.DataFrame:
     df = passes_long.copy()
-    df = df[(df["is_goal"] == True) & (df["is_assist"] == True)]
-    return df[["sequence_id", "pass_num", "xa_plus"]].rename(columns={"xa_plus": "assist_pass_credit"})
+    df = df[
+        (df["is_goal"].fillna(False).astype(bool)) & (df["is_assist"].fillna(False).astype(bool))
+    ]
+    return df[["sequence_id", "pass_num", "xa_plus"]].rename(
+        columns={"xa_plus": "assist_pass_credit"}
+    )
 
 
 def _plot_credit_by_position(df: pd.DataFrame, path: Path) -> None:
@@ -241,7 +247,9 @@ def _write_report(
     lines.append("## Summary\n")
     lines.append(f"Goal sequences: {int(summary['num_goals'])}")
     lines.append(f"Total xA+ credit assigned: {summary['total_credit']:.1f}")
-    lines.append(f"Credit to assist passes: {summary['assist_credit']:.1f} ({summary['assist_credit_share']:.1%})\n")
+    lines.append(
+        f"Credit to assist passes: {summary['assist_credit']:.1f} ({summary['assist_credit_share']:.1%})\n"
+    )
 
     lines.append("## Credit by pass position\n")
     lines.append(credit_by_pos.to_markdown(index=False))
@@ -289,15 +297,25 @@ def run_phase3_xap_passes(temperature: float = 1.0) -> Dict[str, Any]:
         passes_overlap = passes_long.copy()
 
     overlap_res: Dict[str, Any] = _write_outputs(
-        overlap_dir, "(overlap)", seq_overlap, passes_overlap, model, temperature, generate_plots=False
+        overlap_dir,
+        "(overlap)",
+        seq_overlap,
+        passes_overlap,
+        model,
+        temperature,
+        generate_plots=False,
     )
 
     logger.info(f"Phase 3 complete. Outputs: {output_root}")
     print("=" * 72)
     print("cXA Phase 3 — xA+ Passes Summary")
     print("=" * 72)
-    print(f"Full goals: {int(full_res['summary']['num_goals'])} | credit: {full_res['summary']['total_credit']:.1f}")
-    print(f"Overlap goals: {int(overlap_res['summary']['num_goals'])} | credit: {overlap_res['summary']['total_credit']:.1f}")
+    print(
+        f"Full goals: {int(full_res['summary']['num_goals'])} | credit: {full_res['summary']['total_credit']:.1f}"
+    )
+    print(
+        f"Overlap goals: {int(overlap_res['summary']['num_goals'])} | credit: {overlap_res['summary']['total_credit']:.1f}"
+    )
     print(f"Outputs: {output_root}")
 
     return {

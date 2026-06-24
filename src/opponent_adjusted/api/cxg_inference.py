@@ -97,7 +97,11 @@ def _candidate_model_paths(registry_path: str | None = None) -> list[Path]:
         [
             settings.model_artifacts_path / "cxg" / "models" / "contextual_model.joblib",
             Path("outputs") / "modeling" / "cxg" / "models" / "contextual_model.joblib",
-            Path("outputs") / "modeling" / "cxg" / "models" / "contextual_model_neutral_priors_refresh.joblib",
+            Path("outputs")
+            / "modeling"
+            / "cxg"
+            / "models"
+            / "contextual_model_neutral_priors_refresh.joblib",
         ]
     )
     return candidates
@@ -217,7 +221,9 @@ def _base_feature_row(request: ShotPredictionRequest) -> dict[str, Any]:
         "chain_label": "api_request",
         "pass_style": "unknown",
         "assist_category": "unknown",
-        "set_piece_category": "open_play" if request.shot_type.lower() == "open play" else request.shot_type,
+        "set_piece_category": (
+            "open_play" if request.shot_type.lower() == "open play" else request.shot_type
+        ),
         "set_piece_phase": "none",
         "def_label": "average",
         "is_blocked": False,

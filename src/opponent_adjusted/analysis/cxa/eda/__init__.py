@@ -11,7 +11,7 @@ from .run_all_eda import run_all_eda
 
 __all__ = [
     "run_phase0_eda",
-    "run_phase1_eda", 
+    "run_phase1_eda",
     "run_phase2_eda",
     "run_phase3_eda",
     "run_phase4_eda",

@@ -4,7 +4,10 @@ from typing import List
 
 from fastapi import FastAPI, HTTPException, Query
 
-from opponent_adjusted.api.cxg_inference import CxGModelNotAvailable, predict_cxg as run_cxg_prediction
+from opponent_adjusted.api.cxg_inference import (
+    CxGModelNotAvailable,
+    predict_cxg as run_cxg_prediction,
+)
 from opponent_adjusted.api.schemas import (
     HealthResponse,
     ModelVersionResponse,
@@ -46,7 +49,7 @@ async def get_cxg_model_version():
         model = (
             session.query(ModelRegistry)
             .filter(ModelRegistry.model_name == "cxg")
-            .order_by(ModelRegistry.id.desc())
+            .order_by(ModelRegistry.created_at.desc())
             .first()
         )
 

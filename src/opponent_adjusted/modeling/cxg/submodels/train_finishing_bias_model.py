@@ -40,7 +40,11 @@ MATCH_MINUTES = 95.0
 MAX_LOGIT = 3.0
 EPS = 1e-4
 
-INCLUDE_PL1516_IN_PRIORS = os.getenv("CXG_INCLUDE_PL1516_PRIORS", "").lower() in {"1", "true", "yes"}
+INCLUDE_PL1516_IN_PRIORS = os.getenv("CXG_INCLUDE_PL1516_PRIORS", "").lower() in {
+    "1",
+    "true",
+    "yes",
+}
 
 DEFENSIVE_EVENT_TYPES = ("Pressure", "Duel", "Tackle", "Interception", "Block", "Clearance")
 PL_COMP_STATS_BOMB_ID = 2
@@ -157,11 +161,7 @@ def _build_match_team_summary(df: pd.DataFrame) -> pd.DataFrame:
             lambda s: float((s.fillna("Open Play") != "Open Play").mean()),
         )
 
-    summary = (
-        df.groupby(group_cols, dropna=False, observed=False)
-        .agg(**agg_dict)
-        .reset_index()
-    )
+    summary = df.groupby(group_cols, dropna=False, observed=False).agg(**agg_dict).reset_index()
 
     summary["match_date"] = pd.to_datetime(summary["match_date"], errors="coerce")
     summary["is_home"] = summary["is_home"].fillna(False).astype(bool)
@@ -176,14 +176,15 @@ def _build_match_team_summary(df: pd.DataFrame) -> pd.DataFrame:
     summary = summary.sort_values(
         ["competition_season_key", "team_id", "match_date", "match_id"], na_position="last"
     )
-    summary["match_number"] = summary.groupby(["competition_season_key", "team_id"], observed=False).cumcount()
+    summary["match_number"] = summary.groupby(
+        ["competition_season_key", "team_id"], observed=False
+    ).cumcount()
     summary["is_pl1516"] = summary.apply(
-        lambda row: _is_pl1516_row(row["competition_statsbomb_id"], row["competition_season"]), axis=1
+        lambda row: _is_pl1516_row(row["competition_statsbomb_id"], row["competition_season"]),
+        axis=1,
     )
 
-    opponent_stats = summary[
-        ["match_id", "team_id", "shots_for", "goals_for", "xg_for"]
-    ].rename(
+    opponent_stats = summary[["match_id", "team_id", "shots_for", "goals_for", "xg_for"]].rename(
         columns={
             "team_id": "opponent_team_id",
             "shots_for": "shots_against",
@@ -288,12 +289,18 @@ def _build_style_features(summary: pd.DataFrame) -> tuple[pd.DataFrame, dict[str
 
     if not possession.empty:
         possession["duration_seconds"] = possession["duration_seconds"].fillna(0.0)
-        team_pos = possession.groupby(["match_id", "team_id"], as_index=False)["duration_seconds"].sum()
+        team_pos = possession.groupby(["match_id", "team_id"], as_index=False)[
+            "duration_seconds"
+        ].sum()
         match_totals = team_pos.groupby("match_id")["duration_seconds"].transform(
             lambda s: s.sum() if s.sum() > 0 else np.nan
         )
         team_pos["possession_share"] = team_pos["duration_seconds"] / match_totals
-        style = style.merge(team_pos[["match_id", "team_id", "possession_share"]], on=["match_id", "team_id"], how="left")
+        style = style.merge(
+            team_pos[["match_id", "team_id", "possession_share"]],
+            on=["match_id", "team_id"],
+            how="left",
+        )
     else:
         style["possession_share"] = np.nan
 
@@ -330,10 +337,20 @@ def _build_style_features(summary: pd.DataFrame) -> tuple[pd.DataFrame, dict[str
 
     style["possession_share"] = style["possession_share"].fillna(style["possession_share"].median())
     style["possession_share"] = style["possession_share"].fillna(0.5)
-    style["avg_shot_distance"] = style["avg_shot_distance"].fillna(style["avg_shot_distance"].median())
-    style["avg_shot_distance"] = style["avg_shot_distance"].fillna(style["avg_shot_distance"].mean()).fillna(18.0)
+    style["avg_shot_distance"] = style["avg_shot_distance"].fillna(
+        style["avg_shot_distance"].median()
+    )
+    style["avg_shot_distance"] = (
+        style["avg_shot_distance"].fillna(style["avg_shot_distance"].mean()).fillna(18.0)
+    )
 
-    feature_cols = ["possession_share", "press_intensity", "avg_shot_distance", "def_line_height", "press_height"]
+    feature_cols = [
+        "possession_share",
+        "press_intensity",
+        "avg_shot_distance",
+        "def_line_height",
+        "press_height",
+    ]
     style_features = style[feature_cols].fillna(style[feature_cols].median())
     style_features = style_features.fillna(0.0)
 
@@ -400,12 +417,18 @@ def _mean_top_k(series: pd.Series, k: int) -> float:
 
 def _build_player_team_features(df: pd.DataFrame) -> pd.DataFrame:
     if "player_id" not in df.columns:
-        return pd.DataFrame(columns=["match_id", "team_id", "player_component", "player_reliability"])
+        return pd.DataFrame(
+            columns=["match_id", "team_id", "player_component", "player_reliability"]
+        )
 
-    base = df[["shot_id", "match_id", "team_id", "player_id", "statsbomb_xg", "is_goal", "match_date"]].copy()
+    base = df[
+        ["shot_id", "match_id", "team_id", "player_id", "statsbomb_xg", "is_goal", "match_date"]
+    ].copy()
     base = base.dropna(subset=["player_id"])
     if base.empty:
-        return pd.DataFrame(columns=["match_id", "team_id", "player_component", "player_reliability"])
+        return pd.DataFrame(
+            columns=["match_id", "team_id", "player_component", "player_reliability"]
+        )
 
     base["match_date"] = pd.to_datetime(base["match_date"], errors="coerce")
     base = base.sort_values(["player_id", "match_date", "match_id", "shot_id"])
@@ -417,13 +440,18 @@ def _build_player_team_features(df: pd.DataFrame) -> pd.DataFrame:
         return series.shift(1).rolling(PLAYER_WINDOW, min_periods=1)
 
     grouped = base.groupby("player_id", group_keys=False, observed=False)
-    base["player_goal_rate"] = grouped["is_goal"].apply(lambda s: _rolling(s).mean()).fillna(global_goal)
-    base["player_xg_rate"] = grouped["statsbomb_xg"].apply(lambda s: _rolling(s).mean()).fillna(global_xg)
+    base["player_goal_rate"] = (
+        grouped["is_goal"].apply(lambda s: _rolling(s).mean()).fillna(global_goal)
+    )
+    base["player_xg_rate"] = (
+        grouped["statsbomb_xg"].apply(lambda s: _rolling(s).mean()).fillna(global_xg)
+    )
     base["player_shot_volume"] = grouped["shot_id"].apply(lambda s: _rolling(s).count()).fillna(0.0)
     base["player_lift"] = base["player_goal_rate"] - base["player_xg_rate"]
 
-    snapshot = base.sort_values(["match_id", "team_id", "player_id", "shot_id"]) \
-        .drop_duplicates(["match_id", "team_id", "player_id"], keep="first")
+    snapshot = base.sort_values(["match_id", "team_id", "player_id", "shot_id"]).drop_duplicates(
+        ["match_id", "team_id", "player_id"], keep="first"
+    )
 
     team_level = (
         snapshot.groupby(["match_id", "team_id"], observed=False)
@@ -434,24 +462,32 @@ def _build_player_team_features(df: pd.DataFrame) -> pd.DataFrame:
         )
         .reset_index()
     )
-    team_level["player_bias_top3"] = team_level["player_bias_top3"].fillna(team_level["player_bias_mean"].fillna(0.0))
+    team_level["player_bias_top3"] = team_level["player_bias_top3"].fillna(
+        team_level["player_bias_mean"].fillna(0.0)
+    )
     team_level["player_reliability"] = np.clip(
         team_level["player_volume"] / (PLAYER_WINDOW * PLAYER_TOP_N), 0.0, 1.0
     )
-    team_level["player_component"] = team_level["player_bias_top3"] * team_level["player_reliability"]
+    team_level["player_component"] = (
+        team_level["player_bias_top3"] * team_level["player_reliability"]
+    )
     return team_level
 
 
-def _compose_bias_table(summary: pd.DataFrame, style: pd.DataFrame, player_team: pd.DataFrame) -> pd.DataFrame:
+def _compose_bias_table(
+    summary: pd.DataFrame, style: pd.DataFrame, player_team: pd.DataFrame
+) -> pd.DataFrame:
     context = summary.merge(
-        style[[
-            "match_id",
-            "team_id",
-            "style_cluster",
-            "style_att_bias",
-            "style_def_bias",
-            "style_reliability",
-        ]],
+        style[
+            [
+                "match_id",
+                "team_id",
+                "style_cluster",
+                "style_att_bias",
+                "style_def_bias",
+                "style_reliability",
+            ]
+        ],
         on=["match_id", "team_id"],
         how="left",
     )
@@ -463,12 +499,12 @@ def _compose_bias_table(summary: pd.DataFrame, style: pd.DataFrame, player_team:
 
     context["player_component"] = context["player_component"].fillna(0.0)
     context["player_reliability"] = context["player_reliability"].fillna(0.0)
-    context["style_att_component"] = (
-        context["style_att_bias"].fillna(0.0) * context["style_reliability"].fillna(0.0)
-    )
-    context["style_def_component"] = (
-        context["style_def_bias"].fillna(0.0) * context["style_reliability"].fillna(0.0)
-    )
+    context["style_att_component"] = context["style_att_bias"].fillna(0.0) * context[
+        "style_reliability"
+    ].fillna(0.0)
+    context["style_def_component"] = context["style_def_bias"].fillna(0.0) * context[
+        "style_reliability"
+    ].fillna(0.0)
 
     rolling_weight = 0.55
     style_weight = 0.25
@@ -481,13 +517,16 @@ def _compose_bias_table(summary: pd.DataFrame, style: pd.DataFrame, player_team:
         + style_weight * context["style_att_component"].fillna(0.0)
         + player_weight * context["player_component"].fillna(0.0)
     )
-    context["concession_bias_logit"] = (
-        def_rolling_weight * context["def_rolling_component"].fillna(0.0)
-        + def_style_weight * context["style_def_component"].fillna(0.0)
-    )
+    context["concession_bias_logit"] = def_rolling_weight * context["def_rolling_component"].fillna(
+        0.0
+    ) + def_style_weight * context["style_def_component"].fillna(0.0)
 
-    context["finishing_bias_logit"] = np.clip(context["finishing_bias_logit"], -MAX_LOGIT, MAX_LOGIT)
-    context["concession_bias_logit"] = np.clip(context["concession_bias_logit"], -MAX_LOGIT, MAX_LOGIT)
+    context["finishing_bias_logit"] = np.clip(
+        context["finishing_bias_logit"], -MAX_LOGIT, MAX_LOGIT
+    )
+    context["concession_bias_logit"] = np.clip(
+        context["concession_bias_logit"], -MAX_LOGIT, MAX_LOGIT
+    )
     context["finishing_bias_multiplier"] = np.exp(context["finishing_bias_logit"])
     context["concession_bias_multiplier"] = np.exp(context["concession_bias_logit"])
     return context
