@@ -1,27 +1,27 @@
 """FastAPI service for opponent-adjusted metrics inference."""
 
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
+from typing import List
 
-from opponent_adjusted.config import settings
+from fastapi import FastAPI, HTTPException, Query
+
+from opponent_adjusted.api.cxg_inference import CxGModelNotAvailable, predict_cxg as run_cxg_prediction
 from opponent_adjusted.api.schemas import (
     HealthResponse,
     ModelVersionResponse,
+    PlayerAggregateResponse,
     ShotPredictionRequest,
     ShotPredictionResponse,
-    PlayerAggregateResponse,
     TeamAggregateResponse,
 )
-from opponent_adjusted.db.session import session_scope
+from opponent_adjusted.config import settings
 from opponent_adjusted.db.models import (
-    ModelRegistry,
-    ShotPrediction,
     AggregatesPlayer,
     AggregatesTeam,
+    ModelRegistry,
     Player,
     Team,
 )
+from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -46,7 +46,7 @@ async def get_cxg_model_version():
         model = (
             session.query(ModelRegistry)
             .filter(ModelRegistry.model_name == "cxg")
-            .order_by(ModelRegistry.created_at.desc())
+            .order_by(ModelRegistry.id.desc())
             .first()
         )
 
@@ -64,14 +64,22 @@ async def get_cxg_model_version():
 
 @app.post("/predict/cxg", response_model=ShotPredictionResponse)
 async def predict_cxg(request: ShotPredictionRequest):
-    """Predict CxG for a shot (placeholder - requires trained model)."""
-    # This is a placeholder implementation
-    # In production, would load model and make actual prediction
-    raise HTTPException(
-        status_code=501,
-        detail="Prediction endpoint requires trained model artifact. "
-        "Please run training pipeline first.",
-    )
+    """Predict CxG for a shot using the latest available model artefact."""
+    try:
+        result = run_cxg_prediction(request)
+    except CxGModelNotAvailable as exc:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "CxG prediction requires a trained model artefact. "
+                "Run the CxG training pipeline before using this endpoint."
+            ),
+        ) from exc
+    except Exception as exc:
+        logger.exception("CxG prediction failed")
+        raise HTTPException(status_code=500, detail=f"CxG prediction failed: {exc}") from exc
+
+    return ShotPredictionResponse(**result)
 
 
 @app.get("/aggregates/player", response_model=List[PlayerAggregateResponse])
@@ -81,17 +89,11 @@ async def get_player_aggregates(
 ):
     """Get player-level aggregates."""
     with session_scope() as session:
-        # Get model
-        model_obj = (
-            session.query(ModelRegistry)
-            .filter(ModelRegistry.version == model)
-            .first()
-        )
+        model_obj = session.query(ModelRegistry).filter(ModelRegistry.version == model).first()
 
         if not model_obj:
             raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
-        # Get aggregates
         aggregates = (
             session.query(AggregatesPlayer, Player)
             .join(Player, AggregatesPlayer.player_id == Player.id)
@@ -125,17 +127,11 @@ async def get_team_aggregates(
 ):
     """Get team-level aggregates."""
     with session_scope() as session:
-        # Get model
-        model_obj = (
-            session.query(ModelRegistry)
-            .filter(ModelRegistry.version == model)
-            .first()
-        )
+        model_obj = session.query(ModelRegistry).filter(ModelRegistry.version == model).first()
 
         if not model_obj:
             raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
-        # Get aggregates
         aggregates = (
             session.query(AggregatesTeam, Team)
             .join(Team, AggregatesTeam.team_id == Team.id)
