@@ -5,7 +5,9 @@ import numpy as np
 from opponent_adjusted.config import settings
 
 
-def calculate_distance(x: float, y: float, target_x: float = None, target_y: float = None) -> float:
+def calculate_distance(
+    x: float, y: float, target_x: float | None = None, target_y: float | None = None
+) -> float:
     """Calculate Euclidean distance from (x, y) to target point.
 
     Args:

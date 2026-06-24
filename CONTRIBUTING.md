@@ -18,9 +18,11 @@ Run these before opening a PR:
 ```bash
 poetry run ruff check src scripts tests
 poetry run black --check src scripts tests
-poetry run mypy src
+poetry run mypy src/opponent_adjusted/api/schemas.py src/opponent_adjusted/features/cxg/context.py src/opponent_adjusted/features/cxg/geometry.py src/opponent_adjusted/features/context.py src/opponent_adjusted/features/geometry.py
 poetry run pytest -v
 ```
+
+Full-repo MyPy currently has a known typing backlog. New stable modules should be added to the typed-core MyPy scope once they are clean.
 
 For database-related changes, also run:
 

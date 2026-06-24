@@ -26,10 +26,14 @@ jobs:
         with:
           poetry-version: '1.8.3'
 
+      - name: Install Poetry export plugin
+        run: poetry self add poetry-plugin-export
+
+      - name: Lock dependencies
+        run: poetry lock --no-interaction
+
       - name: Export requirements
-        run: |
-          poetry self add poetry-plugin-export
-          poetry export --without-hashes --format=requirements.txt --output=requirements-audit.txt
+        run: poetry export --without-hashes --format=requirements.txt --output=requirements-audit.txt
 
       - name: Run pip-audit
         uses: pypa/gh-action-pip-audit@v1.1.0
