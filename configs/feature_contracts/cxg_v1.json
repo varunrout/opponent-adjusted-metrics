@@ -1,0 +1,72 @@
+{
+  "metric": "cxg",
+  "version": "v1",
+  "description": "Feature contract for contextual expected goals shot-level modelling.",
+  "grain": "one row per shot",
+  "identity_columns": [
+    "shot_id",
+    "event_id",
+    "match_id",
+    "team_id",
+    "player_id",
+    "opponent_team_id"
+  ],
+  "target_columns": [
+    "is_goal"
+  ],
+  "required_numeric_features": [
+    "shot_distance",
+    "shot_angle",
+    "centrality",
+    "distance_to_goal_line",
+    "minute",
+    "score_diff_at_shot",
+    "possession_sequence_length",
+    "possession_duration",
+    "previous_action_gap",
+    "recent_def_actions_count",
+    "pressure_proxy_score",
+    "opponent_def_rating_global",
+    "opponent_def_zone_rating",
+    "opponent_block_rate"
+  ],
+  "required_binary_features": [
+    "under_pressure",
+    "is_leading",
+    "is_trailing",
+    "is_drawing",
+    "first_time",
+    "is_blocked"
+  ],
+  "required_categorical_features": [
+    "minute_bucket",
+    "body_part",
+    "technique",
+    "shot_type",
+    "zone_id"
+  ],
+  "optional_reference_features": [
+    "statsbomb_xg"
+  ],
+  "forbidden_training_features": [
+    "shot_outcome",
+    "outcome",
+    "goal",
+    "is_goal_post_shot",
+    "post_shot_xg",
+    "goalkeeper_outcome"
+  ],
+  "nullable_columns": [
+    "player_id",
+    "statsbomb_xg",
+    "possession_duration",
+    "previous_action_gap",
+    "opponent_def_zone_rating"
+  ],
+  "split_group_column": "match_id",
+  "notes": [
+    "All features must be available at the moment of shot.",
+    "Validation must group by match_id to avoid match-level leakage.",
+    "Neutralised predictions should replace context and opponent columns with reference values."
+  ]
+}

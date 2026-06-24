@@ -1,0 +1,103 @@
+{
+  "metric": "cxt",
+  "version": "v1",
+  "description": "Feature contract for contextual expected threat modelling.",
+  "grain": "one row per progression action",
+  "identity_columns": [
+    "action_id",
+    "event_id",
+    "match_id",
+    "team_id",
+    "player_id",
+    "possession"
+  ],
+  "target_columns": [
+    "completed",
+    "observed_xt_gain"
+  ],
+  "completion_model_features": {
+    "numeric": [
+      "start_x",
+      "start_y",
+      "end_x",
+      "end_y",
+      "length",
+      "angle",
+      "minute",
+      "start_xt",
+      "opponent_def_rating_global",
+      "opponent_zone_block_rate"
+    ],
+    "binary": [
+      "under_pressure",
+      "is_pass",
+      "is_carry",
+      "is_dribble",
+      "is_progressive",
+      "is_into_final_third",
+      "is_into_penalty_area"
+    ],
+    "categorical": [
+      "action_type",
+      "start_third",
+      "end_third",
+      "macro_zone_start",
+      "macro_zone_end"
+    ]
+  },
+  "value_model_features": {
+    "numeric": [
+      "start_x",
+      "start_y",
+      "end_x",
+      "end_y",
+      "length",
+      "angle",
+      "minute",
+      "start_xt",
+      "opponent_def_rating_global",
+      "opponent_zone_block_rate"
+    ],
+    "binary": [
+      "under_pressure",
+      "is_pass",
+      "is_carry",
+      "is_dribble",
+      "is_progressive",
+      "is_into_final_third",
+      "is_into_penalty_area",
+      "zone_changed",
+      "moved_wide_to_central"
+    ],
+    "categorical": [
+      "action_type",
+      "start_third",
+      "end_third",
+      "macro_zone_start",
+      "macro_zone_end"
+    ]
+  },
+  "forbidden_completion_features": [
+    "xt_delta",
+    "observed_xt_gain",
+    "completed",
+    "outcome",
+    "action_success_after_event"
+  ],
+  "forbidden_training_features": [
+    "goal_after_action",
+    "shot_after_action",
+    "post_action_outcome",
+    "future_possession_value"
+  ],
+  "nullable_columns": [
+    "player_id",
+    "opponent_zone_block_rate"
+  ],
+  "split_group_column": "match_id",
+  "notes": [
+    "xt_delta must not be used in the completion model because it can encode completion outcome.",
+    "Completion and value-gain models must have separate feature sets.",
+    "CxT completion requires regenerated evaluation without unresolved leakage warnings."
+  ]
+}
