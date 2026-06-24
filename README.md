@@ -1,272 +1,204 @@
 # Opponent-Adjusted Football Metrics
 
-An end-to-end system for building contextual, opponent-adjusted football metrics (CxG, CxA, CxT, C-OBV) using **StatsBomb Open Data** and **PostgreSQL**.
+An end-to-end football analytics project for building contextual and opponent-adjusted metrics from StatsBomb Open Data.
 
-## Overview
+The project is being completed as a full reproducible system: data ingestion, PostgreSQL storage, feature engineering, CxG/CxA/CxT modelling, neutralisation, evaluation, API serving, and dashboard/reporting.
 
-This project implements advanced football analytics metrics that account for:
-- **Shot context**: Game state, possession patterns, pressure
-- **Opponent quality**: Defensive strength, zone-specific ratings
-- **Geometric factors**: Distance, angle, centrality
-- **Neutralization**: Isolating player/team performance from contextual effects
+## Current status
 
-### Metrics Implemented
+This repository has a strong technical foundation, but it is currently under a completion programme rather than a final `v1.0.0` release.
 
-1. **CxG (Contextual Expected Goals)**: Shot probability accounting for context and opponent strength
-2. **CxA (Contextual Expected Assists)**: Pass value considering completion probability and downstream shot generation (planned)
-3. **CxT (Contextual Expected Threat)**: Action value based on state transitions (planned)
-4. **C-OBV (Contextual On-Ball Value)**: Comprehensive action value using MDP framework (planned)
+For the live completion plan, see:
 
-## Quick Start
+- `docs/COMPLETION_AUDIT.md`
+- `docs/ROADMAP.md`
+- `docs/PROJECT_STATUS.md`
 
-### Prerequisites
+## What the project is designed to do
+
+The final system should:
+
+1. Fetch and ingest a configured StatsBomb Open Data subset.
+2. Store normalised match, event, shot, possession, player, and team data in PostgreSQL.
+3. Build feature tables for CxG, CxA, and CxT.
+4. Train contextual and opponent-adjusted models.
+5. Generate neutralised player and team outputs.
+6. Evaluate calibration, discrimination, slice performance, and leakage risk.
+7. Serve predictions and aggregates through FastAPI.
+8. Present football-facing outputs through reports and dashboard views.
+
+## Metrics
+
+### CxG: Contextual Expected Goals
+
+Shot probability accounting for:
+
+- shot geometry
+- pressure
+- game state
+- possession context
+- opponent defensive profile
+- neutralised opponent context
+
+### CxA: Sequence-adjusted Expected Assists
+
+Creation value assigned across attacking sequences, not only the final pass. The target completion work is to account for:
+
+- passes
+- carries
+- dribbles
+- final actions
+- pre-assists
+- earlier progression actions
+- downstream shot creation and shot quality
+
+### CxT: Contextual Expected Threat
+
+Action value for ball progression actions. The current completion work includes removing leakage-prone features from the completion model and regenerating CxT evaluation before release.
+
+### C-OBV: Contextual On-Ball Value
+
+Planned extension after CxG, CxA, and CxT are complete.
+
+## Repository structure
+
+```text
+opponent-adjusted-metrics/
+├── alembic/                  # Database migrations
+├── dashboard/                # Streamlit dashboard assets
+├── docs/                     # Methodology, reports, roadmap, status
+├── scripts/                  # CLI entrypoints for ingestion, features, modelling
+├── src/opponent_adjusted/    # Main Python package
+│   ├── api/                  # FastAPI service and schemas
+│   ├── analysis/             # Analysis modules
+│   ├── db/                   # SQLAlchemy models and sessions
+│   ├── features/             # Feature engineering
+│   ├── ingestion/            # StatsBomb loading and ingestion
+│   ├── modeling/             # CxG, CxA, CxT modelling
+│   ├── pipelines/            # Pipeline orchestration modules
+│   ├── prediction/           # Batch prediction and scoring utilities
+│   └── utils/                # Shared utilities
+├── tests/                    # Unit and integration tests
+├── Makefile                  # Common project commands
+├── docker-compose.yml        # Local Postgres service
+└── pyproject.toml            # Poetry dependency configuration
+```
+
+## Quick start
+
+### Requirements
 
 - Python 3.11+
-- PostgreSQL 12+
-- Poetry (for dependency management)
+- Poetry
+- Docker and Docker Compose
+- PostgreSQL 12+ if not using Docker
 
-### Running PostgreSQL via Docker (Recommended)
+### Install
 
-You can spin up a local Postgres instance with Docker Compose:
-
-```bash
-cp .env.example .env  # populate defaults (edit if desired)
-docker compose up -d db
-```
-
-Health check the container:
-
-```bash
-docker compose ps
-docker logs -f opponent_metrics_db  # optional
-```
-
-If you run application code inside another container (e.g. in a future API compose setup), set `DATABASE_URL` host to `db` instead of `localhost`.
-
-Example alternative URL for intra-compose networking:
-
-```
-DATABASE_URL=postgresql+psycopg://app:app@db:5432/opponent_metrics
-```
-
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/varunrout/opponent-adjusted-metrics.git
-cd opponent-adjusted-metrics
-```
-
-2. Install dependencies:
 ```bash
 poetry install
-```
-
-3. Set up environment variables:
-```bash
 cp .env.example .env
-# Edit .env with your PostgreSQL credentials
 ```
 
-4. Initialize the database:
-```bash
-# Create the database in PostgreSQL
-createdb opponent_metrics
-
-# Run migrations
-poetry run alembic upgrade head
-```
-
-### Data Pipeline
-
-The complete pipeline consists of several stages:
-
-#### 1. Data Ingestion
-
-Ingest StatsBomb Open Data for the specified competitions:
+### Start local database
 
 ```bash
-# Ingest competitions
-poetry run python scripts/ingest_competitions.py
-
-# Ingest matches
-poetry run python scripts/ingest_matches.py
-
-# Ingest events and normalize
-poetry run python scripts/ingest_events.py
+make db-up
+make migrate-up
 ```
 
-#### 2. Feature Engineering
-
-Build features for shots:
+### Fetch and ingest data
 
 ```bash
-# Build shot features (geometry, context, pressure)
-poetry run python scripts/build_shot_features.py --version v1
-
-# Build opponent defensive profiles
-poetry run python scripts/build_opponent_profiles.py --version v1
+make fetch-data
+make ingest-all
+make normalize-events
 ```
 
-#### 3. Model Training
-
-Train the CxG model:
+### Build features
 
 ```bash
-# Train CxG model
-poetry run python scripts/train_cxg.py --features v1 --version cxg_v1
-
-# Generate neutralized predictions
-poetry run python scripts/neutralize_cxg.py --model cxg_v1 --features v1
+make build-features VERSION=v1
+make build-profiles VERSION=v1
 ```
 
-#### 4. Evaluation
-
-Evaluate and generate reports:
+### Run modelling pipelines
 
 ```bash
-# Evaluate model performance
-poetry run python scripts/evaluate_cxg.py --model cxg_v1 --features v1
-
-# Export reports
-poetry run python scripts/export_reports.py --model cxg_v1 --features v1
+make run-cxg-pipeline
+make run-cxa-pipeline
+make run-cxt-pipeline
 ```
 
-### API Service
-
-Start the inference API:
+### Start API
 
 ```bash
-poetry run uvicorn opponent_adjusted.api.service:app --host 0.0.0.0 --port 8000
+make api
 ```
 
-API endpoints:
-- `GET /health` - Health check
-- `GET /models/cxg/version` - Get current model version
-- `POST /predict/cxg` - Predict CxG for a shot
-- `GET /aggregates/player?model=cxg_v1&limit=50` - Get player aggregates
-- `GET /aggregates/team?model=cxg_v1&limit=50` - Get team aggregates
+Then open:
 
-## Project Structure
-
+```text
+http://localhost:8000/docs
 ```
-opponent-adjusted-metrics/
-├── src/opponent_adjusted/       # Main package
-│   ├── config.py                # Configuration
-│   ├── db/                      # Database models and session
-│   ├── ingestion/               # Data ingestion modules
-│   ├── features/                # Feature engineering
-│   ├── modeling/                # Model training and prediction
-│   ├── evaluation/              # Evaluation and metrics
-│   ├── pipelines/               # End-to-end pipelines
-│   ├── api/                     # FastAPI service
-│   └── utils/                   # Utility functions
-├── scripts/                     # Executable scripts
-├── alembic/                     # Database migrations
-├── tests/                       # Unit tests
-├── reports/                     # Generated reports
-└── db/                          # Database seeds
-```
-
-## Data Sources
-
-This project uses **StatsBomb Open Data**, specifically:
-- FIFA World Cup 2018
-- UEFA Euro 2020
-- FIFA World Cup 2022
-- UEFA Euro 2024
-
-Data is automatically discovered and ingested from the StatsBomb open data repository.
-
-## Database Schema
-
-Key tables:
-- `competitions`, `teams`, `players` - Reference data
-- `matches`, `events`, `raw_events` - Match data
-- `shots`, `shot_features` - Shot-level data and features
-- `opponent_def_profile` - Opponent defensive ratings
-- `model_registry` - Model versions and metadata
-- `shot_predictions` - Raw and neutralized predictions
-- `aggregates_player`, `aggregates_team` - Aggregated metrics
-- `evaluation_metrics` - Model performance metrics
 
 ## Development
 
-### Running Tests
-
 ```bash
-poetry run pytest
+make test
+make lint
+make type-check
 ```
 
-### Code Quality
+Format code:
 
 ```bash
-# Format code
-poetry run black src/ scripts/ tests/
-
-# Lint
-poetry run ruff check src/ scripts/ tests/
-
-# Type checking
-poetry run mypy src/
+make format
 ```
 
-## Methodology
+## API endpoints
 
-### CxG Model
+Current API scaffold includes:
 
-The CxG (Contextual Expected Goals) model uses:
+- `GET /health`
+- `GET /models/cxg/version`
+- `POST /predict/cxg`
+- `GET /aggregates/player`
+- `GET /aggregates/team`
 
-**Input Features:**
-- **Geometry**: Distance, angle, centrality
-- **Context**: Score differential, minute bucket, possession stats
-- **Pressure**: Under pressure flag, recent defensive actions, composite score
-- **Opponent**: Global defensive rating, zone-specific rating, block rate
-- **Baseline**: StatsBomb xG
+The prediction endpoint is part of the completion roadmap and must be backed by a real model artefact before release.
 
-**Model**: LightGBM classifier with post-hoc isotonic calibration
+## Data source
 
-**Neutralization**: 
-- Replace contextual and opponent features with reference values
-- Reference: Tied game (0-0), minute 55, no pressure, average opponent
-- Captures inherent shot quality independent of context
+This project uses StatsBomb Open Data. Usage of StatsBomb data should follow the StatsBomb open data licence and attribution requirements.
 
-### Acceptance Criteria
+## Completion roadmap
 
-- Brier score improvement over baseline xG
-- Calibration (ECE) ≤ 0.06 overall, ≤ 0.05 under pressure
-- Mean opponent-adjusted diff within ±0.005
-- Slice-based performance on pressure, opponent strength, game state
+The repository is being completed through focused PRs:
 
-## Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## License
-
-This project uses StatsBomb Open Data under their [open data license](https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf).
+1. Completion audit and roadmap.
+2. CI/CD and repository hygiene.
+3. Reproducible data ingestion.
+4. Feature store and data quality checks.
+5. CxG end-to-end completion.
+6. Sequence-adjusted CxA completion.
+7. CxT leakage fix and completion.
+8. API prediction completion.
+9. Dashboard and football storytelling.
+10. Final `v1.0.0` release packaging.
 
 ## Citation
 
-If you use this project in your research, please cite:
-
-```
+```bibtex
 @software{opponent_adjusted_metrics,
   title = {Opponent-Adjusted Football Metrics},
-  author = {Your Name},
-  year = {2024},
+  author = {Varun Rout},
+  year = {2026},
   url = {https://github.com/varunrout/opponent-adjusted-metrics}
 }
 ```
 
-## Acknowledgments
+## Acknowledgements
 
-- [StatsBomb](https://statsbomb.com/) for providing open football event data
-- The football analytics community for methodological foundations
-
+- StatsBomb for providing open football event data.
+- The football analytics community for methodological foundations and public discussion around xG, xA, xT, and possession value modelling.
