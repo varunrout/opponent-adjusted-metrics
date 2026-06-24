@@ -1,27 +1,27 @@
 """FastAPI service for opponent-adjusted metrics inference."""
 
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
+from typing import List
 
-from opponent_adjusted.config import settings
+from fastapi import FastAPI, HTTPException, Query
+
+from opponent_adjusted.api.inference import (
+    ModelArtifactError,
+    build_cxg_feature_frame,
+    load_cxg_artifact,
+    neutral_probability_from_metadata,
+    predict_raw_probability,
+)
 from opponent_adjusted.api.schemas import (
     HealthResponse,
     ModelVersionResponse,
+    PlayerAggregateResponse,
     ShotPredictionRequest,
     ShotPredictionResponse,
-    PlayerAggregateResponse,
     TeamAggregateResponse,
 )
+from opponent_adjusted.config import settings
+from opponent_adjusted.db.models import AggregatesPlayer, AggregatesTeam, ModelRegistry, Player, Team
 from opponent_adjusted.db.session import session_scope
-from opponent_adjusted.db.models import (
-    ModelRegistry,
-    ShotPrediction,
-    AggregatesPlayer,
-    AggregatesTeam,
-    Player,
-    Team,
-)
 from opponent_adjusted.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -64,13 +64,34 @@ async def get_cxg_model_version():
 
 @app.post("/predict/cxg", response_model=ShotPredictionResponse)
 async def predict_cxg(request: ShotPredictionRequest):
-    """Predict CxG for a shot (placeholder - requires trained model)."""
-    # This is a placeholder implementation
-    # In production, would load model and make actual prediction
-    raise HTTPException(
-        status_code=501,
-        detail="Prediction endpoint requires trained model artifact. "
-        "Please run training pipeline first.",
+    """Predict CxG for a shot using the configured model artifact."""
+
+    try:
+        model, metadata, model_path = load_cxg_artifact()
+        features = build_cxg_feature_frame(request, metadata)
+        raw_probability = predict_raw_probability(model, features)
+        neutral_probability = neutral_probability_from_metadata(raw_probability, metadata)
+    except ModelArtifactError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:  # pragma: no cover - defensive API boundary
+        logger.exception("CxG prediction failed")
+        raise HTTPException(status_code=500, detail="CxG prediction failed") from exc
+
+    opponent_adjusted_diff = raw_probability - neutral_probability
+    opponent_adjusted_ratio = (
+        raw_probability / neutral_probability if neutral_probability > 0 else 0.0
+    )
+
+    logger.info("CxG prediction served using artifact %s", model_path)
+
+    return ShotPredictionResponse(
+        raw_probability=raw_probability,
+        neutral_probability=neutral_probability,
+        opponent_adjusted_diff=opponent_adjusted_diff,
+        opponent_adjusted_ratio=opponent_adjusted_ratio,
+        geometry_score=None,
+        context_score=None,
+        opponent_effect=opponent_adjusted_diff,
     )
 
 
@@ -81,17 +102,11 @@ async def get_player_aggregates(
 ):
     """Get player-level aggregates."""
     with session_scope() as session:
-        # Get model
-        model_obj = (
-            session.query(ModelRegistry)
-            .filter(ModelRegistry.version == model)
-            .first()
-        )
+        model_obj = session.query(ModelRegistry).filter(ModelRegistry.version == model).first()
 
         if not model_obj:
             raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
-        # Get aggregates
         aggregates = (
             session.query(AggregatesPlayer, Player)
             .join(Player, AggregatesPlayer.player_id == Player.id)
@@ -125,17 +140,11 @@ async def get_team_aggregates(
 ):
     """Get team-level aggregates."""
     with session_scope() as session:
-        # Get model
-        model_obj = (
-            session.query(ModelRegistry)
-            .filter(ModelRegistry.version == model)
-            .first()
-        )
+        model_obj = session.query(ModelRegistry).filter(ModelRegistry.version == model).first()
 
         if not model_obj:
             raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
-        # Get aggregates
         aggregates = (
             session.query(AggregatesTeam, Team)
             .join(Team, AggregatesTeam.team_id == Team.id)
