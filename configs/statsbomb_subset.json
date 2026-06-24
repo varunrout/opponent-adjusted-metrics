@@ -1,0 +1,46 @@
+{
+  "description": "Default reproducible StatsBomb Open Data subset for opponent-adjusted football metrics.",
+  "source": "https://github.com/statsbomb/open-data",
+  "competitions": [
+    {
+      "competition_id": 2,
+      "season_id": 27,
+      "name": "Premier League",
+      "season": "2015/2016",
+      "include_events": true,
+      "purpose": "Club case study and out-of-domain scoring evaluation"
+    },
+    {
+      "competition_id": 43,
+      "season_id": 3,
+      "name": "FIFA World Cup",
+      "season": "2018",
+      "include_events": true,
+      "purpose": "International tournament training and validation"
+    },
+    {
+      "competition_id": 43,
+      "season_id": 106,
+      "name": "FIFA World Cup",
+      "season": "2022",
+      "include_events": true,
+      "purpose": "International tournament training and validation"
+    },
+    {
+      "competition_id": 55,
+      "season_id": 43,
+      "name": "UEFA Euro",
+      "season": "2020",
+      "include_events": true,
+      "purpose": "International tournament training and validation"
+    },
+    {
+      "competition_id": 55,
+      "season_id": 282,
+      "name": "UEFA Euro",
+      "season": "2024",
+      "include_events": true,
+      "purpose": "Held-out international tournament evaluation"
+    }
+  ]
+}
