@@ -1,272 +1,169 @@
 # Opponent-Adjusted Football Metrics
 
-An end-to-end system for building contextual, opponent-adjusted football metrics (CxG, CxA, CxT, C-OBV) using **StatsBomb Open Data** and **PostgreSQL**.
+Opponent-adjusted football analytics workflows built on StatsBomb Open Data. The repository now has a tested ingestion foundation, feature-contract checks, a reproducible CxG baseline runner, model artifact export, model-card documentation, API-backed CxG prediction, and CI quality gates.
 
-## Overview
+This is not yet a complete v1 product. CxG is the most mature metric family; CxA, CxT, dashboard integration, and final release packaging remain partial.
 
-This project implements advanced football analytics metrics that account for:
-- **Shot context**: Game state, possession patterns, pressure
-- **Opponent quality**: Defensive strength, zone-specific ratings
-- **Geometric factors**: Distance, angle, centrality
-- **Neutralization**: Isolating player/team performance from contextual effects
+## Current Scope
 
-### Metrics Implemented
+### Implemented
 
-1. **CxG (Contextual Expected Goals)**: Shot probability accounting for context and opponent strength
-2. **CxA (Contextual Expected Assists)**: Pass value considering completion probability and downstream shot generation (planned)
-3. **CxT (Contextual Expected Threat)**: Action value based on state transitions (planned)
-4. **C-OBV (Contextual On-Ball Value)**: Comprehensive action value using MDP framework (planned)
+- StatsBomb Open Data ingestion foundation with SQLAlchemy/Alembic database support.
+- Fixture-backed ingestion tests using small StatsBomb-like test data.
+- Feature contracts for CxG, CxA, and CxT inputs.
+- CxG feature-building and baseline end-to-end runner.
+- CxG model artifact and metadata export.
+- CxG model-card documentation.
+- FastAPI-backed CxG prediction from the exported model artifact.
+- CI quality gates for linting, formatting, typing, and tests.
+
+### Partial
+
+- CxA methodology, analysis modules, and exploratory outputs exist, but the public metric is not complete.
+- CxT modelling and evaluation code exists, but leakage-sensitive design and final validation are not complete.
+- Dashboard files exist, but the dashboard is not yet a stable v1 output surface.
+- Final v1 packaging, release notes, and full fresh-clone walkthrough are still pending.
 
 ## Quick Start
 
-### Prerequisites
+### Requirements
 
 - Python 3.11+
-- PostgreSQL 12+
-- Poetry (for dependency management)
+- Poetry
+- PostgreSQL 12+ for database-backed ingestion workflows
+- Docker Compose if using the bundled local database service
 
-### Running PostgreSQL via Docker (Recommended)
+### Install
 
-You can spin up a local Postgres instance with Docker Compose:
-
-```bash
-cp .env.example .env  # populate defaults (edit if desired)
-docker compose up -d db
-```
-
-Health check the container:
-
-```bash
-docker compose ps
-docker logs -f opponent_metrics_db  # optional
-```
-
-If you run application code inside another container (e.g. in a future API compose setup), set `DATABASE_URL` host to `db` instead of `localhost`.
-
-Example alternative URL for intra-compose networking:
-
-```
-DATABASE_URL=postgresql+psycopg://app:app@db:5432/opponent_metrics
-```
-
-
-### Installation
-
-1. Clone the repository:
 ```bash
 git clone https://github.com/varunrout/opponent-adjusted-metrics.git
 cd opponent-adjusted-metrics
-```
-
-2. Install dependencies:
-```bash
 poetry install
-```
-
-3. Set up environment variables:
-```bash
 cp .env.example .env
-# Edit .env with your PostgreSQL credentials
 ```
 
-4. Initialize the database:
-```bash
-# Create the database in PostgreSQL
-createdb opponent_metrics
+### Optional Local Database
 
-# Run migrations
+```bash
+docker compose up -d db
 poetry run alembic upgrade head
 ```
 
-### Data Pipeline
+If application code runs inside another container, set the database host to `db` rather than `localhost`.
 
-The complete pipeline consists of several stages:
+## Main Workflows
 
-#### 1. Data Ingestion
+### CxG Feature Pipeline
 
-Ingest StatsBomb Open Data for the specified competitions:
-
-```bash
-# Ingest competitions
-poetry run python scripts/ingest_competitions.py
-
-# Ingest matches
-poetry run python scripts/ingest_matches.py
-
-# Ingest events and normalize
-poetry run python scripts/ingest_events.py
-```
-
-#### 2. Feature Engineering
-
-Build features for shots:
+Build the CxG feature outputs:
 
 ```bash
-# Build shot features (geometry, context, pressure)
-poetry run python scripts/build_shot_features.py --version v1
-
-# Build opponent defensive profiles
-poetry run python scripts/build_opponent_profiles.py --version v1
+poetry run python scripts/run_cxg_pipeline.py
 ```
 
-#### 3. Model Training
+### CxG End-to-End Baseline
 
-Train the CxG model:
+Train, evaluate, and export the current CxG baseline artifacts and metadata:
 
 ```bash
-# Train CxG model
-poetry run python scripts/train_cxg.py --features v1 --version cxg_v1
-
-# Generate neutralized predictions
-poetry run python scripts/neutralize_cxg.py --model cxg_v1 --features v1
+poetry run python scripts/run_cxg_end_to_end.py
 ```
 
-#### 4. Evaluation
-
-Evaluate and generate reports:
-
-```bash
-# Evaluate model performance
-poetry run python scripts/evaluate_cxg.py --model cxg_v1 --features v1
-
-# Export reports
-poetry run python scripts/export_reports.py --model cxg_v1 --features v1
-```
+Generated files are written under `feature_store/` and `outputs/`. They are intentionally not tracked by Git. See [docs/OUTPUTS.md](docs/OUTPUTS.md) for regeneration notes.
 
 ### API Service
 
-Start the inference API:
+Start the FastAPI service:
 
 ```bash
-poetry run uvicorn opponent_adjusted.api.service:app --host 0.0.0.0 --port 8000
+poetry run uvicorn opponent_adjusted.api.service:app --reload
 ```
 
-API endpoints:
-- `GET /health` - Health check
-- `GET /models/cxg/version` - Get current model version
-- `POST /predict/cxg` - Predict CxG for a shot
-- `GET /aggregates/player?model=cxg_v1&limit=50` - Get player aggregates
-- `GET /aggregates/team?model=cxg_v1&limit=50` - Get team aggregates
+Useful endpoints:
 
-## Project Structure
+- `GET /health`
+- `GET /models/cxg/version`
+- `POST /predict/cxg`
 
+## Validation
+
+The repository quality gates are:
+
+```bash
+poetry run ruff check src scripts tests
+poetry run black --check src scripts tests
+poetry run pytest -v -m "not e2e"
+poetry run mypy src/opponent_adjusted/api/schemas.py src/opponent_adjusted/features/cxg/context.py src/opponent_adjusted/features/cxg/geometry.py src/opponent_adjusted/features/context.py src/opponent_adjusted/features/geometry.py
 ```
+
+## Project Layout
+
+```text
 opponent-adjusted-metrics/
-├── src/opponent_adjusted/       # Main package
-│   ├── config.py                # Configuration
-│   ├── db/                      # Database models and session
-│   ├── ingestion/               # Data ingestion modules
-│   ├── features/                # Feature engineering
-│   ├── modeling/                # Model training and prediction
-│   ├── evaluation/              # Evaluation and metrics
-│   ├── pipelines/               # End-to-end pipelines
-│   ├── api/                     # FastAPI service
-│   └── utils/                   # Utility functions
-├── scripts/                     # Executable scripts
-├── alembic/                     # Database migrations
-├── tests/                       # Unit tests
-├── reports/                     # Generated reports
-└── db/                          # Database seeds
+|-- alembic/                  # Database migrations
+|-- configs/                  # Versioned feature contracts and data-subset configs
+|-- dashboard/                # Partial dashboard application
+|-- docs/                     # Status, roadmap, model cards, and methodology notes
+|-- scripts/                  # Runnable ingestion, feature, modelling, and validation commands
+|-- src/opponent_adjusted/    # Package code
+|-- tests/                    # Unit, fixture-backed, and e2e-style tests
+|-- feature_store/            # Generated feature outputs, ignored by Git
+`-- outputs/                  # Generated model/report outputs, ignored by Git
 ```
 
-## Data Sources
+## Data
 
-This project uses **StatsBomb Open Data**, specifically:
-- FIFA World Cup 2018
-- UEFA Euro 2020
-- FIFA World Cup 2022
-- UEFA Euro 2024
+The project uses StatsBomb Open Data. Configured subsets and test fixtures are tracked; raw downloaded data and generated feature/model outputs are not.
 
-Data is automatically discovered and ingested from the StatsBomb open data repository.
+Tracked examples:
 
-## Database Schema
+- `configs/statsbomb_subset.json`
+- `configs/feature_contracts/*.json`
+- `tests/fixtures/statsbomb/**`
 
-Key tables:
-- `competitions`, `teams`, `players` - Reference data
-- `matches`, `events`, `raw_events` - Match data
-- `shots`, `shot_features` - Shot-level data and features
-- `opponent_def_profile` - Opponent defensive ratings
-- `model_registry` - Model versions and metadata
-- `shot_predictions` - Raw and neutralized predictions
-- `aggregates_player`, `aggregates_team` - Aggregated metrics
-- `evaluation_metrics` - Model performance metrics
+Ignored generated data:
 
-## Development
+- `feature_store/`
+- `outputs/`
+- `*.parquet`, `*.csv`, `*.joblib`, `*.pkl`, `*.pickle`
 
-### Running Tests
+## Methodology Notes
 
-```bash
-poetry run pytest
-```
+The current CxG baseline focuses on reproducibility and contract-backed model export. It should be read as a baseline CxG path, not a final calibrated production model. Future work includes calibration refinements, monitoring, richer slice validation, and stable registry-backed aggregate serving.
 
-### Code Quality
+CxA and CxT documentation in this repository is useful methodology and exploratory work, but those metric families should not be described as complete until their pipelines, validation, model cards, and dashboard/API surfaces are finished.
 
-```bash
-# Format code
-poetry run black src/ scripts/ tests/
+## Documentation
 
-# Lint
-poetry run ruff check src/ scripts/ tests/
+- [Project status](docs/PROJECT_STATUS.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Generated outputs](docs/OUTPUTS.md)
+- [CxG model card](docs/modeling/cxg/model_card.md)
+- [Feature contracts](docs/feature_contracts.md)
+- [Data dictionary](docs/data_dictionary.md)
 
-# Type checking
-poetry run mypy src/
-```
-
-## Methodology
-
-### CxG Model
-
-The CxG (Contextual Expected Goals) model uses:
-
-**Input Features:**
-- **Geometry**: Distance, angle, centrality
-- **Context**: Score differential, minute bucket, possession stats
-- **Pressure**: Under pressure flag, recent defensive actions, composite score
-- **Opponent**: Global defensive rating, zone-specific rating, block rate
-- **Baseline**: StatsBomb xG
-
-**Model**: LightGBM classifier with post-hoc isotonic calibration
-
-**Neutralization**: 
-- Replace contextual and opponent features with reference values
-- Reference: Tied game (0-0), minute 55, no pressure, average opponent
-- Captures inherent shot quality independent of context
-
-### Acceptance Criteria
-
-- Brier score improvement over baseline xG
-- Calibration (ECE) ≤ 0.06 overall, ≤ 0.05 under pressure
-- Mean opponent-adjusted diff within ±0.005
-- Slice-based performance on pressure, opponent strength, game state
+Historical reports that no longer represent current project status are kept under `docs/archive/`.
 
 ## Contributing
 
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+Contributions should keep documentation claims aligned with tested behavior. For code changes, add or update tests, run the validation commands above, and avoid committing generated outputs unless they are explicitly curated small examples.
 
 ## License
 
-This project uses StatsBomb Open Data under their [open data license](https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf).
+This project uses StatsBomb Open Data under the [StatsBomb open data license](https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf).
 
 ## Citation
 
-If you use this project in your research, please cite:
-
-```
+```bibtex
 @software{opponent_adjusted_metrics,
   title = {Opponent-Adjusted Football Metrics},
-  author = {Your Name},
-  year = {2024},
+  author = {Varun Rout},
+  year = {2026},
   url = {https://github.com/varunrout/opponent-adjusted-metrics}
 }
 ```
 
 ## Acknowledgments
 
-- [StatsBomb](https://statsbomb.com/) for providing open football event data
-- The football analytics community for methodological foundations
-
+- [StatsBomb](https://statsbomb.com/) for open football event data.
+- The football analytics community for methodological foundations.
