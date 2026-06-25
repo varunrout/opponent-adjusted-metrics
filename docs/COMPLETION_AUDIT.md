@@ -1,45 +1,50 @@
 # Completion Audit
 
-This audit separates what is already usable from what still needs completion before the repository can be described as a complete opponent-adjusted football analytics project.
+This audit records the current repository state after the documentation and generated-output cleanup.
 
-## Current judgement
+## Current Judgement
 
-`opponent-adjusted-metrics` has a strong foundation, but it is not yet complete as an end-to-end project. The repo contains meaningful architecture, modelling work, reports, scripts and dashboard material, but the project story is inconsistent and several interfaces still need production-grade wiring.
+`opponent-adjusted-metrics` has a reproducible CxG baseline path, CI quality gates, fixture-backed ingestion tests, feature contracts, and API-backed CxG prediction from exported artifacts. It should not be described as a complete v1 football analytics product.
 
-The immediate completion objective is not to add unrelated features. The objective is to make the existing system reproducible, tested, documented and runnable from a fresh clone.
+Generated reports and model outputs are intentionally not committed. They must be regenerated locally from source code and configs.
 
-## Status by area
+## Status By Area
 
 | Area | Status | Evidence / notes | Completion need |
 | --- | --- | --- | --- |
-| Repository structure | Mostly complete | Package layout, scripts, docs, tests and outputs exist. | Add CI, contribution docs, release discipline and consistent status docs. |
-| Dependency management | Mostly complete | Poetry config exists. | Ensure lock/install behaviour is validated in CI. |
-| Database schema | Mostly complete | SQLAlchemy models and Alembic migration exist. | Add migration smoke test against Postgres in CI. |
-| StatsBomb ingestion | Partial | Fetch, ingest and normalise scripts exist. | Prove fresh database ingestion works end to end and is idempotent. |
-| Feature engineering | Partial to mostly complete | CxG/CxA/CxT feature modules exist. | Add feature contracts, leakage checks and fixture-based tests. |
-| CxG modelling | Partial to mostly complete | CxG modelling artifacts and reports exist. | Consolidate training, evaluation, neutralisation, registry and API inference into one reproducible flow. |
-| CxA modelling | Partial | CxA analysis and newer methodology docs exist. | Choose final public methodology, complete action-sequence scoring and player aggregation. |
-| CxT modelling | Partial | CxT evaluation exists. | Resolve leakage warning, retrain/evaluate and update report. |
-| API | Partial | Health/model/aggregate routes exist, but CxG prediction still returns a placeholder `501`. | Implement real artifact loading and feature-contract inference. |
-| Dashboard | Partial | Dashboard files and requirements exist. | Wire to stable outputs, add screenshots and dashboard smoke test. |
-| Reports | Partial | Several generated reports exist. | Standardise report locations, remove stale claims and add final model cards. |
-| Testing | Partial | Unit and e2e tests exist. | Add CI coverage for lint, formatting, typing, unit tests, DB smoke and API smoke. |
-| CI/CD | Missing | No workflow files were found during audit. | Add GitHub Actions workflows. |
-| Documentation | Inconsistent | README and project status overstate completion in places. | Rewrite around a truthful v1 completion roadmap. |
+| Repository structure | Mostly complete | Package layout, scripts, tests, docs, configs, and migrations exist. | Keep release discipline and avoid recommitting generated outputs. |
+| Dependency management | Mostly complete | Poetry config exists and validation commands run through Poetry. | Keep lock/install behavior covered by CI. |
+| Database schema | Mostly complete | SQLAlchemy models and Alembic migrations exist. | Broaden Postgres smoke coverage. |
+| StatsBomb ingestion | Mostly complete | Ingestion foundation and fixture-backed tests exist. | Prove full fresh-clone ingestion against Docker Postgres. |
+| Feature engineering | Mostly complete for CxG, partial for CxA/CxT | Feature contracts exist for all metric families; CxG has the stable runner. | Enforce contracts across unfinished CxA/CxT paths. |
+| CxG modelling | Baseline complete | `scripts/run_cxg_pipeline.py` and `scripts/run_cxg_end_to_end.py` build features, train, validate, and export artifacts. | Future calibration, monitoring, and richer slice validation. |
+| CxG outputs | Reproducible, not tracked | `outputs/` and `feature_store/` are ignored by Git. | Regenerate outputs when needed; commit only curated small examples by explicit decision. |
+| CxA modelling | Not complete | Planning and contracts exist; old generated/completion reports were removed. | Complete reproducible sequence scoring, validation, aggregates, and model card. |
+| CxT modelling | Not complete | Leakage guardrail note exists; old generated/completion reports were removed. | Complete leakage-sensitive validation and regenerate final outputs. |
+| API | Mostly complete for CxG prediction, partial overall | `/predict/cxg` can load the emitted CxG artifact. | Broader registry-backed aggregate serving and API coverage. |
+| Dashboard | Not complete | Dashboard code exists, but it is not a stable v1 output surface. | Wire dashboard to stable regenerated outputs and add smoke coverage/screenshots. |
+| CI/CD | Mostly complete | Quality gates exist for lint, formatting, typing, and tests. | Expand database/release workflows. |
+| Documentation | Clean source-of-truth set | Historical generated reports and obsolete summaries were removed from `docs/`. | Keep docs aligned with implemented behavior. |
 
-## Blocking issues before calling the project complete
+## Not Complete Yet
 
-1. Prediction API still contains a placeholder CxG endpoint.
-2. CxT report flags potential leakage from `xt_delta` in the completion model.
-3. Project status documentation is stale and conflicts with later modelling artifacts.
-4. CI/CD is not present, so reproducibility is not enforced.
-5. Feature contracts are not yet treated as first-class artifacts.
-6. Fresh-clone instructions need to be verified by automated smoke tests.
-7. README should distinguish implemented, partial and planned metric layers.
+The repository is not v1 complete until:
 
-## Completion definition
+1. Full fresh-clone ingestion is validated against Docker Postgres.
+2. CxG calibration/monitoring refinements are complete beyond the baseline runner.
+3. Registry-backed aggregate serving is finalized.
+4. CxA has reproducible scoring, validation, aggregate outputs, and model-card documentation.
+5. CxT has leakage-sensitive validation, regenerated outputs, and model-card documentation.
+6. Dashboard views run against stable regenerated outputs.
+7. v1 release notes and packaging are published.
 
-The repository is complete when a reviewer can:
+## Documentation Cleanup Decision
+
+Historical generated reports, obsolete implementation summaries, old modelling result summaries, and documents claiming CxA/CxT completion were removed from `docs/`. The remaining docs should either describe current reproducible behavior or clearly identify future/planned work.
+
+## Completion Definition
+
+The repository reaches v1 complete when a reviewer can:
 
 1. Clone the repo.
 2. Start Postgres with Docker Compose.
@@ -47,23 +52,10 @@ The repository is complete when a reviewer can:
 4. Fetch a StatsBomb subset.
 5. Ingest and normalise events.
 6. Build feature tables.
-7. Train and evaluate CxG.
-8. Generate neutralised/opponent-adjusted predictions.
-9. Train or run completed CxA and CxT pipelines.
-10. Query real model outputs through the API.
-11. Open a dashboard backed by generated outputs.
-12. See CI passing for lint, tests, type checks and smoke tests.
+7. Train and validate CxG with the baseline runner.
+8. Regenerate CxG artifacts and outputs.
+9. Query real CxG predictions through the API.
+10. Run completed CxA and CxT pipelines without unresolved validation warnings.
+11. Open a dashboard backed by stable regenerated outputs.
+12. See CI passing for lint, tests, type checks, and smoke tests.
 13. Read model cards and limitations without stale or contradictory claims.
-
-## Recommended completion order
-
-1. Documentation audit and roadmap.
-2. CI/CD and repository hygiene.
-3. Data ingestion reproducibility.
-4. Feature contracts and data-quality gates.
-5. CxG end-to-end completion.
-6. API inference completion.
-7. CxA completion.
-8. CxT leakage fix and completion.
-9. Dashboard/reporting completion.
-10. v1 release packaging.

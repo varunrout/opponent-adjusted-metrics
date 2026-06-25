@@ -6,6 +6,8 @@ This document is the current source of truth for the completion state of `oppone
 
 The repository has moved beyond a prototype foundation. It now includes CI workflows, fixture-backed StatsBomb ingestion tests, feature contracts, a reproducible CxG end-to-end baseline runner, CxG artifact and metadata export, CxG model-card documentation, and API-backed CxG prediction.
 
+Generated CxG outputs are intentionally not committed. Run `scripts/run_cxg_pipeline.py` and `scripts/run_cxg_end_to_end.py` to regenerate feature and modelling outputs locally.
+
 It should still not be described as a complete v1 product. CxG is baseline-complete and mostly complete as a metric family, while CxA, CxT, dashboard integration, and final packaging remain partial.
 
 ## Implementation Status Matrix
@@ -20,13 +22,13 @@ It should still not be described as a complete v1 product. CxG is baseline-compl
 | Feature engineering | Mostly complete for CxG, partial for CxA/CxT | Feature contracts exist; CxG has the most stable feature path. |
 | CxG modelling | Mostly complete | One-command baseline training/evaluation/export exists. Future work is calibration, monitoring, and richer production validation. |
 | CxG neutralisation | Mostly complete | Runner exports raw, neutral, and opponent-adjusted shot scores plus aggregates. |
-| CxA modelling | Partial | Methodology and analysis code exist, but final reproducible sequence scoring and public metric validation are not complete. |
+| CxA modelling | Partial | Planning, contracts and exploratory code exist, but final reproducible sequence scoring and public metric validation are not complete. |
 | CxT modelling | Partial | Modelling/evaluation code exists, but leakage-sensitive design and final validation remain open. |
 | API | Mostly complete for CxG prediction, partial overall | `/predict/cxg` can load the emitted artifact; broader registry-backed aggregate serving and API coverage remain future work. |
 | Dashboard | Partial | Dashboard material exists but is not yet wired to stable v1 output contracts. |
 | Tests | Mostly complete for current CxG foundation | CI runs quality gates and focused tests; broader integration coverage remains valuable. |
 | CI/CD | Mostly complete | Quality workflows exist; deeper database and release workflows can be expanded later. |
-| Documentation | Partial | Core status and roadmap are being aligned; older historical reports must not be treated as current truth. |
+| Documentation | Mostly complete for current status | Historical generated reports, obsolete summaries, and CxA/CxT completion claims were removed from `docs/`. |
 
 ## Remaining Blockers For v1
 
@@ -77,6 +79,7 @@ The project reaches v1 complete when a reviewer can:
 - CxA and CxT are sensitive to sequence windows, attribution labels, and leakage controls.
 - Dashboard and aggregate-serving surfaces are not yet stable v1 interfaces.
 - Generated outputs are reproducible artifacts and are intentionally not tracked by Git.
+- Historical generated reports were removed from `docs/` so the repository has one honest documentation state.
 
 ## Next Milestone
 

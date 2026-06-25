@@ -105,11 +105,11 @@ The ingestion scripts are expected to be rerunnable. Existing records should be 
 
 ## Remaining hardening work
 
-This PR creates the reproducible fetch/report path. Follow-up data PRs should add:
+Fixture-backed ingestion tests exist. Follow-up data work should add:
 
-- fixture-backed ingestion tests
 - duplicate detection reports
 - normalisation coverage by event type
 - failed-match retry logs
 - configurable small smoke subset for CI
 - checks comparing expected match files with loaded match rows
+- full fresh-clone validation against Docker Postgres

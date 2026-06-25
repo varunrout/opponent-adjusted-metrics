@@ -2,6 +2,8 @@
 
 Generated outputs are intentionally not tracked by Git. They can be recreated from source code, configs, fixtures, and raw StatsBomb data, so the repository keeps only the instructions and versioned contracts needed to reproduce them.
 
+The `outputs/` and `feature_store/` directories are generated, ignored by Git, and should not be committed as routine documentation or model evidence.
+
 Ignored generated locations include:
 
 - `feature_store/cxg/`

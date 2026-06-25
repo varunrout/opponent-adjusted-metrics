@@ -2,6 +2,8 @@
 
 This roadmap tracks the path from the current CxG baseline-complete repository to a complete, reproducible v1 football analytics project.
 
+Generated outputs are not part of the committed documentation state. Regenerate CxG outputs with `scripts/run_cxg_pipeline.py` and `scripts/run_cxg_end_to_end.py` when local artifacts are needed.
+
 ## v1 Goal
 
 Build an end-to-end system that ingests StatsBomb Open Data, stores normalised football events, builds contextual and opponent-aware features, trains and validates CxG/CxA/CxT metrics, exposes CxG predictions through an API, and presents player/team insights through reports and dashboard views.
@@ -24,6 +26,7 @@ Completed or mostly complete:
 - CI quality gates for linting, formatting, typing, and tests.
 - Repository contribution guidance.
 - Git tracking rules for generated outputs.
+- Removal of historical generated reports and obsolete completion summaries from `docs/`.
 
 Remaining refinements:
 
@@ -68,6 +71,7 @@ Completed:
 - Model artifact and metadata export.
 - CxG model card.
 - API-backed CxG prediction from the emitted artifact.
+- Generated outputs kept out of Git and regenerated on demand.
 
 Future CxG refinements:
 
