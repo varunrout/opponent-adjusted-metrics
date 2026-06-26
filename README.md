@@ -69,6 +69,18 @@ Train, evaluate, and export the current CxG baseline artifacts and metadata:
 poetry run python scripts/run_cxg_end_to_end.py
 ```
 
+Validate the regenerated output contract and Git ignore rules:
+
+```bash
+poetry run python scripts/check_cxg_outputs.py
+```
+
+Or run the full local CxG reproducibility smoke:
+
+```bash
+make cxg-smoke
+```
+
 Generated files are written under `feature_store/` and `outputs/`. They are intentionally not tracked by Git. See [docs/OUTPUTS.md](docs/OUTPUTS.md) for regeneration notes.
 
 ### API Service
