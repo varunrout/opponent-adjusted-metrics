@@ -1,137 +1,98 @@
 # Completion Roadmap
 
-This roadmap turns `opponent-adjusted-metrics` into a complete, reproducible and portfolio-ready football analytics project.
+This roadmap tracks the path from the current CxG baseline-complete repository to a complete, reproducible v1 football analytics project.
 
-## v1 goal
+Generated outputs are not part of the committed documentation state. Regenerate CxG outputs with `scripts/run_cxg_pipeline.py` and `scripts/run_cxg_end_to_end.py` when local artifacts are needed.
 
-Build an end-to-end system that ingests StatsBomb Open Data, stores normalised football events, builds contextual and opponent-aware features, trains CxG/CxA/CxT models, evaluates and neutralises outputs, exposes predictions through an API, and presents player/team insights through reports and dashboard views.
+## v1 Goal
 
-## PR delivery plan
+Build an end-to-end system that ingests StatsBomb Open Data, stores normalised football events, builds contextual and opponent-aware features, trains and validates CxG/CxA/CxT metrics, exposes CxG predictions through an API, and presents player/team insights through reports and dashboard views.
 
-### PR 1: Audit and roadmap
+## Completed Phases
 
-**Goal:** make project status honest and remove ambiguity.
+### Phase 1: Audit And Status Alignment
 
-Deliverables:
+Completed:
 
-- `docs/COMPLETION_AUDIT.md`
-- `docs/ROADMAP.md`
-- Updated `docs/PROJECT_STATUS.md`
-- Clear implementation status matrix
-- Completion criteria for each metric layer
+- Project status audit.
+- Roadmap creation.
+- Honest implementation matrix.
+- Completion criteria for each metric layer.
 
-Acceptance criteria:
+### Phase 2: CI/CD And Repository Hygiene
 
-- No module is described as complete unless it is runnable and tested.
-- Placeholder and partial areas are explicitly marked.
-- Future PRs have clear ownership and scope.
+Completed or mostly complete:
 
-### PR 2: CI/CD and repository hygiene
+- CI quality gates for linting, formatting, typing, and tests.
+- Repository contribution guidance.
+- Git tracking rules for generated outputs.
+- Removal of historical generated reports and obsolete completion summaries from `docs/`.
 
-**Goal:** enforce quality on every future PR.
+Remaining refinements:
 
-Deliverables:
+- Broader database smoke workflows.
+- Release-oriented automation.
 
-- GitHub Actions CI workflow
-- Security/dependency workflow
-- Docker/Postgres smoke workflow
-- Pre-commit configuration
-- Contributing guide
-- Pull request template
+### Phase 3: Data Ingestion Reproducibility
 
-Acceptance criteria:
+Completed or mostly complete:
 
-- Lint, formatting, type checks and tests run on pull requests.
-- Database migration smoke test runs against Postgres.
-- Contributors have a standard checklist.
+- StatsBomb ingestion foundation.
+- Deterministic subset configuration.
+- Fixture-backed ingestion tests.
 
-### PR 3: Data ingestion reproducibility
+Remaining refinements:
 
-**Goal:** make the raw-data pipeline runnable from a fresh clone.
+- Full fresh-clone Docker/Postgres walkthrough validation.
+- Expanded row-count and integrity reports.
 
-Deliverables:
+### Phase 4: Feature Contracts And Quality Gates
 
-- Deterministic StatsBomb subset configuration
-- Fresh database ingestion path
-- Idempotent ingestion checks
-- Normalisation validation report
-- Fixture-based ingestion tests
+Completed or mostly complete:
 
-Acceptance criteria:
+- Feature contracts for CxG, CxA, and CxT.
+- Contract validation utility.
+- Leakage-aware expectations for model inputs.
 
-- `make db-up && make migrate-up && make fetch-data && make ingest-all && make normalize-events` can run without manual file edits.
-- Re-running ingestion does not duplicate data.
-- Row-count and integrity summaries are produced.
+Remaining refinements:
 
-### PR 4: Feature contracts and quality gates
+- Broader enforcement across every non-CxG modelling path.
+- Generated feature-quality reports.
 
-**Goal:** make model inputs stable and leakage-aware.
+### Phase 5: CxG Baseline End To End
 
-Deliverables:
+Completed:
 
-- Feature contracts for CxG, CxA and CxT
-- Required, optional and forbidden columns
-- Data quality checks for missingness, invalid coordinates, duplicates and target leakage
-- Feature-store output conventions
+- CxG feature pipeline command.
+- CxG end-to-end baseline runner.
+- Baseline model training and evaluation.
+- Neutral/opponent-adjusted scoring outputs.
+- Player/team aggregate exports.
+- Model artifact and metadata export.
+- CxG model card.
+- API-backed CxG prediction from the emitted artifact.
+- Generated outputs kept out of Git and regenerated on demand.
 
-Acceptance criteria:
+Future CxG refinements:
 
-- Each modelling script validates its input contract before training or scoring.
-- Leakage-prone columns are blocked from inference features.
-- Reports are generated for feature quality.
+- Calibration improvements beyond the current baseline.
+- Monitoring and drift checks.
+- Richer slice validation and production-readiness reporting.
+- Registry-backed aggregate serving.
 
-### PR 5: Complete CxG end to end
+## Remaining Phases
 
-**Goal:** make CxG the flagship completed metric.
+### Phase 6: CxA Completion
 
-Deliverables:
-
-- Baseline geometry model
-- Contextual/opponent-aware model
-- Match-grouped validation
-- Held-out competition evaluation
-- Calibration metrics
-- Neutral CxG and opponent-adjusted deltas
-- Player/team aggregates
-- Model registry entry
-- CxG model card
-
-Acceptance criteria:
-
-- One command trains, evaluates and exports CxG outputs.
-- Predictions and aggregates are reproducible.
-- Model card includes limitations and validation design.
-
-### PR 6: API inference completion
-
-**Goal:** replace placeholder API inference with real model-backed predictions.
+Goal: produce defensible creator and sequence-attribution outputs.
 
 Deliverables:
 
-- CxG model artifact loader
-- Feature-contract validation at request time
-- Real `/predict/cxg` response
-- Batch scoring endpoint or runner
-- API tests with fixture model
-- OpenAPI examples
-
-Acceptance criteria:
-
-- `/predict/cxg` no longer returns `501` when a model artifact is configured.
-- Invalid requests fail with clear validation errors.
-- Health and aggregate endpoints are covered by tests.
-
-### PR 7: Complete CxA
-
-**Goal:** produce meaningful creator and sequence attribution outputs.
-
-Deliverables:
-
-- Action sequence builder for passes, carries and dribbles
-- Shot-creation and shot-quality modelling
-- Credit distribution across final action, pre-assist and earlier actions
-- Player/team CxA aggregates
-- CxA model card and football interpretation report
+- Reproducible action sequence builder for passes, carries, and dribbles.
+- Shot-creation and shot-quality modelling.
+- Credit distribution across final action, pre-assist, and earlier actions.
+- Player/team CxA aggregates.
+- CxA model card and football interpretation report.
 
 Acceptance criteria:
 
@@ -139,17 +100,17 @@ Acceptance criteria:
 - Sequence-level examples are documented.
 - Methodology avoids overclaiming terms such as `true xA` unless precisely defined.
 
-### PR 8: Fix and complete CxT
+### Phase 7: CxT Completion
 
-**Goal:** remove leakage risk and make CxT defensible.
+Goal: remove leakage risk and make CxT defensible.
 
 Deliverables:
 
-- Remove leakage-prone completion features
-- Rebuild completion and xT-gain models
-- Slice evaluation by pressure, zone and action type
-- Player/team CxT aggregates
-- Updated CxT report and model card
+- Remove leakage-prone completion features.
+- Rebuild completion and xT-gain models.
+- Slice evaluation by pressure, zone, and action type.
+- Player/team CxT aggregates.
+- Updated CxT report and model card.
 
 Acceptance criteria:
 
@@ -157,55 +118,56 @@ Acceptance criteria:
 - Completion and value models are evaluated separately.
 - CxT outputs are interpretable by action type.
 
-### PR 9: Dashboard and storytelling
+### Phase 8: Dashboard And Storytelling
 
-**Goal:** make the project understandable to non-technical football audiences.
+Goal: make generated outputs useful to football audiences.
 
 Deliverables:
 
-- Dashboard wired to stable output files
-- CxG, CxA and CxT leaderboards
-- Player/team profile pages
-- Shot/action explorer
-- README screenshots
-- Football interpretation guide
+- Dashboard wired to stable generated-output files.
+- CxG, CxA, and CxT leaderboards once each metric is ready.
+- Player/team profile pages.
+- Shot/action explorer.
+- README screenshots.
+- Football interpretation guide.
 
 Acceptance criteria:
 
-- Dashboard runs from generated outputs.
+- Dashboard runs from regenerated outputs.
 - README explains what a football analyst can learn from the project.
-- At least one player, team and match case study is included.
+- At least one player, team, and match case study is included.
 
-### PR 10: v1 release packaging
+### Phase 9: v1 Release Packaging
 
-**Goal:** mark the project as complete and reproducible.
+Goal: mark the project as complete and reproducible without overclaiming.
 
 Deliverables:
 
-- Final README rewrite
-- Architecture diagram
-- Data-flow diagram
-- Model cards
-- Limitations page
-- Docker Compose full-stack instructions
-- Tagged release notes
+- Final README review.
+- Architecture diagram.
+- Data-flow diagram.
+- Model cards for completed metric families.
+- Limitations page.
+- Docker Compose full-stack instructions.
+- Tagged release notes.
 
 Acceptance criteria:
 
 - Fresh-clone path is documented and tested.
 - CI is passing.
-- v1 release notes clearly distinguish implemented work from future extensions.
+- v1 release notes distinguish implemented work from future extensions.
 
-## Completion checklist
+## Completion Checklist
 
-- [ ] CI passes for lint, formatting, typing and tests.
-- [ ] Docker Postgres smoke test passes.
-- [ ] Fresh ingestion path is documented.
-- [ ] Feature contracts exist for all metric families.
-- [ ] CxG end-to-end pipeline is complete.
-- [ ] API returns real predictions.
+- [x] CI quality gates exist for lint, formatting, typing, and tests.
+- [ ] Docker Postgres smoke test is fully validated.
+- [x] Fresh ingestion path has fixture-backed tests.
+- [x] Feature contracts exist for CxG, CxA, and CxT.
+- [x] CxG baseline end-to-end pipeline is complete.
+- [x] API returns real CxG predictions from exported artifacts.
+- [ ] CxG calibration/monitoring refinements are complete.
 - [ ] CxA outputs are complete and documented.
 - [ ] CxT leakage warning is resolved.
-- [ ] Dashboard runs on generated outputs.
-- [ ] README and project status are consistent.
+- [ ] Dashboard runs on stable generated outputs.
+- [ ] README and project status remain consistent.
 - [ ] v1 release notes are published.

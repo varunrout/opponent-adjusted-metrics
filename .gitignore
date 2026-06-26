@@ -27,7 +27,7 @@ MANIFEST
 venv/
 ENV/
 env/
-.venv
+.venv/
 
 # Poetry
 poetry.lock
@@ -48,33 +48,24 @@ poetry.lock
 *.sqlite
 *.sqlite3
 
-# Data (raw input data — tracked selectively)
+# Downloaded/raw data
 data/
 !data/statsbomb/
 !data/statsbomb/**
 
-# Feature store (intermediate parquets — generated, not tracked)
+# Generated feature stores and outputs
+outputs/
 feature_store/
-
-# Output artifacts
-*.csv
 *.parquet
-*.json
-!data/statsbomb/**/*.json
-!outputs/analysis/cxg/csv/
-!outputs/analysis/cxg/csv/**
-!outputs/csv/
-!outputs/csv/**
-!outputs/modeling/
-!outputs/modeling/**
-!outputs/reports/
-!outputs/reports/**
-
-# Model artifacts
+*.csv
 *.joblib
 *.pkl
 *.pickle
-!outputs/modeling/**/*.joblib
+
+# Keep curated fixtures and JSON configs trackable
+!tests/fixtures/**
+!configs/**/*.json
+!data/statsbomb/**/*.json
 
 # Logs
 *.log
@@ -86,6 +77,8 @@ logs/
 htmlcov/
 .tox/
 .nox/
+.mypy_cache/
+.ruff_cache/
 
 # Jupyter
 .ipynb_checkpoints/

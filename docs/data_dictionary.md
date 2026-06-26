@@ -233,7 +233,7 @@ Model metadata and versioning.
 | id | INTEGER | NO | Primary key |
 | model_name | VARCHAR(100) | NO | Model name (e.g., "cxg") |
 | version | VARCHAR(50) | NO | Model version (e.g., "cxg_v1") |
-| algorithm | VARCHAR(100) | NO | Algorithm (e.g., "LightGBM") |
+| algorithm | VARCHAR(100) | NO | Algorithm name (e.g., "logistic_regression") |
 | hyperparams | JSON | YES | Hyperparameters JSON |
 | trained_on_version_tag | VARCHAR(20) | NO | Feature version used |
 | artifact_path | TEXT | NO | Path to model artifact file |

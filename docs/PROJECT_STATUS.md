@@ -1,75 +1,58 @@
 # Project Status
 
-This document is the source of truth for the current completion state of `opponent-adjusted-metrics`.
+This document is the current source of truth for the completion state of `opponent-adjusted-metrics`.
 
-## Current status
+## Current Status
 
-The repository has a strong foundation for an opponent-adjusted football analytics system, but it should not yet be described as fully complete or production-ready.
+The repository has moved beyond a prototype foundation. It now includes CI workflows, fixture-backed StatsBomb ingestion tests, feature contracts, a reproducible CxG end-to-end baseline runner, CxG artifact and metadata export, CxG model-card documentation, and API-backed CxG prediction.
 
-The project currently contains:
+Generated CxG outputs are intentionally not committed. Run `scripts/run_cxg_pipeline.py` and `scripts/run_cxg_end_to_end.py` to regenerate feature and modelling outputs locally.
 
-- Python package structure for football analytics workflows.
-- PostgreSQL-oriented database models and migrations.
-- StatsBomb ingestion and normalisation scripts.
-- CxG, CxA and CxT modelling/analysis modules.
-- API routes for health, model metadata and aggregates.
-- Dashboard/reporting material.
-- Unit and e2e-style tests.
+It should still not be described as a complete v1 product. CxG is baseline-complete and mostly complete as a metric family, while CxA, CxT, dashboard integration, and final packaging remain partial.
 
-The project still needs final completion work in CI/CD, reproducibility, model-contract validation, API inference, CxT leakage resolution and documentation consistency.
-
-## Implementation status matrix
+## Implementation Status Matrix
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Project structure | Mostly complete | Good package and script layout exists. |
-| Dependency management | Mostly complete | Poetry is configured. CI install validation still needed. |
-| Database schema | Mostly complete | SQLAlchemy/Alembic foundation exists. Needs automated Postgres smoke test. |
-| Data ingestion | Partial | Scripts exist, but fresh-clone reproducibility and idempotency need verification. |
-| Event normalisation | Partial | Normalisation path exists. Needs row-count and integrity reporting. |
-| Feature engineering | Partial | Feature modules exist. Needs formal contracts and leakage gates. |
-| CxG modelling | Mostly complete | One-command end-to-end training/evaluation/export now exists; further calibration and production monitoring remain future work. |
-| CxG neutralisation | Mostly complete | End-to-end runner exports raw, neutral and opponent-adjusted shot scores plus player/team aggregates. |
-| CxA modelling | Partial | Analysis and methodology exist. Needs final public methodology and reproducible sequence scoring. |
-| CxT modelling | Partial | Evaluation exists, but leakage warning must be resolved. |
-| API | Partial | Health/model/aggregate routes exist and `/predict/cxg` can load the emitted CxG artifact; registry-backed aggregate serving still needs completion. |
-| Dashboard | Partial | Dashboard material exists. Needs stable output contracts and screenshots. |
-| Tests | Partial | Tests exist. Needs CI enforcement and broader smoke coverage. |
-| CI/CD | Missing | GitHub Actions workflows need to be added. |
-| Documentation | Partial | Documentation is extensive but inconsistent in completion claims. |
+| Project structure | Mostly complete | Package, scripts, tests, docs, configs, and migrations are in place. |
+| Dependency management | Mostly complete | Poetry is configured and validated by CI. |
+| Database schema | Mostly complete | SQLAlchemy/Alembic foundation exists; broader Postgres smoke coverage can still improve confidence. |
+| Data ingestion | Mostly complete | StatsBomb ingestion foundation exists with fixture-backed tests; full fresh-clone data-volume validation remains useful future work. |
+| Event normalisation | Partial | Normalisation path exists; row-count and integrity reporting can be expanded. |
+| Feature engineering | Mostly complete for CxG, partial for CxA/CxT | Feature contracts exist; CxG has the most stable feature path. |
+| CxG modelling | Mostly complete | One-command baseline training/evaluation/export exists. Future work is calibration, monitoring, and richer production validation. |
+| CxG neutralisation | Mostly complete | Runner exports raw, neutral, and opponent-adjusted shot scores plus aggregates. |
+| CxA modelling | Partial | Planning, contracts and exploratory code exist, but final reproducible sequence scoring and public metric validation are not complete. |
+| CxT modelling | Partial | Modelling/evaluation code exists, but leakage-sensitive design and final validation remain open. |
+| API | Mostly complete for CxG prediction, partial overall | `/predict/cxg` can load the emitted artifact; broader registry-backed aggregate serving and API coverage remain future work. |
+| Dashboard | Partial | Dashboard material exists but is not yet wired to stable v1 output contracts. |
+| Tests | Mostly complete for current CxG foundation | CI runs quality gates and focused tests; broader integration coverage remains valuable. |
+| CI/CD | Mostly complete | Quality workflows exist; deeper database and release workflows can be expanded later. |
+| Documentation | Mostly complete for current status | Historical generated reports, obsolete summaries, and CxA/CxT completion claims were removed from `docs/`. |
 
-## Completion blockers
+## Remaining Blockers For v1
 
-The repository cannot be treated as complete until these are resolved:
+1. Fresh-clone setup should be tested against Docker Postgres end to end.
+2. CxG should receive calibration, monitoring, and richer slice-validation refinements beyond the baseline runner.
+3. Registry-backed aggregate serving should be completed beyond file exports.
+4. CxA needs final methodology, reproducible sequence scoring, validation, and model-card documentation.
+5. CxT needs leakage-sensitive redesign/validation and regenerated reports.
+6. Dashboard views need stable generated-output contracts and screenshots.
+7. v1 release packaging, limitations, and release notes need to be finalized.
 
-1. CI/CD workflows are added and passing.
-2. Fresh-clone setup is tested against Docker Postgres.
-3. Feature contracts exist for CxG, CxA and CxT.
-4. CxG needs further calibration/monitoring beyond the reproducible baseline path.
-5. Registry-backed aggregate serving needs final wiring beyond file exports.
-6. CxT leakage warning is fixed and the report is regenerated.
-7. README, project status and implementation docs are aligned.
-8. Dashboard reads stable generated outputs.
-9. Model cards and limitations are present for each metric family.
+## Active Roadmap
 
-## Active roadmap
+The completion roadmap is tracked in [docs/ROADMAP.md](./ROADMAP.md).
 
-The completion roadmap is tracked in [`docs/ROADMAP.md`](./ROADMAP.md).
+Recommended remaining sequence:
 
-Recommended PR sequence:
+1. CxG calibration, monitoring, and production-readiness refinements.
+2. CxA completion.
+3. CxT leakage-sensitive completion.
+4. Dashboard and storytelling.
+5. v1 release packaging.
 
-1. Audit and roadmap.
-2. CI/CD and repository hygiene.
-3. Data ingestion reproducibility.
-4. Feature contracts and quality gates.
-5. CxG end-to-end completion (baseline runner implemented; calibration refinements remain).
-6. API inference completion.
-7. CxA completion.
-8. CxT leakage fix and completion.
-9. Dashboard and storytelling.
-10. v1 release packaging.
-
-## Definition of complete
+## Definition Of v1 Complete
 
 The project reaches v1 complete when a reviewer can:
 
@@ -82,20 +65,22 @@ The project reaches v1 complete when a reviewer can:
 7. Build feature tables.
 8. Train and evaluate CxG.
 9. Generate neutralised/opponent-adjusted outputs.
-10. Run CxA and CxT pipelines without unresolved leakage warnings.
-11. Query real predictions through the API.
+10. Run CxA and CxT pipelines without unresolved leakage or validation warnings.
+11. Query real CxG predictions through the API.
 12. Open a dashboard backed by generated outputs.
 13. See CI passing on pull requests.
 14. Read consistent documentation that separates implemented work from future extensions.
 
-## Known limitations
+## Known Limitations
 
 - StatsBomb Open Data coverage is limited and competition-dependent.
-- Some pressure and opponent-quality signals are proxies rather than tracking-data measures.
-- CxA and CxT require careful validation because sequence/action attribution is sensitive to label design.
-- CxT must be revalidated after leakage-prone features are removed.
-- API inference depends on stable model artifact and feature-contract handling.
+- Pressure and opponent-quality signals are event-data proxies rather than tracking-data measures.
+- The current CxG path is a reproducible baseline, not the final calibrated production model.
+- CxA and CxT are sensitive to sequence windows, attribution labels, and leakage controls.
+- Dashboard and aggregate-serving surfaces are not yet stable v1 interfaces.
+- Generated outputs are reproducible artifacts and are intentionally not tracked by Git.
+- Historical generated reports were removed from `docs/` so the repository has one honest documentation state.
 
-## Next milestone
+## Next Milestone
 
-The next milestone after this status cleanup is to add CI/CD workflows and repository hygiene so all later completion work lands through tested pull requests.
+The next milestone is to harden CxG beyond the baseline runner while keeping CxA, CxT, dashboard work, and v1 packaging clearly scoped as remaining work.

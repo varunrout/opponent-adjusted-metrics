@@ -2,6 +2,7 @@
 
 **Date:** 2025-12-24  
 **Status:** Planning (Phase 2: cxA)  
+> This is a planning document, not current implementation evidence. CxA is not complete; this plan remains as future methodology guidance only.
 **Scope:** Data ingestion → feature engineering → analysis → modelling methodology  
 
 This plan extends the existing CxG stack by defining **cxA (contextual expected assists)** as a **sequence-based chance-creation** metric. The core principle is:
