@@ -92,6 +92,22 @@ The same regeneration path is available as a Make target:
 make cxg-smoke
 ```
 
+## CxA Design-Stage Output Contract
+
+CxA is currently in design-contract stage. This repository defines the expected future output locations, but this PR does not require generated CxA files to exist.
+
+Future generated CxA locations:
+
+```text
+feature_store/cxa/
+outputs/modeling/cxa/models/
+outputs/modeling/cxa/reports/
+outputs/modeling/cxa/predictions/
+outputs/modeling/cxa/aggregates/
+```
+
+Expected future file paths are recorded in `configs/feature_contracts/cxa_v1.json`. Generated CxA outputs will remain ignored by Git under the existing `feature_store/` and `outputs/` rules.
+
 ## What Should Be Committed
 
 Commit source code, documentation, tests, migrations, and curated configs such as:
