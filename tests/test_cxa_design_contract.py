@@ -90,7 +90,7 @@ def test_cxa_design_document_contains_required_sections():
     ):
         assert heading in text
 
-    assert "not evidence that a final CxA model has been trained" in text
+    assert "not be read as evidence of a final CxA attribution system" in text
     assert "must not require tracking data" in text
 
 

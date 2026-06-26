@@ -3,7 +3,8 @@
 	ingest-competitions ingest-matches ingest-events \
 	normalize-events ingestion-report data-smoke \
 	build-features build-profiles \
-	run-cxa-pipeline run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
+	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
+	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis run-cxt-pipeline train-cxt evaluate-cxt \
 	fetch-data api test lint format clean
 
@@ -74,6 +75,13 @@ build-profiles:  ## Build opponent profiles (VERSION=v1)
 # CxA
 run-cxa-pipeline:  ## Run CxA pipeline
 	poetry run python scripts/run_cxa_pipeline.py
+
+run-cxa-end-to-end:  ## Train, evaluate, and export CxA baseline outputs
+	poetry run python scripts/run_cxa_end_to_end.py
+
+cxa-run: run-cxa-pipeline run-cxa-end-to-end  ## Regenerate CxA baseline features and model outputs
+
+cxa-smoke: cxa-run  ## Alias for the local CxA baseline smoke
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline

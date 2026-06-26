@@ -1,6 +1,6 @@
 # CxA Design And Contract
 
-This document defines the design contract for contextual expected assist (CxA). It is a guardrail for future implementation work, not evidence that a final CxA model has been trained or validated.
+This document defines the design contract for contextual expected assist (CxA). The repository now includes a first baseline model path, but this document remains the guardrail for future refinement and should not be read as evidence of a final CxA attribution system.
 
 ## Definition
 
@@ -68,7 +68,7 @@ Validation must group by `match_id` to reduce match-level leakage.
 
 ## Baseline Model Plan
 
-The next implementation PR should build a reproducible baseline with:
+The first implementation path should stay reproducible and modest:
 
 - A model-ready action feature table under `feature_store/cxa/`.
 - A simple, deterministic baseline model before richer sequence attribution.
@@ -94,7 +94,7 @@ If a baseline comparison is unavailable, validation should state that clearly ra
 
 ## Output Contract
 
-Future generated outputs should be ignored by Git and live under:
+Generated baseline outputs should be ignored by Git and live under:
 
 ```text
 feature_store/cxa/
