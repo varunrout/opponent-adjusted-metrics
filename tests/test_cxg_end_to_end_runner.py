@@ -101,8 +101,8 @@ def test_cxg_output_contract_validation_accepts_temp_outputs(tmp_path: Path):
 def test_cxg_generated_roots_are_git_ignored():
     assert_git_ignored(
         (
-            Path("feature_store"),
-            Path("outputs"),
+            Path("feature_store/"),
+            Path("outputs/"),
             Path("feature_store/cxg"),
             Path("outputs/modeling/cxg/models/contextual_model.joblib"),
             Path("outputs/modeling/cxg/predictions/shot_predictions.parquet"),
