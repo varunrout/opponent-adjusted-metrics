@@ -24,87 +24,128 @@ class CxGModelNotAvailable(RuntimeError):
     """Raised when no usable CxG model artefact can be found."""
 
 
+class CxGMetadataInvalid(CxGModelNotAvailable):
+    """Raised when a CxG model artefact has missing or invalid metadata."""
+
+
 @dataclass(frozen=True)
 class LoadedCxGModel:
     """Loaded CxG model and metadata."""
 
     model: Any
     metadata: dict[str, Any]
+    metadata_summary: dict[str, Any]
     model_path: Path
+    metadata_path: Path
     version: str
 
 
-DEFAULT_CONTEXTUAL_FEATURES = {
-    "numeric": [
-        "shot_distance",
-        "shot_angle",
-        "statsbomb_xg",
-        "score_diff_at_shot",
-        "minute",
-        "time_gap_seconds",
-        "finishing_bias_logit",
-        "finishing_bias_multiplier",
-        "concession_bias_logit",
-        "concession_bias_multiplier",
-        "set_piece_logit",
-        "set_piece_multiplier",
-        "set_piece_modeled_prob",
-        "assist_quality_logit",
-        "assist_quality_multiplier",
-        "assist_quality_modeled_prob",
-        "pressure_logit",
-        "pressure_multiplier",
-        "pressure_modeled_prob",
-        "def_trigger_logit",
-        "def_trigger_multiplier",
-        "def_trigger_modeled_prob",
-    ],
-    "binary": ["is_leading", "is_trailing", "is_drawing", "possession_match"],
-    "categorical": [
-        "chain_label",
-        "pass_style",
-        "score_state",
-        "simple_state",
-        "minute_bucket_label",
-        "assist_category",
-        "pressure_state",
-        "set_piece_category",
-        "set_piece_phase",
-        "def_label",
-    ],
+NEUTRAL_CONTEXT_DEFAULTS: dict[str, Any] = {
+    "score_diff_at_shot": 0,
+    "minute": 55,
+    "minute_bucket_label": "46-60",
+    "under_pressure": False,
+    "pressure_state": "no_pressure",
+    "is_leading": False,
+    "is_trailing": False,
+    "is_drawing": True,
+    "score_state": "drawing",
+    "simple_state": "drawing",
+    "opponent_def_rating_global": 0.0,
+    "opponent_def_zone_rating": 0.0,
+    "opponent_zone_block_rate": 0.0,
 }
 
-
-def _safe_metadata_path(model_path: Path) -> Path | None:
-    metadata_path = model_path.with_suffix(".json")
-    return metadata_path if metadata_path.exists() else None
+DEFAULT_CXG_MODEL_PATH = (
+    settings.model_artifacts_path / "cxg" / "models" / "contextual_model.joblib"
+)
 
 
 def _load_metadata(model_path: Path) -> dict[str, Any]:
-    metadata_path = _safe_metadata_path(model_path)
-    if not metadata_path:
-        return {"features": DEFAULT_CONTEXTUAL_FEATURES, "model_type": "unknown"}
-    return json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata_path = model_path.with_suffix(".json")
+    if not metadata_path.exists():
+        raise CxGMetadataInvalid(f"CxG metadata sidecar is missing: {metadata_path}")
+
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise CxGMetadataInvalid(f"CxG metadata is not valid JSON: {metadata_path}") from exc
+
+    if not isinstance(metadata, dict):
+        raise CxGMetadataInvalid(f"CxG metadata must be a JSON object: {metadata_path}")
+    return metadata
 
 
 def _candidate_model_paths(registry_path: str | None = None) -> list[Path]:
-    candidates: list[Path] = []
+    """Return deterministic CxG artefact candidates.
+
+    The default generated CxG artifact is first. A registry path is accepted as
+    a secondary explicit pointer when it differs from the default.
+    """
+
+    candidates = [DEFAULT_CXG_MODEL_PATH]
     if registry_path:
         path = Path(registry_path)
-        candidates.append(path if path.is_absolute() else Path.cwd() / path)
-
-    candidates.extend(
-        [
-            settings.model_artifacts_path / "cxg" / "models" / "contextual_model.joblib",
-            Path("outputs") / "modeling" / "cxg" / "models" / "contextual_model.joblib",
-            Path("outputs")
-            / "modeling"
-            / "cxg"
-            / "models"
-            / "contextual_model_neutral_priors_refresh.joblib",
-        ]
-    )
+        resolved = path if path.is_absolute() else Path.cwd() / path
+        if resolved not in candidates:
+            candidates.append(resolved)
     return candidates
+
+
+def _model_feature_columns(metadata: dict[str, Any]) -> list[str]:
+    feature_groups = metadata.get("features")
+    if not isinstance(feature_groups, dict):
+        return []
+
+    columns: list[str] = []
+    for key in ("numeric", "binary", "categorical"):
+        group = feature_groups.get(key)
+        if isinstance(group, list):
+            columns.extend(str(column) for column in group)
+    return columns
+
+
+def _validate_metadata(metadata: dict[str, Any], model_path: Path) -> tuple[str, dict[str, Any]]:
+    version = metadata.get("model_version") or metadata.get("version")
+    if not version:
+        raise CxGMetadataInvalid("CxG metadata is missing model_version/version")
+
+    target = metadata.get("target")
+    if target != "is_goal":
+        raise CxGMetadataInvalid("CxG metadata target must be 'is_goal'")
+
+    feature_columns = _model_feature_columns(metadata)
+    if not feature_columns:
+        raise CxGMetadataInvalid("CxG metadata is missing model feature columns")
+
+    prediction_columns = metadata.get("prediction_columns")
+    if not isinstance(prediction_columns, dict) or "cxg_raw" not in prediction_columns:
+        raise CxGMetadataInvalid("CxG metadata is missing prediction_columns.cxg_raw")
+
+    generated_at = (
+        metadata.get("generated_at") or metadata.get("trained_at") or metadata.get("created_at")
+    )
+    if not generated_at:
+        raise CxGMetadataInvalid("CxG metadata is missing generated_at/trained_at/created_at")
+
+    artifact_path = metadata.get("artifact_path")
+    if artifact_path:
+        metadata_artifact_path = Path(str(artifact_path))
+        if not metadata_artifact_path.is_absolute():
+            metadata_artifact_path = Path.cwd() / metadata_artifact_path
+        if metadata_artifact_path.resolve() != model_path.resolve():
+            raise CxGMetadataInvalid("CxG metadata artifact_path does not match loaded artifact")
+
+    metadata_summary = {
+        "model_name": metadata.get("model_name", "cxg"),
+        "model_type": metadata.get("model_type"),
+        "model_version": version,
+        "target": target,
+        "generated_at": generated_at,
+        "feature_count": len(feature_columns),
+        "prediction_columns": prediction_columns,
+    }
+    return str(version), metadata_summary
 
 
 def load_latest_cxg_model() -> LoadedCxGModel:
@@ -114,7 +155,6 @@ def load_latest_cxg_model() -> LoadedCxGModel:
     falls back to common output locations used by the CxG training scripts.
     """
 
-    registry_version = "unregistered"
     registry_artifact_path: str | None = None
     try:
         with session_scope() as session:
@@ -125,7 +165,6 @@ def load_latest_cxg_model() -> LoadedCxGModel:
                 .first()
             )
             if model_row:
-                registry_version = model_row.version
                 registry_artifact_path = model_row.artifact_path
     except Exception as exc:  # pragma: no cover - inference can still use local artefacts
         logger.warning("Could not read model registry: %s", exc)
@@ -136,17 +175,23 @@ def load_latest_cxg_model() -> LoadedCxGModel:
         try:
             model = joblib.load(model_path)
             metadata = _load_metadata(model_path)
-            version = metadata.get("model_version") or metadata.get("version") or registry_version
+            version, metadata_summary = _validate_metadata(metadata, model_path)
             return LoadedCxGModel(
                 model=model,
                 metadata=metadata,
+                metadata_summary=metadata_summary,
                 model_path=model_path,
+                metadata_path=model_path.with_suffix(".json"),
                 version=version,
             )
+        except CxGMetadataInvalid:
+            raise
         except Exception as exc:
             logger.warning("Could not load CxG model from %s: %s", model_path, exc)
 
-    raise CxGModelNotAvailable("No trained CxG model artefact was found")
+    raise CxGModelNotAvailable(
+        f"No trained CxG model artefact was found at {DEFAULT_CXG_MODEL_PATH}"
+    )
 
 
 def _minute_bucket(minute: int) -> str:
@@ -256,18 +301,8 @@ def _base_feature_row(request: ShotPredictionRequest) -> dict[str, Any]:
     return row
 
 
-def _model_feature_columns(metadata: dict[str, Any]) -> list[str]:
-    feature_groups = metadata.get("features") or DEFAULT_CONTEXTUAL_FEATURES
-    columns: list[str] = []
-    for key in ("numeric", "binary", "categorical"):
-        columns.extend(feature_groups.get(key, []))
-    return columns
-
-
 def _frame_for_model(row: dict[str, Any], metadata: dict[str, Any]) -> pd.DataFrame:
     columns = _model_feature_columns(metadata)
-    if not columns:
-        columns = list(row)
     return pd.DataFrame([{column: row.get(column) for column in columns}])
 
 
@@ -282,22 +317,7 @@ def predict_cxg(request: ShotPredictionRequest) -> dict[str, Any]:
     loaded = load_latest_cxg_model()
 
     raw_row = _base_feature_row(request)
-    neutral_row = {
-        **raw_row,
-        "score_diff_at_shot": 0,
-        "minute": 55,
-        "minute_bucket_label": "46-60",
-        "under_pressure": False,
-        "pressure_state": "no_pressure",
-        "is_leading": False,
-        "is_trailing": False,
-        "is_drawing": True,
-        "score_state": "drawing",
-        "simple_state": "drawing",
-        "opponent_def_rating_global": 0.0,
-        "opponent_def_zone_rating": 0.0,
-        "opponent_zone_block_rate": 0.0,
-    }
+    neutral_row = {**raw_row, **NEUTRAL_CONTEXT_DEFAULTS}
 
     raw_probability = _predict_probability(
         loaded.model,
@@ -317,4 +337,5 @@ def predict_cxg(request: ShotPredictionRequest) -> dict[str, Any]:
         "opponent_adjusted_ratio": opponent_adjusted_ratio,
         "model_version": loaded.version,
         "model_path": str(loaded.model_path),
+        "model_metadata": loaded.metadata_summary,
     }

@@ -5,6 +5,7 @@ from typing import List
 from fastapi import FastAPI, HTTPException, Query
 
 from opponent_adjusted.api.cxg_inference import (
+    CxGMetadataInvalid,
     CxGModelNotAvailable,
     predict_cxg as run_cxg_prediction,
 )
@@ -70,6 +71,11 @@ async def predict_cxg(request: ShotPredictionRequest):
     """Predict CxG for a shot using the latest available model artefact."""
     try:
         result = run_cxg_prediction(request)
+    except CxGMetadataInvalid as exc:
+        raise HTTPException(
+            status_code=501,
+            detail=f"CxG model metadata is incomplete or invalid: {exc}",
+        ) from exc
     except CxGModelNotAvailable as exc:
         raise HTTPException(
             status_code=501,

@@ -128,6 +128,10 @@ def test_cxg_metadata_schema_contains_api_loader_fields(tmp_path: Path):
     assert metadata["artifact_path"] == str(outputs.model_path)
     assert metadata["model_version"] == "test-v2"
     assert metadata["version"] == "test-v2"
+    assert metadata["target"] == "is_goal"
+    assert metadata["generated_at"]
+    assert metadata["trained_at"]
+    assert "cxg_raw" in metadata["prediction_columns"]
     assert metadata["created_at"]
     assert metadata["features"]["numeric"]
     assert set(metadata["features"]).issuperset({"numeric", "binary", "categorical"})

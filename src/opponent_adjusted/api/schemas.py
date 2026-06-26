@@ -1,7 +1,7 @@
 """Pydantic schemas for API requests and responses."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
@@ -41,7 +41,7 @@ class ShotPredictionRequest(BaseModel):
     under_pressure: bool = Field(False, description="Whether shot was under defensive pressure")
 
     # Opponent
-    opponent_team_id: int = Field(..., description="Internal opponent team ID")
+    opponent_team_id: int = Field(..., ge=1, description="Internal opponent team ID")
 
     # Optional possession context
     possession_duration: Optional[float] = Field(None, ge=0, description="Possession duration")
@@ -58,6 +58,9 @@ class ShotPredictionResponse(BaseModel):
 
     model_version: Optional[str] = Field(None, description="Model registry version if available")
     model_path: Optional[str] = Field(None, description="Resolved local model artefact path")
+    model_metadata: Optional[dict[str, Any]] = Field(
+        None, description="Validated model metadata summary used for inference"
+    )
 
     # Feature contributions (optional future extension)
     geometry_score: Optional[float] = None
