@@ -1,43 +1,32 @@
 #!/usr/bin/env python
-"""
-CxA Pipeline Runner.
-
-Runs all cxA data pipelines and saves features to the feature store as parquet files.
-
-Usage:
-    python scripts/run_cxa_pipeline.py [--competition-id 3] [--force]
-
-Outputs (feature_store/cxa/):
-    - lineups.parquet: Tactical positions from Starting XI
-    - passes.parquet: Pass-level data with enrichments
-    - shots.parquet: Shot data with key_pass linking
-    - pass_sequences.parquet: Passes enriched with sequence attribution
-    - possessions.parquet: Possession-level aggregates
-    - sequences.parquet: Sequence-level (one row per assist sequence)
-    - action_sequences.parquet: Full action chains including carries/dribbles
-    - action_sequences_opposition.parquet: Action sequences with opposition context
-"""
+"""Build baseline CxA action features from normalized event data."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
-from datetime import datetime
+from typing import Any
 
-from opponent_adjusted.config import settings, ensure_directories
+import numpy as np
+import pandas as pd
+from sqlalchemy import select
+
+from opponent_adjusted.config import ensure_directories, settings
+from opponent_adjusted.db.models import (
+    BallReceiptEvent,
+    CarryEvent,
+    DribbleEvent,
+    Event,
+    Match,
+    PassEvent,
+    Shot,
+)
 from opponent_adjusted.db.session import get_session
-from opponent_adjusted.pipelines.cxa.lineup_data import build_lineup_dataset
-from opponent_adjusted.pipelines.cxa.pass_data import build_pass_dataset
-from opponent_adjusted.pipelines.cxa.shot_data import build_shot_dataset
-from opponent_adjusted.pipelines.cxa.pass_sequences import build_pass_sequences
-from opponent_adjusted.pipelines.cxa.possession_data import build_possession_dataset
-from opponent_adjusted.pipelines.cxa.sequence_data import build_sequence_dataset
-from opponent_adjusted.features.cxa.sequence_builder import build_action_sequences
-from opponent_adjusted.features.cxa.opposition_context import build_opposition_context
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
@@ -45,174 +34,345 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
-def get_feature_store_path() -> Path:
-    """Get the cxA feature store path."""
-    return settings.feature_store_path / "cxa"
-
-
-def save_parquet(df, name: str, output_dir: Path) -> Path:
-    """Save DataFrame as parquet with metadata."""
-    filepath = output_dir / f"{name}.parquet"
-    df.to_parquet(filepath, index=False, engine="pyarrow")
-    logger.info(f"Saved {name}: {len(df):,} rows -> {filepath}")
-    return filepath
+ELIGIBLE_ACTION_TYPES = ("Pass", "Carry", "Dribble", "Ball Receipt")
+FEATURE_STORE_DIR = settings.feature_store_path / "cxa"
+ACTION_FEATURES_FILENAME = "action_features.parquet"
+MAX_ACTIONS_TO_SHOT = 5
+MAX_SECONDS_TO_SHOT = 15
 
 
-def run_pipeline(competition_id: int = None, force: bool = False) -> dict:
-    """
-    Run the full cxA pipeline.
+def _third(x: float | None) -> str:
+    if x is None or pd.isna(x):
+        return "unknown"
+    if x < 40:
+        return "defensive"
+    if x < 80:
+        return "middle"
+    return "final"
 
-    Args:
-        competition_id: Filter to specific competition (None = all competitions)
-        force: Overwrite existing files
 
-    Returns:
-        Dictionary of output file paths
-    """
-    ensure_directories()
-    output_dir = get_feature_store_path()
-    output_dir.mkdir(parents=True, exist_ok=True)
+def _zone(x: float | None, y: float | None) -> str:
+    if x is None or y is None or pd.isna(x) or pd.isna(y):
+        return "unknown"
+    third = _third(float(x))
+    if y < 26.67:
+        lane = "left"
+    elif y < 53.33:
+        lane = "central"
+    else:
+        lane = "right"
+    return f"{third}_{lane}"
 
-    logger.info("=" * 70)
-    logger.info("CxA PIPELINE")
-    logger.info("=" * 70)
-    logger.info(f"Competition ID: {competition_id or 'ALL'}")
-    logger.info(f"Output directory: {output_dir}")
-    logger.info(f"Database: {settings.database_url}")
-    logger.info("=" * 70)
 
-    outputs = {}
+def _distance_to_goal(x: float | None, y: float | None) -> float:
+    if x is None or y is None or pd.isna(x) or pd.isna(y):
+        return 0.0
+    return float(np.hypot(settings.goal_center_x - float(x), settings.goal_center_y - float(y)))
 
-    with get_session() as session:
-        # 1. Lineups
-        logger.info("\n[1/8] Building lineup dataset...")
-        lineups_df = build_lineup_dataset(session, competition_id=competition_id)
-        outputs["lineups"] = save_parquet(lineups_df, "lineups", output_dir)
 
-        # 2. Passes
-        logger.info("\n[2/8] Building pass dataset...")
-        passes_df = build_pass_dataset(session, competition_id=competition_id)
+def _angle_to_goal(x: float | None, y: float | None) -> float:
+    if x is None or y is None or pd.isna(x) or pd.isna(y):
+        return 0.0
+    dx = settings.goal_center_x - float(x)
+    dy = abs(settings.goal_center_y - float(y))
+    return float(np.arctan2(dy, max(dx, 1e-9)))
 
-        # Add xT features if available
-        try:
-            from opponent_adjusted.features.cxt.xt_model import add_xt_features
 
-            passes_df = add_xt_features(passes_df)
-            logger.info("Added xT features to passes")
-        except ImportError:
-            logger.warning("xT features not available")
+def _seconds(minute: int | None, second: int | None) -> float:
+    return float((minute or 0) * 60 + (second or 0))
 
-        outputs["passes"] = save_parquet(passes_df, "passes", output_dir)
 
-        # 3. Shots
-        logger.info("\n[3/8] Building shot dataset...")
-        shots_df = build_shot_dataset(session, competition_id=competition_id)
-        outputs["shots"] = save_parquet(shots_df, "shots", output_dir)
+def _score_state() -> str:
+    return "drawing"
 
-        # 4. Pass sequences (attribute passes to shots)
-        logger.info("\n[4/8] Building pass sequences...")
-        pass_sequences_df = build_pass_sequences(passes_df, shots_df, k=3)
-        outputs["pass_sequences"] = save_parquet(pass_sequences_df, "pass_sequences", output_dir)
 
-        # 5. Possessions
-        logger.info("\n[5/8] Building possession dataset...")
-        possessions_df = build_possession_dataset(pass_sequences_df, shots_df)
-        outputs["possessions"] = save_parquet(possessions_df, "possessions", output_dir)
+def _event_rows(session, competition_id: int | None = None) -> pd.DataFrame:
+    stmt = select(
+        Event.id.label("event_id"),
+        Event.raw_event_id,
+        Event.match_id,
+        Event.team_id,
+        Event.player_id,
+        Event.type.label("action_type"),
+        Event.period,
+        Event.minute,
+        Event.second,
+        Event.possession,
+        Event.location_x.label("start_x"),
+        Event.location_y.label("start_y"),
+        Event.under_pressure,
+        Event.outcome.label("event_outcome"),
+    )
+    if competition_id is not None:
+        stmt = stmt.join(Match, Match.id == Event.match_id).where(
+            Match.competition_id == competition_id
+        )
+    stmt = stmt.where(Event.type.in_([*ELIGIBLE_ACTION_TYPES, "Shot"]))
+    stmt = stmt.order_by(Event.match_id, Event.period, Event.minute, Event.second, Event.id)
+    return pd.DataFrame([dict(row) for row in session.execute(stmt).mappings().all()])
 
-        # 6. Sequences (sequence-level, one row per assist sequence)
-        logger.info("\n[6/8] Building sequence dataset...")
-        sequences_df = build_sequence_dataset(pass_sequences_df, shots_df, k=3)
-        outputs["sequences"] = save_parquet(sequences_df, "sequences", output_dir)
 
-        # 7. Action sequences (full chains including carries/dribbles)
-        logger.info("\n[7/8] Building action sequences (passes + carries + dribbles)...")
-        action_sequences_df = build_action_sequences(session, competition_id=competition_id, k=5)
-        outputs["action_sequences"] = save_parquet(
-            action_sequences_df, "action_sequences", output_dir
+def _detail_frame(session, model: Any) -> pd.DataFrame:
+    objects = session.execute(select(model)).scalars().all()
+    if not objects:
+        return pd.DataFrame()
+    return pd.DataFrame(
+        [
+            {column.name: getattr(obj, column.name) for column in model.__table__.columns}
+            for obj in objects
+        ]
+    )
+
+
+def _detail_maps(session) -> dict[str, pd.DataFrame]:
+    details = {
+        "Pass": _detail_frame(session, PassEvent),
+        "Carry": _detail_frame(session, CarryEvent),
+        "Dribble": _detail_frame(session, DribbleEvent),
+        "Ball Receipt": _detail_frame(session, BallReceiptEvent),
+    }
+    return details
+
+
+def _shot_rows(session) -> pd.DataFrame:
+    stmt = select(
+        Shot.id.label("shot_id"),
+        Shot.event_id,
+        Shot.statsbomb_xg,
+        Shot.outcome.label("created_shot_outcome"),
+    )
+    return pd.DataFrame([dict(row) for row in session.execute(stmt).mappings().all()])
+
+
+def _as_detail_lookup(df: pd.DataFrame) -> dict[int, dict[str, Any]]:
+    if df.empty or "event_id" not in df.columns:
+        return {}
+    return df.set_index("event_id").to_dict(orient="index")
+
+
+def _enrich_action(row: pd.Series, detail: dict[str, Any]) -> dict[str, Any]:
+    action_type = str(row["action_type"])
+    start_x = row.get("start_x")
+    start_y = row.get("start_y")
+    end_x = detail.get("end_x", start_x)
+    end_y = detail.get("end_y", start_y)
+    if pd.isna(end_x):
+        end_x = start_x
+    if pd.isna(end_y):
+        end_y = start_y
+
+    length = detail.get("length")
+    if length is None or pd.isna(length):
+        length = float(
+            np.hypot(
+                float(end_x or 0) - float(start_x or 0), float(end_y or 0) - float(start_y or 0)
+            )
+        )
+    angle = detail.get("angle")
+    if angle is None or pd.isna(angle):
+        angle = float(
+            np.arctan2(
+                float(end_y or 0) - float(start_y or 0), float(end_x or 0) - float(start_x or 0)
+            )
         )
 
-        # 8. Opposition context (enrich action sequences with opponent metrics)
-        logger.info("\n[8/8] Building opposition context features...")
-        # Load opponent profiles from CxG feature store
-        cxg_profiles_path = settings.feature_store_path / "cxg" / "opponent_profiles.parquet"
-        if cxg_profiles_path.exists():
-            import pandas as pd
-
-            opponent_profiles_df = pd.read_parquet(cxg_profiles_path)
-            logger.info(f"Loaded {len(opponent_profiles_df):,} opponent profiles")
-        else:
-            import pandas as pd
-
-            opponent_profiles_df = pd.DataFrame()
-            logger.warning("Opponent profiles not found, run CxG pipeline first")
-
-        opposition_df = build_opposition_context(
-            action_sequences_df=action_sequences_df,
-            opponent_profiles_df=opponent_profiles_df,
-            session=session,
-        )
-        outputs["action_sequences_opposition"] = save_parquet(
-            opposition_df, "action_sequences_opposition", output_dir
-        )
-
-    # Save metadata
-    metadata = {
-        "pipeline": "cxa",
-        "competition_id": competition_id,
-        "created_at": datetime.now().isoformat(),
-        "files": {k: str(v) for k, v in outputs.items()},
-        "row_counts": {
-            "lineups": len(lineups_df),
-            "passes": len(passes_df),
-            "shots": len(shots_df),
-            "pass_sequences": len(pass_sequences_df),
-            "possessions": len(possessions_df),
-            "sequences": len(sequences_df),
-            "action_sequences": len(action_sequences_df) if not action_sequences_df.empty else 0,
-            "action_sequences_opposition": len(opposition_df) if not opposition_df.empty else 0,
-        },
+    x_progression = float(end_x or 0) - float(start_x or 0)
+    y_progression = float(end_y or 0) - float(start_y or 0)
+    return {
+        "start_x": float(start_x or 0),
+        "start_y": float(start_y or 0),
+        "end_x": float(end_x or 0),
+        "end_y": float(end_y or 0),
+        "length": float(length or 0),
+        "angle": float(angle or 0),
+        "x_progression": x_progression,
+        "y_progression": y_progression,
+        "distance_to_goal_before": _distance_to_goal(start_x, start_y),
+        "distance_to_goal_after": _distance_to_goal(end_x, end_y),
+        "angle_to_goal_before": _angle_to_goal(start_x, start_y),
+        "angle_to_goal_after": _angle_to_goal(end_x, end_y),
+        "is_pass": action_type == "Pass",
+        "is_carry": action_type == "Carry",
+        "is_dribble": action_type == "Dribble",
+        "is_cross": bool(detail.get("is_cross", False)),
+        "is_cutback": str(detail.get("pass_type", "")).lower() == "cut back",
+        "is_through_ball": bool(detail.get("is_through_ball", False)),
+        "is_progressive": x_progression >= 10,
+        "enters_final_third": _third(start_x) != "final" and _third(end_x) == "final",
+        "enters_penalty_area": float(end_x or 0) >= 102 and 18 <= float(end_y or 0) <= 62,
+        "enters_zone14": 80 <= float(end_x or 0) <= 102 and 26.67 <= float(end_y or 0) <= 53.33,
+        "switches_play": abs(y_progression) >= 30,
+        "play_pattern": "unknown",
+        "body_part": detail.get("body_part") or "unknown",
+        "pass_height": detail.get("pass_height") or "unknown",
+        "start_zone": _zone(start_x, start_y),
+        "end_zone": _zone(end_x, end_y),
+        "start_third": _third(start_x),
+        "end_third": _third(end_x),
+        "score_state": _score_state(),
     }
 
-    import json
 
-    metadata_path = output_dir / "pipeline_metadata.json"
-    with open(metadata_path, "w") as f:
-        json.dump(metadata, f, indent=2)
-    logger.info(f"\nSaved metadata: {metadata_path}")
+def build_action_features(
+    events: pd.DataFrame,
+    shots: pd.DataFrame,
+    detail_maps: dict[str, pd.DataFrame] | None = None,
+    *,
+    max_actions_to_shot: int = MAX_ACTIONS_TO_SHOT,
+    max_seconds_to_shot: int = MAX_SECONDS_TO_SHOT,
+) -> pd.DataFrame:
+    """Build contract-aligned CxA action features from normalized events."""
 
-    logger.info("\n" + "=" * 70)
-    logger.info("PIPELINE COMPLETE")
-    logger.info("=" * 70)
-    logger.info("Output files:")
-    for name, path in outputs.items():
-        logger.info(f"  {name}: {path}")
+    if events.empty:
+        return pd.DataFrame()
 
-    return outputs
+    detail_maps = detail_maps or {}
+    lookups = {name: _as_detail_lookup(frame) for name, frame in detail_maps.items()}
+    shots_by_event = shots.set_index("event_id").to_dict(orient="index") if not shots.empty else {}
 
-
-def main():
-    parser = argparse.ArgumentParser(description="Run cxA pipeline")
-    parser.add_argument(
-        "--competition-id",
-        "-c",
-        type=int,
-        default=None,
-        help="Competition ID to process (default: None = all competitions)",
+    ordered = events.copy()
+    ordered["event_seconds"] = ordered.apply(
+        lambda row: _seconds(row["minute"], row["second"]), axis=1
     )
-    parser.add_argument("--force", "-f", action="store_true", help="Overwrite existing files")
+    ordered = ordered.sort_values(
+        ["match_id", "possession", "period", "minute", "second", "event_id"]
+    )
+    ordered["possession_index"] = ordered.groupby(["match_id", "possession"]).cumcount()
 
+    action_rows: list[dict[str, Any]] = []
+    eligible = ordered[ordered["action_type"].isin(ELIGIBLE_ACTION_TYPES)].copy()
+    for _, action in eligible.iterrows():
+        same_possession = ordered[
+            (ordered["match_id"] == action["match_id"])
+            & (ordered["team_id"] == action["team_id"])
+            & (ordered["possession"] == action["possession"])
+            & (ordered["possession_index"] > action["possession_index"])
+            & ((ordered["possession_index"] - action["possession_index"]) <= max_actions_to_shot)
+            & ((ordered["event_seconds"] - action["event_seconds"]) <= max_seconds_to_shot)
+            & (ordered["action_type"] == "Shot")
+            & (ordered["event_id"].isin(shots_by_event))
+        ]
+        created_shot = same_possession.head(1)
+        created_shot_id = None
+        created_shot_cxg = 0.0
+        created_shot_distance = np.nan
+        created_shot_angle = np.nan
+        if not created_shot.empty:
+            shot_event_id = int(created_shot.iloc[0]["event_id"])
+            shot_info = shots_by_event.get(shot_event_id, {})
+            created_shot_id = shot_info.get("shot_id")
+            created_shot_cxg = float(shot_info.get("statsbomb_xg") or 0.0)
+            created_shot_distance = _distance_to_goal(
+                created_shot.iloc[0].get("start_x"), created_shot.iloc[0].get("start_y")
+            )
+            created_shot_angle = _angle_to_goal(
+                created_shot.iloc[0].get("start_x"), created_shot.iloc[0].get("start_y")
+            )
+
+        detail = lookups.get(str(action["action_type"]), {}).get(int(action["event_id"]), {})
+        feature_row = {
+            "action_id": f"event-{int(action['event_id'])}",
+            "event_id": int(action["event_id"]),
+            "sequence_id": f"{int(action['match_id'])}-{int(action['possession'] or 0)}",
+            "match_id": int(action["match_id"]),
+            "possession": int(action["possession"] or 0),
+            "team_id": int(action["team_id"]),
+            "player_id": action["player_id"],
+            "shot_created": int(not created_shot.empty),
+            "created_shot_cxg": created_shot_cxg,
+            "created_shot_id": created_shot_id,
+            "created_shot_distance": created_shot_distance,
+            "created_shot_angle": created_shot_angle,
+            "action_type": str(action["action_type"]),
+            "minute": int(action["minute"] or 0),
+            "second": int(action["second"] or 0),
+            "action_position": int(action["possession_index"]),
+            "sequence_length_so_far": int(action["possession_index"] + 1),
+            "seconds_since_possession_start": float(
+                action["event_seconds"]
+                - ordered[
+                    (ordered["match_id"] == action["match_id"])
+                    & (ordered["possession"] == action["possession"])
+                ]["event_seconds"].min()
+            ),
+            "under_pressure": bool(action["under_pressure"]),
+            "opponent_def_rating_global": np.nan,
+            "opponent_zone_block_rate": np.nan,
+            "nearest_defensive_action_seconds": np.nan,
+            "teammate_receipt_pressure": np.nan,
+            "prior_action_type": "unknown",
+            "prior_action_success": np.nan,
+            "carry_under_pressure": bool(
+                action["under_pressure"] and action["action_type"] == "Carry"
+            ),
+            "set_piece_phase": "open_play",
+        }
+        feature_row.update(_enrich_action(action, detail))
+        action_rows.append(feature_row)
+
+    return pd.DataFrame(action_rows)
+
+
+def build_action_features_from_database(competition_id: int | None = None) -> pd.DataFrame:
+    """Build CxA action features from the configured database."""
+
+    with get_session() as session:
+        events = _event_rows(session, competition_id=competition_id)
+        shots = _shot_rows(session)
+        details = _detail_maps(session)
+    return build_action_features(events, shots, details)
+
+
+def save_action_features(df: pd.DataFrame, output_dir: Path = FEATURE_STORE_DIR) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / ACTION_FEATURES_FILENAME
+    df.to_parquet(path, index=False)
+    return path
+
+
+def run_pipeline(
+    competition_id: int | None = None,
+    output_dir: Path = FEATURE_STORE_DIR,
+) -> dict[str, Path]:
+    """Run the baseline CxA feature pipeline."""
+
+    ensure_directories()
+    features = build_action_features_from_database(competition_id=competition_id)
+    output_path = save_action_features(features, output_dir)
+    metadata_path = output_dir / "pipeline_metadata.json"
+    metadata = {
+        "pipeline": "cxa_baseline",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "competition_id": competition_id,
+        "target": "created_shot_cxg",
+        "shot_creation_indicator": "shot_created",
+        "attribution": {
+            "same_team_only": True,
+            "same_possession_preferred": True,
+            "max_actions_to_shot": MAX_ACTIONS_TO_SHOT,
+            "max_seconds_to_shot": MAX_SECONDS_TO_SHOT,
+        },
+        "files": {"action_features": str(output_path)},
+        "row_counts": {"action_features": int(len(features))},
+    }
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    logger.info("Saved CxA action features: %s rows -> %s", len(features), output_path)
+    return {"action_features": output_path, "metadata": metadata_path}
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run baseline CxA action feature pipeline")
+    parser.add_argument("--competition-id", "-c", type=int, default=None)
+    parser.add_argument("--output-dir", type=Path, default=FEATURE_STORE_DIR)
     args = parser.parse_args()
 
     try:
-        run_pipeline(
-            competition_id=args.competition_id,
-            force=args.force,
-        )
-    except Exception as e:
-        logger.error(f"Pipeline failed: {e}", exc_info=True)
+        outputs = run_pipeline(competition_id=args.competition_id, output_dir=args.output_dir)
+    except Exception as exc:
+        logger.error("CxA pipeline failed: %s", exc, exc_info=True)
         sys.exit(1)
+    print(json.dumps({key: str(value) for key, value in outputs.items()}, indent=2))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

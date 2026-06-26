@@ -92,21 +92,35 @@ The same regeneration path is available as a Make target:
 make cxg-smoke
 ```
 
-## CxA Design-Stage Output Contract
+## Regenerate CxA Baseline Outputs
 
-CxA is currently in design-contract stage. This repository defines the expected future output locations, but this PR does not require generated CxA files to exist.
+CxA has a first event-data baseline path. It is not the final attribution system.
 
-Future generated CxA locations:
+Build action features:
 
-```text
-feature_store/cxa/
-outputs/modeling/cxa/models/
-outputs/modeling/cxa/reports/
-outputs/modeling/cxa/predictions/
-outputs/modeling/cxa/aggregates/
+```bash
+poetry run python scripts/run_cxa_pipeline.py
 ```
 
-Expected future file paths are recorded in `configs/feature_contracts/cxa_v1.json`. Generated CxA outputs will remain ignored by Git under the existing `feature_store/` and `outputs/` rules.
+Train, evaluate, score and export the baseline model:
+
+```bash
+poetry run python scripts/run_cxa_end_to_end.py
+```
+
+Expected generated CxA files:
+
+```text
+feature_store/cxa/action_features.parquet
+outputs/modeling/cxa/models/baseline_model.joblib
+outputs/modeling/cxa/models/baseline_model.json
+outputs/modeling/cxa/reports/metrics.json
+outputs/modeling/cxa/predictions/action_predictions.parquet
+outputs/modeling/cxa/aggregates/player_cxa.parquet
+outputs/modeling/cxa/aggregates/team_cxa.parquet
+```
+
+Generated CxA outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules.
 
 ## What Should Be Committed
 

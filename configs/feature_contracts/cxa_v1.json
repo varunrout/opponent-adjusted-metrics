@@ -178,8 +178,8 @@
     "modeling_dir": "outputs/modeling/cxa/",
     "expected_future_paths": {
       "features": "feature_store/cxa/action_features.parquet",
-      "model": "outputs/modeling/cxa/models/contextual_assist_model.joblib",
-      "metadata": "outputs/modeling/cxa/models/contextual_assist_model.json",
+      "model": "outputs/modeling/cxa/models/baseline_model.joblib",
+      "metadata": "outputs/modeling/cxa/models/baseline_model.json",
       "metrics": "outputs/modeling/cxa/reports/metrics.json",
       "validation_summary": "outputs/modeling/cxa/reports/validation_summary.json",
       "predictions": "outputs/modeling/cxa/predictions/action_predictions.parquet",
@@ -201,7 +201,7 @@
     "model_version"
   ],
   "notes": [
-    "This contract defines CxA design and guardrails only; it does not imply a trained CxA model exists.",
+    "This contract defines CxA design and guardrails for the baseline and future models; it does not imply final attribution completeness.",
     "All model features must be available at the action timestamp.",
     "Downstream shot quality should come from the generated CxG contract when available, with any fallback documented explicitly.",
     "Validation must group by match_id to avoid match-level leakage."

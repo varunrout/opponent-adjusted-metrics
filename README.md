@@ -91,6 +91,23 @@ make cxg-smoke
 
 Generated files, including validation reports, are written under `feature_store/` and `outputs/`. They are intentionally not tracked by Git. See [docs/OUTPUTS.md](docs/OUTPUTS.md) for regeneration notes.
 
+### CxA Baseline
+
+Build baseline CxA action features and train/evaluate the first event-data baseline:
+
+```bash
+poetry run python scripts/run_cxa_pipeline.py
+poetry run python scripts/run_cxa_end_to_end.py
+```
+
+Or run both steps:
+
+```bash
+make cxa-smoke
+```
+
+This emits generated files under `feature_store/cxa/` and `outputs/modeling/cxa/`. The CxA path is a baseline model, not a final attribution system or API surface.
+
 ### API Service
 
 Start the FastAPI service:
