@@ -7,7 +7,7 @@ Feature contracts define the expected shape of model-ready datasets before train
 | Metric | Contract | Grain |
 | --- | --- | --- |
 | CxG | `configs/feature_contracts/cxg_v1.json` | one row per shot |
-| CxA | `configs/feature_contracts/cxa_v1.json` | one row per attacking action in a shot-linked sequence |
+| CxA | `configs/feature_contracts/cxa_v1.json` | one row per eligible attacking action with a fixed lookahead window for shot creation |
 | CxT | `configs/feature_contracts/cxt_v1.json` | one row per progression action |
 
 ## What each contract defines
@@ -41,7 +41,7 @@ CxG rows must be available at shot time. Post-shot information should not enter 
 
 ## CxA notes
 
-CxA uses the public-facing name `sequence-adjusted CxA`. Shot quality labels should come from the CxG pipeline, not post-shot outcomes.
+CxA is currently in design-contract stage. The contract defines the target, eligible actions, leakage guardrails, validation expectations, and future output paths. Shot quality labels should come from the CxG pipeline when available, not post-shot outcomes.
 
 ## CxT notes
 

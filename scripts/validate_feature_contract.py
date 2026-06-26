@@ -36,7 +36,6 @@ def _flatten_features(contract: dict[str, Any]) -> set[str]:
         "required_numeric_features",
         "required_binary_features",
         "required_categorical_features",
-        "optional_reference_features",
     ):
         columns.update(contract.get(key, []))
 
