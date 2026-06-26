@@ -68,6 +68,22 @@ Validate the local output contract and Git ignore rules:
 poetry run python scripts/check_cxg_outputs.py
 ```
 
+Generate the CxG validation reports:
+
+```bash
+poetry run python scripts/validate_cxg_outputs.py
+```
+
+Expected generated validation files:
+
+```text
+outputs/modeling/cxg/reports/validation_summary.json
+outputs/modeling/cxg/reports/calibration_table.csv
+outputs/modeling/cxg/reports/slice_metrics.csv
+```
+
+These validation reports summarize main CxG metrics, fold/grouped validation where available, calibration bins, slice metrics, and baseline comparison when a provider or baseline xG column is present. If no baseline column is present, the summary records that the comparison was skipped rather than inventing one.
+
 The same regeneration path is available as a Make target:
 
 ```bash

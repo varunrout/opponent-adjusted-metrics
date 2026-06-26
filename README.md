@@ -75,13 +75,19 @@ Validate the regenerated output contract and Git ignore rules:
 poetry run python scripts/check_cxg_outputs.py
 ```
 
+Generate validation reports for metrics, calibration, slices, grouped checks, and baseline comparison where available:
+
+```bash
+poetry run python scripts/validate_cxg_outputs.py
+```
+
 Or run the full local CxG reproducibility smoke:
 
 ```bash
 make cxg-smoke
 ```
 
-Generated files are written under `feature_store/` and `outputs/`. They are intentionally not tracked by Git. See [docs/OUTPUTS.md](docs/OUTPUTS.md) for regeneration notes.
+Generated files, including validation reports, are written under `feature_store/` and `outputs/`. They are intentionally not tracked by Git. See [docs/OUTPUTS.md](docs/OUTPUTS.md) for regeneration notes.
 
 ### API Service
 

@@ -3,7 +3,7 @@
 	ingest-competitions ingest-matches ingest-events \
 	normalize-events ingestion-report data-smoke \
 	build-features build-profiles \
-	run-cxa-pipeline run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-run cxg-smoke \
+	run-cxa-pipeline run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis run-cxt-pipeline train-cxt evaluate-cxt \
 	fetch-data api test lint format clean
 
@@ -85,7 +85,10 @@ run-cxg-end-to-end:  ## Train, evaluate, and export CxG modeling outputs
 check-cxg-outputs:  ## Validate generated CxG output contract and Git ignore rules
 	poetry run python scripts/check_cxg_outputs.py
 
-cxg-run: run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs  ## Regenerate and validate CxG outputs
+cxg-validate:  ## Generate CxG validation summary, calibration, and slice reports
+	poetry run python scripts/validate_cxg_outputs.py
+
+cxg-run: run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate  ## Regenerate and validate CxG outputs
 
 cxg-smoke: cxg-run  ## Alias for the full local CxG reproducibility smoke
 
