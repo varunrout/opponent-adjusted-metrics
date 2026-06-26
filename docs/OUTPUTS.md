@@ -50,6 +50,8 @@ outputs/modeling/cxg/
 
 This command trains/evaluates the current CxG baseline path and exports generated artifacts such as model files, metadata, metrics, prediction outputs, and aggregate outputs.
 
+The generated `contextual_model.joblib` and `contextual_model.json` pair is the local artifact contract used by `/predict/cxg`. The endpoint returns a controlled 501 response until these generated files exist and the metadata contains the required API inference fields.
+
 Expected generated files:
 
 ```text

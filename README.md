@@ -69,6 +69,8 @@ Train, evaluate, and export the current CxG baseline artifacts and metadata:
 poetry run python scripts/run_cxg_end_to_end.py
 ```
 
+This generates the API-loadable CxG artifact at `outputs/modeling/cxg/models/contextual_model.joblib` with required metadata at `outputs/modeling/cxg/models/contextual_model.json`. The `/predict/cxg` endpoint requires those local generated files to exist.
+
 Validate the regenerated output contract and Git ignore rules:
 
 ```bash
