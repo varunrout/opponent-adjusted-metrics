@@ -7,6 +7,11 @@ from fastapi.testclient import TestClient
 
 from opponent_adjusted.api import cxg_inference
 from opponent_adjusted.api.service import app
+from scripts.check_cxg_outputs import (
+    CxGOutputContract,
+    assert_git_ignored,
+    validate_cxg_outputs,
+)
 from scripts.run_cxg_end_to_end import run_end_to_end
 
 
@@ -70,6 +75,40 @@ def test_cxg_end_to_end_runner_emits_artifact_metadata_and_outputs(tmp_path: Pat
     assert {"cxg_raw", "cxg_neutral", "cxg_opp_adjusted_diff"}.issubset(scored.columns)
     assert not pd.read_parquet(outputs.player_aggregates_path).empty
     assert not pd.read_parquet(outputs.team_aggregates_path).empty
+
+
+def test_cxg_output_contract_validation_accepts_temp_outputs(tmp_path: Path):
+    feature_store_dir = tmp_path / "feature_store" / "cxg"
+    modeling_dir = tmp_path / "outputs" / "modeling" / "cxg"
+    feature_store_dir.mkdir(parents=True)
+    input_path = feature_store_dir / "shot_features.parquet"
+    _synthetic_cxg_frame().to_parquet(input_path, index=False)
+
+    run_end_to_end(input_path=input_path, output_dir=modeling_dir, model_version="contract-v1")
+
+    summary = validate_cxg_outputs(
+        CxGOutputContract.from_roots(feature_store_dir, modeling_dir),
+        check_git_ignore=False,
+    )
+
+    assert summary["feature_store_dir"] == str(feature_store_dir)
+    assert summary["model_path"] == str(modeling_dir / "models" / "contextual_model.joblib")
+    assert summary["predictions_path"] == str(
+        modeling_dir / "predictions" / "shot_predictions.parquet"
+    )
+
+
+def test_cxg_generated_roots_are_git_ignored():
+    assert_git_ignored(
+        (
+            Path("feature_store"),
+            Path("outputs"),
+            Path("feature_store/cxg"),
+            Path("outputs/modeling/cxg/models/contextual_model.joblib"),
+            Path("outputs/modeling/cxg/predictions/shot_predictions.parquet"),
+        ),
+        Path.cwd(),
+    )
 
 
 def test_cxg_metadata_schema_contains_api_loader_fields(tmp_path: Path):

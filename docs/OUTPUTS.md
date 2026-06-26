@@ -20,7 +20,7 @@ Ignored generated file types include:
 
 ## Regenerate CxG Feature Outputs
 
-Run:
+From a clean checkout with dependencies installed and source data/database prepared, run:
 
 ```bash
 poetry run python scripts/run_cxg_pipeline.py
@@ -36,7 +36,7 @@ This command builds the CxG feature outputs used by the downstream baseline runn
 
 ## Regenerate CxG Modeling Outputs
 
-Run:
+Then run:
 
 ```bash
 poetry run python scripts/run_cxg_end_to_end.py
@@ -49,6 +49,30 @@ outputs/modeling/cxg/
 ```
 
 This command trains/evaluates the current CxG baseline path and exports generated artifacts such as model files, metadata, metrics, prediction outputs, and aggregate outputs.
+
+Expected generated files:
+
+```text
+outputs/modeling/cxg/models/contextual_model.joblib
+outputs/modeling/cxg/models/contextual_model.json
+outputs/modeling/cxg/reports/metrics.json
+outputs/modeling/cxg/predictions/shot_predictions.parquet
+outputs/modeling/cxg/aggregates/player_cxg.parquet
+outputs/modeling/cxg/aggregates/team_cxg.parquet
+outputs/modeling/cxg/reports/model_card.md
+```
+
+Validate the local output contract and Git ignore rules:
+
+```bash
+poetry run python scripts/check_cxg_outputs.py
+```
+
+The same regeneration path is available as a Make target:
+
+```bash
+make cxg-smoke
+```
 
 ## What Should Be Committed
 
