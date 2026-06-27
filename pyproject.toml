@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opponent-adjusted-metrics"
-version = "0.1.0"
+version = "1.0.0"
 description = "End-to-end contextual, opponent-adjusted football metrics using StatsBomb Open Data"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"

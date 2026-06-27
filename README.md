@@ -1,166 +1,145 @@
 # Opponent-Adjusted Football Metrics
 
-Opponent-adjusted football analytics workflows built on StatsBomb Open Data. The repository now has a tested ingestion foundation, feature-contract checks, a reproducible CxG baseline runner, model artifact export, model-card documentation, API-backed CxG prediction, and CI quality gates.
+Portfolio/demo release for contextual football analytics built on StatsBomb-style event data.
 
-This is not yet a complete v1 product. CxG is the most mature metric family; CxA, CxT, dashboard integration, and final release packaging remain partial.
+**v1.0.0 status:** CxG, CxA, baseline CxT, aggregate reports, interpretation reports, and Streamlit dashboard v1 are implemented. Generated outputs are reproducible locally and intentionally ignored by Git.
 
-## Current Scope
+This is not a production deployment. It is a reviewable v1 analytics product surface that shows how raw events become model outputs, reports, and football insight.
 
-### Implemented
+## Core Metrics
 
-- StatsBomb Open Data ingestion foundation with SQLAlchemy/Alembic database support.
-- Fixture-backed ingestion tests using small StatsBomb-like test data.
-- Feature contracts for CxG, CxA, and CxT inputs.
-- CxG feature-building and baseline end-to-end runner.
-- CxG model artifact and metadata export.
-- CxG model-card documentation.
-- FastAPI-backed CxG prediction from the exported model artifact.
-- CxA baseline feature, modelling, attribution, and aggregate reporting path.
-- Baseline CxT threat grid, action threat, aggregate, and interpretation reporting path.
-- CI quality gates for linting, formatting, typing, and tests.
+- **CxG:** contextual shot quality. It answers: how good was the shot?
+- **CxA:** baseline chance-creation action value. It answers: which actions moved possessions toward chances?
+- **Baseline CxT:** threat added by moving the ball between pitch zones. It answers: who progresses the ball into more dangerous areas?
 
-### Partial
+Deferred until after v1: CxT+, Contextual CxT, Advanced CxT, OD-CxT, OD-CxT+, production deployment, live data ingestion, and tracking-data workflows.
 
-- Dashboard and storytelling work is in planning stage for v1 release.
-- CxT+, Contextual CxT, Advanced CxT, and OD-CxT are deferred until after v1.
-- Dashboard files exist, but the dashboard is not yet a stable v1 output surface.
-- Final v1 packaging, release notes, and full fresh-clone walkthrough are still pending.
-
-## Quick Start
-
-### Requirements
-
-- Python 3.11+
-- Poetry
-- PostgreSQL 12+ for database-backed ingestion workflows
-- Docker Compose if using the bundled local database service
-
-### Install
+## 5-10 Minute Reviewer Quickstart
 
 ```bash
 git clone https://github.com/varunrout/opponent-adjusted-metrics.git
 cd opponent-adjusted-metrics
 poetry install
-cp .env.example .env
+poetry run pytest -v -m "not e2e"
+make dashboard
 ```
 
-### Optional Local Database
+The dashboard starts even when generated outputs are missing. Missing-output messages and empty tables are expected in a clean checkout.
 
-```bash
-docker compose up -d db
-poetry run alembic upgrade head
-```
-
-If application code runs inside another container, set the database host to `db` rather than `localhost`.
-
-## Main Workflows
-
-### CxG Feature Pipeline
-
-Build the CxG feature outputs:
-
-```bash
-poetry run python scripts/run_cxg_pipeline.py
-```
-
-### CxG End-to-End Baseline
-
-Train, evaluate, and export the current CxG baseline artifacts and metadata:
-
-```bash
-poetry run python scripts/run_cxg_end_to_end.py
-```
-
-This generates the API-loadable CxG artifact at `outputs/modeling/cxg/models/contextual_model.joblib` with required metadata at `outputs/modeling/cxg/models/contextual_model.json`. The `/predict/cxg` endpoint requires those local generated files to exist.
-
-Validate the regenerated output contract and Git ignore rules:
-
-```bash
-poetry run python scripts/check_cxg_outputs.py
-```
-
-Generate validation reports for metrics, calibration, slices, grouped checks, and baseline comparison where available:
-
-```bash
-poetry run python scripts/validate_cxg_outputs.py
-```
-
-Or run the full local CxG reproducibility smoke:
+To populate dashboard data locally:
 
 ```bash
 make cxg-smoke
+make cxa-smoke
+make cxt-baseline
 ```
 
-Generated files, including validation reports, are written under `feature_store/` and `outputs/`. They are intentionally not tracked by Git. See [docs/OUTPUTS.md](docs/OUTPUTS.md) for regeneration notes.
+Reviewer docs:
 
-### CxA Baseline
+- [v1.0.0 release notes](docs/releases/v1.0.0.md)
+- [v1 reviewer quickstart](docs/releases/v1_reviewer_quickstart.md)
+- [dashboard demo walkthrough](docs/dashboard/demo_walkthrough.md)
+- [v1 release scope](docs/releases/v1_scope.md)
+- [generated outputs](docs/OUTPUTS.md)
 
-Build baseline CxA action features and train/evaluate the first event-data baseline:
+## Dashboard
+
+Run:
+
+```bash
+make dashboard
+```
+
+Direct command:
+
+```bash
+poetry run streamlit run app/streamlit_app.py
+```
+
+Dashboard sections:
+
+- Overview and v1 status
+- Player analysis
+- Team analysis
+- CxG
+- CxA
+- CxT
+- Action explorer
+- Reports / diagnostics
+- About methodology
+
+Suggested demo flow: start with Overview, compare Player and Team analysis, explain CxG/CxA/CxT pages, use Action explorer to trace aggregate values back to actions, then show Reports / diagnostics.
+
+## Main Workflows
+
+CxG:
+
+```bash
+poetry run python scripts/run_cxg_pipeline.py
+poetry run python scripts/run_cxg_end_to_end.py
+poetry run python scripts/check_cxg_outputs.py
+poetry run python scripts/validate_cxg_outputs.py
+```
+
+CxA:
 
 ```bash
 poetry run python scripts/run_cxa_pipeline.py
 poetry run python scripts/run_cxa_end_to_end.py
 ```
 
-Or run both steps:
-
-```bash
-make cxa-smoke
-```
-
-This emits generated action predictions, player/team/sequence aggregates, and attribution reports under `feature_store/cxa/` and `outputs/modeling/cxa/`. The CxA path is baseline attribution, not a final causal assist model or API surface.
-
-### CxT Baseline
-
-Generate the baseline CxT threat grid, action-level threat values, aggregates, and interpretation reports:
+CxT:
 
 ```bash
 poetry run python scripts/run_cxt_pipeline.py
 ```
 
-Or use the Make target:
+Convenience targets:
 
 ```bash
+make cxg-smoke
+make cxa-smoke
 make cxt-baseline
 ```
 
-The baseline uses a deterministic 12x8 zone/grid threat table and calculates `cxt_value = end_threat - start_threat`. It emits player/team/sequence aggregates, zone-transition summaries, top-action reports, and an interpretation summary for final-third entries, box entries, pass threat, carry threat, and progressive actions. It is explainable and leakage-safe, not production-grade. CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
-
-## V1 Product Roadmap
-
-The current v1 direction is to turn the modelling foundations into a reviewable football analytics product. CxG, CxA, and baseline CxT have reproducible generated outputs, aggregate reports, tests, and documented contracts. The next product layer is dashboard and storytelling work: a project overview, player/team analysis, CxG/CxA/CxT pages, an action-level explorer, diagnostics, and example insights.
-
-The v1 target is a portfolio-ready analytics surface backed by generated outputs under `feature_store/` and `outputs/`, without committing those outputs. Advanced CxT enhancements, including CxT+, Contextual CxT, Advanced CxT, OD-CxT, and OD-CxT+, are intentionally deferred until after v1.
-
-### Streamlit Dashboard V1
-
-Run the v1 dashboard shell:
+## Validation
 
 ```bash
-make dashboard
+poetry run ruff check src scripts tests app
+poetry run black --check src scripts tests app
+poetry run pytest -v -m "not e2e"
+poetry run mypy src/opponent_adjusted/api/schemas.py src/opponent_adjusted/features/cxg/context.py src/opponent_adjusted/features/cxg/geometry.py src/opponent_adjusted/features/context.py src/opponent_adjusted/features/geometry.py
 ```
 
-Equivalent direct command:
+## Project Structure
 
-```bash
-poetry run streamlit run app/streamlit_app.py
+```text
+opponent-adjusted-metrics/
+|-- app/                      # Streamlit dashboard v1
+|-- configs/                  # Feature and dashboard contracts
+|-- dashboard/                # Earlier dashboard assets/components
+|-- docs/                     # Release, dashboard, modelling, and output docs
+|-- scripts/                  # Ingestion, feature, modelling, and validation commands
+|-- src/opponent_adjusted/    # Package code
+|-- tests/                    # Unit, contract, dashboard, and smoke tests
+|-- feature_store/            # Generated features, ignored by Git
+`-- outputs/                  # Generated model/report outputs, ignored by Git
 ```
 
-The dashboard reads generated CxG, CxA, and CxT outputs declared in `configs/dashboard/v1_dashboard_contract.json`. If outputs are missing, the app still starts and shows friendly availability messages plus empty tables. To populate the dashboard, regenerate modelling outputs first with `make cxg-smoke`, `make cxa-smoke`, and `make cxt-baseline`.
+## Generated Outputs
 
-Suggested demo flow:
+Generated files under `feature_store/` and `outputs/` are not committed. The repository tracks source code, contracts, tests, and documentation needed to regenerate them.
 
-1. Open Overview and read the v1 status banner.
-2. Compare Player analysis and Team analysis.
-3. Open CxG to explain shot quality.
-4. Open CxA to explain chance-creation action value.
-5. Open CxT to explain threat added by ball progression.
-6. Use Action explorer to trace aggregates back to individual actions.
-7. Use Reports / diagnostics to show generated-output availability.
+Ignored generated examples:
 
-See [docs/dashboard/demo_walkthrough.md](docs/dashboard/demo_walkthrough.md) for the reviewer walkthrough and suggested screenshot/GIF targets.
+- `feature_store/cxg/`
+- `feature_store/cxa/`
+- `feature_store/cxt/`
+- `outputs/modeling/cxg/`
+- `outputs/modeling/cxa/`
+- `outputs/modeling/cxt/`
 
-### API Service
+## API
 
 Start the FastAPI service:
 
@@ -174,72 +153,18 @@ Useful endpoints:
 - `GET /models/cxg/version`
 - `POST /predict/cxg`
 
-## Validation
-
-The repository quality gates are:
-
-```bash
-poetry run ruff check src scripts tests
-poetry run black --check src scripts tests
-poetry run pytest -v -m "not e2e"
-poetry run mypy src/opponent_adjusted/api/schemas.py src/opponent_adjusted/features/cxg/context.py src/opponent_adjusted/features/cxg/geometry.py src/opponent_adjusted/features/context.py src/opponent_adjusted/features/geometry.py
-```
-
-## Project Layout
-
-```text
-opponent-adjusted-metrics/
-|-- alembic/                  # Database migrations
-|-- configs/                  # Versioned feature contracts and data-subset configs
-|-- dashboard/                # Partial dashboard application
-|-- docs/                     # Status, roadmap, model cards, and methodology notes
-|-- scripts/                  # Runnable ingestion, feature, modelling, and validation commands
-|-- src/opponent_adjusted/    # Package code
-|-- tests/                    # Unit, fixture-backed, and e2e-style tests
-|-- feature_store/            # Generated feature outputs, ignored by Git
-`-- outputs/                  # Generated model/report outputs, ignored by Git
-```
-
-## Data
-
-The project uses StatsBomb Open Data. Configured subsets and test fixtures are tracked; raw downloaded data and generated feature/model outputs are not.
-
-Tracked examples:
-
-- `configs/statsbomb_subset.json`
-- `configs/feature_contracts/*.json`
-- `tests/fixtures/statsbomb/**`
-
-Ignored generated data:
-
-- `feature_store/`
-- `outputs/`
-- `*.parquet`, `*.csv`, `*.joblib`, `*.pkl`, `*.pickle`
-
-## Methodology Notes
-
-The current CxG baseline focuses on reproducibility and contract-backed model export. It should be read as a baseline CxG path, not a final calibrated production model. Future work includes calibration refinements, monitoring, richer slice validation, and stable registry-backed aggregate serving.
-
-CxA and CxT documentation in this repository is useful methodology and exploratory work, but those metric families should not be described as production complete until their pipelines, validation, model cards, and dashboard/API surfaces are finished.
-
-CxA design and guardrails are documented in [docs/modeling/cxa/design_contract.md](docs/modeling/cxa/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxa_v1.json](configs/feature_contracts/cxa_v1.json). The current CxA path is a baseline event-data model and attribution layer, not a final causal assist model.
-
-CxT design and leakage guardrails are documented in [docs/modeling/cxt/design_contract.md](docs/modeling/cxt/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxt_v1.json](configs/feature_contracts/cxt_v1.json). The current CxT path is a deterministic baseline zone/grid model, not CxT+ or an opponent-adjusted threat model.
+The `/predict/cxg` endpoint requires generated local CxG model artifacts.
 
 ## Documentation
 
-- [Project status](docs/PROJECT_STATUS.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Generated outputs](docs/OUTPUTS.md)
-- [CxG model card](docs/modeling/cxg/model_card.md)
+- [Changelog](CHANGELOG.md)
+- [v1 release checklist](docs/releases/v1_release_checklist.md)
 - [Feature contracts](docs/feature_contracts.md)
-- [Data dictionary](docs/data_dictionary.md)
-
-Historical reports that no longer represent current project status are kept under `docs/archive/`.
-
-## Contributing
-
-Contributions should keep documentation claims aligned with tested behavior. For code changes, add or update tests, run the validation commands above, and avoid committing generated outputs unless they are explicitly curated small examples.
+- [CxG model card](docs/modeling/cxg/model_card.md)
+- [CxA design contract](docs/modeling/cxa/design_contract.md)
+- [CxT design contract](docs/modeling/cxt/design_contract.md)
+- [Dashboard design](docs/dashboard/v1_dashboard_design.md)
+- [Project story](docs/storytelling/v1_project_story.md)
 
 ## License
 
@@ -255,8 +180,3 @@ This project uses StatsBomb Open Data under the [StatsBomb open data license](ht
   url = {https://github.com/varunrout/opponent-adjusted-metrics}
 }
 ```
-
-## Acknowledgments
-
-- [StatsBomb](https://statsbomb.com/) for open football event data.
-- The football analytics community for methodological foundations.
