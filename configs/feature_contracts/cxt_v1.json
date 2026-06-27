@@ -1,8 +1,8 @@
 {
   "metric": "cxt",
   "version": "v1",
-  "status": "design_contract",
-  "description": "Design-stage contract for leakage-safe contextual expected threat modelling.",
+  "status": "baseline_model",
+  "description": "Leakage-safe baseline contract for contextual expected threat modelling.",
   "grain": "one row per eligible ball-progression action",
   "definition": {
     "public_name": "contextual expected threat",
@@ -15,7 +15,7 @@
   "variants": {
     "baseline_cxt": {
       "summary": "Zone or grid threat difference between end and start locations.",
-      "implemented_in_this_pr": false
+      "implemented_in_this_pr": true
     },
     "cxt_plus": {
       "summary": "Baseline CxT with action success, completion probability, and richer event context.",
@@ -180,9 +180,9 @@
     "model_version"
   ],
   "notes": [
-    "This PR defines the leakage-safe CxT design and contract only; it does not implement a threat grid, model, predictions, or aggregates.",
+    "This contract covers the leakage-safe baseline CxT path; CxT+, Advanced CxT, and opponent-adjusted variants remain future work.",
     "CxT is territorial/threat progression, not shot quality (CxG) or chance-creation attribution (CxA).",
     "Future outcomes can be used offline to estimate zone/state values or evaluate model quality, but not as row-level action input features.",
-    "Baseline CxT implementation is planned for the next CxT modelling PR."
+    "Baseline CxT uses a deterministic zone/grid threat table and cxt_value = end_threat - start_threat."
   ]
 }

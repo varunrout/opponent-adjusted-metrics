@@ -5,7 +5,7 @@
 	build-features build-profiles \
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
 	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
-	run-cxg-analysis run-cxt-pipeline train-cxt evaluate-cxt \
+	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run train-cxt evaluate-cxt \
 	fetch-data api test lint format clean
 
 help:  ## Show this help message
@@ -104,8 +104,12 @@ run-cxg-analysis:  ## Run CxG analysis
 	poetry run python scripts/run_cxg_analysis.py
 
 # CxT
-run-cxt-pipeline:  ## Run CxT pipeline
+run-cxt-pipeline:  ## Run baseline CxT pipeline
 	poetry run python scripts/run_cxt_pipeline.py
+
+cxt-baseline: run-cxt-pipeline  ## Regenerate baseline CxT outputs
+
+cxt-run: cxt-baseline  ## Alias for the local baseline CxT run
 
 train-cxt:  ## Train CxT model
 	poetry run python scripts/train_cxt_model.py

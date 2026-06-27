@@ -10,7 +10,7 @@ CxT is distinct from the other metric families:
 - CxA = chance creation actions that create or progress toward shots.
 - CxT = territorial and threat progression from one ball state to another.
 
-This document defines the leakage-safe CxT design and contract. It does not implement the CxT model, threat grid, predictions, or aggregates.
+This document defines the leakage-safe CxT design and contract. The baseline CxT path is now implemented with a simple zone/grid threat value approach; CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
 
 ## Baseline CxT
 
@@ -20,7 +20,7 @@ The baseline CxT idea is:
 CxT = threat_value(end_location) - threat_value(start_location)
 ```
 
-The first implementation should use event-data-compatible pass, carry, dribble, cross, and progressive movement actions. It should map start and end locations into zones or grid cells, estimate threat values for those zones from historical future outcomes, and assign each action the difference between the end-state and start-state threat.
+The baseline implementation uses event-data-compatible pass, carry, dribble, cross, and progressive movement actions. It maps start and end locations into a deterministic 12x8 grid and assigns each action the difference between the end-state and start-state threat.
 
 ## CxT+
 
@@ -42,7 +42,7 @@ This variant may use future outcomes during offline value-estimation or evaluati
 
 OD-CxT means opponent defensive adjusted CxT. It should adjust threat progression for defensive context and opponent suppression effects. OD-CxT+ is the future enhanced version combining opponent adjustment with the richer CxT+ feature set.
 
-These variants are roadmap items. They are not implemented by this design-contract PR.
+These variants are roadmap items. They are not implemented by the baseline CxT PR.
 
 ## Eligible Actions
 
@@ -103,7 +103,7 @@ The baseline implementation should validate:
 
 ## Output Contract
 
-Expected generated paths for future CxT PRs:
+Expected generated paths for the baseline CxT path and future CxT extensions:
 
 ```text
 feature_store/cxt/action_features.parquet
@@ -122,4 +122,4 @@ These paths are generated outputs and remain ignored by Git.
 
 This contract is event-data compatible and does not require tracking data. That makes it reproducible with StatsBomb Open Data, but it also limits what CxT can know about defensive shape, receiver separation, passing lanes, and off-ball movement.
 
-Baseline CxT is upcoming PR24. CxT aggregates and interpretation are upcoming PR25. CxT+, Advanced CxT, OD-CxT, and OD-CxT+ are roadmap items rather than completed model surfaces.
+Baseline CxT is implemented as an explainable, leakage-safe starting point, not a production-grade threat model. Sequence aggregates and interpretation reporting are upcoming PR25. CxT+, Advanced CxT, OD-CxT, and OD-CxT+ are roadmap items rather than completed model surfaces.
