@@ -182,9 +182,11 @@
       "metadata": "outputs/modeling/cxa/models/baseline_model.json",
       "metrics": "outputs/modeling/cxa/reports/metrics.json",
       "validation_summary": "outputs/modeling/cxa/reports/validation_summary.json",
+      "attribution_summary": "outputs/modeling/cxa/reports/attribution_summary.json",
       "predictions": "outputs/modeling/cxa/predictions/action_predictions.parquet",
       "player_aggregates": "outputs/modeling/cxa/aggregates/player_cxa.parquet",
       "team_aggregates": "outputs/modeling/cxa/aggregates/team_cxa.parquet",
+      "sequence_aggregates": "outputs/modeling/cxa/aggregates/sequence_cxa.parquet",
       "model_card": "outputs/modeling/cxa/reports/model_card.md"
     }
   },
@@ -196,6 +198,13 @@
     "shot_created",
     "created_shot_cxg",
     "predicted_cxa",
+    "cxa_raw",
+    "cxa_value",
+    "cxa_share",
+    "possession_cxa",
+    "sequence_cxa",
+    "downstream_shot_value",
+    "attribution_method",
     "baseline_cxa",
     "cxa_above_baseline",
     "model_version"

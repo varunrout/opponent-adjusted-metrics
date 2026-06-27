@@ -106,7 +106,7 @@ Or run both steps:
 make cxa-smoke
 ```
 
-This emits generated files under `feature_store/cxa/` and `outputs/modeling/cxa/`. The CxA path is a baseline model, not a final attribution system or API surface.
+This emits generated action predictions, player/team/sequence aggregates, and attribution reports under `feature_store/cxa/` and `outputs/modeling/cxa/`. The CxA path is baseline attribution, not a final causal assist model or API surface.
 
 ### API Service
 

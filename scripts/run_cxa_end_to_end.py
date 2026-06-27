@@ -42,6 +42,8 @@ class CxARunOutputs:
     predictions_path: Path
     player_aggregates_path: Path
     team_aggregates_path: Path
+    sequence_aggregates_path: Path
+    attribution_summary_path: Path
 
 
 def _read_table(path: Path) -> pd.DataFrame:
@@ -207,23 +209,165 @@ def _cross_validated_predictions(
     return predictions, folds
 
 
-def _aggregate(scored: pd.DataFrame, entity_id: str) -> pd.DataFrame:
-    if entity_id not in scored.columns:
+def _name_column(scored: pd.DataFrame, entity_id: str) -> str | None:
+    candidate = entity_id.replace("_id", "_name")
+    return candidate if candidate in scored.columns else None
+
+
+def _aggregate_player(scored: pd.DataFrame) -> pd.DataFrame:
+    if "player_id" not in scored.columns:
         return pd.DataFrame()
+    group_cols = ["player_id"]
+    for optional in ("player_name", "team_id", "team_name"):
+        if optional in scored.columns:
+            group_cols.append(optional)
     return (
-        scored.groupby(entity_id, dropna=False)
+        scored.groupby(group_cols, dropna=False)
         .agg(
-            actions_count=("action_id", "count"),
-            shot_creating_actions=("shot_created", "sum"),
-            summed_created_shot_cxg=("created_shot_cxg", "sum"),
-            summed_predicted_cxa=("predicted_cxa", "sum"),
-            summed_baseline_cxa=("baseline_cxa", "sum"),
-            summed_cxa_above_baseline=("cxa_above_baseline", "sum"),
-            avg_predicted_cxa=("predicted_cxa", "mean"),
+            match_count=("match_id", "nunique"),
+            action_count=("action_id", "count"),
+            total_cxa=("cxa_value", "sum"),
+            mean_cxa=("cxa_value", "mean"),
+            cxa_per_action=("cxa_value", "mean"),
+            high_value_actions=("is_high_value_action", "sum"),
+            progressive_action_count=("is_progressive", "sum"),
+            box_entry_count=("enters_penalty_area", "sum"),
+            chance_created_count=("shot_created", "sum"),
+            predicted_chance_actions=("predicted_chance_action", "sum"),
+            total_sequence_cxa=("sequence_cxa", "sum"),
         )
         .reset_index()
-        .sort_values("summed_predicted_cxa", ascending=False)
+        .sort_values("total_cxa", ascending=False)
     )
+
+
+def _aggregate_team(scored: pd.DataFrame) -> pd.DataFrame:
+    if "team_id" not in scored.columns:
+        return pd.DataFrame()
+    group_cols = ["team_id"]
+    name_col = _name_column(scored, "team_id")
+    if name_col:
+        group_cols.append(name_col)
+    return (
+        scored.groupby(group_cols, dropna=False)
+        .agg(
+            match_count=("match_id", "nunique"),
+            action_count=("action_id", "count"),
+            possession_count=("possession", "nunique"),
+            sequence_count=("sequence_id", "nunique"),
+            total_cxa=("cxa_value", "sum"),
+            mean_cxa=("cxa_value", "mean"),
+            cxa_per_action=("cxa_value", "mean"),
+            high_value_actions=("is_high_value_action", "sum"),
+            progressive_action_count=("is_progressive", "sum"),
+            box_entry_count=("enters_penalty_area", "sum"),
+            chance_created_count=("shot_created", "sum"),
+            predicted_chance_actions=("predicted_chance_action", "sum"),
+        )
+        .reset_index()
+        .sort_values("total_cxa", ascending=False)
+    )
+
+
+def _aggregate_sequence(scored: pd.DataFrame) -> pd.DataFrame:
+    sequence_col = "sequence_id" if "sequence_id" in scored.columns else "possession"
+    group_cols = ["match_id", sequence_col]
+    for optional in ("possession", "team_id", "team_name"):
+        if optional in scored.columns and optional not in group_cols:
+            group_cols.append(optional)
+    return (
+        scored.groupby(group_cols, dropna=False)
+        .agg(
+            action_count=("action_id", "count"),
+            total_cxa=("cxa_value", "sum"),
+            max_action_cxa=("cxa_value", "max"),
+            mean_action_cxa=("cxa_value", "mean"),
+            possession_cxa=("possession_cxa", "max"),
+            sequence_cxa=("sequence_cxa", "max"),
+            led_to_shot=("shot_created", "max"),
+            downstream_shot_value=("downstream_shot_value", "max"),
+            progressive_action_count=("is_progressive", "sum"),
+            box_entry_count=("enters_penalty_area", "sum"),
+        )
+        .reset_index()
+        .sort_values("total_cxa", ascending=False)
+    )
+
+
+def _add_attribution_columns(scored: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
+    scored = scored.copy()
+    has_downstream_value = (
+        VALUE_COLUMN in scored.columns
+        and scored[VALUE_COLUMN].notna().any()
+        and float(scored[VALUE_COLUMN].sum()) > 0
+    )
+    scored["cxa_raw"] = scored["predicted_cxa"]
+    scored["downstream_shot_value"] = (
+        scored[VALUE_COLUMN].astype(float).clip(0.0, 1.0) if has_downstream_value else np.nan
+    )
+    scored["cxa_value"] = scored["cxa_raw"]
+    scored["attribution_method"] = np.where(
+        has_downstream_value,
+        "baseline_model_expected_value_with_observed_shot_value_reference",
+        "baseline_model_probability_only_no_downstream_shot_value",
+    )
+
+    sequence_key = "sequence_id" if "sequence_id" in scored.columns else "possession"
+    scored["sequence_cxa"] = scored.groupby(["match_id", sequence_key], dropna=False)[
+        "cxa_value"
+    ].transform("sum")
+    if "possession" in scored.columns:
+        scored["possession_cxa"] = scored.groupby(["match_id", "possession"], dropna=False)[
+            "cxa_value"
+        ].transform("sum")
+    else:
+        scored["possession_cxa"] = scored["sequence_cxa"]
+    scored["cxa_share"] = np.where(
+        scored["sequence_cxa"] > 0,
+        scored["cxa_value"] / scored["sequence_cxa"],
+        0.0,
+    )
+    high_value_threshold = float(scored["cxa_value"].quantile(0.75)) if len(scored) else 0.0
+    scored["is_high_value_action"] = scored["cxa_value"] >= high_value_threshold
+    scored["predicted_chance_action"] = scored["predicted_shot_created_probability"] >= 0.5
+
+    notes = []
+    if not has_downstream_value:
+        notes.append(
+            "Downstream shot value unavailable; cxa_value uses baseline chance-creation probability/value only."
+        )
+    return scored, {
+        "method": "simple_action_level_baseline_attribution",
+        "description": (
+            "Each action receives its baseline model expected CxA value. Sequence and possession "
+            "shares are normalized within the generated action groups."
+        ),
+        "downstream_shot_value_available": has_downstream_value,
+        "skipped_fields": notes,
+        "high_value_threshold": high_value_threshold,
+    }
+
+
+def _attribution_summary(
+    scored: pd.DataFrame,
+    paths: dict[str, Path],
+    attribution: dict[str, Any],
+) -> dict[str, Any]:
+    distribution = scored["cxa_value"].describe(percentiles=[0.25, 0.5, 0.75, 0.9]).to_dict()
+    return {
+        "row_count": int(len(scored)),
+        "action_count": (
+            int(scored["action_id"].nunique()) if "action_id" in scored else int(len(scored))
+        ),
+        "sequence_count": int(scored["sequence_id"].nunique()) if "sequence_id" in scored else None,
+        "possession_count": int(scored["possession"].nunique()) if "possession" in scored else None,
+        "total_attributed_cxa": float(scored["cxa_value"].sum()),
+        "mean_cxa": float(scored["cxa_value"].mean()) if len(scored) else 0.0,
+        "max_cxa": float(scored["cxa_value"].max()) if len(scored) else 0.0,
+        "distribution": {key: float(value) for key, value in distribution.items()},
+        "aggregate_paths": {key: str(value) for key, value in paths.items()},
+        "attribution": attribution,
+    }
 
 
 def train_evaluate_score(
@@ -269,6 +413,7 @@ def train_evaluate_score(
     scored["baseline_cxa"] = baseline_value
     scored["cxa_above_baseline"] = scored["predicted_cxa"] - scored["baseline_cxa"]
     scored["model_version"] = model_version
+    scored, attribution = _add_attribution_columns(scored)
 
     metrics = _safe_classification_metrics(y, cv_probs)
     metrics.update(
@@ -282,6 +427,7 @@ def train_evaluate_score(
             "folds": fold_metrics,
             "features": feature_groups,
             "estimator": "dummy_prior" if use_dummy else "logistic_regression",
+            "attribution": attribution,
         }
     )
     return final_model, scored, metrics, feature_groups
@@ -310,11 +456,24 @@ def run_end_to_end(
     predictions_path = predictions_dir / "action_predictions.parquet"
     player_path = aggregates_dir / "player_cxa.parquet"
     team_path = aggregates_dir / "team_cxa.parquet"
+    sequence_path = aggregates_dir / "sequence_cxa.parquet"
+    attribution_summary_path = reports_dir / "attribution_summary.json"
 
     joblib.dump(model, model_path)
     scored.to_parquet(predictions_path, index=False)
-    _aggregate(scored, "player_id").to_parquet(player_path, index=False)
-    _aggregate(scored, "team_id").to_parquet(team_path, index=False)
+    _aggregate_player(scored).to_parquet(player_path, index=False)
+    _aggregate_team(scored).to_parquet(team_path, index=False)
+    _aggregate_sequence(scored).to_parquet(sequence_path, index=False)
+    attribution_summary = _attribution_summary(
+        scored,
+        {
+            "predictions": predictions_path,
+            "player_aggregates": player_path,
+            "team_aggregates": team_path,
+            "sequence_aggregates": sequence_path,
+        },
+        metrics["attribution"],
+    )
 
     metadata = {
         "model_name": "cxa",
@@ -342,13 +501,23 @@ def run_end_to_end(
             "predictions": str(predictions_path),
             "player_aggregates": str(player_path),
             "team_aggregates": str(team_path),
+            "sequence_aggregates": str(sequence_path),
+            "attribution_summary": str(attribution_summary_path),
         },
     }
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    attribution_summary_path.write_text(json.dumps(attribution_summary, indent=2), encoding="utf-8")
 
     return CxARunOutputs(
-        model_path, metadata_path, metrics_path, predictions_path, player_path, team_path
+        model_path,
+        metadata_path,
+        metrics_path,
+        predictions_path,
+        player_path,
+        team_path,
+        sequence_path,
+        attribution_summary_path,
     )
 
 
