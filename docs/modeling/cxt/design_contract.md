@@ -113,6 +113,8 @@ outputs/modeling/cxt/aggregates/player_cxt.parquet
 outputs/modeling/cxt/aggregates/team_cxt.parquet
 outputs/modeling/cxt/aggregates/sequence_cxt.parquet
 outputs/modeling/cxt/reports/metrics.json
+outputs/modeling/cxt/reports/zone_transition_summary.csv
+outputs/modeling/cxt/reports/top_actions.csv
 outputs/modeling/cxt/reports/interpretation_summary.json
 ```
 
@@ -122,4 +124,4 @@ These paths are generated outputs and remain ignored by Git.
 
 This contract is event-data compatible and does not require tracking data. That makes it reproducible with StatsBomb Open Data, but it also limits what CxT can know about defensive shape, receiver separation, passing lanes, and off-ball movement.
 
-Baseline CxT is implemented as an explainable, leakage-safe starting point, not a production-grade threat model. Sequence aggregates and interpretation reporting are upcoming PR25. CxT+, Advanced CxT, OD-CxT, and OD-CxT+ are roadmap items rather than completed model surfaces.
+Baseline CxT is implemented as an explainable, leakage-safe starting point, not a production-grade threat model. Player, team, sequence, zone-transition, top-action, and interpretation reports are baseline reporting surfaces. CxT+, Advanced CxT, OD-CxT, and OD-CxT+ are roadmap items rather than completed model surfaces.

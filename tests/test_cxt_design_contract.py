@@ -103,6 +103,8 @@ def test_cxt_contract_defines_leakage_guardrails_and_outputs():
         "team_aggregates": "outputs/modeling/cxt/aggregates/team_cxt.parquet",
         "sequence_aggregates": "outputs/modeling/cxt/aggregates/sequence_cxt.parquet",
         "metrics": "outputs/modeling/cxt/reports/metrics.json",
+        "zone_transition_summary": "outputs/modeling/cxt/reports/zone_transition_summary.csv",
+        "top_actions": "outputs/modeling/cxt/reports/top_actions.csv",
         "interpretation_summary": ("outputs/modeling/cxt/reports/interpretation_summary.json"),
     }
 

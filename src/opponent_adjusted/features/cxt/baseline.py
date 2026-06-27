@@ -59,6 +59,7 @@ BASELINE_VALUE_COLUMNS = [
     "end_threat",
     "cxt_value",
 ]
+HIGH_VALUE_CXT_THRESHOLD = 0.01
 
 
 @dataclass(frozen=True)
@@ -68,7 +69,11 @@ class CxTBaselineOutputs:
     predictions_path: Path
     player_aggregates_path: Path
     team_aggregates_path: Path
+    sequence_aggregates_path: Path
     metrics_path: Path
+    zone_transition_summary_path: Path
+    top_actions_path: Path
+    interpretation_summary_path: Path
 
 
 def _zone_id(x: float, y: float) -> str:
@@ -139,6 +144,10 @@ def _ensure_optional_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _in_penalty_box(x: pd.Series, y: pd.Series) -> pd.Series:
+    return (x >= 102.0) & y.between(18.0, 62.0, inclusive="both")
+
+
 def build_action_features(actions: pd.DataFrame) -> pd.DataFrame:
     """Build baseline action-level CxT features.
 
@@ -167,6 +176,10 @@ def build_action_features(actions: pd.DataFrame) -> pd.DataFrame:
                 *LOCATION_COLUMNS,
                 "successful_action",
                 *BASELINE_VALUE_COLUMNS,
+                "entered_final_third",
+                "entered_box",
+                "progressive_action",
+                "action_type_group",
                 "model_version",
             ]
         )
@@ -187,6 +200,18 @@ def build_action_features(actions: pd.DataFrame) -> pd.DataFrame:
     df["end_threat"] = [float(XT_GRID[y_zone, x_zone]) for x_zone, y_zone in end_zones]
     df["cxt_value"] = df["end_threat"] - df["start_threat"]
     df["successful_action"] = df.apply(_successful_action, axis=1)
+    df["entered_final_third"] = (df["start_x"] < 80.0) & (df["end_x"] >= 80.0)
+    df["entered_box"] = ~_in_penalty_box(df["start_x"], df["start_y"]) & _in_penalty_box(
+        df["end_x"], df["end_y"]
+    )
+    df["progressive_action"] = (df["end_x"] - df["start_x"] >= 10.0) | df["action_type"].isin(
+        {"progressive_pass", "progressive_carry"}
+    )
+    df["action_type_group"] = "other"
+    df.loc[df["action_type"].isin({"pass", "cross", "progressive_pass"}), "action_type_group"] = (
+        "pass"
+    )
+    df.loc[df["action_type"].isin({"carry", "progressive_carry"}), "action_type_group"] = "carry"
     df["model_version"] = MODEL_VERSION
 
     output_columns = [
@@ -195,9 +220,19 @@ def build_action_features(actions: pd.DataFrame) -> pd.DataFrame:
         *LOCATION_COLUMNS,
         "successful_action",
         *BASELINE_VALUE_COLUMNS,
+        "entered_final_third",
+        "entered_box",
+        "progressive_action",
+        "action_type_group",
         "model_version",
     ]
     return df[output_columns].reset_index(drop=True)
+
+
+def _conditional_sum(
+    features: pd.DataFrame, group_columns: list[str], mask: pd.Series
+) -> pd.Series:
+    return features.loc[mask].groupby(group_columns, dropna=False)["cxt_value"].sum()
 
 
 def _aggregate(features: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame:
@@ -212,6 +247,13 @@ def _aggregate(features: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame
                 "negative_cxt_actions",
                 "max_cxt",
                 "min_cxt",
+                "pass_cxt",
+                "carry_cxt",
+                "final_third_entry_cxt",
+                "box_entry_cxt",
+                "progressive_cxt",
+                "high_value_actions",
+                "cxt_per_action",
             ]
         )
 
@@ -227,6 +269,32 @@ def _aggregate(features: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame
     negative = grouped["cxt_value"].apply(lambda values: int((values < 0).sum()))
     summary["positive_cxt_actions"] = positive
     summary["negative_cxt_actions"] = negative
+    summary["pass_cxt"] = _conditional_sum(
+        features, group_columns, features["action_type_group"] == "pass"
+    )
+    summary["carry_cxt"] = _conditional_sum(
+        features, group_columns, features["action_type_group"] == "carry"
+    )
+    summary["final_third_entry_cxt"] = _conditional_sum(
+        features, group_columns, features["entered_final_third"]
+    )
+    summary["box_entry_cxt"] = _conditional_sum(features, group_columns, features["entered_box"])
+    summary["progressive_cxt"] = _conditional_sum(
+        features, group_columns, features["progressive_action"]
+    )
+    summary["high_value_actions"] = grouped["cxt_value"].apply(
+        lambda values: int((values >= HIGH_VALUE_CXT_THRESHOLD).sum())
+    )
+    summary["cxt_per_action"] = summary["total_cxt"] / summary["actions"]
+    summary = summary.fillna(
+        {
+            "pass_cxt": 0.0,
+            "carry_cxt": 0.0,
+            "final_third_entry_cxt": 0.0,
+            "box_entry_cxt": 0.0,
+            "progressive_cxt": 0.0,
+        }
+    )
 
     ordered_columns = [
         "actions",
@@ -236,6 +304,13 @@ def _aggregate(features: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame
         "negative_cxt_actions",
         "max_cxt",
         "min_cxt",
+        "pass_cxt",
+        "carry_cxt",
+        "final_third_entry_cxt",
+        "box_entry_cxt",
+        "progressive_cxt",
+        "high_value_actions",
+        "cxt_per_action",
     ]
     return summary.reset_index()[group_columns + ordered_columns]
 
@@ -248,6 +323,156 @@ def aggregate_teams(features: pd.DataFrame) -> pd.DataFrame:
     return _aggregate(features, ["team_id", "team_name"])
 
 
+def _threat_direction(total_cxt: float) -> str:
+    if total_cxt > 0:
+        return "positive"
+    if total_cxt < 0:
+        return "negative"
+    return "neutral"
+
+
+def aggregate_sequences(features: pd.DataFrame) -> pd.DataFrame:
+    group_columns = ["match_id", "possession_id", "team_id", "team_name"]
+    if features.empty:
+        return pd.DataFrame(
+            columns=[
+                *group_columns,
+                "action_count",
+                "total_cxt",
+                "mean_cxt",
+                "max_cxt",
+                "min_cxt",
+                "positive_cxt_actions",
+                "negative_cxt_actions",
+                "start_zone",
+                "end_zone",
+                "sequence_threat_direction",
+                "dominant_transition",
+            ]
+        )
+
+    sequence_features = features.assign(
+        transition=features["start_zone"].astype(str) + "->" + features["end_zone"].astype(str)
+    )
+    grouped = sequence_features.groupby(group_columns, dropna=False, sort=False)
+    summary = grouped["cxt_value"].agg(
+        action_count="size",
+        total_cxt="sum",
+        mean_cxt="mean",
+        max_cxt="max",
+        min_cxt="min",
+    )
+    summary["positive_cxt_actions"] = grouped["cxt_value"].apply(
+        lambda values: int((values > 0).sum())
+    )
+    summary["negative_cxt_actions"] = grouped["cxt_value"].apply(
+        lambda values: int((values < 0).sum())
+    )
+    summary["start_zone"] = grouped["start_zone"].first()
+    summary["end_zone"] = grouped["end_zone"].last()
+    summary["sequence_threat_direction"] = summary["total_cxt"].map(_threat_direction)
+    summary["dominant_transition"] = grouped["transition"].agg(
+        lambda values: values.mode(dropna=False).iloc[0]
+    )
+    return summary.reset_index()
+
+
+def build_zone_transition_summary(features: pd.DataFrame) -> pd.DataFrame:
+    columns = [
+        "start_zone",
+        "end_zone",
+        "actions",
+        "total_cxt",
+        "mean_cxt",
+        "max_cxt",
+        "positive_cxt_actions",
+        "negative_cxt_actions",
+    ]
+    if features.empty:
+        return pd.DataFrame(columns=columns)
+
+    grouped = features.groupby(["start_zone", "end_zone"], dropna=False)
+    summary = grouped["cxt_value"].agg(
+        actions="size",
+        total_cxt="sum",
+        mean_cxt="mean",
+        max_cxt="max",
+    )
+    summary["positive_cxt_actions"] = grouped["cxt_value"].apply(
+        lambda values: int((values > 0).sum())
+    )
+    summary["negative_cxt_actions"] = grouped["cxt_value"].apply(
+        lambda values: int((values < 0).sum())
+    )
+    return summary.reset_index()[columns]
+
+
+def build_top_actions(features: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
+    columns = [
+        "rank",
+        "direction",
+        "match_id",
+        "team_name",
+        "player_name",
+        "action_type",
+        "start_zone",
+        "end_zone",
+        "start_threat",
+        "end_threat",
+        "cxt_value",
+    ]
+    if features.empty:
+        return pd.DataFrame(columns=columns)
+
+    report_parts = []
+    for direction, ascending in (("top_positive", False), ("top_negative", True)):
+        ranked = features.sort_values(
+            ["cxt_value", "action_id"], ascending=[ascending, True], kind="mergesort"
+        ).head(top_n)
+        ranked = ranked.copy()
+        ranked["rank"] = range(1, len(ranked) + 1)
+        ranked["direction"] = direction
+        report_parts.append(ranked)
+
+    report = pd.concat(report_parts, ignore_index=True)
+    return report[columns]
+
+
+def _sum_where(features: pd.DataFrame, mask: pd.Series) -> float:
+    if features.empty:
+        return 0.0
+    return float(features.loc[mask, "cxt_value"].sum())
+
+
+def build_interpretation_summary(
+    features: pd.DataFrame,
+    *,
+    zone_transition_summary_path: Path,
+    top_actions_path: Path,
+    sequence_aggregates_path: Path,
+) -> dict[str, Any]:
+    cxt = features["cxt_value"] if "cxt_value" in features else pd.Series(dtype=float)
+    return {
+        "model_version": MODEL_VERSION,
+        "baseline_formula": BASELINE_FORMULA,
+        "summary": (
+            "Baseline CxT interpretation for deterministic zone/grid threat values. "
+            "CxT+ and opponent-adjusted variants are not included."
+        ),
+        "total_cxt": float(cxt.sum()) if not cxt.empty else 0.0,
+        "pass_cxt": _sum_where(features, features["action_type_group"] == "pass"),
+        "carry_cxt": _sum_where(features, features["action_type_group"] == "carry"),
+        "final_third_entry_cxt": _sum_where(features, features["entered_final_third"]),
+        "box_entry_cxt": _sum_where(features, features["entered_box"]),
+        "progressive_action_cxt": _sum_where(features, features["progressive_action"]),
+        "top_positive_action_count": int((cxt > 0).sum()) if not cxt.empty else 0,
+        "top_negative_action_count": int((cxt < 0).sum()) if not cxt.empty else 0,
+        "zone_transition_report_path": str(zone_transition_summary_path),
+        "top_actions_report_path": str(top_actions_path),
+        "sequence_aggregate_path": str(sequence_aggregates_path),
+    }
+
+
 def build_metrics(
     features: pd.DataFrame,
     *,
@@ -255,6 +480,10 @@ def build_metrics(
     predictions_path: Path,
     player_aggregates_path: Path,
     team_aggregates_path: Path,
+    sequence_aggregates_path: Path,
+    interpretation_summary_path: Path,
+    zone_transition_summary_path: Path,
+    top_actions_path: Path,
 ) -> dict[str, Any]:
     cxt = features["cxt_value"] if "cxt_value" in features else pd.Series(dtype=float)
     number_of_actions = int(len(features))
@@ -283,6 +512,10 @@ def build_metrics(
         "prediction_path": str(predictions_path),
         "player_aggregates_path": str(player_aggregates_path),
         "team_aggregates_path": str(team_aggregates_path),
+        "sequence_aggregates_path": str(sequence_aggregates_path),
+        "interpretation_summary_path": str(interpretation_summary_path),
+        "zone_transition_summary_path": str(zone_transition_summary_path),
+        "top_actions_path": str(top_actions_path),
     }
 
 
@@ -355,6 +588,9 @@ def run_baseline(
     features = build_action_features(raw_actions)
     player_aggregates = aggregate_players(features)
     team_aggregates = aggregate_teams(features)
+    sequence_aggregates = aggregate_sequences(features)
+    zone_transition_summary = build_zone_transition_summary(features)
+    top_actions = build_top_actions(features)
 
     feature_store_dir.mkdir(parents=True, exist_ok=True)
     predictions_dir = output_dir / "predictions"
@@ -369,18 +605,38 @@ def run_baseline(
     predictions_path = predictions_dir / "action_threat.parquet"
     player_aggregates_path = aggregates_dir / "player_cxt.parquet"
     team_aggregates_path = aggregates_dir / "team_cxt.parquet"
+    sequence_aggregates_path = aggregates_dir / "sequence_cxt.parquet"
     metrics_path = reports_dir / "metrics.json"
+    zone_transition_summary_path = reports_dir / "zone_transition_summary.csv"
+    zone_transition_summary_parquet_path = reports_dir / "zone_transition_summary.parquet"
+    top_actions_path = reports_dir / "top_actions.csv"
+    interpretation_summary_path = reports_dir / "interpretation_summary.json"
 
     features.to_parquet(feature_path, index=False)
     threat_grid.to_parquet(threat_grid_path, index=False)
     features.to_parquet(predictions_path, index=False)
     player_aggregates.to_parquet(player_aggregates_path, index=False)
     team_aggregates.to_parquet(team_aggregates_path, index=False)
+    sequence_aggregates.to_parquet(sequence_aggregates_path, index=False)
+    zone_transition_summary.to_csv(zone_transition_summary_path, index=False)
+    zone_transition_summary.to_parquet(zone_transition_summary_parquet_path, index=False)
+    top_actions.to_csv(top_actions_path, index=False)
+
+    interpretation_summary = build_interpretation_summary(
+        features,
+        zone_transition_summary_path=zone_transition_summary_path,
+        top_actions_path=top_actions_path,
+        sequence_aggregates_path=sequence_aggregates_path,
+    )
+    interpretation_summary_path.write_text(
+        json.dumps(interpretation_summary, indent=2), encoding="utf-8"
+    )
 
     if write_csv:
         features.to_csv(predictions_dir / "action_threat.csv", index=False)
         player_aggregates.to_csv(aggregates_dir / "player_cxt.csv", index=False)
         team_aggregates.to_csv(aggregates_dir / "team_cxt.csv", index=False)
+        sequence_aggregates.to_csv(aggregates_dir / "sequence_cxt.csv", index=False)
 
     metrics = build_metrics(
         features,
@@ -388,6 +644,10 @@ def run_baseline(
         predictions_path=predictions_path,
         player_aggregates_path=player_aggregates_path,
         team_aggregates_path=team_aggregates_path,
+        sequence_aggregates_path=sequence_aggregates_path,
+        interpretation_summary_path=interpretation_summary_path,
+        zone_transition_summary_path=zone_transition_summary_path,
+        top_actions_path=top_actions_path,
     )
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
@@ -397,5 +657,9 @@ def run_baseline(
         predictions_path=predictions_path,
         player_aggregates_path=player_aggregates_path,
         team_aggregates_path=team_aggregates_path,
+        sequence_aggregates_path=sequence_aggregates_path,
         metrics_path=metrics_path,
+        zone_transition_summary_path=zone_transition_summary_path,
+        top_actions_path=top_actions_path,
+        interpretation_summary_path=interpretation_summary_path,
     )

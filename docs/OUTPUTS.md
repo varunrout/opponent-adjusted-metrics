@@ -142,7 +142,12 @@ outputs/modeling/cxt/threat_grid.parquet
 outputs/modeling/cxt/predictions/action_threat.parquet
 outputs/modeling/cxt/aggregates/player_cxt.parquet
 outputs/modeling/cxt/aggregates/team_cxt.parquet
+outputs/modeling/cxt/aggregates/sequence_cxt.parquet
 outputs/modeling/cxt/reports/metrics.json
+outputs/modeling/cxt/reports/zone_transition_summary.csv
+outputs/modeling/cxt/reports/zone_transition_summary.parquet
+outputs/modeling/cxt/reports/top_actions.csv
+outputs/modeling/cxt/reports/interpretation_summary.json
 ```
 
 Optional CSV mirrors can be generated with `--write-csv`:
@@ -151,9 +156,10 @@ Optional CSV mirrors can be generated with `--write-csv`:
 outputs/modeling/cxt/predictions/action_threat.csv
 outputs/modeling/cxt/aggregates/player_cxt.csv
 outputs/modeling/cxt/aggregates/team_cxt.csv
+outputs/modeling/cxt/aggregates/sequence_cxt.csv
 ```
 
-The baseline calculates `cxt_value = end_threat - start_threat` from a deterministic pitch grid. Generated CxT outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules. Sequence aggregates and interpretation reporting are upcoming PR25.
+The baseline calculates `cxt_value = end_threat - start_threat` from a deterministic pitch grid. Player/team/sequence aggregates summarize who and which possessions add threat; zone-transition and top-action reports explain where threat is created. Generated CxT outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules. CxT+, Advanced CxT, and OD-CxT remain future roadmap items.
 
 ## What Should Be Committed
 

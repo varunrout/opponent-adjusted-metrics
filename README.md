@@ -110,7 +110,7 @@ This emits generated action predictions, player/team/sequence aggregates, and at
 
 ### CxT Baseline
 
-Generate the baseline CxT threat grid, action-level threat values, aggregates, and metrics:
+Generate the baseline CxT threat grid, action-level threat values, aggregates, and interpretation reports:
 
 ```bash
 poetry run python scripts/run_cxt_pipeline.py
@@ -122,7 +122,7 @@ Or use the Make target:
 make cxt-baseline
 ```
 
-The baseline uses a deterministic 12x8 zone/grid threat table and calculates `cxt_value = end_threat - start_threat`. It is explainable and leakage-safe, not production-grade. CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
+The baseline uses a deterministic 12x8 zone/grid threat table and calculates `cxt_value = end_threat - start_threat`. It emits player/team/sequence aggregates, zone-transition summaries, top-action reports, and an interpretation summary for final-third entries, box entries, pass threat, carry threat, and progressive actions. It is explainable and leakage-safe, not production-grade. CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
 
 ### API Service
 
