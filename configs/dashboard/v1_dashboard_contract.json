@@ -1,0 +1,372 @@
+{
+  "name": "v1_dashboard_contract",
+  "version": "v1",
+  "status": "planned_dashboard_contract",
+  "description": "Dashboard data contract for the v1 football analytics product surface.",
+  "dashboard_pages": [
+    "project_overview",
+    "player_analysis",
+    "team_analysis",
+    "cxg_analysis",
+    "cxa_analysis",
+    "cxt_analysis",
+    "action_level_explorer",
+    "model_report_diagnostics",
+    "example_insights"
+  ],
+  "metric_sections": {
+    "cxg": {
+      "status": "implemented_baseline",
+      "metric_explanation": "CxG explains shot quality.",
+      "page_ownership": [
+        "project_overview",
+        "player_analysis",
+        "team_analysis",
+        "cxg_analysis",
+        "model_report_diagnostics"
+      ],
+      "inputs": {
+        "predictions": {
+          "path": "outputs/modeling/cxg/predictions/shot_predictions.parquet",
+          "required_columns": [
+            "shot_id",
+            "match_id",
+            "team_id",
+            "player_id",
+            "cxg_raw",
+            "cxg_neutral",
+            "cxg_opp_adjusted"
+          ],
+          "optional_columns": [
+            "team_name",
+            "player_name",
+            "statsbomb_xg",
+            "is_goal",
+            "shot_distance",
+            "shot_angle",
+            "score_state"
+          ]
+        },
+        "player_aggregates": {
+          "path": "outputs/modeling/cxg/aggregates/player_cxg.parquet",
+          "required_columns": [
+            "player_id",
+            "total_cxg",
+            "mean_cxg"
+          ],
+          "optional_columns": [
+            "player_name",
+            "team_id",
+            "team_name",
+            "shots",
+            "goals"
+          ]
+        },
+        "team_aggregates": {
+          "path": "outputs/modeling/cxg/aggregates/team_cxg.parquet",
+          "required_columns": [
+            "team_id",
+            "total_cxg",
+            "mean_cxg"
+          ],
+          "optional_columns": [
+            "team_name",
+            "shots",
+            "goals"
+          ]
+        },
+        "metrics": {
+          "path": "outputs/modeling/cxg/reports/metrics.json",
+          "required_fields": [
+            "model_version",
+            "row_count"
+          ],
+          "optional_fields": [
+            "brier_score",
+            "log_loss",
+            "roc_auc"
+          ]
+        },
+        "validation_summary": {
+          "path": "outputs/modeling/cxg/reports/validation_summary.json",
+          "required_fields": [
+            "row_count"
+          ],
+          "optional_fields": [
+            "baseline_comparison",
+            "grouped_validation",
+            "slice_metrics"
+          ]
+        }
+      }
+    },
+    "cxa": {
+      "status": "implemented_baseline",
+      "metric_explanation": "CxA explains chance creation and attacking actions that create or progress toward shots.",
+      "page_ownership": [
+        "project_overview",
+        "player_analysis",
+        "team_analysis",
+        "cxa_analysis",
+        "action_level_explorer",
+        "model_report_diagnostics"
+      ],
+      "inputs": {
+        "predictions": {
+          "path": "outputs/modeling/cxa/predictions/action_predictions.parquet",
+          "required_columns": [
+            "action_id",
+            "match_id",
+            "team_id",
+            "player_id",
+            "predicted_cxa",
+            "cxa_value"
+          ],
+          "optional_columns": [
+            "team_name",
+            "player_name",
+            "action_type",
+            "shot_created",
+            "created_shot_cxg",
+            "cxa_share",
+            "sequence_cxa",
+            "possession_cxa"
+          ]
+        },
+        "player_aggregates": {
+          "path": "outputs/modeling/cxa/aggregates/player_cxa.parquet",
+          "required_columns": [
+            "player_id",
+            "action_count",
+            "total_cxa",
+            "mean_cxa"
+          ],
+          "optional_columns": [
+            "player_name",
+            "team_id",
+            "team_name",
+            "high_value_actions",
+            "progressive_action_count",
+            "box_entry_count"
+          ]
+        },
+        "team_aggregates": {
+          "path": "outputs/modeling/cxa/aggregates/team_cxa.parquet",
+          "required_columns": [
+            "team_id",
+            "action_count",
+            "total_cxa",
+            "mean_cxa"
+          ],
+          "optional_columns": [
+            "team_name",
+            "progressive_action_count",
+            "box_entry_count",
+            "sequence_count"
+          ]
+        },
+        "sequence_aggregates": {
+          "path": "outputs/modeling/cxa/aggregates/sequence_cxa.parquet",
+          "required_columns": [
+            "match_id",
+            "team_id",
+            "action_count",
+            "total_cxa"
+          ],
+          "optional_columns": [
+            "team_name",
+            "possession",
+            "sequence_id",
+            "led_to_shot"
+          ]
+        },
+        "metrics": {
+          "path": "outputs/modeling/cxa/reports/metrics.json",
+          "required_fields": [
+            "row_count"
+          ],
+          "optional_fields": [
+            "brier_score",
+            "log_loss",
+            "roc_auc"
+          ]
+        },
+        "attribution_summary": {
+          "path": "outputs/modeling/cxa/reports/attribution_summary.json",
+          "required_fields": [
+            "attribution_method",
+            "total_cxa"
+          ],
+          "optional_fields": [
+            "skipped_fields",
+            "distribution"
+          ]
+        }
+      }
+    },
+    "cxt": {
+      "status": "implemented_baseline",
+      "metric_explanation": "Baseline CxT explains territorial threat progression from moving between pitch zones.",
+      "page_ownership": [
+        "project_overview",
+        "player_analysis",
+        "team_analysis",
+        "cxt_analysis",
+        "action_level_explorer",
+        "model_report_diagnostics",
+        "example_insights"
+      ],
+      "roadmap_note": "CxT+, Contextual CxT, Advanced CxT, OD-CxT, and OD-CxT+ are deferred until after v1.",
+      "inputs": {
+        "action_threat": {
+          "path": "outputs/modeling/cxt/predictions/action_threat.parquet",
+          "required_columns": [
+            "action_id",
+            "match_id",
+            "team_id",
+            "player_id",
+            "action_type",
+            "start_zone",
+            "end_zone",
+            "start_threat",
+            "end_threat",
+            "cxt_value"
+          ],
+          "optional_columns": [
+            "team_name",
+            "player_name",
+            "entered_final_third",
+            "entered_box",
+            "progressive_action",
+            "action_type_group"
+          ]
+        },
+        "player_aggregates": {
+          "path": "outputs/modeling/cxt/aggregates/player_cxt.parquet",
+          "required_columns": [
+            "player_id",
+            "actions",
+            "total_cxt",
+            "mean_cxt",
+            "cxt_per_action"
+          ],
+          "optional_columns": [
+            "player_name",
+            "team_id",
+            "team_name",
+            "pass_cxt",
+            "carry_cxt",
+            "final_third_entry_cxt",
+            "box_entry_cxt",
+            "progressive_cxt",
+            "high_value_actions"
+          ]
+        },
+        "team_aggregates": {
+          "path": "outputs/modeling/cxt/aggregates/team_cxt.parquet",
+          "required_columns": [
+            "team_id",
+            "actions",
+            "total_cxt",
+            "mean_cxt",
+            "cxt_per_action"
+          ],
+          "optional_columns": [
+            "team_name",
+            "pass_cxt",
+            "carry_cxt",
+            "final_third_entry_cxt",
+            "box_entry_cxt",
+            "progressive_cxt"
+          ]
+        },
+        "sequence_aggregates": {
+          "path": "outputs/modeling/cxt/aggregates/sequence_cxt.parquet",
+          "required_columns": [
+            "match_id",
+            "possession_id",
+            "team_id",
+            "action_count",
+            "total_cxt"
+          ],
+          "optional_columns": [
+            "team_name",
+            "start_zone",
+            "end_zone",
+            "sequence_threat_direction",
+            "dominant_transition"
+          ]
+        },
+        "zone_transition_summary": {
+          "path": "outputs/modeling/cxt/reports/zone_transition_summary.csv",
+          "required_columns": [
+            "start_zone",
+            "end_zone",
+            "actions",
+            "total_cxt",
+            "mean_cxt"
+          ],
+          "optional_columns": [
+            "max_cxt",
+            "positive_cxt_actions",
+            "negative_cxt_actions"
+          ]
+        },
+        "top_actions": {
+          "path": "outputs/modeling/cxt/reports/top_actions.csv",
+          "required_columns": [
+            "rank",
+            "direction",
+            "match_id",
+            "action_type",
+            "start_zone",
+            "end_zone",
+            "cxt_value"
+          ],
+          "optional_columns": [
+            "team_name",
+            "player_name",
+            "start_threat",
+            "end_threat"
+          ]
+        },
+        "metrics": {
+          "path": "outputs/modeling/cxt/reports/metrics.json",
+          "required_fields": [
+            "number_of_actions",
+            "total_cxt",
+            "baseline_formula"
+          ],
+          "optional_fields": [
+            "positive_action_count",
+            "negative_action_count",
+            "zero_action_count"
+          ]
+        },
+        "interpretation_summary": {
+          "path": "outputs/modeling/cxt/reports/interpretation_summary.json",
+          "required_fields": [
+            "total_cxt",
+            "pass_cxt",
+            "carry_cxt",
+            "final_third_entry_cxt",
+            "box_entry_cxt",
+            "progressive_action_cxt"
+          ],
+          "optional_fields": [
+            "zone_transition_report_path",
+            "top_actions_report_path",
+            "sequence_aggregate_path"
+          ]
+        }
+      }
+    }
+  },
+  "generated_output_policy": {
+    "generated_roots": [
+      "feature_store/",
+      "outputs/"
+    ],
+    "commit_generated_outputs": false
+  }
+}

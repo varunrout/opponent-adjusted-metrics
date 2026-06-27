@@ -15,12 +15,14 @@ This is not yet a complete v1 product. CxG is the most mature metric family; CxA
 - CxG model artifact and metadata export.
 - CxG model-card documentation.
 - FastAPI-backed CxG prediction from the exported model artifact.
+- CxA baseline feature, modelling, attribution, and aggregate reporting path.
+- Baseline CxT threat grid, action threat, aggregate, and interpretation reporting path.
 - CI quality gates for linting, formatting, typing, and tests.
 
 ### Partial
 
-- CxA is in design-contract stage: target, feature, validation, and future output contracts are defined, but the baseline model is not complete.
-- CxT has a leakage-safe baseline zone/grid model. CxT+/Advanced/OD variants remain roadmap items.
+- Dashboard and storytelling work is in planning stage for v1 release.
+- CxT+, Contextual CxT, Advanced CxT, and OD-CxT are deferred until after v1.
 - Dashboard files exist, but the dashboard is not yet a stable v1 output surface.
 - Final v1 packaging, release notes, and full fresh-clone walkthrough are still pending.
 
@@ -123,6 +125,12 @@ make cxt-baseline
 ```
 
 The baseline uses a deterministic 12x8 zone/grid threat table and calculates `cxt_value = end_threat - start_threat`. It emits player/team/sequence aggregates, zone-transition summaries, top-action reports, and an interpretation summary for final-third entries, box entries, pass threat, carry threat, and progressive actions. It is explainable and leakage-safe, not production-grade. CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
+
+## V1 Product Roadmap
+
+The current v1 direction is to turn the modelling foundations into a reviewable football analytics product. CxG, CxA, and baseline CxT have reproducible generated outputs, aggregate reports, tests, and documented contracts. The next product layer is dashboard and storytelling work: a project overview, player/team analysis, CxG/CxA/CxT pages, an action-level explorer, diagnostics, and example insights.
+
+The v1 target is a portfolio-ready analytics surface backed by generated outputs under `feature_store/` and `outputs/`, without committing those outputs. Advanced CxT enhancements, including CxT+, Contextual CxT, Advanced CxT, OD-CxT, and OD-CxT+, are intentionally deferred until after v1.
 
 ### API Service
 
