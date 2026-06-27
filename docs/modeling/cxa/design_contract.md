@@ -40,6 +40,8 @@ The baseline attribution window should be deterministic:
 
 Future PRs may add multi-action credit allocation, but the baseline should start with a single target per action so validation remains legible.
 
+The current baseline attribution method assigns each action its baseline model expected CxA value (`cxa_value`) and normalizes `cxa_share` within each sequence. When downstream shot value is unavailable, the method uses the model's chance-creation probability/value only and records that limitation in `outputs/modeling/cxa/reports/attribution_summary.json`.
+
 ## Feature Families
 
 Core features should be available at the action timestamp:

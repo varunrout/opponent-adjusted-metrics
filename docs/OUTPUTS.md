@@ -115,9 +115,11 @@ feature_store/cxa/action_features.parquet
 outputs/modeling/cxa/models/baseline_model.joblib
 outputs/modeling/cxa/models/baseline_model.json
 outputs/modeling/cxa/reports/metrics.json
+outputs/modeling/cxa/reports/attribution_summary.json
 outputs/modeling/cxa/predictions/action_predictions.parquet
 outputs/modeling/cxa/aggregates/player_cxa.parquet
 outputs/modeling/cxa/aggregates/team_cxa.parquet
+outputs/modeling/cxa/aggregates/sequence_cxa.parquet
 ```
 
 Generated CxA outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules.

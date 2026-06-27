@@ -122,20 +122,50 @@ def test_cxa_end_to_end_emits_model_predictions_and_aggregates(tmp_path: Path):
     assert outputs.predictions_path.exists()
     assert outputs.player_aggregates_path.exists()
     assert outputs.team_aggregates_path.exists()
+    assert outputs.sequence_aggregates_path.exists()
+    assert outputs.attribution_summary_path.exists()
     assert hasattr(joblib.load(outputs.model_path), "predict_proba")
 
     metadata = json.loads(outputs.metadata_path.read_text(encoding="utf-8"))
     metrics = json.loads(outputs.metrics_path.read_text(encoding="utf-8"))
+    summary = json.loads(outputs.attribution_summary_path.read_text(encoding="utf-8"))
     predictions = pd.read_parquet(outputs.predictions_path)
+    player_aggregates = pd.read_parquet(outputs.player_aggregates_path)
+    team_aggregates = pd.read_parquet(outputs.team_aggregates_path)
+    sequence_aggregates = pd.read_parquet(outputs.sequence_aggregates_path)
     assert metadata["model_version"] == "cxa-test-v1"
     assert metadata["target"] == "shot_created"
     assert metadata["value_column"] == "created_shot_cxg"
     assert metadata["leakage_guardrails"]["forbidden_training_features_excluded"] is True
+    assert "sequence_aggregates" in metadata["outputs"]
+    assert "attribution_summary" in metadata["outputs"]
     assert metrics["row_count"] == len(features)
     assert metrics["log_loss_status"] == "computed"
-    assert {"predicted_cxa", "baseline_cxa", "cxa_above_baseline"}.issubset(predictions.columns)
-    assert not pd.read_parquet(outputs.player_aggregates_path).empty
-    assert not pd.read_parquet(outputs.team_aggregates_path).empty
+    assert {
+        "predicted_cxa",
+        "baseline_cxa",
+        "cxa_above_baseline",
+        "cxa_raw",
+        "cxa_value",
+        "cxa_share",
+        "possession_cxa",
+        "sequence_cxa",
+        "downstream_shot_value",
+        "attribution_method",
+    }.issubset(predictions.columns)
+    assert not player_aggregates.empty
+    assert not team_aggregates.empty
+    assert not sequence_aggregates.empty
+    assert {"total_cxa", "mean_cxa", "cxa_per_action", "high_value_actions"}.issubset(
+        player_aggregates.columns
+    )
+    assert {"total_cxa", "possession_count", "sequence_count"}.issubset(team_aggregates.columns)
+    assert {"total_cxa", "max_action_cxa", "led_to_shot"}.issubset(sequence_aggregates.columns)
+    assert abs(player_aggregates["total_cxa"].sum() - predictions["cxa_value"].sum()) < 1e-9
+    assert abs(team_aggregates["total_cxa"].sum() - predictions["cxa_value"].sum()) < 1e-9
+    assert abs(sequence_aggregates["total_cxa"].sum() - predictions["cxa_value"].sum()) < 1e-9
+    assert abs(summary["total_attributed_cxa"] - predictions["cxa_value"].sum()) < 1e-9
+    assert summary["attribution"]["method"] == "simple_action_level_baseline_attribution"
 
 
 def test_cxa_baseline_excludes_forbidden_leakage_features(tmp_path: Path):
@@ -167,6 +197,29 @@ def test_cxa_baseline_handles_one_class_data_safely(tmp_path: Path):
     assert metrics["log_loss_status"] == "skipped_single_class"
     assert metrics["roc_auc_status"] == "skipped_single_class"
     assert predictions["predicted_cxa"].eq(0.0).all()
+    assert predictions["cxa_value"].eq(0.0).all()
+
+
+def test_cxa_attribution_handles_missing_optional_names(tmp_path: Path):
+    events, shots, details = _synthetic_events()
+    features = build_action_features(events, shots, details)
+    features["player_id"] = pd.NA
+    features = features.drop(
+        columns=[col for col in ("player_name", "team_name") if col in features]
+    )
+    input_path = tmp_path / "action_features.parquet"
+    features.to_parquet(input_path, index=False)
+
+    outputs = run_end_to_end(input_path=input_path, output_dir=tmp_path / "cxa")
+    predictions = pd.read_parquet(outputs.predictions_path)
+    player_aggregates = pd.read_parquet(outputs.player_aggregates_path)
+    team_aggregates = pd.read_parquet(outputs.team_aggregates_path)
+
+    assert not player_aggregates.empty
+    assert not team_aggregates.empty
+    assert "player_name" not in player_aggregates.columns
+    assert "team_name" not in team_aggregates.columns
+    assert abs(player_aggregates["total_cxa"].sum() - predictions["cxa_value"].sum()) < 1e-9
 
 
 def test_cxa_generated_paths_are_git_ignored():
@@ -176,9 +229,11 @@ def test_cxa_generated_paths_are_git_ignored():
             Path("outputs/modeling/cxa/models/baseline_model.joblib"),
             Path("outputs/modeling/cxa/models/baseline_model.json"),
             Path("outputs/modeling/cxa/reports/metrics.json"),
+            Path("outputs/modeling/cxa/reports/attribution_summary.json"),
             Path("outputs/modeling/cxa/predictions/action_predictions.parquet"),
             Path("outputs/modeling/cxa/aggregates/player_cxa.parquet"),
             Path("outputs/modeling/cxa/aggregates/team_cxa.parquet"),
+            Path("outputs/modeling/cxa/aggregates/sequence_cxa.parquet"),
         ),
         Path.cwd(),
     )
