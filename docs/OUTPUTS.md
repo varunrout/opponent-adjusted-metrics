@@ -124,11 +124,17 @@ outputs/modeling/cxa/aggregates/sequence_cxa.parquet
 
 Generated CxA outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules.
 
-## Planned CxT Outputs
+## Regenerate CxT Baseline Outputs
 
-CxT is currently in leakage-safe design-contract stage. The baseline model is not implemented yet, and this repository should not contain generated CxT outputs from this PR.
+CxT has a leakage-safe baseline zone/grid model. It is an explainable baseline, not CxT+, Advanced CxT, OD-CxT, or a production-grade threat model.
 
-The CxT contract declares these future generated paths:
+Run:
+
+```bash
+poetry run python scripts/run_cxt_pipeline.py
+```
+
+Expected generated CxT baseline files:
 
 ```text
 feature_store/cxt/action_features.parquet
@@ -136,12 +142,18 @@ outputs/modeling/cxt/threat_grid.parquet
 outputs/modeling/cxt/predictions/action_threat.parquet
 outputs/modeling/cxt/aggregates/player_cxt.parquet
 outputs/modeling/cxt/aggregates/team_cxt.parquet
-outputs/modeling/cxt/aggregates/sequence_cxt.parquet
 outputs/modeling/cxt/reports/metrics.json
-outputs/modeling/cxt/reports/interpretation_summary.json
 ```
 
-When future CxT PRs generate these files, they remain ignored by Git under the existing `feature_store/` and `outputs/` rules. Baseline CxT is upcoming PR24; aggregate and interpretation reporting are upcoming PR25.
+Optional CSV mirrors can be generated with `--write-csv`:
+
+```text
+outputs/modeling/cxt/predictions/action_threat.csv
+outputs/modeling/cxt/aggregates/player_cxt.csv
+outputs/modeling/cxt/aggregates/team_cxt.csv
+```
+
+The baseline calculates `cxt_value = end_threat - start_threat` from a deterministic pitch grid. Generated CxT outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules. Sequence aggregates and interpretation reporting are upcoming PR25.
 
 ## What Should Be Committed
 

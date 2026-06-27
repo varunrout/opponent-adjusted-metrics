@@ -20,7 +20,7 @@ This is not yet a complete v1 product. CxG is the most mature metric family; CxA
 ### Partial
 
 - CxA is in design-contract stage: target, feature, validation, and future output contracts are defined, but the baseline model is not complete.
-- CxT is in leakage-safe design-contract stage. The baseline CxT model is upcoming PR24, aggregates/interpretation are upcoming PR25, and CxT+/Advanced/OD variants are roadmap items.
+- CxT has a leakage-safe baseline zone/grid model. CxT+/Advanced/OD variants remain roadmap items.
 - Dashboard files exist, but the dashboard is not yet a stable v1 output surface.
 - Final v1 packaging, release notes, and full fresh-clone walkthrough are still pending.
 
@@ -108,17 +108,21 @@ make cxa-smoke
 
 This emits generated action predictions, player/team/sequence aggregates, and attribution reports under `feature_store/cxa/` and `outputs/modeling/cxa/`. The CxA path is baseline attribution, not a final causal assist model or API surface.
 
-### CxT Design Contract
+### CxT Baseline
 
-CxT has a leakage-safe design and feature/value contract, but no generated model outputs yet:
+Generate the baseline CxT threat grid, action-level threat values, aggregates, and metrics:
 
 ```bash
-poetry run python scripts/validate_feature_contract.py \
-  --contract configs/feature_contracts/cxt_v1.json \
-  --data path/to/cxt_action_features.csv
+poetry run python scripts/run_cxt_pipeline.py
 ```
 
-The CxT contract defines baseline CxT, CxT+, contextual CxT, advanced CxT, and OD-CxT roadmap variants. Baseline CxT implementation is upcoming PR24; aggregate and interpretation outputs are upcoming PR25.
+Or use the Make target:
+
+```bash
+make cxt-baseline
+```
+
+The baseline uses a deterministic 12x8 zone/grid threat table and calculates `cxt_value = end_threat - start_threat`. It is explainable and leakage-safe, not production-grade. CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
 
 ### API Service
 
@@ -184,7 +188,7 @@ CxA and CxT documentation in this repository is useful methodology and explorato
 
 CxA design and guardrails are documented in [docs/modeling/cxa/design_contract.md](docs/modeling/cxa/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxa_v1.json](configs/feature_contracts/cxa_v1.json). The current CxA path is a baseline event-data model and attribution layer, not a final causal assist model.
 
-CxT design and leakage guardrails are documented in [docs/modeling/cxt/design_contract.md](docs/modeling/cxt/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxt_v1.json](configs/feature_contracts/cxt_v1.json). This is a design contract only; it does not generate threat grids, predictions, or aggregates yet.
+CxT design and leakage guardrails are documented in [docs/modeling/cxt/design_contract.md](docs/modeling/cxt/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxt_v1.json](configs/feature_contracts/cxt_v1.json). The current CxT path is a deterministic baseline zone/grid model, not CxT+ or an opponent-adjusted threat model.
 
 ## Documentation
 

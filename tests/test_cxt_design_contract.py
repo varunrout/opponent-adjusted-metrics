@@ -15,11 +15,11 @@ def _load_contract() -> dict:
     return json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
 
 
-def test_cxt_contract_declares_design_stage_and_variants():
+def test_cxt_contract_declares_baseline_status_and_variants():
     contract = _load_contract()
 
     assert contract["metric"] == "cxt"
-    assert contract["status"] == "design_contract"
+    assert contract["status"] == "baseline_model"
     assert contract["definition"]["baseline_formula"] == (
         "threat_value(end_location) - threat_value(start_location)"
     )
@@ -34,8 +34,11 @@ def test_cxt_contract_declares_design_stage_and_variants():
         "od_cxt",
         "od_cxt_plus",
     }
+    assert contract["variants"]["baseline_cxt"]["implemented_in_this_pr"] is True
     assert all(
-        variant["implemented_in_this_pr"] is False for variant in contract["variants"].values()
+        variant["implemented_in_this_pr"] is False
+        for name, variant in contract["variants"].items()
+        if name != "baseline_cxt"
     )
 
 
@@ -126,8 +129,8 @@ def test_cxt_design_document_contains_required_sections_and_scope():
     assert "CxG = shot quality" in text
     assert "CxA = chance creation actions" in text
     assert "CxT = territorial and threat progression" in text
-    assert "does not implement the CxT model" in text
-    assert "Baseline CxT is upcoming PR24" in text
+    assert "simple zone/grid threat value approach" in text
+    assert "CxT+ / Contextual / Advanced / OD-CxT" in text
 
 
 def test_cxt_contract_validator_accepts_minimal_synthetic_action_table(
