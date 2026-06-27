@@ -15,7 +15,8 @@ V1 is not a production deployment and not the end of the modelling roadmap.
 - Generated outputs under `feature_store/` and `outputs/` remain ignored by Git.
 - Feature contracts and dashboard data contracts define expected generated inputs.
 - Tests and CI quality gates cover contracts, reproducibility checks, API integration, baseline outputs, and generated-output ignore rules.
-- Dashboard and storytelling plan defined for the v1 product surface.
+- Streamlit dashboard v1 shell implemented for portfolio/demo review.
+- Dashboard and storytelling docs define the v1 product surface and reviewer walkthrough.
 
 ## Excluded From V1
 
@@ -27,12 +28,12 @@ V1 is not a production deployment and not the end of the modelling roadmap.
 - Production deployment is not included in v1.
 - Live data ingestion is not included in v1.
 - Tracking data is not required or included in v1.
-- Full Streamlit or web dashboard implementation is not included in this planning PR.
+- Advanced dashboard visual design is not included in v1.
 - Production-grade calibration, monitoring, and model registry workflows are not claimed.
 
-## V1 Dashboard Target
+## V1 Dashboard Surface
 
-The v1 dashboard should make the existing outputs understandable quickly. It should focus on:
+The v1 dashboard makes the existing outputs understandable quickly. It focuses on:
 
 - project overview
 - player analysis

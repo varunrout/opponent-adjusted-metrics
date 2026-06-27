@@ -6,7 +6,7 @@
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
 	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run train-cxt evaluate-cxt \
-	fetch-data api dashboard streamlit-dashboard test lint format clean
+	fetch-data api dashboard streamlit-dashboard test lint format format-check clean
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
@@ -139,6 +139,9 @@ lint:  ## Run linting
 
 format:  ## Format code
 	poetry run black src/ scripts/ tests/
+
+format-check:  ## Check formatting
+	poetry run black --check src scripts tests app
 
 type-check:  ## Run type checking
 	poetry run mypy src/
