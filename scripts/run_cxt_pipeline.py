@@ -65,7 +65,17 @@ def main() -> None:
     logger.info("Baseline CxT predictions path: %s", outputs.predictions_path)
     logger.info("Baseline CxT player aggregates path: %s", outputs.player_aggregates_path)
     logger.info("Baseline CxT team aggregates path: %s", outputs.team_aggregates_path)
+    logger.info("Baseline CxT sequence aggregates path: %s", outputs.sequence_aggregates_path)
     logger.info("Baseline CxT metrics path: %s", outputs.metrics_path)
+    logger.info(
+        "Baseline CxT zone transition summary path: %s",
+        outputs.zone_transition_summary_path,
+    )
+    logger.info("Baseline CxT top actions path: %s", outputs.top_actions_path)
+    logger.info(
+        "Baseline CxT interpretation summary path: %s",
+        outputs.interpretation_summary_path,
+    )
 
 
 if __name__ == "__main__":
