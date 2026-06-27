@@ -103,3 +103,18 @@ The reviewer should leave with three takeaways:
 - The modelling outputs are reproducible.
 - The metrics answer distinct football questions.
 - The project is ready for dashboard implementation and deeper post-v1 modelling work.
+
+## Dashboard Demo Story
+
+The v1 dashboard should be demoed in this order:
+
+1. Overview: show the product goal, metric explanations, output availability, and v1 status.
+2. Player analysis: explain what a strong player looks like across CxG, CxA, and CxT.
+3. Team analysis: show how teams create value through shots, chance creation, or progression.
+4. CxG: explain shot quality.
+5. CxA: explain chance-creation action value.
+6. CxT: explain threat added by ball progression.
+7. Action explorer: trace aggregate value back to individual events.
+8. Reports / diagnostics: show generated-output status and limitations.
+
+The demo should explicitly say that CxT+, Contextual CxT, Advanced CxT, and OD-CxT are deferred until after v1. Future screenshots or GIFs should capture the overview banner, player/team tables, CxT interpretation reports, action explorer, and missing-output state.

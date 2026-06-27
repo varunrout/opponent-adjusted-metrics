@@ -148,6 +148,18 @@ poetry run streamlit run app/streamlit_app.py
 
 The dashboard reads generated CxG, CxA, and CxT outputs declared in `configs/dashboard/v1_dashboard_contract.json`. If outputs are missing, the app still starts and shows friendly availability messages plus empty tables. To populate the dashboard, regenerate modelling outputs first with `make cxg-smoke`, `make cxa-smoke`, and `make cxt-baseline`.
 
+Suggested demo flow:
+
+1. Open Overview and read the v1 status banner.
+2. Compare Player analysis and Team analysis.
+3. Open CxG to explain shot quality.
+4. Open CxA to explain chance-creation action value.
+5. Open CxT to explain threat added by ball progression.
+6. Use Action explorer to trace aggregates back to individual actions.
+7. Use Reports / diagnostics to show generated-output availability.
+
+See [docs/dashboard/demo_walkthrough.md](docs/dashboard/demo_walkthrough.md) for the reviewer walkthrough and suggested screenshot/GIF targets.
+
 ### API Service
 
 Start the FastAPI service:

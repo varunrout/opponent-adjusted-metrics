@@ -24,10 +24,30 @@ from opponent_adjusted.dashboard.data_loader import (  # noqa: E402
 
 st.set_page_config(
     page_title="Opponent-Adjusted Football Metrics",
-    page_icon="⚽",
+    page_icon="football",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+V1_IMPLEMENTED = [
+    "CxG",
+    "CxA",
+    "baseline CxT",
+    "dashboard shell",
+    "aggregate/report views",
+]
+V1_DEFERRED = [
+    "CxT+",
+    "Contextual CxT",
+    "Advanced CxT",
+    "OD-CxT / OD-CxT+",
+]
+EXAMPLE_INTERPRETATIONS = [
+    "A high CxT player repeatedly moves the ball into more dangerous areas.",
+    "A high CxA player contributes actions that move possessions closer to chance creation.",
+    "CxG evaluates shot quality, not whether the shot became a goal.",
+    "Baseline CxT is location-threat movement, not full possession-state value.",
+]
 
 
 @st.cache_data(show_spinner=False)
@@ -82,6 +102,80 @@ def _availability_card(resources: dict[str, dict[str, DashboardResource]]) -> No
         )
 
 
+def render_insight_card(title: str, body: str, status: str = "Guide") -> None:
+    """Render a compact narrative card for dashboard interpretation."""
+
+    st.markdown(
+        f"""
+        <div style="border: 1px solid #d9e2ec; border-radius: 8px; padding: 0.9rem;
+                    margin: 0.35rem 0; background: #f8fafc;">
+            <div style="font-size: 0.78rem; color: #52616b; font-weight: 700;">{status}</div>
+            <div style="font-size: 1rem; font-weight: 700; color: #102a43;">{title}</div>
+            <div style="font-size: 0.92rem; color: #334e68;">{body}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_metric_explanation(metric_name: str, question: str, interpretation: str) -> None:
+    """Explain what a metric answers and how to read it."""
+
+    render_insight_card(
+        metric_name,
+        f"Football question: {question}<br>How to read it: {interpretation}",
+        status="Metric",
+    )
+
+
+def render_page_intro(title: str, purpose: str, question: str, interpretation: str) -> None:
+    """Render standard page-level storytelling copy."""
+
+    st.header(title)
+    st.write(purpose)
+    render_insight_card("Football question", question, status="Question")
+    render_insight_card("How to interpret this page", interpretation, status="Read this first")
+
+
+def render_missing_guidance() -> None:
+    """Explain missing generated-output behavior."""
+
+    st.info(
+        "If this section is empty, generated outputs are missing locally. "
+        "Run `make cxg-smoke`, `make cxa-smoke`, and `make cxt-baseline` to populate "
+        "the dashboard. Empty tables here are expected in a clean checkout."
+    )
+
+
+def render_v1_scope_banner() -> None:
+    """Show implemented and deferred v1 scope."""
+
+    st.subheader("V1 Status")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Implemented in v1**")
+        for item in V1_IMPLEMENTED:
+            st.markdown(f"- {item}")
+    with col2:
+        st.markdown("**Deferred after v1**")
+        for item in V1_DEFERRED:
+            st.markdown(f"- {item}")
+
+
+def render_reviewer_walkthrough() -> None:
+    """Give reviewers a suggested first path through the dashboard."""
+
+    render_insight_card(
+        "What to look at first",
+        (
+            "Start with output availability, then compare player/team aggregate tables. "
+            "Use CxG for shot quality, CxA for chance-creation actions, and baseline CxT "
+            "for progression into dangerous zones."
+        ),
+        status="Reviewer path",
+    )
+
+
 def _show_table(df: pd.DataFrame, label: str, *, max_rows: int = 25) -> None:
     st.subheader(label)
     if df.empty:
@@ -117,23 +211,66 @@ def _report_cards(report: dict[str, Any], keys: list[str]) -> None:
 def overview_tab(
     resources: dict[str, dict[str, DashboardResource]], contract: dict[str, Any]
 ) -> None:
-    st.header("Project Overview")
+    render_page_intro(
+        "Project Overview",
+        "This dashboard turns modelling outputs into a guided football analytics review.",
+        "What problem does this project solve, and which outputs are available?",
+        (
+            "Use this page to understand the product scope before jumping into tables. "
+            "Availability cards show whether generated outputs exist locally."
+        ),
+    )
     st.write(
         "Opponent-adjusted football analytics built from StatsBomb-style event data. "
         "CxG explains shot quality, CxA explains chance creation, and baseline CxT "
         "explains ball progression into more threatening pitch zones."
     )
+    render_v1_scope_banner()
+    render_reviewer_walkthrough()
     _availability_card(resources)
 
     st.subheader("Metric Families")
-    for metric, section in contract["metric_sections"].items():
-        st.markdown(f"**{metric.upper()}**: {section['metric_explanation']}")
-        if roadmap_note := section.get("roadmap_note"):
-            st.caption(roadmap_note)
+    render_metric_explanation(
+        "CxG",
+        "How good was the shot?",
+        "CxG evaluates shot quality, not whether the shot became a goal.",
+    )
+    render_metric_explanation(
+        "CxA",
+        "Which actions moved a possession toward chance creation?",
+        "A high CxA player contributes actions that move possessions closer to chance creation.",
+    )
+    render_metric_explanation(
+        "Baseline CxT",
+        "How much threat did ball progression add?",
+        "A high CxT player repeatedly moves the ball into more dangerous areas.",
+    )
+    render_metric_explanation(
+        "Opponent-adjusted metrics",
+        "How should opponent context change interpretation?",
+        (
+            "CxG has API-backed inference and opponent-aware context. OD-CxT and richer "
+            "opponent-adjusted progression metrics are future extensions, not v1 claims."
+        ),
+    )
+    with st.expander("Dashboard contract metric sections"):
+        for metric, section in contract["metric_sections"].items():
+            st.markdown(f"**{metric.upper()}**: {section['metric_explanation']}")
+            if roadmap_note := section.get("roadmap_note"):
+                st.caption(roadmap_note)
 
 
 def player_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
-    st.header("Player Analysis")
+    render_page_intro(
+        "Player Analysis",
+        "Compare player contribution across shot quality, chance creation, and progression.",
+        "Which players add value, and through which attacking channel?",
+        (
+            "High CxG points to shot quality, high CxA to chance creation, and high "
+            "baseline CxT to repeated progression into dangerous zones."
+        ),
+    )
+    render_missing_guidance()
     cxg_players = _dataframe(resources, "cxg", "player_aggregates")
     cxa_players = _dataframe(resources, "cxa", "player_aggregates")
     cxt_players = _dataframe(resources, "cxt", "player_aggregates")
@@ -147,7 +284,16 @@ def player_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
 
 
 def team_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
-    st.header("Team Analysis")
+    render_page_intro(
+        "Team Analysis",
+        "Compare how teams create value through shots, chances, and territory.",
+        "Which teams create value through finishing chances versus progressing the ball?",
+        (
+            "A team with strong CxT but weaker CxG may progress well without converting "
+            "territory into high-quality shots."
+        ),
+    )
+    render_missing_guidance()
     cxg_teams = _dataframe(resources, "cxg", "team_aggregates")
     cxa_teams = _dataframe(resources, "cxa", "team_aggregates")
     cxt_teams = _dataframe(resources, "cxt", "team_aggregates")
@@ -161,8 +307,13 @@ def team_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
 
 
 def cxg_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
-    st.header("CxG")
-    st.write("CxG estimates contextual shot quality.")
+    render_page_intro(
+        "CxG",
+        "CxG estimates contextual shot quality.",
+        "How good was each shot before we know the outcome?",
+        "CxG evaluates shot quality, not whether the shot became a goal.",
+    )
+    render_missing_guidance()
     _report_cards(
         _json_report(resources, "cxg", "metrics"),
         ["row_count", "brier_score", "log_loss", "roc_auc"],
@@ -175,8 +326,16 @@ def cxg_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
 
 
 def cxa_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
-    st.header("CxA")
-    st.write("CxA estimates chance-creation value from eligible attacking actions.")
+    render_page_intro(
+        "CxA",
+        "CxA estimates chance-creation value from eligible attacking actions.",
+        "Which actions moved possessions closer to chance creation?",
+        (
+            "A high CxA player contributes actions that create or progress toward shots, "
+            "even when they do not take the final shot."
+        ),
+    )
+    render_missing_guidance()
     _report_cards(
         _json_report(resources, "cxa", "metrics"),
         ["row_count", "brier_score", "log_loss", "roc_auc"],
@@ -190,11 +349,16 @@ def cxa_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
 
 
 def cxt_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
-    st.header("CxT")
-    st.write(
-        "Baseline CxT measures the threat gained by moving from one pitch zone to another. "
-        "CxT+ and opponent-adjusted CxT are future roadmap items."
+    render_page_intro(
+        "CxT",
+        "Baseline CxT measures the threat gained by moving from one pitch zone to another.",
+        "Which actions and possessions added territorial threat?",
+        (
+            "Baseline CxT is location-threat movement, not full possession-state value. "
+            "CxT+ and opponent-adjusted CxT are future roadmap items."
+        ),
     )
+    render_missing_guidance()
     _report_cards(
         _json_report(resources, "cxt", "interpretation_summary"),
         ["total_cxt", "pass_cxt", "carry_cxt", "final_third_entry_cxt", "box_entry_cxt"],
@@ -205,7 +369,16 @@ def cxt_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
 
 
 def action_explorer_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
-    st.header("Action Explorer")
+    render_page_intro(
+        "Action Explorer",
+        "Inspect individual CxA and CxT action rows.",
+        "Which specific actions explain aggregate player or team value?",
+        (
+            "Use this table after reading the leaderboards. Strong aggregate numbers "
+            "should be traceable back to repeated valuable actions."
+        ),
+    )
+    render_missing_guidance()
     cxa_actions = _dataframe(resources, "cxa", "predictions")
     cxt_actions = _dataframe(resources, "cxt", "action_threat")
 
@@ -227,8 +400,15 @@ def action_explorer_tab(resources: dict[str, dict[str, DashboardResource]]) -> N
 
 
 def diagnostics_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
-    st.header("Reports / Diagnostics")
-    st.write("Generated-output availability and lightweight report metadata.")
+    render_page_intro(
+        "Reports / Diagnostics",
+        "Inspect generated-output availability and report metadata.",
+        "Which local outputs exist, and which reports are missing?",
+        (
+            "Use this page to verify the dashboard is reading generated files rather "
+            "than committed outputs. Missing files mean the local run has not produced them yet."
+        ),
+    )
     status = status_table(resources)
     st.dataframe(status, use_container_width=True, hide_index=True)
 
@@ -241,7 +421,13 @@ def diagnostics_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
 
 
 def methodology_tab() -> None:
-    st.header("About Methodology")
+    render_page_intro(
+        "About Methodology",
+        "Read the modelling story and v1 limitations.",
+        "What is implemented in v1, and what is intentionally deferred?",
+        "This project is a demo and portfolio surface, not a production deployment claim.",
+    )
+    render_v1_scope_banner()
     st.markdown(
         """
         **CxG** asks how good a shot was.
@@ -257,6 +443,9 @@ def methodology_tab() -> None:
         live-data service, or final calibration claim.
         """
     )
+    st.subheader("Example interpretations")
+    for interpretation in EXAMPLE_INTERPRETATIONS:
+        render_insight_card("Example interpretation", interpretation, status="Example")
 
 
 def main() -> None:
@@ -265,6 +454,10 @@ def main() -> None:
 
     st.title("Opponent-Adjusted Football Metrics")
     st.caption("CxG, CxA, and baseline CxT dashboard v1")
+    st.write(
+        "Guided demo flow: start with Overview, compare Player and Team analysis, "
+        "then drill into CxG, CxA, CxT, and Action explorer tabs."
+    )
 
     tabs = st.tabs(
         [

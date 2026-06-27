@@ -8,6 +8,8 @@ The v1 dashboard shell lives at `app/streamlit_app.py` and can be run with `make
 
 The dashboard reads generated outputs when they exist and degrades gracefully when they are missing. Missing generated files should produce status messages and empty tables, not application crashes.
 
+PR28 adds guided storytelling polish: each major section should state its purpose, the football question it answers, how to interpret the table or chart, and what to do when generated outputs are missing.
+
 ## Intended Users
 
 - Football analysts evaluating player, team, and action value.
@@ -249,12 +251,18 @@ The dashboard should label CxG, CxA, and baseline CxT as baseline modelling outp
 ## Storytelling Flow
 
 1. Start with the project overview: why contextual and opponent-adjusted metrics matter.
-2. Show the three metric families and what each one answers.
-3. Move from teams to players to individual actions.
-4. Use CxG to explain shot quality.
-5. Use CxA to explain chance creation.
-6. Use baseline CxT to explain ball progression and territorial threat.
-7. End with diagnostics and limitations so the reviewer can trust what is implemented and what is still roadmap work.
+2. Read the v1 status banner: CxG, CxA, baseline CxT, dashboard shell, and aggregate/report views are implemented.
+3. Note deferred work: CxT+, Contextual CxT, Advanced CxT, and OD-CxT / OD-CxT+ are post-v1.
+4. Show the three metric families and what each one answers.
+5. Move from teams to players to individual actions.
+6. Use CxG to explain shot quality.
+7. Use CxA to explain chance creation.
+8. Use baseline CxT to explain ball progression and territorial threat.
+9. End with diagnostics and limitations so the reviewer can trust what is implemented and what is still roadmap work.
+
+## Demo Assets
+
+Future screenshots or GIFs should show the overview/v1 status banner, player and team leaderboards, CxT zone-transition or top-action reports, the action explorer, diagnostics, and the missing-output state from a clean checkout.
 
 ## Example Insights
 

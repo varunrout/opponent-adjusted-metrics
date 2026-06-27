@@ -159,6 +159,7 @@ def test_docs_do_not_claim_advanced_cxt_variants_are_implemented():
         DASHBOARD_DESIGN_PATH,
         STORY_PATH,
         V1_SCOPE_PATH,
+        Path("docs/dashboard/demo_walkthrough.md"),
         Path("README.md"),
     ]
     text = "\n".join(path.read_text(encoding="utf-8") for path in docs).lower()
