@@ -20,7 +20,7 @@ This is not yet a complete v1 product. CxG is the most mature metric family; CxA
 ### Partial
 
 - CxA is in design-contract stage: target, feature, validation, and future output contracts are defined, but the baseline model is not complete.
-- CxT modelling and evaluation code exists, but leakage-sensitive design and final validation are not complete.
+- CxT is in leakage-safe design-contract stage. The baseline CxT model is upcoming PR24, aggregates/interpretation are upcoming PR25, and CxT+/Advanced/OD variants are roadmap items.
 - Dashboard files exist, but the dashboard is not yet a stable v1 output surface.
 - Final v1 packaging, release notes, and full fresh-clone walkthrough are still pending.
 
@@ -108,6 +108,18 @@ make cxa-smoke
 
 This emits generated action predictions, player/team/sequence aggregates, and attribution reports under `feature_store/cxa/` and `outputs/modeling/cxa/`. The CxA path is baseline attribution, not a final causal assist model or API surface.
 
+### CxT Design Contract
+
+CxT has a leakage-safe design and feature/value contract, but no generated model outputs yet:
+
+```bash
+poetry run python scripts/validate_feature_contract.py \
+  --contract configs/feature_contracts/cxt_v1.json \
+  --data path/to/cxt_action_features.csv
+```
+
+The CxT contract defines baseline CxT, CxT+, contextual CxT, advanced CxT, and OD-CxT roadmap variants. Baseline CxT implementation is upcoming PR24; aggregate and interpretation outputs are upcoming PR25.
+
 ### API Service
 
 Start the FastAPI service:
@@ -168,9 +180,11 @@ Ignored generated data:
 
 The current CxG baseline focuses on reproducibility and contract-backed model export. It should be read as a baseline CxG path, not a final calibrated production model. Future work includes calibration refinements, monitoring, richer slice validation, and stable registry-backed aggregate serving.
 
-CxA and CxT documentation in this repository is useful methodology and exploratory work, but those metric families should not be described as complete until their pipelines, validation, model cards, and dashboard/API surfaces are finished.
+CxA and CxT documentation in this repository is useful methodology and exploratory work, but those metric families should not be described as production complete until their pipelines, validation, model cards, and dashboard/API surfaces are finished.
 
-CxA design and guardrails are documented in [docs/modeling/cxa/design_contract.md](docs/modeling/cxa/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxa_v1.json](configs/feature_contracts/cxa_v1.json). This is a contract for the next implementation PR, not a trained CxA model.
+CxA design and guardrails are documented in [docs/modeling/cxa/design_contract.md](docs/modeling/cxa/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxa_v1.json](configs/feature_contracts/cxa_v1.json). The current CxA path is a baseline event-data model and attribution layer, not a final causal assist model.
+
+CxT design and leakage guardrails are documented in [docs/modeling/cxt/design_contract.md](docs/modeling/cxt/design_contract.md), with the machine-readable contract in [configs/feature_contracts/cxt_v1.json](configs/feature_contracts/cxt_v1.json). This is a design contract only; it does not generate threat grids, predictions, or aggregates yet.
 
 ## Documentation
 

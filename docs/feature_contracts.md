@@ -45,7 +45,9 @@ CxA is currently in design-contract stage. The contract defines the target, elig
 
 ## CxT notes
 
-CxT has a specific completion-model constraint: `xt_delta` must not be used in the completion model because it can encode the completion outcome. Completion and value-gain models use separate feature lists.
+CxT is currently in leakage-safe design-contract stage. The contract defines baseline CxT, CxT+, contextual CxT, advanced CxT, and OD-CxT roadmap variants, required location/value fields, future output paths, and fields that must not be used as action-level model inputs.
+
+Future outcomes may be used to estimate historical zone or state values and to evaluate the metric. They must not be used as row-level action features for the action being scored.
 
 ## Completion role
 

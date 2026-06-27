@@ -36,6 +36,8 @@ def _flatten_features(contract: dict[str, Any]) -> set[str]:
         "required_numeric_features",
         "required_binary_features",
         "required_categorical_features",
+        "required_location_fields",
+        "baseline_value_fields",
     ):
         columns.update(contract.get(key, []))
 
@@ -52,6 +54,7 @@ def _forbidden_features(contract: dict[str, Any]) -> set[str]:
     for key in (
         "forbidden_training_features",
         "forbidden_completion_features",
+        "prohibited_leakage_columns",
     ):
         columns.update(contract.get(key, []))
     return columns
