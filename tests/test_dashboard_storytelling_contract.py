@@ -45,7 +45,8 @@ def test_dashboard_design_doc_defines_required_product_shape():
         assert page in text
 
     assert "This document defines the product shape and data contract" in text
-    assert "it does not implement the UI" in text
+    assert "app/streamlit_app.py" in text
+    assert "degrades gracefully when they are missing" in text
 
 
 def test_storytelling_doc_explains_metric_narrative():

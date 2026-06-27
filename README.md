@@ -132,6 +132,22 @@ The current v1 direction is to turn the modelling foundations into a reviewable 
 
 The v1 target is a portfolio-ready analytics surface backed by generated outputs under `feature_store/` and `outputs/`, without committing those outputs. Advanced CxT enhancements, including CxT+, Contextual CxT, Advanced CxT, OD-CxT, and OD-CxT+, are intentionally deferred until after v1.
 
+### Streamlit Dashboard V1
+
+Run the v1 dashboard shell:
+
+```bash
+make dashboard
+```
+
+Equivalent direct command:
+
+```bash
+poetry run streamlit run app/streamlit_app.py
+```
+
+The dashboard reads generated CxG, CxA, and CxT outputs declared in `configs/dashboard/v1_dashboard_contract.json`. If outputs are missing, the app still starts and shows friendly availability messages plus empty tables. To populate the dashboard, regenerate modelling outputs first with `make cxg-smoke`, `make cxa-smoke`, and `make cxt-baseline`.
+
 ### API Service
 
 Start the FastAPI service:

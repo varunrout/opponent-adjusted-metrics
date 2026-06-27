@@ -6,7 +6,7 @@
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
 	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run train-cxt evaluate-cxt \
-	fetch-data api test lint format clean
+	fetch-data api dashboard streamlit-dashboard test lint format clean
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
@@ -120,6 +120,12 @@ evaluate-cxt:  ## Evaluate CxT model
 # API
 api:  ## Start API server
 	poetry run uvicorn opponent_adjusted.api.service:app --host 0.0.0.0 --port 8000 --reload
+
+# Dashboard
+dashboard:  ## Start Streamlit dashboard v1
+	poetry run streamlit run app/streamlit_app.py
+
+streamlit-dashboard: dashboard  ## Alias for Streamlit dashboard v1
 
 # Development
 test:  ## Run tests

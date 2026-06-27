@@ -170,3 +170,21 @@ Commit source code, documentation, tests, migrations, and curated configs such a
 - `docs/modeling/cxg/model_card.md`
 
 Do not commit generated model artifacts, feature stores, bulk reports, or regenerated CSV/parquet outputs unless a future PR explicitly defines a small curated example fixture.
+
+## Dashboard Consumption
+
+The Streamlit dashboard v1 reads generated outputs through `configs/dashboard/v1_dashboard_contract.json`.
+
+Run:
+
+```bash
+make dashboard
+```
+
+or:
+
+```bash
+poetry run streamlit run app/streamlit_app.py
+```
+
+The dashboard is a demo/portfolio shell, not a production deployment. It starts even when generated outputs are missing and shows availability status plus empty tables for missing files. Regenerate CxG, CxA, and CxT outputs locally to populate the dashboard.

@@ -4,7 +4,9 @@
 
 The v1 dashboard should turn the modelling repository into a reviewable football analytics product. A reviewer should be able to understand what the project does, inspect player and team outputs, compare CxG, CxA, and baseline CxT, and trace example insights back to generated model reports.
 
-The dashboard is planned work. This document defines the product shape and data contract for the first dashboard build; it does not implement the UI.
+The v1 dashboard shell lives at `app/streamlit_app.py` and can be run with `make dashboard`. This document defines the product shape and data contract for that first dashboard build.
+
+The dashboard reads generated outputs when they exist and degrades gracefully when they are missing. Missing generated files should produce status messages and empty tables, not application crashes.
 
 ## Intended Users
 
