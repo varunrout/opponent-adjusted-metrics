@@ -15,6 +15,7 @@ CONTRACT_PATH = Path("configs/dashboard/v1_dashboard_contract.json")
 APP_PATH = Path("app/streamlit_app.py")
 MAKEFILE_PATH = Path("Makefile")
 README_PATH = Path("README.md")
+DEMO_WALKTHROUGH_PATH = Path("docs/dashboard/demo_walkthrough.md")
 
 
 def test_dashboard_contract_can_be_loaded():
@@ -141,3 +142,59 @@ def test_streamlit_app_makefile_and_readme_are_documented():
     assert "streamlit run app/streamlit_app.py" in readme
     assert "load_all_resources" in app_source
     assert "Some generated outputs are missing" in app_source
+
+
+def test_streamlit_app_contains_guided_storytelling_helpers_and_scope():
+    app_source = APP_PATH.read_text(encoding="utf-8")
+
+    for helper in (
+        "def render_insight_card",
+        "def render_metric_explanation",
+        "def render_page_intro",
+        "def render_missing_guidance",
+        "def render_v1_scope_banner",
+        "def render_reviewer_walkthrough",
+    ):
+        assert helper in app_source
+
+    for implemented in (
+        "CxG",
+        "CxA",
+        "baseline CxT",
+        "dashboard shell",
+        "aggregate/report views",
+    ):
+        assert implemented in app_source
+
+    for deferred in ("CxT+", "Contextual CxT", "Advanced CxT", "OD-CxT / OD-CxT+"):
+        assert deferred in app_source
+
+
+def test_streamlit_app_contains_metric_explanations_and_missing_output_guidance():
+    app_source = APP_PATH.read_text(encoding="utf-8")
+
+    expected_copy = (
+        "What problem does this project solve",
+        "How to read it",
+        "CxG evaluates shot quality, not whether the shot became a goal.",
+        "A high CxA player contributes actions that move possessions closer to chance creation.",
+        "A high CxT player repeatedly moves the ball into more dangerous areas.",
+        "Baseline CxT is location-threat movement, not full possession-state value.",
+        "Empty tables here are expected in a clean checkout.",
+    )
+
+    for text in expected_copy:
+        assert text in app_source
+
+
+def test_demo_walkthrough_doc_and_readme_reference_dashboard_demo_flow():
+    assert DEMO_WALKTHROUGH_PATH.exists()
+
+    walkthrough = DEMO_WALKTHROUGH_PATH.read_text(encoding="utf-8")
+    readme = README_PATH.read_text(encoding="utf-8")
+
+    assert "Suggested Reviewer Walkthrough" in walkthrough
+    assert "Screenshot / GIF Targets" in walkthrough
+    assert "make dashboard" in walkthrough
+    assert "Suggested demo flow" in readme
+    assert "docs/dashboard/demo_walkthrough.md" in readme
