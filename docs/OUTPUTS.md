@@ -124,6 +124,25 @@ outputs/modeling/cxa/aggregates/sequence_cxa.parquet
 
 Generated CxA outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules.
 
+## Planned CxT Outputs
+
+CxT is currently in leakage-safe design-contract stage. The baseline model is not implemented yet, and this repository should not contain generated CxT outputs from this PR.
+
+The CxT contract declares these future generated paths:
+
+```text
+feature_store/cxt/action_features.parquet
+outputs/modeling/cxt/threat_grid.parquet
+outputs/modeling/cxt/predictions/action_threat.parquet
+outputs/modeling/cxt/aggregates/player_cxt.parquet
+outputs/modeling/cxt/aggregates/team_cxt.parquet
+outputs/modeling/cxt/aggregates/sequence_cxt.parquet
+outputs/modeling/cxt/reports/metrics.json
+outputs/modeling/cxt/reports/interpretation_summary.json
+```
+
+When future CxT PRs generate these files, they remain ignored by Git under the existing `feature_store/` and `outputs/` rules. Baseline CxT is upcoming PR24; aggregate and interpretation reporting are upcoming PR25.
+
 ## What Should Be Committed
 
 Commit source code, documentation, tests, migrations, and curated configs such as:
