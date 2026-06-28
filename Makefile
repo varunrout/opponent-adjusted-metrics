@@ -7,6 +7,7 @@
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
 	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run \
+	analysis-cxg analysis-v1 \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
 
 help:  ## Show this help message
@@ -112,6 +113,12 @@ cxg-smoke: cxg-run  ## Alias for the full local CxG reproducibility smoke
 
 run-cxg-analysis:  ## Run CxG analysis
 	poetry run python scripts/run_cxg_analysis.py
+
+# Analysis
+analysis-cxg:  ## Run v1 CxG football analysis report
+	poetry run python scripts/run_cxg_analysis_v1.py
+
+analysis-v1: analysis-cxg  ## Run v1 football analysis suite
 
 # CxT
 run-cxt-pipeline:  ## Run baseline CxT pipeline
