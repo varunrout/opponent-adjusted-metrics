@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-CxT Final Evaluation & Reporting.
+Experimental contextual CxT evaluation and reporting.
+
+This script is retained for deferred CxT research and is not part of the v1
+baseline dashboard/reproducibility path. Use `make cxt-baseline` for the
+implemented v1 grid-threat pipeline.
 
 Phase 9: Comprehensive model evaluation including:
 - Discrimination metrics (AUC, Brier, Log Loss)

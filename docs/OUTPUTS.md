@@ -1,117 +1,111 @@
 # Generated Outputs
 
-Generated outputs are intentionally not tracked by Git. They can be recreated from source code, configs, fixtures, and raw StatsBomb data, so the repository keeps only the instructions and versioned contracts needed to reproduce them.
+Generated outputs are intentionally not tracked by Git. They can be recreated from source code, configs, fixtures, migrations, and raw StatsBomb data. The repository keeps only the instructions and versioned contracts needed to reproduce them.
 
-The `outputs/` and `feature_store/` directories are generated, ignored by Git, and should not be committed as routine documentation or model evidence.
+The generated local surfaces are:
 
-Ignored generated locations include:
+- `data/opponent_adjusted.db` for SQLite database state.
+- `feature_store/` for engineered feature parquet files.
+- `outputs/` for model artifacts, predictions, aggregates, metrics, validation reports, and dashboard-readable summaries.
 
-- `feature_store/cxg/`
-- `outputs/modeling/cxg/`
-- Other files under `feature_store/` and `outputs/`
+## Current V1 Sample Run
 
-Ignored generated file types include:
+The current post-PR43 v1 sample run reported these local DB counts in `outputs/reports/ingestion/db_status.json`:
 
-- `*.parquet`
-- `*.csv`
-- `*.joblib`
-- `*.pkl`
-- `*.pickle`
+| Table | Rows |
+|---|---:|
+| competitions | 5 |
+| teams | 74 |
+| players | 2,038 |
+| matches | 610 |
+| raw_events | 2,143,146 |
+| events | 2,143,146 |
+| possessions | 110,432 |
+| shots | 15,623 |
+| shot_features | 15,623 |
+| action_features | 1,091,388 |
+| model_registry | 3 |
+| shot_predictions | 15,623 |
+| action_predictions | 1,091,388 |
+| action_threat_predictions | 1,091,388 |
+| aggregates_player | 5,503 |
+| aggregates_team | 222 |
+| aggregates_sequence | 107,626 |
+| evaluation_metrics | 78 |
 
-## Regenerate CxG Feature Outputs
+These counts are examples from the current v1 sample run, not hard-coded acceptance thresholds.
 
-From a clean checkout with dependencies installed and source data/database prepared, run:
+## Regenerate Everything
 
 ```bash
-poetry run python scripts/run_cxg_pipeline.py
+make reproduce-v1
+make ingestion-report
 ```
 
-Expected generated directory:
-
-```text
-feature_store/cxg/
-```
-
-This command builds the CxG feature outputs used by the downstream baseline runner. The exact files depend on the configured data subset and pipeline settings.
-
-## Regenerate CxG Modeling Outputs
-
-Then run:
+Expanded pipeline:
 
 ```bash
-poetry run python scripts/run_cxg_end_to_end.py
+make migrate-up
+make fetch-data
+make ingest-all
+make normalize-events
+make build-possessions
+make build-features
+make build-profiles
+make build-cxa-action-features
+make run-cxg-pipeline
+make run-cxg-end-to-end
+make run-cxa-end-to-end
+make run-cxt-pipeline
+make ingestion-report
 ```
 
-Expected generated directory:
+Generated files and the SQLite database remain ignored by Git.
 
-```text
-outputs/modeling/cxg/
+## CxG Outputs
+
+Command:
+
+```bash
+make cxg-run
 ```
 
-This command trains/evaluates the current CxG baseline path and exports generated artifacts such as model files, metadata, metrics, prediction outputs, and aggregate outputs.
-
-The generated `contextual_model.joblib` and `contextual_model.json` pair is the local artifact contract used by `/predict/cxg`. The endpoint returns a controlled 501 response until these generated files exist and the metadata contains the required API inference fields.
-
-Expected generated files:
+Generated files:
 
 ```text
+feature_store/cxg/shot_features.parquet
 outputs/modeling/cxg/models/contextual_model.joblib
 outputs/modeling/cxg/models/contextual_model.json
 outputs/modeling/cxg/reports/metrics.json
-outputs/modeling/cxg/predictions/shot_predictions.parquet
-outputs/modeling/cxg/aggregates/player_cxg.parquet
-outputs/modeling/cxg/aggregates/team_cxg.parquet
-outputs/modeling/cxg/reports/model_card.md
-```
-
-Validate the local output contract and Git ignore rules:
-
-```bash
-poetry run python scripts/check_cxg_outputs.py
-```
-
-Generate the CxG validation reports:
-
-```bash
-poetry run python scripts/validate_cxg_outputs.py
-```
-
-Expected generated validation files:
-
-```text
 outputs/modeling/cxg/reports/validation_summary.json
 outputs/modeling/cxg/reports/calibration_table.csv
 outputs/modeling/cxg/reports/slice_metrics.csv
+outputs/modeling/cxg/reports/model_card.md
+outputs/modeling/cxg/predictions/shot_predictions.parquet
+outputs/modeling/cxg/aggregates/player_cxg.parquet
+outputs/modeling/cxg/aggregates/team_cxg.parquet
 ```
 
-These validation reports summarize main CxG metrics, fold/grouped validation where available, calibration bins, slice metrics, and baseline comparison when a provider or baseline xG column is present. If no baseline column is present, the summary records that the comparison was skipped rather than inventing one.
+DB persistence:
 
-The same regeneration path is available as a Make target:
+- `model_registry`: one `cxg` model row for `cxg_contextual_20260628` in the current sample run.
+- `shot_predictions`: one row per scored shot.
+- `aggregates_player` and `aggregates_team`: CxG player/team aggregate rows.
+- `evaluation_metrics`: metrics from `metrics.json` and validation outputs.
+
+## CxA Outputs
+
+Command:
 
 ```bash
-make cxg-smoke
+make cxa-run
 ```
 
-## Regenerate CxA Baseline Outputs
-
-CxA has a first event-data baseline path. It is not the final attribution system.
-
-Build action features:
-
-```bash
-poetry run python scripts/run_cxa_pipeline.py
-```
-
-Train, evaluate, score and export the baseline model:
-
-```bash
-poetry run python scripts/run_cxa_end_to_end.py
-```
-
-Expected generated CxA files:
+Generated files:
 
 ```text
 feature_store/cxa/action_features.parquet
+feature_store/cxa/pipeline_metadata.json
 outputs/modeling/cxa/models/baseline_model.joblib
 outputs/modeling/cxa/models/baseline_model.json
 outputs/modeling/cxa/reports/metrics.json
@@ -122,19 +116,25 @@ outputs/modeling/cxa/aggregates/team_cxa.parquet
 outputs/modeling/cxa/aggregates/sequence_cxa.parquet
 ```
 
-Generated CxA outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules.
+DB persistence:
 
-## Regenerate CxT Baseline Outputs
+- `action_features`: engineered CxA action features from `feature_store/cxa/action_features.parquet`.
+- `model_registry`: one `cxa` model row for `cxa_baseline_20260628` in the current sample run.
+- `action_predictions`: action-level CxA predictions.
+- `aggregates_player`, `aggregates_team`, and `aggregates_sequence`: CxA aggregate rows.
+- `evaluation_metrics`: CxA model metrics.
 
-CxT has a leakage-safe baseline zone/grid model. It is an explainable baseline, not CxT+, Advanced CxT, OD-CxT, or a production-grade threat model.
+`make cxa-smoke` only builds a small action-feature smoke dataset and does not populate the full CxA model outputs.
 
-Run:
+## CxT Outputs
+
+Command:
 
 ```bash
-poetry run python scripts/run_cxt_pipeline.py
+make cxt-baseline
 ```
 
-Expected generated CxT baseline files:
+Generated files:
 
 ```text
 feature_store/cxt/action_features.parquet
@@ -150,16 +150,47 @@ outputs/modeling/cxt/reports/top_actions.csv
 outputs/modeling/cxt/reports/interpretation_summary.json
 ```
 
-Optional CSV mirrors can be generated with `--write-csv`:
+DB persistence:
 
-```text
-outputs/modeling/cxt/predictions/action_threat.csv
-outputs/modeling/cxt/aggregates/player_cxt.csv
-outputs/modeling/cxt/aggregates/team_cxt.csv
-outputs/modeling/cxt/aggregates/sequence_cxt.csv
+- `model_registry`: one `cxt` model row for `cxt-baseline-v1` in the current sample run.
+- `action_threat_predictions`: action-level baseline CxT rows from `outputs/modeling/cxt/predictions/action_threat.parquet`.
+- `aggregates_player`, `aggregates_team`, and `aggregates_sequence`: CxT aggregate rows.
+- `evaluation_metrics`: CxT report metrics.
+
+Baseline CxT calculates `cxt_value = end_threat - start_threat` from a deterministic pitch grid. CxT+, Contextual CxT, Advanced CxT, OD-CxT, and OD-CxT+ remain future roadmap items.
+
+## File To DB Mapping
+
+| Generated file | DB table |
+|---|---|
+| `feature_store/cxa/action_features.parquet` | `action_features` |
+| `outputs/modeling/cxg/models/contextual_model.joblib` and `.json` | `model_registry` |
+| `outputs/modeling/cxa/models/baseline_model.joblib` and `.json` | `model_registry` |
+| `outputs/modeling/cxt/threat_grid.parquet` | `model_registry` artifact path for baseline CxT |
+| `outputs/modeling/cxg/predictions/shot_predictions.parquet` | `shot_predictions` |
+| `outputs/modeling/cxa/predictions/action_predictions.parquet` | `action_predictions` |
+| `outputs/modeling/cxt/predictions/action_threat.parquet` | `action_threat_predictions` |
+| `outputs/modeling/cxg/aggregates/player_cxg.parquet` | `aggregates_player` |
+| `outputs/modeling/cxg/aggregates/team_cxg.parquet` | `aggregates_team` |
+| `outputs/modeling/cxa/aggregates/player_cxa.parquet` | `aggregates_player` |
+| `outputs/modeling/cxa/aggregates/team_cxa.parquet` | `aggregates_team` |
+| `outputs/modeling/cxa/aggregates/sequence_cxa.parquet` | `aggregates_sequence` |
+| `outputs/modeling/cxt/aggregates/player_cxt.parquet` | `aggregates_player` |
+| `outputs/modeling/cxt/aggregates/team_cxt.parquet` | `aggregates_team` |
+| `outputs/modeling/cxt/aggregates/sequence_cxt.parquet` | `aggregates_sequence` |
+| `outputs/modeling/*/reports/metrics.json` | `evaluation_metrics` |
+
+The persistence layer is idempotent by model family/version. Re-running a model path replaces that model/version's generated DB rows without deleting other metric families.
+
+## Dashboard Consumption
+
+The Streamlit dashboard v1 reads generated outputs through `configs/dashboard/v1_dashboard_contract.json`.
+
+```bash
+make dashboard
 ```
 
-The baseline calculates `cxt_value = end_threat - start_threat` from a deterministic pitch grid. Player/team/sequence aggregates summarize who and which possessions add threat; zone-transition and top-action reports explain where threat is created. Generated CxT outputs remain ignored by Git under the existing `feature_store/` and `outputs/` rules. CxT+, Advanced CxT, and OD-CxT remain future roadmap items.
+The dashboard is a demo/portfolio shell, not a production deployment. It starts even when generated outputs are missing and shows availability status plus empty tables for missing files. Regenerate CxG, CxA, and CxT outputs locally to populate the analysis pages.
 
 ## What Should Be Committed
 
@@ -167,24 +198,6 @@ Commit source code, documentation, tests, migrations, and curated configs such a
 
 - `configs/**/*.json`
 - `tests/fixtures/**`
-- `docs/modeling/cxg/model_card.md`
+- `docs/**/*.md`
 
-Do not commit generated model artifacts, feature stores, bulk reports, or regenerated CSV/parquet outputs unless a future PR explicitly defines a small curated example fixture.
-
-## Dashboard Consumption
-
-The Streamlit dashboard v1 reads generated outputs through `configs/dashboard/v1_dashboard_contract.json`.
-
-Run:
-
-```bash
-make dashboard
-```
-
-or:
-
-```bash
-poetry run streamlit run app/streamlit_app.py
-```
-
-The dashboard is a demo/portfolio shell, not a production deployment. It starts even when generated outputs are missing and shows availability status plus empty tables for missing files. Regenerate CxG, CxA, and CxT outputs locally to populate the dashboard.
+Do not commit generated model artifacts, local SQLite DBs, feature stores, or regenerated CSV/parquet outputs unless a future PR explicitly defines a small curated example fixture.

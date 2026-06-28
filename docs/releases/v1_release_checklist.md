@@ -18,6 +18,19 @@ Use this checklist before creating the v1.0.0 tag after the release PR is merged
 - [ ] v1 limitations are documented.
 - [ ] Deferred work is documented.
 
+## Post-PR43 Reproducibility Checks
+
+- [ ] `make reproduce-v1` completes on a clean local checkout.
+- [ ] `make ingestion-report` writes `outputs/reports/ingestion/db_status.json`.
+- [ ] `action_features` table is populated.
+- [ ] `shot_features` possession/context fields are populated.
+- [ ] `model_registry` contains CxG, CxA, and CxT model rows.
+- [ ] `shot_predictions` is populated by CxG.
+- [ ] `action_predictions` is populated by CxA.
+- [ ] `action_threat_predictions` is populated from real generated CxT rows.
+- [ ] `aggregates_sequence` is populated.
+- [ ] No generated parquet, CSV, joblib, SQLite DB, `feature_store/`, or `outputs/` files are committed.
+
 ## Deferred After V1
 
 - [ ] CxT+.

@@ -6,14 +6,14 @@
 	build-cxa-action-features cxa-action-features-smoke \
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
 	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
-	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run train-cxt evaluate-cxt \
+	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
 
 help:  ## Show this help message
-	@echo 'Usage: make [target]'
-	@echo ''
-	@echo 'Available targets:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo Usage: make [target]
+	@echo.
+	@echo Available targets:
+	@python -c "import re; rows=[]; [rows.append((m.group(1), m.group(2))) for line in open('Makefile', encoding='utf-8') for m in [re.match(r'^([A-Za-z0-9_-]+):.*?## (.*)$$', line)] if m]; print('\n'.join(f'  {name:<28} {desc}' for name, desc in sorted(rows)))"
 
 # Setup
 install:  ## Install dependencies
@@ -121,10 +121,10 @@ cxt-baseline: run-cxt-pipeline  ## Regenerate baseline CxT outputs
 
 cxt-run: cxt-baseline  ## Alias for the local baseline CxT run
 
-train-cxt:  ## Train CxT model
+train-cxt:
 	poetry run python scripts/train_cxt_model.py
 
-evaluate-cxt:  ## Evaluate CxT model
+evaluate-cxt:
 	poetry run python scripts/evaluate_cxt_final.py
 
 # API
