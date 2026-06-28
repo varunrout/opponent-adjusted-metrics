@@ -56,25 +56,43 @@ def _extract_location(raw_json):
     return None, None
 
 
-def _get_or_create_player(session, raw_json) -> Optional[int]:
+def _load_player_cache(session) -> dict[int, int]:
+    return dict(session.query(Player.statsbomb_player_id, Player.id).all())
+
+
+def _load_team_cache(session) -> dict[int, int]:
+    return dict(session.query(Team.statsbomb_team_id, Team.id).all())
+
+
+def _get_or_create_player(
+    session, raw_json, player_cache: Optional[dict[int, int]] = None
+) -> Optional[int]:
     player_dict = raw_json.get("player") or {}
     sb_player_id = player_dict.get("id")
     name = player_dict.get("name")
     if sb_player_id is None:
         return None
+    if player_cache is not None and sb_player_id in player_cache:
+        return player_cache[sb_player_id]
     player = session.query(Player).filter_by(statsbomb_player_id=sb_player_id).first()
     if not player:
         player = Player(statsbomb_player_id=sb_player_id, name=name or f"Player {sb_player_id}")
         session.add(player)
         session.flush()
+    if player_cache is not None:
+        player_cache[sb_player_id] = player.id
     return player.id
 
 
-def _get_team_id(session, raw_ev: RawEvent) -> Optional[int]:
+def _get_team_id(
+    session, raw_ev: RawEvent, team_cache: Optional[dict[int, int]] = None
+) -> Optional[int]:
     team_dict = raw_ev.raw_json.get("team", {})
     sb_team_id = team_dict.get("id")
     if sb_team_id is None:
         return None
+    if team_cache is not None:
+        return team_cache.get(sb_team_id)
     team = session.query(Team).filter_by(statsbomb_team_id=sb_team_id).first()
     return team.id if team else None
 
@@ -97,13 +115,21 @@ def _derive_outcome(raw_ev: RawEvent) -> Optional[str]:
     return None
 
 
-def _ensure_event(session, raw_ev: RawEvent) -> Event:
-    ev = session.query(Event).filter_by(raw_event_id=raw_ev.id).first()
-    if ev:
-        return ev
+def _ensure_event(
+    session,
+    raw_ev: RawEvent,
+    player_cache: Optional[dict[int, int]] = None,
+    team_cache: Optional[dict[int, int]] = None,
+    skip_existing_lookup: bool = False,
+    flush_event: bool = True,
+) -> Event:
+    if not skip_existing_lookup:
+        ev = session.query(Event).filter_by(raw_event_id=raw_ev.id).first()
+        if ev:
+            return ev
     x, y = _extract_location(raw_ev.raw_json)
-    player_id = _get_or_create_player(session, raw_ev.raw_json)
-    team_id = _get_team_id(session, raw_ev)
+    player_id = _get_or_create_player(session, raw_ev.raw_json, player_cache)
+    team_id = _get_team_id(session, raw_ev, team_cache)
     outcome = _derive_outcome(raw_ev)
     ev = Event(
         raw_event_id=raw_ev.id,
@@ -122,12 +148,19 @@ def _ensure_event(session, raw_ev: RawEvent) -> Event:
         outcome=outcome,
     )
     session.add(ev)
-    session.flush()
+    if flush_event:
+        session.flush()
     return ev
 
 
-def _populate_pass(session, ev: Event, raw_json: dict):
-    if session.query(PassEvent).filter_by(event_id=ev.id).first():
+def _populate_pass(
+    session,
+    ev: Event,
+    raw_json: dict,
+    skip_existing_lookup: bool = False,
+    player_cache: Optional[dict[int, int]] = None,
+):
+    if not skip_existing_lookup and session.query(PassEvent).filter_by(event_id=ev.id).first():
         return
     p = raw_json.get("pass", {})
     end_loc = p.get("end_location") or [None, None]
@@ -137,7 +170,7 @@ def _populate_pass(session, ev: Event, raw_json: dict):
     rec = p.get("recipient") or {}
     if rec.get("id") is not None:
         # ensure player exists
-        recipient_id = _get_or_create_player(session, {"player": rec})
+        recipient_id = _get_or_create_player(session, {"player": rec}, player_cache)
     obj = PassEvent(
         event_id=ev.id,
         length=p.get("length"),
@@ -209,8 +242,8 @@ def _fill_missing_pass_end_locations(session, batch_size: int, limit: Optional[i
     return filled
 
 
-def _populate_dribble(session, ev: Event, raw_json: dict):
-    if session.query(DribbleEvent).filter_by(event_id=ev.id).first():
+def _populate_dribble(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if not skip_existing_lookup and session.query(DribbleEvent).filter_by(event_id=ev.id).first():
         return
     d = raw_json.get("dribble", {})
     obj = DribbleEvent(
@@ -222,8 +255,8 @@ def _populate_dribble(session, ev: Event, raw_json: dict):
     session.add(obj)
 
 
-def _populate_carry(session, ev: Event, raw_json: dict):
-    if session.query(CarryEvent).filter_by(event_id=ev.id).first():
+def _populate_carry(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if not skip_existing_lookup and session.query(CarryEvent).filter_by(event_id=ev.id).first():
         return
     c = raw_json.get("carry", {})
     end_loc = c.get("end_location") or [None, None]
@@ -246,8 +279,8 @@ def _populate_carry(session, ev: Event, raw_json: dict):
     session.add(obj)
 
 
-def _populate_clearance(session, ev: Event, raw_json: dict):
-    if session.query(ClearanceEvent).filter_by(event_id=ev.id).first():
+def _populate_clearance(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if not skip_existing_lookup and session.query(ClearanceEvent).filter_by(event_id=ev.id).first():
         return
     c = raw_json.get("clearance", {})
     obj = ClearanceEvent(
@@ -259,8 +292,8 @@ def _populate_clearance(session, ev: Event, raw_json: dict):
     session.add(obj)
 
 
-def _populate_duel(session, ev: Event, raw_json: dict):
-    if session.query(DuelEvent).filter_by(event_id=ev.id).first():
+def _populate_duel(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if not skip_existing_lookup and session.query(DuelEvent).filter_by(event_id=ev.id).first():
         return
     d = raw_json.get("duel", {})
     obj = DuelEvent(
@@ -272,8 +305,8 @@ def _populate_duel(session, ev: Event, raw_json: dict):
     session.add(obj)
 
 
-def _populate_block(session, ev: Event, raw_json: dict):
-    if session.query(BlockEvent).filter_by(event_id=ev.id).first():
+def _populate_block(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if not skip_existing_lookup and session.query(BlockEvent).filter_by(event_id=ev.id).first():
         return
     b = raw_json.get("block", {})
     obj = BlockEvent(
@@ -285,8 +318,11 @@ def _populate_block(session, ev: Event, raw_json: dict):
     session.add(obj)
 
 
-def _populate_interception(session, ev: Event, raw_json: dict):
-    if session.query(InterceptionEvent).filter_by(event_id=ev.id).first():
+def _populate_interception(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if (
+        not skip_existing_lookup
+        and session.query(InterceptionEvent).filter_by(event_id=ev.id).first()
+    ):
         return
     i = raw_json.get("interception", {})
     obj = InterceptionEvent(
@@ -297,8 +333,8 @@ def _populate_interception(session, ev: Event, raw_json: dict):
     session.add(obj)
 
 
-def _populate_pressure(session, ev: Event, raw_json: dict):
-    if session.query(PressureEvent).filter_by(event_id=ev.id).first():
+def _populate_pressure(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if not skip_existing_lookup and session.query(PressureEvent).filter_by(event_id=ev.id).first():
         return
     p = raw_json.get("pressure", {})
     obj = PressureEvent(
@@ -308,8 +344,11 @@ def _populate_pressure(session, ev: Event, raw_json: dict):
     session.add(obj)
 
 
-def _populate_ball_receipt(session, ev: Event, raw_json: dict):
-    if session.query(BallReceiptEvent).filter_by(event_id=ev.id).first():
+def _populate_ball_receipt(session, ev: Event, raw_json: dict, skip_existing_lookup: bool = False):
+    if (
+        not skip_existing_lookup
+        and session.query(BallReceiptEvent).filter_by(event_id=ev.id).first()
+    ):
         return
     b = raw_json.get("ball_receipt", {})
     obj = BallReceiptEvent(
@@ -337,6 +376,9 @@ def _normalize_missing_events(
     session, batch_size: int, start_id: Optional[int], limit: Optional[int]
 ) -> int:
     processed = 0
+    player_cache = _load_player_cache(session)
+    team_cache = _load_team_cache(session)
+
     # Build backlog query: only raw events without normalized Event
     q = (
         session.query(RawEvent)
@@ -366,12 +408,39 @@ def _normalize_missing_events(
         if not batch:
             break
 
+        event_rows = []
         for raw_ev in batch:
-            ev = _ensure_event(session, raw_ev)
+            ev = _ensure_event(
+                session,
+                raw_ev,
+                player_cache=player_cache,
+                team_cache=team_cache,
+                skip_existing_lookup=True,
+                flush_event=False,
+            )
+            event_rows.append((raw_ev, ev))
+
+        session.flush()
+
+        for raw_ev, ev in event_rows:
             # Populate detail table (skip Shot which has its own table)
             if raw_ev.type in POPULATORS and raw_ev.type != "Shot":
-                POPULATORS[raw_ev.type](session, ev, raw_ev.raw_json)
-            processed += 1
+                if raw_ev.type == "Pass":
+                    POPULATORS[raw_ev.type](
+                        session,
+                        ev,
+                        raw_ev.raw_json,
+                        skip_existing_lookup=True,
+                        player_cache=player_cache,
+                    )
+                else:
+                    POPULATORS[raw_ev.type](
+                        session,
+                        ev,
+                        raw_ev.raw_json,
+                        skip_existing_lookup=True,
+                    )
+        processed += len(event_rows)
         session.commit()
 
         fetched += len(batch)
@@ -482,6 +551,8 @@ def main(argv: list[str] | None = None) -> None:
         else:
             # Fallback: iterate all raw events but _ensure_event makes it idempotent
             logger.info("Scanning all raw events (idempotent mode)...")
+            player_cache = _load_player_cache(session)
+            team_cache = _load_team_cache(session)
             q = session.query(RawEvent).order_by(RawEvent.id)
             if args.from_id is not None:
                 q = q.filter(RawEvent.id >= args.from_id)
@@ -498,9 +569,22 @@ def main(argv: list[str] | None = None) -> None:
                 if not batch:
                     break
                 for raw_ev in batch:
-                    ev = _ensure_event(session, raw_ev)
+                    ev = _ensure_event(
+                        session,
+                        raw_ev,
+                        player_cache=player_cache,
+                        team_cache=team_cache,
+                    )
                     if raw_ev.type in POPULATORS and raw_ev.type != "Shot":
-                        POPULATORS[raw_ev.type](session, ev, raw_ev.raw_json)
+                        if raw_ev.type == "Pass":
+                            POPULATORS[raw_ev.type](
+                                session,
+                                ev,
+                                raw_ev.raw_json,
+                                player_cache=player_cache,
+                            )
+                        else:
+                            POPULATORS[raw_ev.type](session, ev, raw_ev.raw_json)
                     processed += 1
                 session.commit()
                 fetched += len(batch)

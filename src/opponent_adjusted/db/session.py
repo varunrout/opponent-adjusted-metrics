@@ -7,11 +7,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from opponent_adjusted.config import settings
+from opponent_adjusted.db.bootstrap import ensure_sqlite_database_parent
 from opponent_adjusted.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
 # Create engine
+ensure_sqlite_database_parent(settings.database_url)
 engine = create_engine(
     settings.database_url,
     echo=False,

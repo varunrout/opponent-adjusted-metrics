@@ -1,12 +1,28 @@
 import json
+import logging
 from pathlib import Path
 
 import joblib
 import pandas as pd
 
+from opponent_adjusted.db.models import (
+    ActionFeature,
+    ActionPrediction,
+    AggregatesPlayer,
+    AggregatesSequence,
+    AggregatesTeam,
+    EvaluationMetric,
+    ModelRegistry,
+)
+from opponent_adjusted.db.session import session_scope
+from opponent_adjusted.features.cxa import action_features as cxa_feature_builder
+from opponent_adjusted.features.cxa.action_features import (
+    build_action_features,
+    save_action_features,
+)
 from scripts.check_cxg_outputs import assert_git_ignored
+from scripts.report_ingestion_status import build_report
 from scripts.run_cxa_end_to_end import run_end_to_end
-from scripts.run_cxa_pipeline import build_action_features, save_action_features
 
 
 def _synthetic_events(
@@ -106,6 +122,119 @@ def test_cxa_feature_table_is_generated_under_contract_path(tmp_path: Path):
     assert written["created_shot_cxg"].between(0, 1).all()
 
 
+def test_cxa_feature_builder_respects_max_actions_and_logs_progress(caplog):
+    events, shots, details = _synthetic_events()
+
+    with caplog.at_level(logging.INFO):
+        features = build_action_features(events, shots, details, max_actions=5)
+
+    assert len(features) == 5
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "CxA action features: matches=" in messages
+    assert "CxA action features: scanning" in messages
+    assert "CxA action features: candidate actions=5" in messages
+    assert "CxA action features: built 5 rows" in messages
+
+
+def test_cxa_smoke_pipeline_uses_limited_builder_path(tmp_path: Path, monkeypatch):
+    events, shots, details = _synthetic_events()
+    captured: dict[str, int | None] = {}
+
+    def fake_build_from_database(
+        competition_id: int | None = None,
+        max_matches: int | None = None,
+        max_actions: int | None = None,
+    ) -> pd.DataFrame:
+        captured["competition_id"] = competition_id
+        captured["max_matches"] = max_matches
+        captured["max_actions"] = max_actions
+        return build_action_features(events, shots, details, max_actions=max_actions)
+
+    monkeypatch.setattr(
+        cxa_feature_builder,
+        "build_action_features_from_database",
+        fake_build_from_database,
+    )
+
+    outputs = cxa_feature_builder.run_pipeline(
+        output_dir=tmp_path,
+        smoke=True,
+        max_matches=3,
+        max_actions=4,
+    )
+
+    assert captured == {"competition_id": None, "max_matches": 3, "max_actions": 4}
+    assert outputs["action_features"].exists()
+    written = pd.read_parquet(outputs["action_features"])
+    metadata = json.loads(outputs["metadata"].read_text(encoding="utf-8"))
+    assert len(written) == 4
+    assert metadata["smoke"] is True
+    assert metadata["max_matches"] == 3
+    assert metadata["max_actions"] == 4
+
+
+def test_cxa_feature_pipeline_persists_action_features_to_database(
+    e2e_test_env, tmp_path: Path, monkeypatch
+):
+    events, shots, details = _synthetic_events()
+    features = build_action_features(events, shots, details)
+
+    def fake_build_from_database(
+        competition_id: int | None = None,
+        max_matches: int | None = None,
+        max_actions: int | None = None,
+    ) -> pd.DataFrame:
+        return features
+
+    monkeypatch.setattr(
+        cxa_feature_builder,
+        "build_action_features_from_database",
+        fake_build_from_database,
+    )
+
+    for _ in range(2):
+        outputs = cxa_feature_builder.run_pipeline(
+            output_dir=tmp_path / "feature_store" / "cxa",
+            persist_db=True,
+            feature_version="test-cxa-features-v1",
+        )
+
+    assert outputs["action_features"].exists()
+    written = pd.read_parquet(outputs["action_features"])
+    assert len(written) == len(features)
+
+    with session_scope() as session:
+        rows = (
+            session.query(ActionFeature)
+            .filter_by(feature_family="cxa", version_tag="test-cxa-features-v1")
+            .all()
+        )
+        assert len(rows) == len(features)
+        assert rows[0].target_shot_created in {True, False}
+
+    report = build_report()
+    assert report["table_counts"]["action_features"] == len(features)
+    assert report["readiness"]["has_action_features"] is True
+
+
+def test_cxa_feature_builder_source_avoids_old_rowwise_nested_scans():
+    text = Path("src/opponent_adjusted/features/cxa/action_features.py").read_text(encoding="utf-8")
+
+    assert ".iterrows(" not in text
+    assert "for _, action" not in text
+    assert "ordered[(" not in text
+
+
+def test_cxa_pipeline_scripts_import_shared_package_module():
+    build_script = Path("scripts/build_cxa_action_features.py").read_text(encoding="utf-8")
+    pipeline_script = Path("scripts/run_cxa_pipeline.py").read_text(encoding="utf-8")
+
+    assert "opponent_adjusted.features.cxa.action_features" in build_script
+    assert "opponent_adjusted.features.cxa.action_features" in pipeline_script
+    assert "from scripts." not in build_script
+    assert "from scripts." not in pipeline_script
+
+
 def test_cxa_end_to_end_emits_model_predictions_and_aggregates(tmp_path: Path):
     events, shots, details = _synthetic_events()
     features = build_action_features(events, shots, details)
@@ -166,6 +295,78 @@ def test_cxa_end_to_end_emits_model_predictions_and_aggregates(tmp_path: Path):
     assert abs(sequence_aggregates["total_cxa"].sum() - predictions["cxa_value"].sum()) < 1e-9
     assert abs(summary["total_attributed_cxa"] - predictions["cxa_value"].sum()) < 1e-9
     assert summary["attribution"]["method"] == "simple_action_level_baseline_attribution"
+
+
+def test_cxa_end_to_end_persists_outputs_to_database(e2e_test_env, tmp_path: Path):
+    events, shots, details = _synthetic_events()
+    features = build_action_features(events, shots, details)
+    input_path = tmp_path / "action_features.parquet"
+    features.to_parquet(input_path, index=False)
+
+    run_end_to_end(
+        input_path=input_path,
+        output_dir=tmp_path / "cxa",
+        model_version="cxa-db-v1",
+        persist_db=True,
+    )
+
+    with session_scope() as session:
+        registry = (
+            session.query(ModelRegistry).filter_by(model_name="cxa", version="cxa-db-v1").one()
+        )
+        assert session.query(ActionPrediction).filter_by(model_id=registry.id).count() == len(
+            features
+        )
+        assert session.query(AggregatesPlayer).filter_by(model_id=registry.id).count() > 0
+        assert session.query(AggregatesTeam).filter_by(model_id=registry.id).count() > 0
+        assert session.query(AggregatesSequence).filter_by(model_id=registry.id).count() > 0
+        assert session.query(EvaluationMetric).filter_by(model_id=registry.id).count() > 0
+
+    report = build_report()
+    assert report["table_counts"]["action_predictions"] == len(features)
+    assert report["table_counts"]["aggregates_sequence"] > 0
+    assert report["readiness"]["has_cxa_predictions"] is True
+    assert report["readiness"]["has_sequence_aggregates"] is True
+
+
+def test_cxa_database_persistence_is_idempotent_and_preserves_cxg_rows(
+    e2e_test_env, tmp_path: Path
+):
+    events, shots, details = _synthetic_events()
+    features = build_action_features(events, shots, details)
+    input_path = tmp_path / "action_features.parquet"
+    features.to_parquet(input_path, index=False)
+
+    with session_scope() as session:
+        session.add(
+            ModelRegistry(
+                model_name="cxg",
+                version="existing-cxg",
+                algorithm="fixture",
+                trained_on_version_tag="existing-cxg",
+                artifact_path="fixture.joblib",
+            )
+        )
+
+    for _ in range(2):
+        run_end_to_end(
+            input_path=input_path,
+            output_dir=tmp_path / "cxa",
+            model_version="cxa-idempotent-v1",
+            persist_db=True,
+        )
+
+    with session_scope() as session:
+        cxa_registry = (
+            session.query(ModelRegistry)
+            .filter_by(model_name="cxa", version="cxa-idempotent-v1")
+            .one()
+        )
+        assert session.query(ModelRegistry).filter_by(model_name="cxg").count() == 1
+        assert session.query(ModelRegistry).filter_by(model_name="cxa").count() == 1
+        assert session.query(ActionPrediction).filter_by(model_id=cxa_registry.id).count() == len(
+            features
+        )
 
 
 def test_cxa_baseline_excludes_forbidden_leakage_features(tmp_path: Path):

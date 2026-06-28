@@ -9,6 +9,7 @@ from typing import Any
 
 import pandas as pd
 
+from opponent_adjusted.db.model_output_persistence import persist_cxt_outputs_to_database
 from opponent_adjusted.features.cxt.xt_model import (
     PITCH_LENGTH,
     PITCH_WIDTH,
@@ -582,6 +583,7 @@ def run_baseline(
     feature_store_dir: Path = Path("feature_store/cxt"),
     output_dir: Path = Path("outputs/modeling/cxt"),
     write_csv: bool = False,
+    persist_db: bool = False,
 ) -> CxTBaselineOutputs:
     raw_actions = _read_table(input_path) if input_path else synthetic_actions()
     threat_grid = build_threat_grid()
@@ -650,6 +652,26 @@ def run_baseline(
         top_actions_path=top_actions_path,
     )
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    if persist_db:
+        metadata = {
+            "model_name": "cxt",
+            "model_version": MODEL_VERSION,
+            "model_type": "baseline_grid_threat",
+            "artifact_path": str(threat_grid_path),
+            "features": {
+                "identity": IDENTITY_COLUMNS,
+                "location": LOCATION_COLUMNS,
+                "value": BASELINE_VALUE_COLUMNS,
+            },
+        }
+        persist_cxt_outputs_to_database(
+            metadata=metadata,
+            metrics=metrics,
+            predictions=features,
+            player_aggregates=player_aggregates,
+            team_aggregates=team_aggregates,
+            sequence_aggregates=sequence_aggregates,
+        )
 
     return CxTBaselineOutputs(
         feature_path=feature_path,

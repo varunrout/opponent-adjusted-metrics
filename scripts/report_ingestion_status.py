@@ -18,7 +18,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from opponent_adjusted.db.models import (  # noqa: E402
+    ActionFeature,
+    ActionPrediction,
+    ActionThreatPrediction,
     AggregatesPlayer,
+    AggregatesSequence,
     AggregatesTeam,
     BallReceiptEvent,
     BlockEvent,
@@ -43,6 +47,7 @@ from opponent_adjusted.db.models import (  # noqa: E402
     ShotPrediction,
     Team,
 )
+from opponent_adjusted.db.feature_persistence import ensure_feature_tables  # noqa: E402
 from opponent_adjusted.db.session import session_scope  # noqa: E402
 from opponent_adjusted.utils.logging import get_logger  # noqa: E402
 
@@ -67,11 +72,15 @@ TABLES = {
     "ball_receipts": BallReceiptEvent,
     "shots": Shot,
     "shot_features": ShotFeature,
+    "action_features": ActionFeature,
     "opponent_def_profile": OpponentDefProfile,
     "model_registry": ModelRegistry,
     "shot_predictions": ShotPrediction,
+    "action_predictions": ActionPrediction,
+    "action_threat_predictions": ActionThreatPrediction,
     "aggregates_player": AggregatesPlayer,
     "aggregates_team": AggregatesTeam,
+    "aggregates_sequence": AggregatesSequence,
     "evaluation_metrics": EvaluationMetric,
 }
 
@@ -92,6 +101,7 @@ def _event_type_counts(session: Any, limit: int = 25) -> list[dict[str, Any]]:
 
 
 def build_report() -> dict[str, Any]:
+    ensure_feature_tables()
     with session_scope() as session:
         table_counts = _count_rows(session)
         event_type_counts = _event_type_counts(session)
@@ -104,10 +114,16 @@ def build_report() -> dict[str, Any]:
             "has_matches": table_counts["matches"] > 0,
             "has_raw_events": table_counts["raw_events"] > 0,
             "has_normalized_events": table_counts["events"] > 0,
+            "has_possessions": table_counts["possessions"] > 0,
             "has_shots": table_counts["shots"] > 0,
             "has_shot_features": table_counts["shot_features"] > 0,
+            "has_action_features": table_counts["action_features"] > 0,
             "has_model_registry": table_counts["model_registry"] > 0,
             "has_predictions": table_counts["shot_predictions"] > 0,
+            "has_cxg_predictions": table_counts["shot_predictions"] > 0,
+            "has_cxa_predictions": table_counts["action_predictions"] > 0,
+            "has_cxt_predictions": table_counts["action_threat_predictions"] > 0,
+            "has_sequence_aggregates": table_counts["aggregates_sequence"] > 0,
         },
     }
     return report
