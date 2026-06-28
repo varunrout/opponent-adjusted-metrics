@@ -1,8 +1,10 @@
-# CxT Design and Contract
+# CxT Design And Contract
 
 ## Definition
 
-Contextual expected threat (CxT) values moving the ball into more threatening pitch states. It is a territorial and progression metric: it asks how much an action improves the attacking state before a shot happens.
+Contextual expected threat (CxT) values ball progression into more threatening pitch states. It is a territorial/progression metric: it asks how much an action improves the attacking state before a shot happens.
+
+In v1, CxT is a baseline grid-threat implementation. It is not CxT+, Contextual CxT, Advanced CxT, OD-CxT, or OD-CxT+.
 
 CxT is distinct from the other metric families:
 
@@ -10,69 +12,75 @@ CxT is distinct from the other metric families:
 - CxA = chance creation actions that create or progress toward shots.
 - CxT = territorial and threat progression from one ball state to another.
 
-This document defines the leakage-safe CxT design and contract. The baseline CxT path is now implemented with a simple zone/grid threat value approach; CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
+The baseline CxT path is implemented with a simple zone/grid threat value approach; CxT+ / Contextual / Advanced / OD-CxT remain future enhancements.
 
 ## Baseline CxT
 
-The baseline CxT idea is:
+The implemented v1 baseline uses:
 
 ```text
-CxT = threat_value(end_location) - threat_value(start_location)
+cxt_value = end_threat - start_threat
 ```
 
-The baseline implementation uses event-data-compatible pass, carry, dribble, cross, and progressive movement actions. It maps start and end locations into a deterministic 12x8 grid and assigns each action the difference between the end-state and start-state threat.
+The model maps start and end locations into a deterministic pitch grid, looks up the start/end zone threat values, and assigns the difference to the action.
 
 ## CxT+
 
-CxT+ is a future enhancement of baseline CxT. It can account for action completion, action type, pressure, pass height, body part, and other context known at action time. CxT+ should still preserve the core idea that value comes from moving into more dangerous states, not from reading future outcomes from the same action row.
+CxT+ is deferred after v1. It may add action-completion context, pressure, pass height, body part, or other event-data context known at action time. It is not implemented in the current baseline.
 
 ## Contextual CxT
 
-Contextual CxT adds match and possession context available when the action occurs. Examples include period, minute, score state, play pattern, pressure, prior action context, and zone-level opponent tendencies when available.
-
-Contextual features must be observable at the action timestamp. They must not include future shot labels, future possession length, or downstream outcome fields as action-level inputs.
+Contextual CxT is deferred after v1. It may add match and possession context such as period, minute, score state, play pattern, prior action context, and opponent tendencies. It is not implemented in the current baseline.
 
 ## Advanced CxT
 
-Advanced CxT is a future state-value formulation. Instead of only comparing fixed zone values, it can estimate `state_value_before` and `state_value_after` from richer event state. The action value is the improvement in estimated state value.
-
-This variant may use future outcomes during offline value-estimation or evaluation, but the row-level model inputs must remain leakage-safe.
+Advanced CxT is deferred after v1. It may estimate richer state values before and after an action rather than relying only on fixed grid threat values. It is not implemented in the current baseline.
 
 ## OD-CxT
 
-OD-CxT means opponent defensive adjusted CxT. It should adjust threat progression for defensive context and opponent suppression effects. OD-CxT+ is the future enhanced version combining opponent adjustment with the richer CxT+ feature set.
+OD-CxT means opponent defensive adjusted CxT. OD-CxT and OD-CxT+ are deferred after v1 and are not implemented in the current baseline.
 
-These variants are roadmap items. They are not implemented by the baseline CxT PR.
+## Input Contract
+
+The v1 CxT pipeline uses real generated action features. It no longer persists synthetic fixture rows in production paths.
+
+Primary command:
+
+```bash
+make cxt-baseline
+```
+
+The runner resolves generated inputs in this order:
+
+1. `feature_store/cxt/progressions_featured.parquet`
+2. `feature_store/cxt/progressions.parquet`
+3. `feature_store/cxa/action_features.parquet`
+
+The current v1 sample run used real generated action rows and produced 1,091,388 CxT action-threat predictions.
 
 ## Eligible Actions
 
-The baseline contract covers ball-progression actions:
+The baseline covers ball-progression actions with start/end locations, including:
 
 - pass
 - carry
-- dribble
-- cross when represented
-- progressive pass or carry when available
+- dribble/progression rows when represented in the generated action features
 
 Shots belong to CxG, not CxT. Foul, goalkeeper, injury, and administrative event types should not be treated as CxT progression actions.
 
 ## Feature Families
 
-Required identifiers should include match, team, player, possession, and action/event identifiers where available. Required location fields are `start_x`, `start_y`, `end_x`, and `end_y`.
+Required feature families are:
 
-Baseline value fields are:
-
-- `start_zone`
-- `end_zone`
-- `start_threat`
-- `end_threat`
-- `cxt_value`
-
-Future enhancement fields include `cxt_plus`, `state_value_before`, `state_value_after`, `advanced_cxt`, `od_cxt`, and `od_cxt_plus`.
+- Identifiers: action/event ID, match ID, team ID, player ID, and possession/sequence ID where available.
+- Locations: `start_x`, `start_y`, `end_x`, and `end_y`.
+- Zones: `start_zone` and `end_zone`.
+- Threat values: `start_threat`, `end_threat`, and `cxt_value`.
+- Action descriptors: action type and success/progression flags where available.
 
 ## Leakage Guardrails
 
-Future outcomes may be used to estimate zone or state values and to evaluate CxT quality. They must not be used as action-level model input features.
+Baseline CxT uses action type, identifiers, and start/end locations. Future shot or goal outcomes are not used as action-level inputs.
 
 Prohibited action-level input fields include:
 
@@ -86,24 +94,51 @@ Prohibited action-level input fields include:
 - `goal_outcome`
 - `shot_outcome`
 
-The key rule is simple: CxT can learn from historical futures when estimating the value map, but a scored action row cannot peek at its own future.
+The key rule is simple: CxT may learn zone values from historical data, but a scored action row cannot peek at its own future.
+
+## Current V1 Metrics
+
+From `outputs/modeling/cxt/reports/metrics.json`:
+
+| Metric | Value |
+|---|---:|
+| model version | `cxt-baseline-v1` |
+| actions | 1,091,388 |
+| players | 2,025 |
+| teams | 74 |
+| total CxT | 7,848.171 |
+| mean CxT | 0.007191 |
+| min CxT | -0.239401 |
+| max CxT | 0.245658 |
+| positive actions | 515,593 |
+| negative actions | 264,073 |
+| zero actions | 311,722 |
+
+From `outputs/modeling/cxt/reports/interpretation_summary.json`:
+
+| Interpretation metric | Value |
+|---|---:|
+| pass CxT | 6,737.874 |
+| carry CxT | 1,110.297 |
+| final-third entry CxT | 2,205.979 |
+| box-entry CxT | 4,898.689 |
+| progressive-action CxT | 4,947.281 |
 
 ## Validation Plan
 
-The baseline implementation should validate:
+Baseline validation should continue to check:
 
-- row count
-- valid pitch coordinates
-- required start/end locations
-- no prohibited leakage fields in model inputs
-- baseline value reconciliation between start/end threat and `cxt_value`
-- grouped validation by `match_id` where modelling is introduced
-- slice summaries by action type and zone
-- sequence or possession summaries
+- Action row count.
+- Required start/end location coverage.
+- Valid pitch coordinates.
+- No prohibited leakage fields in action-level inputs.
+- Reconciliation of `cxt_value = end_threat - start_threat`.
+- Player/team/sequence aggregates.
+- Zone-transition and top-action interpretation reports.
 
 ## Output Contract
 
-Expected generated paths for the baseline CxT path and future CxT extensions:
+Generated files:
 
 ```text
 feature_store/cxt/action_features.parquet
@@ -118,10 +153,41 @@ outputs/modeling/cxt/reports/top_actions.csv
 outputs/modeling/cxt/reports/interpretation_summary.json
 ```
 
-These paths are generated outputs and remain ignored by Git.
+DB tables:
+
+- `model_registry`: model row for `cxt-baseline-v1`.
+- `action_threat_predictions`: 1,091,388 rows in the current v1 sample run.
+- `aggregates_player`: CxT player aggregate rows.
+- `aggregates_team`: CxT team aggregate rows.
+- `aggregates_sequence`: CxT sequence aggregate rows.
+- `evaluation_metrics`: 13 CxT metric rows in the current v1 sample run.
+
+## Interpretation
+
+Baseline CxT should be read as a location-threat movement model:
+
+- Positive values indicate movement into more threatening grid zones.
+- Negative values indicate movement away from threat.
+- Zero values often mean the action stayed within the same grid-threat state.
+
+This is useful for reviewing progression profiles at action, player, team, and sequence level. It is not a full possession-state value model.
+
+## Deferred Variants Summary
+
+The following are roadmap items and are not implemented in v1:
+
+- CxT+
+- Contextual CxT
+- Advanced CxT
+- OD-CxT
+- OD-CxT+
+
+Future variants may add richer action context, opponent defensive adjustment, state-value modelling, and more advanced validation. They must preserve the no-future-leakage rule.
 
 ## Limitations
 
-This contract is event-data compatible and does not require tracking data. That makes it reproducible with StatsBomb Open Data, but it also limits what CxT can know about defensive shape, receiver separation, passing lanes, and off-ball movement.
-
-Baseline CxT is implemented as an explainable, leakage-safe starting point, not a production-grade threat model. Player, team, sequence, zone-transition, top-action, and interpretation reports are baseline reporting surfaces. CxT+, Advanced CxT, OD-CxT, and OD-CxT+ are roadmap items rather than completed model surfaces.
+- Event-only CxT cannot observe defensive shape, receiver separation, passing lanes, or off-ball movement.
+- Grid values are explainable but coarse.
+- The current model is not opponent-adjusted.
+- Sequence aggregate persistence is idempotent by model/version and may not be a one-to-one mirror of every generated sequence file row.
+- Baseline CxT is a reproducible v1 reporting surface, not a production-grade threat model.

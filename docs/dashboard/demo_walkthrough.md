@@ -10,9 +10,17 @@ Install dependencies and regenerate any outputs you want to show:
 
 ```bash
 poetry install
-make cxg-smoke
-make cxa-smoke
+make reproduce-v1
+make ingestion-report
+```
+
+If data is already ingested and normalized, regenerate model families individually:
+
+```bash
+make cxg-run
+make cxa-run
 make cxt-baseline
+make ingestion-report
 ```
 
 Then launch the dashboard:

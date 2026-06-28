@@ -1,114 +1,177 @@
 # CxA Design And Contract
 
-This document defines the design contract for contextual expected assist (CxA). The repository now includes a first baseline model path, but this document remains the guardrail for future refinement and should not be read as evidence of a final CxA attribution system.
+This document defines the implemented v1 baseline contract for contextual expected assist (CxA). It should not be read as evidence of a final CxA attribution system.
 
 ## Definition
 
-CxA estimates the expected chance-creation value of eligible attacking actions. In this repository, the first baseline target is the CxG value of a downstream shot created by the action inside a fixed event-data window. Actions that do not create an eligible shot receive zero target value.
+CxA estimates the expected chance-creation value of eligible attacking actions. In v1 it asks:
 
-CxA is event-data compatible and must work with StatsBomb Open Data. It must not require tracking data.
+> Did this action help create a shot within a short same-team possession window, and what expected chance value should be attributed to it?
 
-## Target
-
-The design-stage target is `created_shot_cxg`.
-
-- `shot_created`: binary indicator that the action created an eligible downstream shot.
-- `created_shot_cxg`: CxG value of the first eligible downstream shot; zero when no eligible shot exists.
-- `created_shot_id`: optional reference identifier for audit and attribution, not a training feature.
-
-The preferred shot-quality source is the generated CxG output. A future baseline may use provider xG as an explicit fallback only when CxG is unavailable, and the fallback must be recorded in model metadata and validation reports.
+CxA is event-data compatible and works with StatsBomb Open Data. It must not require tracking data.
 
 ## Eligible Actions
 
-Eligible rows should represent attacking events that can create or materially progress toward shots:
+The implemented v1 action feature builder uses:
 
-- Passes, including crosses, through balls, cutbacks, switches and set-piece deliveries.
-- Carries and dribbles that progress the ball or change shot-creation context.
-- Ball receipts or pressure evasions only when they are represented cleanly enough to attribute action value.
+- Pass
+- Carry
+- Dribble
 
-Shots, goalkeeper events, fouls, stoppages, tactical shifts and post-shot events are excluded from CxA training rows.
+Ball receipts are loaded as context/detail data but the current generated CxA action-feature table contains pass, carry, and dribble rows. Shots, goalkeeper events, fouls, stoppages, tactical shifts, and post-shot events are excluded from CxA training rows.
+
+Current v1 sample action-feature rows: 1,091,388.
+
+## Target
+
+The v1 target is deterministic and leakage-controlled:
+
+- Same team.
+- Same possession.
+- Maximum 5 downstream actions.
+- Maximum 15 seconds from action to shot.
+- First eligible downstream shot is the target event.
+
+Generated target/reference columns:
+
+- `shot_created`: binary indicator that the action created an eligible downstream shot.
+- `created_shot_cxg`: value of the created downstream shot; zero when no eligible shot exists.
+- `created_shot_id`: optional reference identifier for audit and attribution, not a training feature.
+
+Current v1 sample target summary:
+
+| Field | Value |
+|---|---:|
+| action rows | 1,091,388 |
+| positive shot-created rows | 54,569 |
+| positive rate | 0.050000 |
+| positive mean created-shot CxG | 0.090648 |
 
 ## Attribution Logic
 
-The baseline attribution window should be deterministic:
+The implemented attribution method is simple and explicit:
 
-- Same team only.
-- Same possession preferred.
-- Maximum 5 downstream actions.
-- Maximum 15 seconds from action to shot.
-- First eligible downstream shot is the baseline target event.
-
-Future PRs may add multi-action credit allocation, but the baseline should start with a single target per action so validation remains legible.
-
-The current baseline attribution method assigns each action its baseline model expected CxA value (`cxa_value`) and normalizes `cxa_share` within each sequence. When downstream shot value is unavailable, the method uses the model's chance-creation probability/value only and records that limitation in `outputs/modeling/cxa/reports/attribution_summary.json`.
+- Actions are linked to the first eligible downstream shot inside the same-team/same-possession window.
+- Model predictions produce action-level expected CxA values.
+- `cxa_share` is normalized within generated sequence/possession groups.
+- Attribution is baseline action-level credit, not causal assist credit.
 
 ## Feature Families
 
-Core features should be available at the action timestamp:
+Core feature families are observable at the action timestamp:
 
-- Identity: action, event, sequence, match, possession, team and player identifiers.
-- Location and movement: start/end coordinates, distance, angle, x/y progression, final-third and penalty-area entries.
-- Action descriptors: action type, body part, pass height, cross/cutback/through-ball flags and carry/dribble indicators.
-- Sequence context: action position, sequence length so far and seconds since possession start.
-- Match context: minute, second, score state and play pattern.
-- Optional opponent context: opponent defensive profile or nearby defensive-action proxies when available from event data.
-
-Future generated datasets should follow `configs/feature_contracts/cxa_v1.json`.
+- Identity: action, event, sequence, match, possession, team, and player identifiers.
+- Location and movement: start/end coordinates, distance, angle, x/y progression.
+- Action descriptors: action type, body part, pass height, cross/cutback/through-ball flags, carry/dribble indicators.
+- Progression: final-third entry, penalty-area entry, zone 14 entry, switches of play.
+- Sequence context: action position, sequence length so far, seconds since possession start.
+- Match context: minute, second, score state, play pattern.
+- Optional proxies: pressure flags and opponent defensive profile placeholders where available.
 
 ## Leakage Risks
 
-CxA is especially leakage-prone because its target depends on future events. Training features must not include:
+Prohibited leakage fields remain excluded from model inputs:
 
 - Created shot outcome or goal outcome.
 - Post-shot xG.
 - Future possession value.
 - Future sequence length.
-- Number or type of actions after the current action.
-- Any feature derived from the shot after it happens, except explicit target/reference columns excluded from training.
-
-Validation must group by `match_id` to reduce match-level leakage.
+- Number/type of future actions.
+- Any feature derived from a shot after it happens, except explicit target/reference columns excluded from training.
 
 ## Baseline Model Plan
 
-The first implementation path should stay reproducible and modest:
+The implemented v1 model is a logistic-regression baseline classifier:
 
-- A model-ready action feature table under `feature_store/cxa/`.
-- A simple, deterministic baseline model before richer sequence attribution.
-- Model metadata that records target source, feature columns, split group and generated output paths.
-- Prediction outputs at action grain.
-- Player/team aggregates based on summed predicted CxA and CxA above baseline.
+- Model version: `cxa_baseline_20260628`
+- Estimator: `logistic_regression`
+- Target: `shot_created`
+- Value column: `created_shot_cxg`
+- Split: grouped by `match_id` where available
 
-This plan does not require a CxA API endpoint.
+The model predicts shot-creation probability and converts it into baseline CxA value using the observed created-shot value scale.
 
-## Validation Plan
+## Current V1 Metrics
 
-Generated validation should report:
+From `outputs/modeling/cxa/reports/metrics.json`:
 
-- Row count and eligible-action count.
-- Shot creation rate.
-- Mean target CxA and mean predicted CxA.
-- Main metrics appropriate for continuous probability/value targets.
-- Grouped validation by `match_id`.
-- Slice metrics by action type, start/end zone, score state and pressure context where available.
-- Baseline comparison against traditional assists, uncontextualized created-shot xG or a simple location-progression baseline when available.
+| Metric | Value |
+|---|---:|
+| rows | 1,091,388 |
+| positive count | 54,569 |
+| positive rate | 0.050000 |
+| mean predicted probability | 0.050004 |
+| Brier | 0.040464 |
+| Log loss | 0.150804 |
+| ROC AUC | 0.858136 |
+| baseline probability | 0.050000 |
+| baseline CxA | 0.004532 |
 
-If a baseline comparison is unavailable, validation should state that clearly rather than inventing values.
+The fold-level metrics are computed with grouped match splits. All current fold log-loss and ROC-AUC statuses are `computed`.
+
+## Attribution Summary
+
+From `outputs/modeling/cxa/reports/attribution_summary.json`:
+
+| Attribution field | Value |
+|---|---:|
+| action count | 1,091,388 |
+| sequence count | 107,020 |
+| total attributed CxA | 4,944.835 |
+| mean CxA | 0.004531 |
+| max CxA | 0.072891 |
+| high-value threshold | 0.004784 |
+
+Attribution method:
+
+```text
+simple_action_level_baseline_attribution
+```
+
+Each action receives its baseline model expected CxA value. Sequence and possession shares are normalized within generated action groups. Downstream shot value is available in the current v1 sample run, so attribution includes observed shot-value references.
 
 ## Output Contract
 
-Generated baseline outputs should be ignored by Git and live under:
+Generated files:
 
 ```text
-feature_store/cxa/
-outputs/modeling/cxa/
-outputs/modeling/cxa/models/
-outputs/modeling/cxa/reports/
-outputs/modeling/cxa/predictions/
-outputs/modeling/cxa/aggregates/
+feature_store/cxa/action_features.parquet
+feature_store/cxa/pipeline_metadata.json
+outputs/modeling/cxa/models/baseline_model.joblib
+outputs/modeling/cxa/models/baseline_model.json
+outputs/modeling/cxa/reports/metrics.json
+outputs/modeling/cxa/reports/attribution_summary.json
+outputs/modeling/cxa/predictions/action_predictions.parquet
+outputs/modeling/cxa/aggregates/player_cxa.parquet
+outputs/modeling/cxa/aggregates/team_cxa.parquet
+outputs/modeling/cxa/aggregates/sequence_cxa.parquet
 ```
 
-Expected future files are defined in `configs/feature_contracts/cxa_v1.json`. This PR documents and tests the contract shape only; it does not require those files to exist.
+DB tables:
+
+- `action_features`: 1,091,388 rows in the current sample run.
+- `model_registry`: model row for `cxa_baseline_20260628`.
+- `action_predictions`: 1,091,388 rows in the current sample run.
+- `aggregates_player`: CxA player aggregate rows.
+- `aggregates_team`: CxA team aggregate rows.
+- `aggregates_sequence`: CxA sequence aggregate rows.
+- `evaluation_metrics`: 45 CxA metric rows in the current sample run.
+
+## Validation Plan
+
+Validation should continue to report:
+
+- Row count and eligible-action count.
+- Shot creation rate.
+- Mean predicted probability/value.
+- Brier, log loss, and ROC AUC when safe.
+- Grouped validation by match.
+- Slice summaries by action type and zone where available.
+- Clear skip statuses where class-dependent metrics are unsafe.
 
 ## Limitations
 
-Event-only CxA cannot observe off-ball movement, defender spacing, passing lanes or receiver separation directly. Pressure and defensive context are proxies. Results should be described as a reproducible event-data baseline until a future PR implements and validates the model.
+- Event-only CxA cannot observe off-ball movement, defender spacing, passing lanes, or receiver separation directly.
+- The baseline target depends on future shots, so leakage guardrails are essential.
+- Current attribution is simple action-level baseline attribution, not causal assist credit.
+- Future work may introduce CxA+, richer sequence credit, better defensive context, and more advanced chance-value attribution.

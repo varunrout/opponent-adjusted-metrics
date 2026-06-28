@@ -2,9 +2,9 @@
 
 Portfolio/demo release for contextual football analytics built on StatsBomb-style event data.
 
-**v1.0.0 status:** CxG, CxA, baseline CxT, aggregate reports, interpretation reports, and Streamlit dashboard v1 are implemented. Generated outputs are reproducible locally and intentionally ignored by Git.
+**v1.0.0 status:** CxG, CxA, baseline CxT, aggregate reports, interpretation reports, DB persistence, and Streamlit dashboard v1 are implemented. Generated outputs and the local SQLite database are reproducible locally and intentionally ignored by Git.
 
-This is not a production deployment. It is a reviewable v1 analytics product surface that shows how raw events become model outputs, reports, and football insight.
+This is not a production deployment. It is a reviewable v1 analytics product surface that shows how raw events become feature tables, model outputs, reports, database rows, and football insight.
 
 ## Core Metrics
 
@@ -26,21 +26,34 @@ make dashboard
 
 The dashboard starts even when generated outputs are missing. Missing-output messages and empty tables are expected in a clean checkout.
 
-To populate dashboard data locally:
+To fully regenerate the v1 local database, feature store, model outputs, and reports:
 
 ```bash
-make cxg-smoke
-make cxa-smoke
-make cxt-baseline
+make reproduce-v1
+make ingestion-report
+make dashboard
 ```
+
+To regenerate model families individually after data is already ingested and normalized:
+
+```bash
+make cxg-run
+make cxa-run
+make cxt-baseline
+make ingestion-report
+```
+
+`make cxa-smoke` only builds a small CxA action-feature smoke dataset. It does not populate full CxA model outputs.
 
 Reviewer docs:
 
 - [v1.0.0 release notes](docs/releases/v1.0.0.md)
 - [v1 reviewer quickstart](docs/releases/v1_reviewer_quickstart.md)
-- [dashboard demo walkthrough](docs/dashboard/demo_walkthrough.md)
-- [v1 release scope](docs/releases/v1_scope.md)
+- [v1 results summary](docs/modeling/v1_results_summary.md)
+- [clean-run reproducibility](docs/reproducibility/clean_run_reproducibility.md)
+- [DB schema and lineage](docs/data/db_schema_and_lineage.md)
 - [generated outputs](docs/OUTPUTS.md)
+- [dashboard demo walkthrough](docs/dashboard/demo_walkthrough.md)
 
 ## Dashboard
 
@@ -72,35 +85,37 @@ Suggested demo flow: start with Overview, compare Player and Team analysis, expl
 
 ## Main Workflows
 
+Full v1 reproduction:
+
+```bash
+make reproduce-v1
+```
+
 CxG:
 
 ```bash
-poetry run python scripts/run_cxg_pipeline.py
-poetry run python scripts/run_cxg_end_to_end.py
-poetry run python scripts/check_cxg_outputs.py
-poetry run python scripts/validate_cxg_outputs.py
+make cxg-run
 ```
 
 CxA:
 
 ```bash
-poetry run python scripts/run_cxa_pipeline.py
-poetry run python scripts/run_cxa_end_to_end.py
+make cxa-run
 ```
 
 CxT:
 
 ```bash
-poetry run python scripts/run_cxt_pipeline.py
-```
-
-Convenience targets:
-
-```bash
-make cxg-smoke
-make cxa-smoke
 make cxt-baseline
 ```
+
+Database status:
+
+```bash
+make ingestion-report
+```
+
+The current v1 sample run writes 15,623 CxG shot predictions, 1,091,388 CxA action predictions, and 1,091,388 CxT action-threat rows to the local SQLite database.
 
 ## Validation
 
@@ -118,7 +133,7 @@ opponent-adjusted-metrics/
 |-- app/                      # Streamlit dashboard v1
 |-- configs/                  # Feature and dashboard contracts
 |-- dashboard/                # Earlier dashboard assets/components
-|-- docs/                     # Release, dashboard, modelling, and output docs
+|-- docs/                     # Release, dashboard, modelling, data, and output docs
 |-- scripts/                  # Ingestion, feature, modelling, and validation commands
 |-- src/opponent_adjusted/    # Package code
 |-- tests/                    # Unit, contract, dashboard, and smoke tests
@@ -128,10 +143,11 @@ opponent-adjusted-metrics/
 
 ## Generated Outputs
 
-Generated files under `feature_store/` and `outputs/` are not committed. The repository tracks source code, contracts, tests, and documentation needed to regenerate them.
+Generated files under `feature_store/` and `outputs/` are not committed. The local SQLite database under `data/` is also ignored. The repository tracks source code, contracts, tests, migrations, and documentation needed to regenerate them.
 
 Ignored generated examples:
 
+- `data/opponent_adjusted.db`
 - `feature_store/cxg/`
 - `feature_store/cxa/`
 - `feature_store/cxt/`
@@ -163,6 +179,7 @@ The `/predict/cxg` endpoint requires generated local CxG model artifacts.
 - [CxG model card](docs/modeling/cxg/model_card.md)
 - [CxA design contract](docs/modeling/cxa/design_contract.md)
 - [CxT design contract](docs/modeling/cxt/design_contract.md)
+- [v1 results summary](docs/modeling/v1_results_summary.md)
 - [Dashboard design](docs/dashboard/v1_dashboard_design.md)
 - [Project story](docs/storytelling/v1_project_story.md)
 

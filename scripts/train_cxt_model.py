@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """
-Train CxT Model
+Experimental contextual CxT training script.
 
-Trains the contextual xT model with opponent adjustments.
+This script is retained for deferred CxT research and is not part of the v1
+baseline dashboard/reproducibility path. Use `make cxt-baseline` for the
+implemented v1 grid-threat pipeline.
 """
 
 import argparse

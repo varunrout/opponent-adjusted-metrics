@@ -39,13 +39,23 @@ poetry run streamlit run app/streamlit_app.py
 
 The dashboard reads generated files from `feature_store/` and `outputs/`. Those files are intentionally ignored by Git. In a clean checkout, some dashboard sections may show empty tables and missing-output guidance. That is expected.
 
-To populate the dashboard locally, run:
+To fully populate the dashboard locally, run:
 
 ```bash
-make cxg-smoke
-make cxa-smoke
-make cxt-baseline
+make reproduce-v1
+make ingestion-report
 ```
+
+If the database is already ingested and normalized, regenerate model families individually:
+
+```bash
+make cxg-run
+make cxa-run
+make cxt-baseline
+make ingestion-report
+```
+
+`make cxa-smoke` only builds a small CxA action-feature smoke dataset. It does not populate full CxA model outputs.
 
 ## 5. Review The Project Story
 
@@ -56,6 +66,8 @@ Recommended docs:
 - [dashboard demo walkthrough](../dashboard/demo_walkthrough.md)
 - [project story](../storytelling/v1_project_story.md)
 - [generated outputs](../OUTPUTS.md)
+- [v1 results summary](../modeling/v1_results_summary.md)
+- [clean-run reproducibility](../reproducibility/clean_run_reproducibility.md)
 
 ## 6. What To Look For
 

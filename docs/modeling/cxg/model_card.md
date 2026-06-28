@@ -2,64 +2,120 @@
 
 ## Status
 
-CxG now has a reproducible end-to-end runner for local feature tables and fixture/synthetic test data. The implementation is a pragmatic sklearn logistic-regression baseline, not a claim of production-grade football forecasting.
+CxG is implemented as a reproducible v1 contextual expected-goals baseline. It trains a sklearn-compatible contextual logistic model, writes local file outputs, and persists model outputs to the SQLite database.
 
-## One-command run
+This is a pragmatic event-data baseline, not a claim of production-grade calibration or betting-grade forecasting.
+
+## Objective
+
+CxG estimates the probability that a shot becomes a goal using shot location, shot descriptors, match context, possession context, and opponent/profile proxy features available from event data.
+
+## Target
+
+- Target: `is_goal`
+- Current v1 sample rows: 15,623 shots
+- Current v1 sample goals: 1,639
+- Current v1 goal rate: 0.1049
+
+## Run Command
 
 ```bash
+make cxg-run
+```
+
+Expanded commands:
+
+```bash
+poetry run python scripts/run_cxg_pipeline.py
 poetry run python scripts/run_cxg_end_to_end.py
+poetry run python scripts/check_cxg_outputs.py
+poetry run python scripts/validate_cxg_outputs.py
 ```
 
-The command auto-discovers CxG feature outputs in `feature_store/cxg/`, preferring `shot_features.parquet` and falling back to other existing CxG datasets. To use a specific dataset:
+## Feature Families
 
-```bash
-poetry run python scripts/run_cxg_end_to_end.py --input feature_store/cxg/shot_features.parquet
-```
+The current CxG pipeline uses event-derived shot features:
 
-All generated modeling outputs are written under `outputs/modeling/cxg/` by default.
+- Geometry: shot distance, angle, centrality, distance to goal line.
+- Shot descriptors: body part, technique, shot type, first-time flag, blocked flag.
+- Match context: period, minute, minute bucket, score state.
+- Possession context: possession sequence length, duration, previous action gap.
+- Pressure/opponent proxy context: under-pressure flag, recent defensive action count, pressure proxy, opponent defensive profile features where available.
 
-## Inputs
+No tracking data is required.
 
-The runner expects a shot-level table with:
+## Current V1 Metrics
 
-- `is_goal` target labels.
-- `match_id` for grouped evaluation.
-- Any supported CxG contextual features already produced by the CxG feature pipeline.
+From `outputs/modeling/cxg/reports/metrics.json`:
 
-When optional context columns are absent, the runner fills conservative neutral defaults so fixture tests and smaller datasets remain reproducible.
+| Metric | Value |
+|---|---:|
+| rows | 15,623 |
+| folds | 5 |
+| Brier mean | 0.073251 |
+| Log loss mean | 0.261105 |
+| ROC AUC mean | 0.810041 |
+
+From `outputs/modeling/cxg/reports/validation_summary.json`:
+
+| Validation metric | Value |
+|---|---:|
+| mean predicted CxG | 0.105071 |
+| Brier | 0.073248 |
+| Log loss | 0.261096 |
+| ROC AUC | 0.809201 |
+| calibration bins | 10 |
+| mean absolute calibration error | 0.042051 |
+| grouped validation matches | 606 |
+
+Provider `statsbomb_xg` was available for baseline comparison in the current run:
+
+| Baseline metric | Value |
+|---|---:|
+| baseline column | `statsbomb_xg` |
+| mean provider xG | 0.105949 |
+| Brier | 0.072433 |
+| Log loss | 0.257550 |
+| ROC AUC | 0.819568 |
+
+Provider xG slightly outperformed this baseline CxG on the current sample. That is expected for a simple reproducible model and should be read as a calibration benchmark, not a failure of the pipeline.
 
 ## Outputs
 
-The end-to-end run emits:
+Generated files:
 
-- `outputs/modeling/cxg/models/contextual_model.joblib` — sklearn-compatible model artifact loadable with joblib.
-- `outputs/modeling/cxg/models/contextual_model.json` — API-compatible metadata with model version, artifact path, created timestamp, features, metrics and output paths.
-- `outputs/modeling/cxg/predictions/shot_predictions.parquet` — shot-level raw, neutral and opponent-adjusted CxG scores.
-- `outputs/modeling/cxg/aggregates/player_cxg.parquet` — player aggregates.
-- `outputs/modeling/cxg/aggregates/team_cxg.parquet` — team aggregates.
-- `outputs/modeling/cxg/reports/metrics.json` — cross-validated metrics.
-- `outputs/modeling/cxg/reports/model_card.md` — run-specific model card/report.
+```text
+feature_store/cxg/shot_features.parquet
+outputs/modeling/cxg/models/contextual_model.joblib
+outputs/modeling/cxg/models/contextual_model.json
+outputs/modeling/cxg/reports/metrics.json
+outputs/modeling/cxg/reports/validation_summary.json
+outputs/modeling/cxg/reports/calibration_table.csv
+outputs/modeling/cxg/reports/slice_metrics.csv
+outputs/modeling/cxg/reports/model_card.md
+outputs/modeling/cxg/predictions/shot_predictions.parquet
+outputs/modeling/cxg/aggregates/player_cxg.parquet
+outputs/modeling/cxg/aggregates/team_cxg.parquet
+```
 
-## Evaluation
+DB persistence:
 
-Evaluation uses deterministic cross-validation with match grouping when possible. The exported metrics currently include mean Brier score, mean log loss, mean ROC AUC and fold-level rows.
+- `model_registry`: model row for `cxg_contextual_20260628`.
+- `shot_predictions`: 15,623 rows in the current v1 sample run.
+- `aggregates_player`: CxG player aggregate rows.
+- `aggregates_team`: CxG team aggregate rows.
+- `evaluation_metrics`: 20 CxG metric rows in the current v1 sample run.
 
-## Neutral and opponent-adjusted scoring
+## API Compatibility
 
-The runner exports:
+The generated metadata sidecar at `outputs/modeling/cxg/models/contextual_model.json` is the local artifact contract used by `src/opponent_adjusted/api/cxg_inference.py`.
 
-- `cxg_raw`: model score in observed context.
-- `cxg_neutral`: model score after neutralizing score state, minute bucket and opponent defensive profile proxies.
-- `cxg_opp_adjusted_diff`: raw minus neutral CxG.
-- `cxg_opp_adjusted_ratio`: raw divided by neutral CxG.
-
-## API compatibility
-
-The metadata sidecar is intentionally written next to the joblib artifact at `outputs/modeling/cxg/models/contextual_model.json`, matching the discovery path used by `src/opponent_adjusted/api/cxg_inference.py`.
+The `/predict/cxg` endpoint requires generated local model artifacts. Without them it returns a controlled unavailable response.
 
 ## Limitations
 
 - The model uses event-derived features only; it does not use tracking data.
 - Opponent defensive ratings are proxies and should be interpreted as contextual adjustments, not causal defensive quality.
-- Small or biased samples can produce unstable player/team aggregates.
-- The runner is designed for reproducibility and portfolio clarity, not production deployment or betting use.
+- Provider xG is currently a strong baseline and outperforms this simple CxG model on the current sample.
+- Player/team aggregates can be unstable for small shot samples.
+- The runner is designed for reproducibility and portfolio clarity, not production deployment.
