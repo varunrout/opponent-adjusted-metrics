@@ -1,12 +1,13 @@
 .PHONY: help install migrate-create migrate-up migrate-down \
 	db-up db-down db-logs db-psql \
 	ingest-competitions ingest-matches ingest-events \
-	normalize-events ingestion-report data-smoke \
+	normalize-events build-possessions ingestion-report data-smoke \
 	build-features build-profiles \
+	build-cxa-action-features cxa-action-features-smoke \
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
 	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run train-cxt evaluate-cxt \
-	fetch-data api dashboard streamlit-dashboard test lint format format-check clean
+	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
@@ -60,10 +61,13 @@ ingest-all: ingest-competitions ingest-matches ingest-events  ## Run full ingest
 normalize-events:  ## Normalize all raw events and populate detail tables
 	poetry run python scripts/normalize_events.py --only-missing --batch-size 20000 --fill-missing-detail
 
+build-possessions:  ## Build possession rows from normalized events
+	poetry run python scripts/build_possessions.py
+
 ingestion-report:  ## Write database ingestion status report
 	poetry run python scripts/report_ingestion_status.py
 
-data-smoke: fetch-data ingest-all normalize-events ingestion-report  ## Fetch, ingest, normalize and report data status
+data-smoke: migrate-up fetch-data ingest-all normalize-events build-possessions ingestion-report  ## Migrate, fetch, ingest, normalize, build possessions and report data status
 
 # Features
 build-features:  ## Build shot features (VERSION=v1)
@@ -73,15 +77,21 @@ build-profiles:  ## Build opponent profiles (VERSION=v1)
 	poetry run python scripts/build_opponent_profiles.py --version $(or $(VERSION),v1)
 
 # CxA
+build-cxa-action-features:  ## Build CxA action features from normalized events
+	poetry run python scripts/build_cxa_action_features.py
+
+cxa-action-features-smoke:  ## Build CxA action features on a small deterministic subset
+	poetry run python scripts/build_cxa_action_features.py --smoke --max-matches 20
+
 run-cxa-pipeline:  ## Run CxA pipeline
 	poetry run python scripts/run_cxa_pipeline.py
 
 run-cxa-end-to-end:  ## Train, evaluate, and export CxA baseline outputs
 	poetry run python scripts/run_cxa_end_to_end.py
 
-cxa-run: run-cxa-pipeline run-cxa-end-to-end  ## Regenerate CxA baseline features and model outputs
+cxa-run: build-cxa-action-features run-cxa-end-to-end  ## Regenerate CxA baseline features and model outputs
 
-cxa-smoke: cxa-run  ## Alias for the local CxA baseline smoke
+cxa-smoke: cxa-action-features-smoke  ## Alias for the local CxA feature smoke
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline
@@ -127,6 +137,12 @@ dashboard:  ## Start Streamlit dashboard v1
 
 streamlit-dashboard: dashboard  ## Alias for Streamlit dashboard v1
 
+clean-rebuild: migrate-up fetch-data ingest-all normalize-events build-possessions ingestion-report build-features build-profiles build-cxa-action-features run-cxg-pipeline run-cxt-pipeline  ## Rebuild generated local data from a clean checkout
+
+reproduce: clean-rebuild  ## Alias for clean local reproducibility path
+
+reproduce-v1: migrate-up fetch-data ingest-all normalize-events build-possessions build-features build-profiles build-cxa-action-features run-cxg-pipeline run-cxg-end-to-end run-cxa-pipeline run-cxa-end-to-end run-cxt-pipeline ingestion-report  ## Reproduce v1 generated outputs from a clean checkout
+
 # Development
 test:  ## Run tests
 	poetry run pytest -v
@@ -153,4 +169,4 @@ clean:  ## Clean generated files
 	rm -rf .pytest_cache .coverage htmlcov .mypy_cache .ruff_cache
 
 # Full pipeline
-pipeline: ingest-all normalize-events build-features build-profiles run-cxg-pipeline run-cxt-pipeline ingestion-report  ## Run complete pipeline
+pipeline: migrate-up ingest-all normalize-events build-possessions build-features build-profiles build-cxa-action-features run-cxg-pipeline run-cxt-pipeline ingestion-report  ## Run complete pipeline

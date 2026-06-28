@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 # Import the database configuration and models
 from opponent_adjusted.config import settings
 from opponent_adjusted.db.base import Base
+from opponent_adjusted.db.bootstrap import ensure_sqlite_database_parent
 from opponent_adjusted.db import models  # noqa: F401 - import to register models
 
 # this is the Alembic Config object, which provides
@@ -21,6 +22,7 @@ config = context.config
 
 # Override the sqlalchemy.url with our settings
 config.set_main_option("sqlalchemy.url", settings.database_url)
+ensure_sqlite_database_parent(settings.database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

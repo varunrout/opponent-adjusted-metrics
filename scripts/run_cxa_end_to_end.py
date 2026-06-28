@@ -23,6 +23,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from opponent_adjusted.config import settings
+from opponent_adjusted.db.model_output_persistence import persist_cxa_outputs_to_database
 
 FEATURE_STORE_INPUT = settings.feature_store_path / "cxa" / "action_features.parquet"
 DEFAULT_OUTPUT_DIR = Path("outputs") / "modeling" / "cxa"
@@ -437,6 +438,7 @@ def run_end_to_end(
     input_path: Path = FEATURE_STORE_INPUT,
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     model_version: str | None = None,
+    persist_db: bool = False,
 ) -> CxARunOutputs:
     df = _read_table(input_path)
     created_at = datetime.now(timezone.utc).isoformat()
@@ -460,10 +462,14 @@ def run_end_to_end(
     attribution_summary_path = reports_dir / "attribution_summary.json"
 
     joblib.dump(model, model_path)
+    player_aggregates = _aggregate_player(scored)
+    team_aggregates = _aggregate_team(scored)
+    sequence_aggregates = _aggregate_sequence(scored)
+
     scored.to_parquet(predictions_path, index=False)
-    _aggregate_player(scored).to_parquet(player_path, index=False)
-    _aggregate_team(scored).to_parquet(team_path, index=False)
-    _aggregate_sequence(scored).to_parquet(sequence_path, index=False)
+    player_aggregates.to_parquet(player_path, index=False)
+    team_aggregates.to_parquet(team_path, index=False)
+    sequence_aggregates.to_parquet(sequence_path, index=False)
     attribution_summary = _attribution_summary(
         scored,
         {
@@ -508,6 +514,15 @@ def run_end_to_end(
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     attribution_summary_path.write_text(json.dumps(attribution_summary, indent=2), encoding="utf-8")
+    if persist_db:
+        persist_cxa_outputs_to_database(
+            metadata=metadata,
+            metrics=metrics,
+            scored=scored,
+            player_aggregates=player_aggregates,
+            team_aggregates=team_aggregates,
+            sequence_aggregates=sequence_aggregates,
+        )
 
     return CxARunOutputs(
         model_path,
@@ -526,9 +541,19 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=FEATURE_STORE_INPUT)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--model-version", default=None)
+    parser.add_argument(
+        "--no-db-persist",
+        action="store_true",
+        help="Write CxA files only and skip DB persistence.",
+    )
     args = parser.parse_args()
 
-    outputs = run_end_to_end(args.input, args.output_dir, args.model_version)
+    outputs = run_end_to_end(
+        args.input,
+        args.output_dir,
+        args.model_version,
+        persist_db=not args.no_db_persist,
+    )
     print(json.dumps({key: str(value) for key, value in outputs.__dict__.items()}, indent=2))
 
 

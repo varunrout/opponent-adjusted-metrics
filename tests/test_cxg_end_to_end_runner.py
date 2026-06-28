@@ -5,14 +5,31 @@ import joblib
 import pandas as pd
 from fastapi.testclient import TestClient
 
+from opponent_adjusted.db.models import (
+    AggregatesPlayer,
+    AggregatesTeam,
+    Competition,
+    EvaluationMetric,
+    Event,
+    Match,
+    ModelRegistry,
+    Player,
+    RawEvent,
+    Shot,
+    ShotPrediction,
+    Team,
+)
+from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.api import cxg_inference
 from opponent_adjusted.api.service import app
+from scripts.report_ingestion_status import build_report
 from scripts.check_cxg_outputs import (
     CxGOutputContract,
     assert_git_ignored,
     validate_cxg_outputs,
 )
 from scripts.run_cxg_end_to_end import run_end_to_end
+from scripts.run_cxg_end_to_end import _aggregate
 
 
 def _synthetic_cxg_frame() -> pd.DataFrame:
@@ -52,6 +69,91 @@ def _synthetic_cxg_frame() -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+def _seed_cxg_database_shots(frame: pd.DataFrame) -> pd.DataFrame:
+    seeded = frame.copy()
+    with session_scope() as session:
+        competition = Competition(
+            statsbomb_competition_id=99,
+            name="CxG Fixture League",
+            season="2026",
+        )
+        teams = [Team(statsbomb_team_id=1000 + i, name=f"Team {i}") for i in range(8)]
+        players = [Player(statsbomb_player_id=2000 + i, name=f"Player {i}") for i in range(6)]
+        session.add(competition)
+        session.add_all(teams + players)
+        session.flush()
+
+        matches = []
+        for i in range(int(seeded["match_id"].nunique())):
+            match = Match(
+                statsbomb_match_id=3000 + i,
+                competition_id=competition.id,
+                home_team_id=teams[0].id,
+                away_team_id=teams[1].id,
+                season="2026",
+            )
+            matches.append(match)
+        session.add_all(matches)
+        session.flush()
+
+        team_ids = [team.id for team in teams[:3]]
+        opponent_ids = [team.id for team in teams[3:7]]
+        player_ids = [player.id for player in players]
+        shot_ids = []
+        for i, record in seeded.iterrows():
+            raw_event = RawEvent(
+                match_id=matches[int(record["match_id"])].id,
+                statsbomb_event_id=f"shot-{i}",
+                raw_json={
+                    "id": f"shot-{i}",
+                    "type": {"name": "Shot"},
+                    "possession": int(i) + 1,
+                    "team": {"id": 1000 + (i % 3), "name": f"Team {i % 3}"},
+                },
+                type="Shot",
+                period=1,
+                minute=int(record["minute"]),
+                second=0,
+            )
+            session.add(raw_event)
+            session.flush()
+
+            event = Event(
+                raw_event_id=raw_event.id,
+                match_id=raw_event.match_id,
+                team_id=team_ids[i % len(team_ids)],
+                player_id=player_ids[i % len(player_ids)],
+                type="Shot",
+                period=1,
+                minute=int(record["minute"]),
+                second=0,
+                possession=int(i) + 1,
+            )
+            session.add(event)
+            session.flush()
+
+            shot = Shot(
+                event_id=event.id,
+                match_id=event.match_id,
+                team_id=event.team_id,
+                player_id=event.player_id,
+                opponent_team_id=opponent_ids[i % len(opponent_ids)],
+                statsbomb_xg=float(record["statsbomb_xg"]),
+                outcome="Goal" if int(record["is_goal"]) else "Saved",
+                first_time=False,
+                is_blocked=False,
+            )
+            session.add(shot)
+            session.flush()
+            shot_ids.append(shot.id)
+
+    seeded["shot_id"] = shot_ids
+    seeded["team_id"] = [team_ids[i % len(team_ids)] for i in range(len(seeded))]
+    seeded["player_id"] = [player_ids[i % len(player_ids)] for i in range(len(seeded))]
+    seeded["opponent_team_id"] = [opponent_ids[i % len(opponent_ids)] for i in range(len(seeded))]
+    return seeded
 
 
 def test_cxg_end_to_end_runner_emits_artifact_metadata_and_outputs(tmp_path: Path):
@@ -116,6 +218,39 @@ def test_cxg_generated_roots_are_git_ignored():
     )
 
 
+def test_cxg_aggregate_does_not_collide_when_name_falls_back_to_id():
+    scored = pd.DataFrame(
+        [
+            {
+                "shot_id": 1,
+                "player_id": 10,
+                "team_id": 100,
+                "is_goal": 1,
+                "cxg_raw": 0.2,
+                "cxg_neutral": 0.18,
+                "cxg_opp_adjusted_diff": 0.02,
+            },
+            {
+                "shot_id": 2,
+                "player_id": 10,
+                "team_id": 100,
+                "is_goal": 0,
+                "cxg_raw": 0.1,
+                "cxg_neutral": 0.12,
+                "cxg_opp_adjusted_diff": -0.02,
+            },
+        ]
+    )
+
+    player_aggregate = _aggregate(scored, "player_id", "player_name")
+    team_aggregate = _aggregate(scored, "team_id", "team_name")
+
+    assert list(player_aggregate["player_id"]) == [10]
+    assert list(team_aggregate["team_id"]) == [100]
+    assert player_aggregate.loc[0, "shots_count"] == 2
+    assert team_aggregate.loc[0, "summed_cxg"] == 0.30000000000000004
+
+
 def test_cxg_metadata_schema_contains_api_loader_fields(tmp_path: Path):
     input_path = tmp_path / "shot_features.parquet"
     _synthetic_cxg_frame().to_parquet(input_path, index=False)
@@ -173,3 +308,58 @@ def test_cxg_api_positive_path_with_fixture_model(tmp_path: Path, monkeypatch):
     assert 0.0 <= body["neutral_probability"] <= 1.0
     assert body["model_version"] == "api-v1"
     assert body["model_path"] == str(outputs.model_path)
+
+
+def test_cxg_end_to_end_persists_outputs_to_database(e2e_test_env, tmp_path: Path):
+    input_path = tmp_path / "shot_features.parquet"
+    frame = _seed_cxg_database_shots(_synthetic_cxg_frame())
+    frame.to_parquet(input_path, index=False)
+
+    run_end_to_end(
+        input_path=input_path,
+        output_dir=tmp_path / "cxg",
+        model_version="db-v1",
+        persist_db=True,
+    )
+
+    with session_scope() as session:
+        registry = session.query(ModelRegistry).filter_by(model_name="cxg", version="db-v1").one()
+        assert registry.artifact_path.endswith("contextual_model.joblib")
+        assert session.query(ShotPrediction).filter_by(model_id=registry.id).count() == len(frame)
+        assert session.query(AggregatesPlayer).filter_by(model_id=registry.id).count() > 0
+        assert session.query(AggregatesTeam).filter_by(model_id=registry.id).count() > 0
+        assert session.query(EvaluationMetric).filter_by(model_id=registry.id).count() > 0
+
+    report = build_report()
+    assert report["table_counts"]["model_registry"] == 1
+    assert report["table_counts"]["shot_predictions"] == len(frame)
+    assert report["table_counts"]["aggregates_player"] > 0
+    assert report["table_counts"]["aggregates_team"] > 0
+    assert report["table_counts"]["evaluation_metrics"] > 0
+    assert report["readiness"]["has_predictions"] is True
+
+
+def test_cxg_database_persistence_is_idempotent(e2e_test_env, tmp_path: Path):
+    input_path = tmp_path / "shot_features.parquet"
+    frame = _seed_cxg_database_shots(_synthetic_cxg_frame())
+    frame.to_parquet(input_path, index=False)
+
+    for _ in range(2):
+        run_end_to_end(
+            input_path=input_path,
+            output_dir=tmp_path / "cxg",
+            model_version="db-idempotent-v1",
+            persist_db=True,
+        )
+
+    with session_scope() as session:
+        registry = (
+            session.query(ModelRegistry)
+            .filter_by(model_name="cxg", version="db-idempotent-v1")
+            .one()
+        )
+        assert session.query(ModelRegistry).count() == 1
+        assert session.query(ShotPrediction).filter_by(model_id=registry.id).count() == len(frame)
+        assert session.query(AggregatesPlayer).filter_by(model_id=registry.id).count() > 0
+        assert session.query(AggregatesTeam).filter_by(model_id=registry.id).count() > 0
+        assert session.query(EvaluationMetric).filter_by(model_id=registry.id).count() > 0

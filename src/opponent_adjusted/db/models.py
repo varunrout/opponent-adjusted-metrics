@@ -368,6 +368,56 @@ class ShotFeature(Base):
     __table_args__ = (Index("ix_shot_features_version_tag", "version_tag"),)
 
 
+class ActionFeature(Base):
+    """Engineered action feature rows used by CxA-style feature pipelines."""
+
+    __tablename__ = "action_features"
+
+    feature_family: Mapped[str] = mapped_column(String(50), nullable=False)
+    version_tag: Mapped[str] = mapped_column(String(50), nullable=False)
+    action_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    event_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    match_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    team_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    player_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    possession_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    possession_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    sequence_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    action_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    start_x: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    start_y: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    end_x: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    end_y: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    length: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    angle: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    x_progression: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    y_progression: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    distance_to_goal_before: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    distance_to_goal_after: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    angle_to_goal_before: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    angle_to_goal_after: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    start_zone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    end_zone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    is_progressive: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    enters_final_third: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    enters_penalty_area: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    target_shot_created: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    target_created_shot_cxg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    target_created_shot_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "feature_family",
+            "version_tag",
+            "action_id",
+            name="uq_action_feature_version_action",
+        ),
+        Index("ix_action_features_family_version", "feature_family", "version_tag"),
+        Index("ix_action_features_match_id", "match_id"),
+        Index("ix_action_features_event_id", "event_id"),
+    )
+
+
 class OpponentDefProfile(Base):
     """Opponent defensive profile table."""
 
@@ -439,6 +489,60 @@ class ShotPrediction(Base):
     )
 
 
+class ActionPrediction(Base):
+    """Action-level CxA predictions table."""
+
+    __tablename__ = "action_predictions"
+
+    model_id: Mapped[int] = mapped_column(ForeignKey("model_registry.id"), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    action_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    event_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    match_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    team_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    player_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    possession_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    sequence_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    action_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    predicted_cxa: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    predicted_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    target_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("model_id", "action_id", name="uq_action_prediction"),
+        Index("ix_action_predictions_model_id", "model_id"),
+        Index("ix_action_predictions_match_id", "match_id"),
+    )
+
+
+class ActionThreatPrediction(Base):
+    """Action-level CxT threat predictions table."""
+
+    __tablename__ = "action_threat_predictions"
+
+    model_id: Mapped[int] = mapped_column(ForeignKey("model_registry.id"), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    action_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    event_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    match_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    team_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    player_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    possession_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    sequence_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    action_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    start_zone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    end_zone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    cxt_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    predicted_threat: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    threat_delta: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("model_id", "action_id", name="uq_action_threat_prediction"),
+        Index("ix_action_threat_predictions_model_id", "model_id"),
+        Index("ix_action_threat_predictions_match_id", "match_id"),
+    )
+
+
 class AggregatesPlayer(Base):
     """Player-level aggregates table."""
 
@@ -476,6 +580,29 @@ class AggregatesTeam(Base):
     __table_args__ = (
         UniqueConstraint("team_id", "model_id", "version_tag", name="uq_team_aggregate"),
         Index("ix_aggregates_team_model_id", "model_id"),
+    )
+
+
+class AggregatesSequence(Base):
+    """Sequence-level model aggregates table."""
+
+    __tablename__ = "aggregates_sequence"
+
+    model_id: Mapped[int] = mapped_column(ForeignKey("model_registry.id"), nullable=False)
+    model_family: Mapped[str] = mapped_column(String(50), nullable=False)
+    model_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    match_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    team_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    possession_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    sequence_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    total_value: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    action_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("model_id", "match_id", "sequence_id", name="uq_sequence_aggregate"),
+        Index("ix_aggregates_sequence_model_id", "model_id"),
+        Index("ix_aggregates_sequence_match_id", "match_id"),
     )
 
 

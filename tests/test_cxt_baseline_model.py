@@ -3,12 +3,23 @@ from pathlib import Path
 
 import pandas as pd
 
+from opponent_adjusted.db.models import (
+    ActionThreatPrediction,
+    AggregatesPlayer,
+    AggregatesSequence,
+    AggregatesTeam,
+    EvaluationMetric,
+    ModelRegistry,
+)
+from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.features.cxt.baseline import (
     PROHIBITED_LEAKAGE_COLUMNS,
     build_action_features,
     run_baseline,
 )
 from scripts.check_cxg_outputs import assert_git_ignored
+from scripts.report_ingestion_status import build_report
+from scripts.run_cxt_pipeline import resolve_input_path
 
 
 def _synthetic_cxt_actions() -> pd.DataFrame:
@@ -245,6 +256,93 @@ def test_cxt_baseline_emits_grid_predictions_aggregates_and_metrics(tmp_path: Pa
     )
     assert interpretation["top_actions_report_path"] == str(outputs.top_actions_path)
     assert interpretation["sequence_aggregate_path"] == str(outputs.sequence_aggregates_path)
+
+
+def test_cxt_baseline_persists_outputs_to_database(e2e_test_env, tmp_path: Path):
+    input_path = tmp_path / "actions.parquet"
+    _synthetic_cxt_actions().to_parquet(input_path, index=False)
+
+    outputs = run_baseline(
+        input_path=input_path,
+        feature_store_dir=tmp_path / "feature_store" / "cxt",
+        output_dir=tmp_path / "outputs" / "modeling" / "cxt",
+        persist_db=True,
+    )
+
+    with session_scope() as session:
+        registry = session.query(ModelRegistry).filter_by(model_name="cxt").one()
+        prediction_count = (
+            session.query(ActionThreatPrediction).filter_by(model_id=registry.id).count()
+        )
+        assert prediction_count == len(pd.read_parquet(outputs.predictions_path))
+        assert session.query(AggregatesPlayer).filter_by(model_id=registry.id).count() == 3
+        assert session.query(AggregatesTeam).filter_by(model_id=registry.id).count() == 2
+        assert session.query(AggregatesSequence).filter_by(model_id=registry.id).count() == 3
+        assert session.query(EvaluationMetric).filter_by(model_id=registry.id).count() > 0
+
+    report = build_report()
+    assert report["table_counts"]["action_threat_predictions"] == 3
+    assert report["table_counts"]["aggregates_sequence"] == 3
+    assert report["readiness"]["has_cxt_predictions"] is True
+    assert report["readiness"]["has_sequence_aggregates"] is True
+
+
+def test_run_cxt_pipeline_resolves_real_generated_input(tmp_path: Path, monkeypatch):
+    feature_root = tmp_path / "feature_store"
+    cxa_path = feature_root / "cxa" / "action_features.parquet"
+    cxa_path.parent.mkdir(parents=True)
+    pd.DataFrame({"action_id": ["real-action"]}).to_parquet(cxa_path, index=False)
+
+    monkeypatch.setattr("scripts.run_cxt_pipeline.settings.feature_store_path", feature_root)
+    monkeypatch.setattr(
+        "scripts.run_cxt_pipeline.DEFAULT_INPUT_CANDIDATES",
+        (
+            feature_root / "cxt" / "progressions_featured.parquet",
+            feature_root / "cxt" / "progressions.parquet",
+            cxa_path,
+        ),
+    )
+
+    assert resolve_input_path(None) == cxa_path
+
+
+def test_run_cxt_pipeline_source_does_not_use_synthetic_fixture_default():
+    text = Path("scripts/run_cxt_pipeline.py").read_text(encoding="utf-8")
+
+    assert "synthetic_actions" not in text
+    assert "small deterministic fixture" not in text
+
+
+def test_cxt_database_persistence_is_idempotent_and_preserves_cxg_rows(
+    e2e_test_env, tmp_path: Path
+):
+    input_path = tmp_path / "actions.parquet"
+    _synthetic_cxt_actions().to_parquet(input_path, index=False)
+
+    with session_scope() as session:
+        session.add(
+            ModelRegistry(
+                model_name="cxg",
+                version="existing-cxg",
+                algorithm="fixture",
+                trained_on_version_tag="existing-cxg",
+                artifact_path="fixture.joblib",
+            )
+        )
+
+    for _ in range(2):
+        run_baseline(
+            input_path=input_path,
+            feature_store_dir=tmp_path / "feature_store" / "cxt",
+            output_dir=tmp_path / "outputs" / "modeling" / "cxt",
+            persist_db=True,
+        )
+
+    with session_scope() as session:
+        registry = session.query(ModelRegistry).filter_by(model_name="cxt").one()
+        assert session.query(ModelRegistry).filter_by(model_name="cxg").count() == 1
+        assert session.query(ActionThreatPrediction).filter_by(model_id=registry.id).count() == 3
+        assert session.query(AggregatesSequence).filter_by(model_id=registry.id).count() == 3
 
 
 def test_cxt_baseline_handles_missing_optional_names_and_drops_leakage_columns():
