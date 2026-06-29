@@ -6,7 +6,7 @@
 	build-cxa-action-features cxa-action-features-smoke \
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke \
 	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
-	run-cxg-analysis run-cxt-pipeline cxt-baseline cxt-run \
+	run-cxg-analysis analysis-cxg run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
 
 help:  ## Show this help message
@@ -110,8 +110,10 @@ cxg-run: run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate  ## 
 
 cxg-smoke: cxg-run  ## Alias for the full local CxG reproducibility smoke
 
-run-cxg-analysis:  ## Run CxG analysis
+run-cxg-analysis:  ## Run pre-model CxG target and feature analysis
 	poetry run python scripts/run_cxg_analysis.py
+
+analysis-cxg: run-cxg-analysis  ## Alias for the pre-model CxG analysis layer
 
 # CxT
 run-cxt-pipeline:  ## Run baseline CxT pipeline

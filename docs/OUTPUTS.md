@@ -7,6 +7,8 @@ The generated local surfaces are:
 - `data/opponent_adjusted.db` for SQLite database state.
 - `feature_store/` for engineered feature parquet files.
 - `outputs/` for model artifacts, predictions, aggregates, metrics, validation reports, and dashboard-readable summaries.
+- `outputs/analysis/` for pre-model analysis artifacts that inform modelling decisions before
+  any predictions or aggregate model outputs are produced.
 
 ## Current V1 Sample Run
 
@@ -63,6 +65,57 @@ make ingestion-report
 Generated files and the SQLite database remain ignored by Git.
 
 ## CxG Outputs
+
+### Pre-model CxG Analysis
+
+Command:
+
+```bash
+make analysis-cxg
+```
+
+This layer sits between feature engineering and model training:
+
+```text
+raw / normalized events
+-> feature engineering
+-> CxG analysis layer
+-> CxG modelling decisions / model training
+-> post-model prediction reporting
+```
+
+It reads `shot_features` joined to `shots`. Optional provider xG columns, such as
+`statsbomb_xg`, are treated only as external benchmarks/reference variables. It does
+not read `shot_predictions`, `model_registry`, CxG aggregate model outputs,
+opponent-adjusted CxG outputs, or prediction leaderboards.
+
+Generated files:
+
+```text
+outputs/analysis/cxg/
+outputs/analysis/cxg/00_target/target_summary.csv
+outputs/analysis/cxg/00_target/target_balance.png
+outputs/analysis/cxg/01_feature_distributions/feature_missingness.csv
+outputs/analysis/cxg/01_feature_distributions/numeric_distributions.png
+outputs/analysis/cxg/01_feature_distributions/categorical_top_levels.csv
+outputs/analysis/cxg/02_feature_target_relationships/numeric_target_relationships.csv
+outputs/analysis/cxg/02_feature_target_relationships/categorical_target_relationships.csv
+outputs/analysis/cxg/02_feature_target_relationships/numeric_target_relationships.png
+outputs/analysis/cxg/03_feature_correlations/numeric_correlations.csv
+outputs/analysis/cxg/03_feature_correlations/high_correlations.csv
+outputs/analysis/cxg/03_feature_correlations/correlation_heatmap.png
+outputs/analysis/cxg/04_slice_stability/slice_stability.csv
+outputs/analysis/cxg/04_slice_stability/slice_stability.png
+outputs/analysis/cxg/05_data_quality/data_quality.csv
+outputs/analysis/cxg/05_data_quality/cleaning_recommendations.csv
+outputs/analysis/cxg/06_leakage_checks/leakage_checks.csv
+outputs/analysis/cxg/report.md
+```
+
+Every report section follows: Question -> Calculation -> Visual/Table ->
+Interpretation -> Modelling implication -> Limitation.
+
+### CxG Modelling
 
 Command:
 
