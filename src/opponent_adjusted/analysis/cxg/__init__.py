@@ -1,19 +1,15 @@
-"""CxG analysis helpers and exploratory scripts package."""
+"""Pre-model CxG target and feature analysis package."""
 
 from .core import (
-    ShotLevelCxGRecord,
-    PlayerCxGSummary,
-    TeamCxGSummary,
-    compute_shot_level_cxg,
-    summarize_player_cxg,
-    summarize_team_cxg,
+    CxGAnalysisResult,
+    build_pre_model_cxg_analysis,
+    load_shot_feature_dataset,
+    run_pre_model_cxg_analysis,
 )
 
 __all__ = [
-    "ShotLevelCxGRecord",
-    "PlayerCxGSummary",
-    "TeamCxGSummary",
-    "compute_shot_level_cxg",
-    "summarize_player_cxg",
-    "summarize_team_cxg",
+    "CxGAnalysisResult",
+    "build_pre_model_cxg_analysis",
+    "load_shot_feature_dataset",
+    "run_pre_model_cxg_analysis",
 ]

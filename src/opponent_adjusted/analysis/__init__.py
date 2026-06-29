@@ -1,24 +1,15 @@
-"""Analysis utilities for CxG and opponent-adjusted metrics.
-
-This package provides higher-level analysis functions built on top of the
-core data model and prediction tables. These are intended for notebooks,
-exploratory scripts, and reporting tools rather than the core API.
-"""
+"""Analysis utilities that sit between feature engineering and modelling."""
 
 from .cxg import (
-    ShotLevelCxGRecord,
-    PlayerCxGSummary,
-    TeamCxGSummary,
-    compute_shot_level_cxg,
-    summarize_player_cxg,
-    summarize_team_cxg,
+    CxGAnalysisResult,
+    build_pre_model_cxg_analysis,
+    load_shot_feature_dataset,
+    run_pre_model_cxg_analysis,
 )
 
 __all__ = [
-    "ShotLevelCxGRecord",
-    "PlayerCxGSummary",
-    "TeamCxGSummary",
-    "compute_shot_level_cxg",
-    "summarize_player_cxg",
-    "summarize_team_cxg",
+    "CxGAnalysisResult",
+    "build_pre_model_cxg_analysis",
+    "load_shot_feature_dataset",
+    "run_pre_model_cxg_analysis",
 ]
