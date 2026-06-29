@@ -181,6 +181,64 @@ DB persistence:
 
 ## CxT Outputs
 
+### Pre-model Ball Progression / CxT Analysis
+
+Command:
+
+```bash
+make analysis-cxt
+```
+
+This diagnostic layer reads pre-model progression/action features before threat
+value construction. It does not read `action_threat_predictions`, `model_registry`,
+post-model CxT aggregates, leaderboards, player/team threat reports, or dashboard
+storytelling outputs.
+
+Generated files:
+
+```text
+outputs/analysis/cxt/
+outputs/analysis/cxt/00_action_coverage/tables/action_type_coverage.csv
+outputs/analysis/cxt/00_action_coverage/plots/action_type_coverage.png
+outputs/analysis/cxt/00_action_coverage/tables/id_coverage.csv
+outputs/analysis/cxt/00_action_coverage/tables/location_coverage.csv
+outputs/analysis/cxt/01_spatial_coverage/tables/start_zone_coverage.csv
+outputs/analysis/cxt/01_spatial_coverage/tables/end_zone_coverage.csv
+outputs/analysis/cxt/01_spatial_coverage/tables/transition_coverage.csv
+outputs/analysis/cxt/01_spatial_coverage/plots/start_zone_coverage.png
+outputs/analysis/cxt/01_spatial_coverage/plots/end_zone_coverage.png
+outputs/analysis/cxt/01_spatial_coverage/plots/transition_coverage.png
+outputs/analysis/cxt/02_feature_distributions/tables/numeric_feature_profiles.csv
+outputs/analysis/cxt/02_feature_distributions/tables/categorical_feature_profiles.csv
+outputs/analysis/cxt/03_feature_target_relationships/tables/missing_target_proxy.csv
+outputs/analysis/cxt/03_feature_target_relationships/tables/action_type_progression_summary.csv
+outputs/analysis/cxt/03_feature_target_relationships/plots/action_type_progression_summary.png
+outputs/analysis/cxt/03_feature_target_relationships/tables/zone_progression_summary.csv
+outputs/analysis/cxt/03_feature_target_relationships/plots/zone_progression_summary.png
+outputs/analysis/cxt/03_feature_target_relationships/tables/final_third_box_entry_summary.csv
+outputs/analysis/cxt/03_feature_target_relationships/plots/final_third_box_entry_summary.png
+outputs/analysis/cxt/04_feature_correlations/tables/numeric_correlations.csv
+outputs/analysis/cxt/04_feature_correlations/tables/high_correlations.csv
+outputs/analysis/cxt/04_feature_correlations/tables/targeted_redundancy_checks.csv
+outputs/analysis/cxt/04_feature_correlations/plots/correlation_heatmap.png
+outputs/analysis/cxt/05_transition_stability/tables/transition_stability.csv
+outputs/analysis/cxt/05_transition_stability/plots/transition_stability.png
+outputs/analysis/cxt/05_transition_stability/tables/sparse_transitions.csv
+outputs/analysis/cxt/05_transition_stability/tables/zone_resolution_recommendations.csv
+outputs/analysis/cxt/06_slice_stability/tables/slice_stability.csv
+outputs/analysis/cxt/06_slice_stability/plots/slice_stability.png
+outputs/analysis/cxt/07_data_quality/tables/feature_quality.csv
+outputs/analysis/cxt/07_data_quality/tables/football_value_checks.csv
+outputs/analysis/cxt/07_data_quality/tables/cleaning_recommendations.csv
+outputs/analysis/cxt/08_leakage_checks/tables/leakage_checks.csv
+outputs/analysis/cxt/08_leakage_checks/tables/feature_training_eligibility.csv
+outputs/analysis/cxt/report.md
+```
+
+See `docs/analysis/cxt_pre_model_analysis.md` for interpretation guidance.
+
+### CxT Modelling
+
 Command:
 
 ```bash
