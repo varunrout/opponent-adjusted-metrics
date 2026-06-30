@@ -291,6 +291,23 @@ def test_promotion_recommendation_categories():
         == "provisional_promote"
     )
 
+    ece_only = {
+        **baseline,
+        "log_loss": 0.34,
+        "brier": 0.09,
+        "expected_calibration_error": 0.035,
+    }
+    assert (
+        promotion_recommendation(
+            baseline,
+            ece_only,
+            selected_fold_status="stable",
+            leakage=leakage,
+            slice_calibration_df=empty_slices,
+        )["recommendation"]
+        == "needs_revision"
+    )
+
     worse = {**baseline, "log_loss": 0.34, "brier": 0.09, "expected_calibration_error": 0.08}
     assert (
         promotion_recommendation(
@@ -314,6 +331,41 @@ def test_promotion_recommendation_categories():
         )["recommendation"]
         == "do_not_promote"
     )
+
+    governance_unknown = {
+        "status": "unknown",
+        "missing_governance_artifacts": ["resolved_features.json"],
+    }
+    assert (
+        promotion_recommendation(
+            baseline,
+            good,
+            selected_fold_status="stable",
+            leakage=governance_unknown,
+            slice_calibration_df=empty_slices,
+        )["recommendation"]
+        == "do_not_promote"
+    )
+
+
+def test_missing_governance_artifacts_block_promotion(tmp_path: Path):
+    for missing_name, path_attr in (
+        ("resolved_features.json", "diagnostic_resolved_features"),
+        ("excluded_columns.csv", "diagnostic_excluded_columns"),
+        ("feature_group_summary.csv", "diagnostic_feature_group_summary"),
+    ):
+        paths = _write_artifacts(tmp_path / missing_name.replace(".", "_"))
+        getattr(paths, path_attr).unlink()
+
+        outputs = validate_diagnostic_cxg(paths, n_bins=5, make_plots=False)
+        summary = json.loads(outputs["validation_summary"].read_text(encoding="utf-8"))
+        recommendation = json.loads(outputs["promotion_recommendation"].read_text(encoding="utf-8"))
+
+        assert summary["governance_status"] == "unknown"
+        assert summary["leakage_status"] == "unknown"
+        assert any(missing_name in item for item in summary["missing_governance_artifacts"])
+        assert recommendation["recommendation"] == "do_not_promote"
+        assert recommendation["known_limitations"]
 
 
 def test_validation_command_writes_expected_outputs(tmp_path: Path):

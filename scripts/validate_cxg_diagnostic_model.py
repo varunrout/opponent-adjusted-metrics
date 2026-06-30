@@ -438,7 +438,21 @@ def leakage_status(
     excluded_columns: pd.DataFrame,
     resolved_features: dict[str, Any],
     feature_group_summary: pd.DataFrame,
+    *,
+    missing_governance_artifacts: list[str] | None = None,
 ) -> dict[str, Any]:
+    missing_governance_artifacts = missing_governance_artifacts or []
+    if missing_governance_artifacts:
+        return {
+            "status": "unknown",
+            "governance_status": "unknown",
+            "leakage_status": "unknown",
+            "missing_governance_artifacts": missing_governance_artifacts,
+            "leakage_or_reference_features_used": [],
+            "source_available": {},
+            "synthetic_default_excluded": {},
+            "synthetic_default_excluded_features": [],
+        }
     excluded = set()
     if not excluded_columns.empty and "column" in excluded_columns.columns:
         excluded = set(excluded_columns["column"].dropna().astype(str))
@@ -454,8 +468,12 @@ def leakage_status(
         synthetic_excluded = (
             feature_group_summary.loc[mask, "feature"].dropna().astype(str).tolist()
         )
+    status = "failed" if leakage_used else "passed"
     return {
-        "status": "failed" if leakage_used else "passed",
+        "status": status,
+        "governance_status": status,
+        "leakage_status": status,
+        "missing_governance_artifacts": [],
         "leakage_or_reference_features_used": leakage_used,
         "source_available": resolved_features.get("source_available", {}),
         "synthetic_default_excluded": resolved_features.get("synthetic_default_excluded", {}),
@@ -474,6 +492,7 @@ def promotion_recommendation(
     reasons: list[str] = []
     limitations: list[str] = []
     leakage_failed = leakage.get("status") != "passed"
+    missing_governance = leakage.get("missing_governance_artifacts") or []
     invalid_probability = (
         diagnostic_metrics["probability_null_count"] > 0
         or diagnostic_metrics["probability_min"] < 0.0
@@ -487,7 +506,13 @@ def promotion_recommendation(
     )
 
     if leakage_failed:
-        reasons.append("Forbidden leakage/reference features were used.")
+        if missing_governance:
+            reasons.append(
+                "Required feature-governance artifacts are missing: "
+                + ", ".join(str(path) for path in missing_governance)
+            )
+        else:
+            reasons.append("Forbidden leakage/reference features were used.")
     if invalid_probability:
         reasons.append("Diagnostic probabilities contain invalid or missing values.")
     if selected_fold_status == "unstable":
@@ -503,7 +528,7 @@ def promotion_recommendation(
     elif (
         not severe_slice_gap
         and selected_fold_status in {"stable", "moderate_variance"}
-        and (improves_log_loss or improves_brier or ece_ok)
+        and (improves_log_loss or improves_brier)
     ):
         recommendation = "provisional_promote"
         reasons.append(
@@ -522,6 +547,10 @@ def promotion_recommendation(
     if severe_slice_gap:
         limitations.append(
             "At least one sufficient slice has an absolute calibration gap above 0.12."
+        )
+    if missing_governance:
+        limitations.append(
+            "Feature-governance artifacts are required promotion gates and were missing."
         )
 
     return {
@@ -603,10 +632,13 @@ def validate_diagnostic_cxg(
         [baseline, diagnostic],
         min_rows=min_slice_rows,
     )
-    excluded_columns = _read_csv_if_exists(paths.diagnostic_excluded_columns)
-    resolved_features = _read_json(paths.diagnostic_resolved_features)
-    feature_group_summary = _read_csv_if_exists(paths.diagnostic_feature_group_summary)
-    leakage = leakage_status(excluded_columns, resolved_features, feature_group_summary)
+    governance = _load_governance_artifacts(paths)
+    leakage = leakage_status(
+        governance["excluded_columns"],
+        governance["resolved_features"],
+        governance["feature_group_summary"],
+        missing_governance_artifacts=governance["missing_governance_artifacts"],
+    )
     recommendation = promotion_recommendation(
         baseline_metrics,
         diagnostic_metrics,
@@ -670,10 +702,26 @@ def validate_diagnostic_cxg(
     return output_paths
 
 
-def _read_csv_if_exists(path: Path) -> pd.DataFrame:
-    if not path.exists():
-        return pd.DataFrame()
-    return pd.read_csv(path)
+def _load_governance_artifacts(paths: ValidationPaths) -> dict[str, Any]:
+    required = {
+        "resolved_features": paths.diagnostic_resolved_features,
+        "excluded_columns": paths.diagnostic_excluded_columns,
+        "feature_group_summary": paths.diagnostic_feature_group_summary,
+    }
+    missing = [str(path) for path in required.values() if not path.exists()]
+    if missing:
+        return {
+            "resolved_features": {},
+            "excluded_columns": pd.DataFrame(),
+            "feature_group_summary": pd.DataFrame(),
+            "missing_governance_artifacts": missing,
+        }
+    return {
+        "resolved_features": _read_json(paths.diagnostic_resolved_features),
+        "excluded_columns": pd.read_csv(paths.diagnostic_excluded_columns),
+        "feature_group_summary": pd.read_csv(paths.diagnostic_feature_group_summary),
+        "missing_governance_artifacts": [],
+    }
 
 
 def _validation_summary(
@@ -704,6 +752,9 @@ def _validation_summary(
         "baseline_metrics": baseline_metrics,
         "diagnostic_metrics": diagnostic_metrics,
         "missing_slice_columns": missing_slice_columns,
+        "governance_status": leakage.get("governance_status", leakage.get("status", "unknown")),
+        "missing_governance_artifacts": leakage.get("missing_governance_artifacts", []),
+        "leakage_status": leakage.get("leakage_status", leakage.get("status", "unknown")),
         "leakage_feature_governance": leakage,
         "promotion_recommendation": recommendation["recommendation"],
     }
@@ -737,6 +788,7 @@ def _validation_report(
     source_available = leakage.get("source_available", {})
     synthetic_excluded = leakage.get("synthetic_default_excluded", {})
     leakage_used = leakage.get("leakage_or_reference_features_used", [])
+    missing_governance = leakage.get("missing_governance_artifacts", [])
     return "\n".join(
         [
             "# Diagnostic CxG Validation",
@@ -782,7 +834,10 @@ def _validation_report(
             "## 7. Leakage / Feature Governance Check",
             "",
             "The validation uses the #55 diagnostics artifacts rather than recomputing "
-            "training eligibility. Source-available features were:",
+            "training eligibility. Governance status is "
+            f"`{leakage.get('governance_status', leakage.get('status', 'unknown'))}`. "
+            f"Missing governance artifacts: {', '.join(missing_governance) or 'none'}. "
+            "Source-available features were:",
             "",
             f"- Numeric: {', '.join(source_available.get('numeric', [])) or 'none'}",
             f"- Binary: {', '.join(source_available.get('binary', [])) or 'none'}",
