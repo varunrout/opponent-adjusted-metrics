@@ -46,7 +46,7 @@ No tracking data is required.
 
 ## Current V1 Metrics
 
-From `outputs/modeling/cxg/reports/metrics.json`:
+From `outputs/modeling/cxg/baseline/reports/metrics.json`:
 
 | Metric | Value |
 |---|---:|
@@ -56,7 +56,7 @@ From `outputs/modeling/cxg/reports/metrics.json`:
 | Log loss mean | 0.261105 |
 | ROC AUC mean | 0.810041 |
 
-From `outputs/modeling/cxg/reports/validation_summary.json`:
+From `outputs/modeling/cxg/baseline/reports/validation_summary.json`:
 
 | Validation metric | Value |
 |---|---:|
@@ -86,16 +86,16 @@ Generated files:
 
 ```text
 feature_store/cxg/shot_features.parquet
-outputs/modeling/cxg/models/contextual_model.joblib
-outputs/modeling/cxg/models/contextual_model.json
-outputs/modeling/cxg/reports/metrics.json
-outputs/modeling/cxg/reports/validation_summary.json
-outputs/modeling/cxg/reports/calibration_table.csv
-outputs/modeling/cxg/reports/slice_metrics.csv
-outputs/modeling/cxg/reports/model_card.md
-outputs/modeling/cxg/predictions/shot_predictions.parquet
-outputs/modeling/cxg/aggregates/player_cxg.parquet
-outputs/modeling/cxg/aggregates/team_cxg.parquet
+outputs/modeling/cxg/baseline/models/contextual_model.joblib
+outputs/modeling/cxg/baseline/models/contextual_model.json
+outputs/modeling/cxg/baseline/reports/metrics.json
+outputs/modeling/cxg/baseline/reports/validation_summary.json
+outputs/modeling/cxg/baseline/reports/calibration_table.csv
+outputs/modeling/cxg/baseline/reports/slice_metrics.csv
+outputs/modeling/cxg/baseline/reports/model_card.md
+outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet
+outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet
+outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet
 ```
 
 DB persistence:
@@ -108,7 +108,7 @@ DB persistence:
 
 ## API Compatibility
 
-The generated metadata sidecar at `outputs/modeling/cxg/models/contextual_model.json` is the local artifact contract used by `src/opponent_adjusted/api/cxg_inference.py`.
+The generated metadata sidecar at `outputs/modeling/cxg/baseline/models/contextual_model.json` is the local artifact contract used by `src/opponent_adjusted/api/cxg_inference.py`.
 
 The `/predict/cxg` endpoint requires generated local model artifacts. Without them it returns a controlled unavailable response.
 

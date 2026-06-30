@@ -111,8 +111,8 @@ def test_dashboard_contract_references_expected_generated_paths():
     sections = contract["metric_sections"]
 
     expected_paths = {
-        "outputs/modeling/cxg/predictions/shot_predictions.parquet",
-        "outputs/modeling/cxg/reports/metrics.json",
+        "outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet",
+        "outputs/modeling/cxg/baseline/reports/metrics.json",
         "outputs/modeling/cxa/predictions/action_predictions.parquet",
         "outputs/modeling/cxa/aggregates/player_cxa.parquet",
         "outputs/modeling/cxa/aggregates/team_cxa.parquet",

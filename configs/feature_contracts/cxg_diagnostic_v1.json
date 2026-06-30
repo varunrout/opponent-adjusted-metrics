@@ -1,0 +1,180 @@
+{
+  "version": "cxg_diagnostic_v1",
+  "target_column": "is_goal",
+  "group_column": "match_id",
+  "eligible_numeric_features": [
+    "shot_distance",
+    "shot_angle",
+    "centrality",
+    "distance_to_goal_line",
+    "location_x",
+    "location_y",
+    "shot_x",
+    "shot_y",
+    "score_diff_at_shot",
+    "minute",
+    "time_gap_seconds",
+    "possession_sequence_length",
+    "possession_duration",
+    "previous_action_gap",
+    "recent_def_actions_count",
+    "pressure_proxy_score",
+    "opponent_def_rating_global",
+    "opponent_def_zone_rating",
+    "opponent_zone_block_rate"
+  ],
+  "eligible_binary_features": [
+    "first_time",
+    "under_pressure",
+    "is_leading",
+    "is_trailing",
+    "is_drawing",
+    "possession_match"
+  ],
+  "eligible_categorical_features": [
+    "body_part",
+    "technique",
+    "shot_type",
+    "play_pattern",
+    "set_piece_category",
+    "set_piece_phase",
+    "minute_bucket",
+    "minute_bucket_label",
+    "score_state",
+    "simple_state",
+    "chain_label",
+    "assist_category",
+    "pressure_state",
+    "def_label"
+  ],
+  "reference_only_columns": [
+    "statsbomb_xg",
+    "provider_xg"
+  ],
+  "excluded_leakage_columns": [
+    "outcome",
+    "shot_outcome",
+    "is_blocked",
+    "cxg_raw",
+    "cxg_neutral",
+    "cxg_opp_adjusted_diff",
+    "cxg_opp_adjusted_ratio",
+    "raw_probability",
+    "neutral_probability",
+    "opponent_adjusted_diff",
+    "opponent_adjusted_ratio",
+    "model_id",
+    "model_registry",
+    "shot_prediction",
+    "shot_predictions"
+  ],
+  "transformation_rules": {
+    "numeric": "median_impute_and_standardise_for_linear_models",
+    "categorical": "collapse_rare_levels_then_one_hot_encode",
+    "binary": "most_frequent_impute"
+  },
+  "missing_value_rules": {
+    "numeric": "median",
+    "binary": "most_frequent",
+    "categorical": "most_frequent"
+  },
+  "sparse_category_rules": {
+    "min_count": 30,
+    "replacement": "__rare__"
+  },
+  "slice_monitoring_columns": [
+    "body_part",
+    "technique",
+    "shot_type",
+    "play_pattern",
+    "minute_bucket",
+    "minute_bucket_label",
+    "pressure_state",
+    "score_state",
+    "set_piece_category",
+    "def_label",
+    "team_id",
+    "opponent_team_id"
+  ],
+  "feature_groups": {
+    "geometry": [
+      "shot_distance",
+      "shot_angle",
+      "centrality",
+      "distance_to_goal_line",
+      "location_x",
+      "location_y",
+      "shot_x",
+      "shot_y"
+    ],
+    "shot_context": [
+      "body_part",
+      "technique",
+      "shot_type",
+      "play_pattern",
+      "set_piece_category",
+      "set_piece_phase",
+      "first_time",
+      "under_pressure",
+      "pressure_state"
+    ],
+    "possession_match_context": [
+      "minute",
+      "minute_bucket",
+      "minute_bucket_label",
+      "score_state",
+      "simple_state",
+      "score_diff_at_shot",
+      "chain_label",
+      "assist_category",
+      "possession_sequence_length",
+      "possession_duration",
+      "previous_action_gap",
+      "recent_def_actions_count",
+      "pressure_proxy_score"
+    ],
+    "opponent_context": [
+      "opponent_def_rating_global",
+      "opponent_def_zone_rating",
+      "opponent_zone_block_rate",
+      "def_label"
+    ]
+  },
+  "diagnostic_sources": [
+    "outputs/analysis/cxg/report.md",
+    "outputs/analysis/cxg/00_target/",
+    "outputs/analysis/cxg/01_feature_distributions/",
+    "outputs/analysis/cxg/02_feature_target_relationships/",
+    "outputs/analysis/cxg/03_feature_correlations/",
+    "outputs/analysis/cxg/04_slice_stability/",
+    "outputs/analysis/cxg/05_data_quality/",
+    "outputs/analysis/cxg/06_leakage_checks/"
+  ],
+  "redundancy_notes": [
+    "Keep core football geometry features unless a future contract explicitly excludes them.",
+    "Review distance and angle families during validation; do not silently drop major shot geometry features in training."
+  ],
+  "model_candidates": [
+    {
+      "name": "geometry_logistic",
+      "type": "logistic_regression",
+      "feature_scope": "geometry_only"
+    },
+    {
+      "name": "diagnostic_logistic",
+      "type": "regularised_logistic_regression",
+      "feature_scope": "contract_all"
+    },
+    {
+      "name": "gradient_boosting",
+      "type": "gradient_boosting_classifier",
+      "feature_scope": "contract_all"
+    },
+    {
+      "name": "extra_trees",
+      "type": "extra_trees_classifier",
+      "feature_scope": "contract_all"
+    }
+  ],
+  "selected_model": null
+}

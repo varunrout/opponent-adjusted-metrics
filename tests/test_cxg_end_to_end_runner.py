@@ -30,6 +30,7 @@ from scripts.check_cxg_outputs import (
 )
 from scripts.run_cxg_end_to_end import run_end_to_end
 from scripts.run_cxg_end_to_end import _aggregate
+from scripts.run_cxg_end_to_end import DEFAULT_OUTPUT_DIR
 
 
 def _synthetic_cxg_frame() -> pd.DataFrame:
@@ -160,10 +161,13 @@ def test_cxg_end_to_end_runner_emits_artifact_metadata_and_outputs(tmp_path: Pat
     input_path = tmp_path / "shot_features.parquet"
     _synthetic_cxg_frame().to_parquet(input_path, index=False)
 
+    baseline_dir = tmp_path / "cxg" / "baseline"
     outputs = run_end_to_end(
-        input_path=input_path, output_dir=tmp_path / "cxg", model_version="test-v1"
+        input_path=input_path, output_dir=baseline_dir, model_version="test-v1"
     )
 
+    assert DEFAULT_OUTPUT_DIR == Path("outputs") / "modeling" / "cxg" / "baseline"
+    assert outputs.model_path == baseline_dir / "models" / "contextual_model.joblib"
     assert outputs.model_path.exists()
     assert outputs.metadata_path.exists()
     assert outputs.metrics_path.exists()
@@ -186,7 +190,11 @@ def test_cxg_output_contract_validation_accepts_temp_outputs(tmp_path: Path):
     input_path = feature_store_dir / "shot_features.parquet"
     _synthetic_cxg_frame().to_parquet(input_path, index=False)
 
-    run_end_to_end(input_path=input_path, output_dir=modeling_dir, model_version="contract-v1")
+    run_end_to_end(
+        input_path=input_path,
+        output_dir=modeling_dir / "baseline",
+        model_version="contract-v1",
+    )
 
     summary = validate_cxg_outputs(
         CxGOutputContract.from_roots(feature_store_dir, modeling_dir),
@@ -194,9 +202,11 @@ def test_cxg_output_contract_validation_accepts_temp_outputs(tmp_path: Path):
     )
 
     assert summary["feature_store_dir"] == str(feature_store_dir)
-    assert summary["model_path"] == str(modeling_dir / "models" / "contextual_model.joblib")
+    assert summary["model_path"] == str(
+        modeling_dir / "baseline" / "models" / "contextual_model.joblib"
+    )
     assert summary["predictions_path"] == str(
-        modeling_dir / "predictions" / "shot_predictions.parquet"
+        modeling_dir / "baseline" / "predictions" / "shot_predictions.parquet"
     )
 
 
@@ -204,15 +214,15 @@ def test_cxg_generated_roots_are_git_ignored():
     assert_git_ignored(
         (
             Path("feature_store/cxg/shot_features.parquet"),
-            Path("outputs/modeling/cxg/models/contextual_model.joblib"),
-            Path("outputs/modeling/cxg/models/contextual_model.json"),
-            Path("outputs/modeling/cxg/reports/metrics.json"),
-            Path("outputs/modeling/cxg/reports/validation_summary.json"),
-            Path("outputs/modeling/cxg/reports/calibration_table.csv"),
-            Path("outputs/modeling/cxg/reports/slice_metrics.csv"),
-            Path("outputs/modeling/cxg/predictions/shot_predictions.parquet"),
-            Path("outputs/modeling/cxg/aggregates/player_cxg.parquet"),
-            Path("outputs/modeling/cxg/aggregates/team_cxg.parquet"),
+            Path("outputs/modeling/cxg/baseline/models/contextual_model.joblib"),
+            Path("outputs/modeling/cxg/baseline/models/contextual_model.json"),
+            Path("outputs/modeling/cxg/baseline/reports/metrics.json"),
+            Path("outputs/modeling/cxg/baseline/reports/validation_summary.json"),
+            Path("outputs/modeling/cxg/baseline/reports/calibration_table.csv"),
+            Path("outputs/modeling/cxg/baseline/reports/slice_metrics.csv"),
+            Path("outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet"),
+            Path("outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet"),
+            Path("outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet"),
         ),
         Path.cwd(),
     )

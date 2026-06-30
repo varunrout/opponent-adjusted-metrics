@@ -66,6 +66,15 @@ Generated files and the SQLite database remain ignored by Git.
 
 ## CxG Outputs
 
+Modelling outputs use the standard layout:
+
+```text
+outputs/modeling/{metric}/{model_version}/{artifact_type}/...
+```
+
+For CxG, `baseline` is the existing contextual CxG training layer and
+`diagnostic_v1` is the diagnostic-informed training layer added for issue #55.
+
 ### Pre-model CxG Analysis
 
 Command:
@@ -115,7 +124,39 @@ outputs/analysis/cxg/report.md
 Every report section follows: Question -> Calculation -> Visual/Table ->
 Interpretation -> Modelling implication -> Limitation.
 
-### CxG Modelling
+### Diagnostic-Informed CxG Training
+
+Command:
+
+```bash
+make run-cxg-diagnostic-training
+```
+
+This layer trains candidate CxG models from a diagnostic-informed feature
+contract while keeping the baseline CxG modelling path intact. It uses the same
+shot-feature input discovery as the baseline runner and writes separate training
+artifacts for validation issue #56.
+
+Generated files:
+
+```text
+outputs/modeling/cxg/diagnostic_v1/contracts/feature_contract.json
+outputs/modeling/cxg/diagnostic_v1/diagnostics/excluded_columns.csv
+outputs/modeling/cxg/diagnostic_v1/diagnostics/resolved_features.json
+outputs/modeling/cxg/diagnostic_v1/diagnostics/feature_group_summary.csv
+outputs/modeling/cxg/diagnostic_v1/models/selected_model.joblib
+outputs/modeling/cxg/diagnostic_v1/models/selected_model_metadata.json
+outputs/modeling/cxg/diagnostic_v1/models/model_candidates.json
+outputs/modeling/cxg/diagnostic_v1/predictions/cross_validated_predictions.parquet
+outputs/modeling/cxg/diagnostic_v1/reports/training_report.md
+outputs/modeling/cxg/diagnostic_v1/reports/model_comparison.csv
+outputs/modeling/cxg/diagnostic_v1/reports/fold_metrics.csv
+outputs/modeling/cxg/diagnostic_v1/reports/training_summary.json
+```
+
+See `docs/modeling/cxg_diagnostic_training.md` for interpretation guidance.
+
+### Baseline CxG Modelling
 
 Command:
 
@@ -127,16 +168,16 @@ Generated files:
 
 ```text
 feature_store/cxg/shot_features.parquet
-outputs/modeling/cxg/models/contextual_model.joblib
-outputs/modeling/cxg/models/contextual_model.json
-outputs/modeling/cxg/reports/metrics.json
-outputs/modeling/cxg/reports/validation_summary.json
-outputs/modeling/cxg/reports/calibration_table.csv
-outputs/modeling/cxg/reports/slice_metrics.csv
-outputs/modeling/cxg/reports/model_card.md
-outputs/modeling/cxg/predictions/shot_predictions.parquet
-outputs/modeling/cxg/aggregates/player_cxg.parquet
-outputs/modeling/cxg/aggregates/team_cxg.parquet
+outputs/modeling/cxg/baseline/models/contextual_model.joblib
+outputs/modeling/cxg/baseline/models/contextual_model.json
+outputs/modeling/cxg/baseline/reports/metrics.json
+outputs/modeling/cxg/baseline/reports/validation_summary.json
+outputs/modeling/cxg/baseline/reports/calibration_table.csv
+outputs/modeling/cxg/baseline/reports/slice_metrics.csv
+outputs/modeling/cxg/baseline/reports/model_card.md
+outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet
+outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet
+outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet
 ```
 
 DB persistence:
@@ -275,14 +316,14 @@ Baseline CxT calculates `cxt_value = end_threat - start_threat` from a determini
 | Generated file | DB table |
 |---|---|
 | `feature_store/cxa/action_features.parquet` | `action_features` |
-| `outputs/modeling/cxg/models/contextual_model.joblib` and `.json` | `model_registry` |
+| `outputs/modeling/cxg/baseline/models/contextual_model.joblib` and `.json` | `model_registry` |
 | `outputs/modeling/cxa/models/baseline_model.joblib` and `.json` | `model_registry` |
 | `outputs/modeling/cxt/threat_grid.parquet` | `model_registry` artifact path for baseline CxT |
-| `outputs/modeling/cxg/predictions/shot_predictions.parquet` | `shot_predictions` |
+| `outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet` | `shot_predictions` |
 | `outputs/modeling/cxa/predictions/action_predictions.parquet` | `action_predictions` |
 | `outputs/modeling/cxt/predictions/action_threat.parquet` | `action_threat_predictions` |
-| `outputs/modeling/cxg/aggregates/player_cxg.parquet` | `aggregates_player` |
-| `outputs/modeling/cxg/aggregates/team_cxg.parquet` | `aggregates_team` |
+| `outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet` | `aggregates_player` |
+| `outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet` | `aggregates_team` |
 | `outputs/modeling/cxa/aggregates/player_cxa.parquet` | `aggregates_player` |
 | `outputs/modeling/cxa/aggregates/team_cxa.parquet` | `aggregates_team` |
 | `outputs/modeling/cxa/aggregates/sequence_cxa.parquet` | `aggregates_sequence` |

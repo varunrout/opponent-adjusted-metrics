@@ -57,8 +57,9 @@ NEUTRAL_CONTEXT_DEFAULTS: dict[str, Any] = {
 }
 
 DEFAULT_CXG_MODEL_PATH = (
-    settings.model_artifacts_path / "cxg" / "models" / "contextual_model.joblib"
+    settings.model_artifacts_path / "cxg" / "baseline" / "models" / "contextual_model.joblib"
 )
+LEGACY_CXG_MODEL_PATH = settings.model_artifacts_path / "cxg" / "models" / "contextual_model.joblib"
 
 
 def _load_metadata(model_path: Path) -> dict[str, Any]:
@@ -83,7 +84,7 @@ def _candidate_model_paths(registry_path: str | None = None) -> list[Path]:
     a secondary explicit pointer when it differs from the default.
     """
 
-    candidates = [DEFAULT_CXG_MODEL_PATH]
+    candidates = [DEFAULT_CXG_MODEL_PATH, LEGACY_CXG_MODEL_PATH]
     if registry_path:
         path = Path(registry_path)
         resolved = path if path.is_absolute() else Path.cwd() / path

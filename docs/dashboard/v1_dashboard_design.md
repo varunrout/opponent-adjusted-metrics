@@ -39,7 +39,7 @@ Visual sections:
 
 Required inputs:
 
-- `outputs/modeling/cxg/reports/metrics.json`
+- `outputs/modeling/cxg/baseline/reports/metrics.json`
 - `outputs/modeling/cxa/reports/metrics.json`
 - `outputs/modeling/cxt/reports/metrics.json`
 - CxT interpretation summary when available.
@@ -66,7 +66,7 @@ Required inputs:
 
 - `outputs/modeling/cxa/aggregates/player_cxa.parquet`
 - `outputs/modeling/cxt/aggregates/player_cxt.parquet`
-- `outputs/modeling/cxg/aggregates/player_cxg.parquet`
+- `outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet`
 
 Filters:
 
@@ -96,7 +96,7 @@ Visual sections:
 
 Required inputs:
 
-- `outputs/modeling/cxg/aggregates/team_cxg.parquet`
+- `outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet`
 - `outputs/modeling/cxa/aggregates/team_cxa.parquet`
 - `outputs/modeling/cxt/aggregates/team_cxt.parquet`
 
@@ -127,11 +127,11 @@ Visual sections:
 
 Required inputs:
 
-- `outputs/modeling/cxg/predictions/shot_predictions.parquet`
-- `outputs/modeling/cxg/reports/metrics.json`
-- `outputs/modeling/cxg/reports/validation_summary.json`
-- `outputs/modeling/cxg/reports/calibration_table.csv`
-- `outputs/modeling/cxg/reports/slice_metrics.csv`
+- `outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet`
+- `outputs/modeling/cxg/baseline/reports/metrics.json`
+- `outputs/modeling/cxg/baseline/reports/validation_summary.json`
+- `outputs/modeling/cxg/baseline/reports/calibration_table.csv`
+- `outputs/modeling/cxg/baseline/reports/slice_metrics.csv`
 
 ### CxA Analysis
 
