@@ -485,15 +485,26 @@ def write_training_artifacts(
 ) -> dict[str, Path]:
     """Write all required diagnostic CxG training artifacts."""
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    contract_path = output_dir / "feature_contract.json"
-    candidates_path = output_dir / "model_candidates.json"
-    comparison_path = output_dir / "model_comparison.csv"
-    fold_path = output_dir / "fold_metrics.csv"
-    metadata_path = output_dir / "selected_model_metadata.json"
-    model_path = output_dir / "selected_model.joblib"
-    predictions_path = output_dir / "cross_validated_predictions.parquet"
-    report_path = output_dir / "training_report.md"
+    contracts_dir = output_dir / "contracts"
+    diagnostics_dir = output_dir / "diagnostics"
+    models_dir = output_dir / "models"
+    predictions_dir = output_dir / "predictions"
+    reports_dir = output_dir / "reports"
+    for directory in (contracts_dir, diagnostics_dir, models_dir, predictions_dir, reports_dir):
+        directory.mkdir(parents=True, exist_ok=True)
+
+    contract_path = contracts_dir / "feature_contract.json"
+    excluded_path = diagnostics_dir / "excluded_columns.csv"
+    resolved_path = diagnostics_dir / "resolved_features.json"
+    feature_group_path = diagnostics_dir / "feature_group_summary.csv"
+    candidates_path = models_dir / "model_candidates.json"
+    metadata_path = models_dir / "selected_model_metadata.json"
+    model_path = models_dir / "selected_model.joblib"
+    predictions_path = predictions_dir / "cross_validated_predictions.parquet"
+    comparison_path = reports_dir / "model_comparison.csv"
+    fold_path = reports_dir / "fold_metrics.csv"
+    report_path = reports_dir / "training_report.md"
+    summary_path = reports_dir / "training_summary.json"
 
     contract_to_write = dict(contract)
     contract_to_write["selected_model"] = metadata["selected_model"]
@@ -502,6 +513,10 @@ def write_training_artifacts(
         json.dumps(metadata["model_candidates"], indent=2),
         encoding="utf-8",
     )
+    resolved_features = metadata["resolved_features"]
+    resolved_path.write_text(json.dumps(resolved_features, indent=2), encoding="utf-8")
+    _excluded_columns_table(resolved_features).to_csv(excluded_path, index=False)
+    _feature_group_summary(contract, resolved_features).to_csv(feature_group_path, index=False)
     comparison.to_csv(comparison_path, index=False)
     fold_metrics.to_csv(fold_path, index=False)
     predictions.to_parquet(predictions_path, index=False)
@@ -514,12 +529,19 @@ def write_training_artifacts(
         **metadata,
     }
     metadata_path.write_text(json.dumps(selected_metadata, indent=2), encoding="utf-8")
+    summary_path.write_text(
+        json.dumps(_training_summary(selected_metadata, comparison, fold_metrics), indent=2),
+        encoding="utf-8",
+    )
     report_path.write_text(
         _training_report(contract_to_write, selected_metadata, comparison),
         encoding="utf-8",
     )
     return {
         "feature_contract": contract_path,
+        "excluded_columns": excluded_path,
+        "resolved_features": resolved_path,
+        "feature_group_summary": feature_group_path,
         "model_candidates": candidates_path,
         "model_comparison": comparison_path,
         "fold_metrics": fold_path,
@@ -527,6 +549,66 @@ def write_training_artifacts(
         "selected_model": model_path,
         "cross_validated_predictions": predictions_path,
         "training_report": report_path,
+        "training_summary": summary_path,
+    }
+
+
+def _excluded_columns_table(resolved_features: dict[str, Any]) -> pd.DataFrame:
+    rows = [
+        {"column": column, "reason": "reference_only"}
+        for column in resolved_features.get("reference_present", [])
+    ]
+    rows.extend(
+        {"column": column, "reason": "excluded_leakage"}
+        for column in resolved_features.get("excluded_present", [])
+    )
+    return pd.DataFrame(rows, columns=["column", "reason"])
+
+
+def _feature_group_summary(
+    contract: dict[str, Any], resolved_features: dict[str, Any]
+) -> pd.DataFrame:
+    resolved = set(
+        resolved_features.get("numeric", [])
+        + resolved_features.get("binary", [])
+        + resolved_features.get("categorical", [])
+    )
+    rows = []
+    for group_name, columns in contract.get("feature_groups", {}).items():
+        available = [column for column in columns if column in resolved]
+        rows.append(
+            {
+                "feature_group": group_name,
+                "contract_column_count": len(columns),
+                "resolved_column_count": len(available),
+                "resolved_columns": ", ".join(available),
+            }
+        )
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "feature_group",
+            "contract_column_count",
+            "resolved_column_count",
+            "resolved_columns",
+        ],
+    )
+
+
+def _training_summary(
+    metadata: dict[str, Any],
+    comparison: pd.DataFrame,
+    fold_metrics: pd.DataFrame,
+) -> dict[str, Any]:
+    return {
+        "selected_model": metadata["selected_model"],
+        "selected_reason": metadata["selected_reason"],
+        "split_metadata": metadata["split_metadata"],
+        "candidate_count": int(comparison["model_candidate"].nunique()),
+        "fold_count": int(fold_metrics["fold"].nunique()),
+        "row_count": int(comparison["row_count"].max()) if not comparison.empty else 0,
+        "goal_count": int(comparison["goal_count"].max()) if not comparison.empty else 0,
+        "model_comparison": comparison.to_dict(orient="records"),
     }
 
 

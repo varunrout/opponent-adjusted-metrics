@@ -37,7 +37,9 @@ from opponent_adjusted.modeling.cxg.contextual_model import (
     _prepare_frame,
 )
 
-DEFAULT_OUTPUT_DIR = Path("outputs") / "modeling" / "cxg"
+DEFAULT_MODELING_ROOT = Path("outputs") / "modeling" / "cxg"
+DEFAULT_OUTPUT_DIR = DEFAULT_MODELING_ROOT / "baseline"
+LEGACY_OUTPUT_DIR = DEFAULT_MODELING_ROOT
 MODEL_VERSION_PREFIX = "cxg_contextual"
 logger = get_logger(__name__)
 
@@ -75,6 +77,9 @@ def discover_feature_input(feature_store_dir: Path | None = None) -> Path:
         DEFAULT_OUTPUT_DIR / "cxg_dataset_enriched.parquet",
         DEFAULT_OUTPUT_DIR / "cxg_dataset_filtered.parquet",
         DEFAULT_OUTPUT_DIR / "cxg_dataset.parquet",
+        LEGACY_OUTPUT_DIR / "cxg_dataset_enriched.parquet",
+        LEGACY_OUTPUT_DIR / "cxg_dataset_filtered.parquet",
+        LEGACY_OUTPUT_DIR / "cxg_dataset.parquet",
     ]
     for candidate in candidates:
         if candidate.exists():

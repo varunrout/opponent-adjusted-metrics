@@ -16,6 +16,7 @@ import pandas as pd
 
 DEFAULT_FEATURE_STORE_DIR = Path("feature_store") / "cxg"
 DEFAULT_MODELING_DIR = Path("outputs") / "modeling" / "cxg"
+DEFAULT_BASELINE_DIR = DEFAULT_MODELING_DIR / "baseline"
 
 
 @dataclass(frozen=True)
@@ -35,8 +36,9 @@ class CxGOutputContract:
     def from_roots(
         cls,
         feature_store_dir: Path = DEFAULT_FEATURE_STORE_DIR,
-        modeling_dir: Path = DEFAULT_MODELING_DIR,
+        modeling_dir: Path = DEFAULT_BASELINE_DIR,
     ) -> "CxGOutputContract":
+        modeling_dir = _baseline_dir(modeling_dir)
         return cls(
             feature_store_dir=feature_store_dir,
             model_path=modeling_dir / "models" / "contextual_model.joblib",
@@ -67,6 +69,14 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must contain a JSON object")
     return payload
+
+
+def _baseline_dir(modeling_dir: Path) -> Path:
+    if modeling_dir.name == "baseline":
+        return modeling_dir
+    if modeling_dir.name == "cxg":
+        return modeling_dir / "baseline"
+    return modeling_dir
 
 
 def _assert_parquet_has_rows(path: Path) -> None:
@@ -107,6 +117,7 @@ def validate_cxg_outputs(
 ) -> dict[str, str]:
     """Validate generated CxG files and return a path summary."""
 
+    contract = _with_legacy_baseline_fallback(contract)
     missing = [path for path in (contract.feature_store_dir, *contract.files) if not path.exists()]
     if missing:
         raise FileNotFoundError(
@@ -158,10 +169,35 @@ def validate_cxg_outputs(
     }
 
 
+def _with_legacy_baseline_fallback(contract: CxGOutputContract) -> CxGOutputContract:
+    """Prefer versioned baseline outputs, but accept the legacy loose layout."""
+
+    if all(path.exists() for path in contract.files):
+        return contract
+    if contract.model_path.exists():
+        return contract
+
+    legacy_root = DEFAULT_MODELING_DIR
+    if contract.model_path.parent.parent.name == "baseline":
+        legacy = CxGOutputContract(
+            feature_store_dir=contract.feature_store_dir,
+            model_path=legacy_root / "models" / "contextual_model.joblib",
+            metadata_path=legacy_root / "models" / "contextual_model.json",
+            metrics_path=legacy_root / "reports" / "metrics.json",
+            predictions_path=legacy_root / "predictions" / "shot_predictions.parquet",
+            player_aggregates_path=legacy_root / "aggregates" / "player_cxg.parquet",
+            team_aggregates_path=legacy_root / "aggregates" / "team_cxg.parquet",
+            model_card_path=legacy_root / "reports" / "model_card.md",
+        )
+        if any(path.exists() for path in legacy.files):
+            return legacy
+    return contract
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate generated CxG output files")
     parser.add_argument("--feature-store-dir", type=Path, default=DEFAULT_FEATURE_STORE_DIR)
-    parser.add_argument("--modeling-dir", type=Path, default=DEFAULT_MODELING_DIR)
+    parser.add_argument("--modeling-dir", type=Path, default=DEFAULT_BASELINE_DIR)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument(
         "--skip-git-ignore",

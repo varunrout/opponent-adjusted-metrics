@@ -27,7 +27,7 @@
       ],
       "inputs": {
         "predictions": {
-          "path": "outputs/modeling/cxg/predictions/shot_predictions.parquet",
+          "path": "outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet",
           "required_columns": [
             "shot_id",
             "match_id",
@@ -48,7 +48,7 @@
           ]
         },
         "player_aggregates": {
-          "path": "outputs/modeling/cxg/aggregates/player_cxg.parquet",
+          "path": "outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet",
           "required_columns": [
             "player_id",
             "total_cxg",
@@ -63,7 +63,7 @@
           ]
         },
         "team_aggregates": {
-          "path": "outputs/modeling/cxg/aggregates/team_cxg.parquet",
+          "path": "outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet",
           "required_columns": [
             "team_id",
             "total_cxg",
@@ -76,7 +76,7 @@
           ]
         },
         "metrics": {
-          "path": "outputs/modeling/cxg/reports/metrics.json",
+          "path": "outputs/modeling/cxg/baseline/reports/metrics.json",
           "required_fields": [
             "model_version",
             "row_count"
@@ -88,7 +88,7 @@
           ]
         },
         "validation_summary": {
-          "path": "outputs/modeling/cxg/reports/validation_summary.json",
+          "path": "outputs/modeling/cxg/baseline/reports/validation_summary.json",
           "required_fields": [
             "row_count"
           ],

@@ -130,6 +130,9 @@ def test_tiny_synthetic_training_run_writes_required_outputs(tmp_path: Path):
 
     expected = {
         "feature_contract",
+        "excluded_columns",
+        "resolved_features",
+        "feature_group_summary",
         "model_candidates",
         "model_comparison",
         "fold_metrics",
@@ -137,6 +140,7 @@ def test_tiny_synthetic_training_run_writes_required_outputs(tmp_path: Path):
         "selected_model",
         "cross_validated_predictions",
         "training_report",
+        "training_summary",
     }
     assert set(outputs) == expected
     for path in outputs.values():
@@ -147,6 +151,21 @@ def test_tiny_synthetic_training_run_writes_required_outputs(tmp_path: Path):
     predictions = pd.read_parquet(outputs["cross_validated_predictions"])
     metadata = json.loads(outputs["selected_model_metadata"].read_text(encoding="utf-8"))
 
+    assert outputs["feature_contract"] == output_dir / "contracts" / "feature_contract.json"
+    assert outputs["excluded_columns"] == output_dir / "diagnostics" / "excluded_columns.csv"
+    assert outputs["resolved_features"] == output_dir / "diagnostics" / "resolved_features.json"
+    assert outputs["feature_group_summary"] == (
+        output_dir / "diagnostics" / "feature_group_summary.csv"
+    )
+    assert outputs["selected_model"] == output_dir / "models" / "selected_model.joblib"
+    assert outputs["model_candidates"] == output_dir / "models" / "model_candidates.json"
+    assert outputs["cross_validated_predictions"] == (
+        output_dir / "predictions" / "cross_validated_predictions.parquet"
+    )
+    assert outputs["training_report"] == output_dir / "reports" / "training_report.md"
+    assert outputs["model_comparison"] == output_dir / "reports" / "model_comparison.csv"
+    assert outputs["fold_metrics"] == output_dir / "reports" / "fold_metrics.csv"
+    assert outputs["training_summary"] == output_dir / "reports" / "training_summary.json"
     assert set(comparison["model_candidate"]) == {
         "geometry_logistic",
         "diagnostic_logistic",

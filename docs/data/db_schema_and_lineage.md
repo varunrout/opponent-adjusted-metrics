@@ -50,7 +50,7 @@ The current v1 sample run contains three model families:
 
 | Model | Version | Artifact |
 |---|---|---|
-| cxg | `cxg_contextual_20260628` | `outputs/modeling/cxg/models/contextual_model.joblib` |
+| cxg | `cxg_contextual_20260628` | `outputs/modeling/cxg/baseline/models/contextual_model.joblib` |
 | cxa | `cxa_baseline_20260628` | `outputs/modeling/cxa/models/baseline_model.joblib` |
 | cxt | `cxt-baseline-v1` | `outputs/modeling/cxt/threat_grid.parquet` |
 
@@ -111,7 +111,7 @@ This lets reviewers regenerate a single modelling family without rebuilding the 
 |---|---|
 | `feature_store/cxg/shot_features.parquet` | feeds `shot_features`/CxG model input |
 | `feature_store/cxa/action_features.parquet` | `action_features` |
-| `outputs/modeling/cxg/predictions/shot_predictions.parquet` | `shot_predictions` |
+| `outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet` | `shot_predictions` |
 | `outputs/modeling/cxa/predictions/action_predictions.parquet` | `action_predictions` |
 | `outputs/modeling/cxt/predictions/action_threat.parquet` | `action_threat_predictions` |
 | `outputs/modeling/*/aggregates/player_*.parquet` | `aggregates_player` |
