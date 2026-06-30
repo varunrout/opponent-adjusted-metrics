@@ -156,6 +156,36 @@ outputs/modeling/cxg/diagnostic_v1/reports/training_summary.json
 
 See `docs/modeling/cxg_diagnostic_training.md` for interpretation guidance.
 
+### Diagnostic CxG Validation
+
+Command:
+
+```bash
+make validate-cxg-diagnostic
+```
+
+This layer compares the selected diagnostic-informed CxG model against the
+baseline CxG model. It evaluates probability quality, calibration, fold
+stability, slice-level calibration, and feature governance before any promoted
+prediction/reporting work in issue #57.
+
+Generated files:
+
+```text
+outputs/validation/cxg/diagnostic_v1/validation_summary.json
+outputs/validation/cxg/diagnostic_v1/model_comparison_validation.csv
+outputs/validation/cxg/diagnostic_v1/fold_stability.csv
+outputs/validation/cxg/diagnostic_v1/calibration_bins.csv
+outputs/validation/cxg/diagnostic_v1/slice_calibration.csv
+outputs/validation/cxg/diagnostic_v1/promotion_recommendation.json
+outputs/validation/cxg/diagnostic_v1/validation_report.md
+outputs/validation/cxg/diagnostic_v1/plots/calibration_curve.png
+outputs/validation/cxg/diagnostic_v1/plots/predicted_vs_actual_by_slice.png
+```
+
+See `docs/modeling/cxg_diagnostic_validation.md` for validation and promotion
+logic.
+
 ### Baseline CxG Modelling
 
 Command:
