@@ -5,7 +5,7 @@
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa \
-	run-cxg-pipeline run-cxg-end-to-end check-cxg-outputs cxg-validate cxg-run cxg-smoke \
+	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
 
@@ -102,6 +102,11 @@ run-cxg-pipeline:  ## Run CxG pipeline
 
 run-cxg-end-to-end:  ## Train, evaluate, and export CxG modeling outputs
 	poetry run python scripts/run_cxg_end_to_end.py
+
+run-cxg-diagnostic-training:  ## Train diagnostic-informed CxG model candidates
+	poetry run python scripts/run_cxg_diagnostic_training.py
+
+cxg-diagnostic-train: run-cxg-diagnostic-training  ## Alias for diagnostic-informed CxG training
 
 check-cxg-outputs:  ## Validate generated CxG output contract and Git ignore rules
 	poetry run python scripts/check_cxg_outputs.py

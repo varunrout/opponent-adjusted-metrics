@@ -115,7 +115,35 @@ outputs/analysis/cxg/report.md
 Every report section follows: Question -> Calculation -> Visual/Table ->
 Interpretation -> Modelling implication -> Limitation.
 
-### CxG Modelling
+### Diagnostic-Informed CxG Training
+
+Command:
+
+```bash
+make run-cxg-diagnostic-training
+```
+
+This layer trains candidate CxG models from a diagnostic-informed feature
+contract while keeping the baseline CxG modelling path intact. It uses the same
+shot-feature input discovery as the baseline runner and writes separate training
+artifacts for validation issue #56.
+
+Generated files:
+
+```text
+outputs/modeling/cxg/diagnostic_v1/feature_contract.json
+outputs/modeling/cxg/diagnostic_v1/model_candidates.json
+outputs/modeling/cxg/diagnostic_v1/model_comparison.csv
+outputs/modeling/cxg/diagnostic_v1/fold_metrics.csv
+outputs/modeling/cxg/diagnostic_v1/selected_model_metadata.json
+outputs/modeling/cxg/diagnostic_v1/selected_model.joblib
+outputs/modeling/cxg/diagnostic_v1/cross_validated_predictions.parquet
+outputs/modeling/cxg/diagnostic_v1/training_report.md
+```
+
+See `docs/modeling/cxg_diagnostic_training.md` for interpretation guidance.
+
+### Baseline CxG Modelling
 
 Command:
 
