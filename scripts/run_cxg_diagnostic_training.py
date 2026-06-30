@@ -28,9 +28,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 
 try:
-    from scripts.run_cxg_end_to_end import load_cxg_features
+    from scripts.run_cxg_end_to_end import _read_table, discover_feature_input, load_cxg_features
 except ModuleNotFoundError:  # pragma: no cover - direct script execution path
-    from run_cxg_end_to_end import load_cxg_features
+    from run_cxg_end_to_end import _read_table, discover_feature_input, load_cxg_features
 
 DEFAULT_CONTRACT_PATH = Path("configs/feature_contracts/cxg_diagnostic_v1.json")
 DEFAULT_OUTPUT_DIR = Path("outputs/modeling/cxg/diagnostic_v1")
@@ -44,6 +44,10 @@ class ResolvedFeatures:
     numeric: list[str]
     binary: list[str]
     categorical: list[str]
+    source_available: dict[str, list[str]]
+    model_available: dict[str, list[str]]
+    synthetic_default_features: dict[str, list[str]]
+    synthetic_default_excluded: dict[str, list[str]]
     geometry_numeric: list[str]
     unavailable: dict[str, list[str]]
     excluded_present: list[str]
@@ -95,8 +99,25 @@ def load_contract(path: Path = DEFAULT_CONTRACT_PATH) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def resolve_features(df: pd.DataFrame, contract: dict[str, Any]) -> ResolvedFeatures:
-    """Resolve contract features present in an input frame."""
+def load_raw_and_modeling_features(
+    input_path: Path | None = None,
+) -> tuple[pd.DataFrame, Path, set[str]]:
+    """Read raw source columns before applying baseline CxG normalization."""
+
+    resolved_input = input_path or discover_feature_input()
+    raw_df = _read_table(resolved_input)
+    original_input_columns = set(raw_df.columns)
+    model_df, resolved_model_input = load_cxg_features(resolved_input)
+    return model_df, resolved_model_input, original_input_columns
+
+
+def resolve_features(
+    df: pd.DataFrame,
+    contract: dict[str, Any],
+    *,
+    original_input_columns: set[str] | None = None,
+) -> ResolvedFeatures:
+    """Resolve contract features while preserving raw source availability."""
 
     numeric_contract = list(contract.get("eligible_numeric_features", []))
     binary_contract = list(contract.get("eligible_binary_features", []))
@@ -108,13 +129,54 @@ def resolve_features(df: pd.DataFrame, contract: dict[str, Any]) -> ResolvedFeat
 
     forbidden = set(reference + leakage + [target])
     present = set(df.columns)
+    source_present = set(original_input_columns or present)
+    source_present = _with_baseline_aliases(source_present)
 
-    def _resolve(columns: list[str]) -> list[str]:
+    def _model_available(columns: list[str]) -> list[str]:
         return [column for column in columns if column in present and column not in forbidden]
 
-    numeric = _resolve(numeric_contract)
-    binary = _resolve(binary_contract)
-    categorical = _resolve(categorical_contract)
+    model_available = {
+        "numeric": _model_available(numeric_contract),
+        "binary": _model_available(binary_contract),
+        "categorical": _model_available(categorical_contract),
+    }
+    source_available = {
+        group: [
+            column for column in columns if column in source_present and column not in forbidden
+        ]
+        for group, columns in (
+            ("numeric", numeric_contract),
+            ("binary", binary_contract),
+            ("categorical", categorical_contract),
+        )
+    }
+    synthetic_default_features = {
+        group: [
+            column
+            for column in model_available[group]
+            if column not in set(source_available[group])
+        ]
+        for group in ("numeric", "binary", "categorical")
+    }
+    synthetic_default_excluded = {
+        group: [
+            column
+            for column in synthetic_default_features[group]
+            if _is_constant_or_empty(df[column])
+        ]
+        for group in ("numeric", "binary", "categorical")
+    }
+    usable = {
+        group: [
+            column
+            for column in model_available[group]
+            if column not in set(synthetic_default_excluded[group])
+        ]
+        for group in ("numeric", "binary", "categorical")
+    }
+    numeric = usable["numeric"]
+    binary = usable["binary"]
+    categorical = usable["categorical"]
     geometry = [
         column
         for column in contract.get("feature_groups", {}).get("geometry", [])
@@ -137,11 +199,28 @@ def resolve_features(df: pd.DataFrame, contract: dict[str, Any]) -> ResolvedFeat
         numeric=numeric,
         binary=binary,
         categorical=categorical,
+        source_available=source_available,
+        model_available=model_available,
+        synthetic_default_features=synthetic_default_features,
+        synthetic_default_excluded=synthetic_default_excluded,
         geometry_numeric=geometry,
         unavailable=unavailable,
         excluded_present=excluded_present,
         reference_present=reference_present,
     )
+
+
+def _is_constant_or_empty(series: pd.Series) -> bool:
+    return int(series.nunique(dropna=True)) <= 1
+
+
+def _with_baseline_aliases(columns: set[str]) -> set[str]:
+    aliased = set(columns)
+    if "shot_x" in aliased:
+        aliased.add("location_x")
+    if "shot_y" in aliased:
+        aliased.add("location_y")
+    return aliased
 
 
 def validate_no_forbidden_features(features: list[str], contract: dict[str, Any]) -> None:
@@ -301,12 +380,13 @@ def train_diagnostic_candidates(
     df: pd.DataFrame,
     contract: dict[str, Any],
     *,
+    original_input_columns: set[str] | None = None,
     min_category_count: int,
     random_state: int,
 ) -> tuple[Pipeline, dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Train CxG diagnostic candidates and return the selected final model plus artifacts."""
 
-    resolved = resolve_features(df, contract)
+    resolved = resolve_features(df, contract, original_input_columns=original_input_columns)
     y = df[contract["target_column"]].astype(int).to_numpy()
     if len(np.unique(y)) < 2:
         raise ValueError("CxG diagnostic training data must contain both goals and non-goals.")
@@ -400,6 +480,15 @@ def train_diagnostic_candidates(
         "selected_reason": _selection_reason(comparison, selected_name),
         "split_metadata": split_metadata,
         "resolved_features": {
+            "source_available": resolved.source_available,
+            "model_available": resolved.model_available,
+            "synthetic_default_features": resolved.synthetic_default_features,
+            "synthetic_default_excluded": resolved.synthetic_default_excluded,
+            "training_features": {
+                "numeric": resolved.numeric,
+                "binary": resolved.binary,
+                "categorical": resolved.categorical,
+            },
             "numeric": resolved.numeric,
             "binary": resolved.binary,
             "categorical": resolved.categorical,
@@ -562,37 +651,65 @@ def _excluded_columns_table(resolved_features: dict[str, Any]) -> pd.DataFrame:
         {"column": column, "reason": "excluded_leakage"}
         for column in resolved_features.get("excluded_present", [])
     )
+    for group, columns in resolved_features.get("synthetic_default_excluded", {}).items():
+        rows.extend(
+            {"column": column, "reason": f"constant_synthetic_default_{group}"}
+            for column in columns
+        )
     return pd.DataFrame(rows, columns=["column", "reason"])
 
 
 def _feature_group_summary(
     contract: dict[str, Any], resolved_features: dict[str, Any]
 ) -> pd.DataFrame:
-    resolved = set(
-        resolved_features.get("numeric", [])
-        + resolved_features.get("binary", [])
-        + resolved_features.get("categorical", [])
+    source_available = _flatten_feature_groups(resolved_features.get("source_available", {}))
+    synthetic_defaults = _flatten_feature_groups(
+        resolved_features.get("synthetic_default_features", {})
+    )
+    model_available = _flatten_feature_groups(resolved_features.get("model_available", {}))
+    training_features = _flatten_feature_groups(resolved_features.get("training_features", {}))
+    excluded_defaults = _flatten_feature_groups(
+        resolved_features.get("synthetic_default_excluded", {})
     )
     rows = []
     for group_name, columns in contract.get("feature_groups", {}).items():
-        available = [column for column in columns if column in resolved]
-        rows.append(
-            {
-                "feature_group": group_name,
-                "contract_column_count": len(columns),
-                "resolved_column_count": len(available),
-                "resolved_columns": ", ".join(available),
-            }
-        )
+        for column in columns:
+            if column in source_available:
+                availability_source = "source"
+            elif column in synthetic_defaults:
+                availability_source = "synthetic_default"
+            else:
+                availability_source = "unavailable"
+            rows.append(
+                {
+                    "feature_group": group_name,
+                    "feature": column,
+                    "availability_source": availability_source,
+                    "model_available": column in model_available,
+                    "used_in_training": column in training_features,
+                    "excluded_reason": (
+                        "constant_synthetic_default" if column in excluded_defaults else ""
+                    ),
+                }
+            )
     return pd.DataFrame(
         rows,
         columns=[
             "feature_group",
-            "contract_column_count",
-            "resolved_column_count",
-            "resolved_columns",
+            "feature",
+            "availability_source",
+            "model_available",
+            "used_in_training",
+            "excluded_reason",
         ],
     )
+
+
+def _flatten_feature_groups(groups: dict[str, list[str]]) -> set[str]:
+    flattened: set[str] = set()
+    for columns in groups.values():
+        flattened.update(columns)
+    return flattened
 
 
 def _training_summary(
@@ -634,9 +751,37 @@ def _training_report(
             "",
             "## Feature Groups Used",
             "",
-            f"- Numeric: {', '.join(resolved['numeric']) or 'none'}",
-            f"- Binary: {', '.join(resolved['binary']) or 'none'}",
-            f"- Categorical: {', '.join(resolved['categorical']) or 'none'}",
+            f"- Numeric: {', '.join(resolved['training_features']['numeric']) or 'none'}",
+            f"- Binary: {', '.join(resolved['training_features']['binary']) or 'none'}",
+            f"- Categorical: {', '.join(resolved['training_features']['categorical']) or 'none'}",
+            "",
+            "## Source Feature Availability",
+            "",
+            "These features were genuinely present in the source feature table before baseline "
+            "normalisation/default filling:",
+            "",
+            f"- Numeric: {', '.join(resolved['source_available']['numeric']) or 'none'}",
+            f"- Binary: {', '.join(resolved['source_available']['binary']) or 'none'}",
+            f"- Categorical: {', '.join(resolved['source_available']['categorical']) or 'none'}",
+            "",
+            "These contract features were available only after baseline normalisation added "
+            "safe defaults:",
+            "",
+            f"- Numeric: {', '.join(resolved['synthetic_default_features']['numeric']) or 'none'}",
+            f"- Binary: {', '.join(resolved['synthetic_default_features']['binary']) or 'none'}",
+            f"- Categorical: {', '.join(resolved['synthetic_default_features']['categorical']) or 'none'}",
+            "",
+            "Synthetic default features with no variation were excluded from candidate model "
+            "features rather than treated as source signal:",
+            "",
+            f"- Numeric: {', '.join(resolved['synthetic_default_excluded']['numeric']) or 'none'}",
+            f"- Binary: {', '.join(resolved['synthetic_default_excluded']['binary']) or 'none'}",
+            f"- Categorical: {', '.join(resolved['synthetic_default_excluded']['categorical']) or 'none'}",
+            "",
+            "Synthetic defaults may still appear in the normalised modelling frame for "
+            "baseline compatibility, but constant default-only fields are not passed to "
+            "candidate model matrices. Issue #56 must validate whether any synthetic/default "
+            "context features should remain in a promoted model.",
             "",
             "## Leakage And Reference Exclusions",
             "",
@@ -678,12 +823,13 @@ def run_diagnostic_training(
     contract = load_contract(contract_path)
     if min_category_count is None:
         min_category_count = int(contract.get("sparse_category_rules", {}).get("min_count", 30))
-    df, resolved_input = load_cxg_features(input_path)
-    resolved = resolve_features(df, contract)
+    df, resolved_input, original_input_columns = load_raw_and_modeling_features(input_path)
+    resolved = resolve_features(df, contract, original_input_columns=original_input_columns)
     validate_no_forbidden_features(resolved.all_features, contract)
     model, metadata, comparison, fold_metrics, predictions = train_diagnostic_candidates(
         df,
         contract,
+        original_input_columns=original_input_columns,
         min_category_count=min_category_count,
         random_state=random_state,
     )

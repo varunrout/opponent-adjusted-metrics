@@ -6,6 +6,7 @@ import pytest
 
 from scripts.run_cxg_diagnostic_training import (
     DEFAULT_CONTRACT_PATH,
+    load_raw_and_modeling_features,
     load_contract,
     resolve_features,
     run_diagnostic_training,
@@ -101,6 +102,30 @@ def test_unavailable_optional_features_are_ignored_safely():
     assert "centrality" in resolved.unavailable["numeric"]
 
 
+def test_baseline_coordinate_aliases_are_source_available():
+    contract = load_contract(DEFAULT_CONTRACT_PATH)
+    frame = _synthetic_diagnostic_frame()[["match_id", "is_goal", "shot_distance", "shot_angle"]]
+    frame["location_x"] = 100.0
+    frame["location_y"] = 40.0
+
+    resolved = resolve_features(
+        frame,
+        contract,
+        original_input_columns={
+            "match_id",
+            "is_goal",
+            "shot_distance",
+            "shot_angle",
+            "shot_x",
+            "shot_y",
+        },
+    )
+
+    assert "location_x" in resolved.source_available["numeric"]
+    assert "location_y" in resolved.source_available["numeric"]
+    assert "location_x" not in resolved.synthetic_default_features["numeric"]
+
+
 def test_leakage_and_reference_columns_are_excluded_from_features():
     contract = load_contract(DEFAULT_CONTRACT_PATH)
     frame = _synthetic_diagnostic_frame()
@@ -180,6 +205,13 @@ def test_tiny_synthetic_training_run_writes_required_outputs(tmp_path: Path):
     assert metadata["selected_model"] in set(comparison["model_candidate"])
     assert "statsbomb_xg" not in metadata["resolved_features"]["numeric"]
     assert "is_blocked" not in metadata["resolved_features"]["binary"]
+    resolved_payload = json.loads(outputs["resolved_features"].read_text(encoding="utf-8"))
+    assert {
+        "source_available",
+        "model_available",
+        "synthetic_default_features",
+        "unavailable",
+    }.issubset(resolved_payload)
 
 
 def test_single_class_folds_skip_roc_auc_safely():
@@ -195,6 +227,63 @@ def test_single_class_folds_skip_roc_auc_safely():
     )
 
     assert "skipped_single_class_fold" in set(fold_metrics["roc_auc_status"])
+
+
+def test_synthetic_default_columns_are_recorded_and_excluded(tmp_path: Path):
+    input_path = tmp_path / "minimal_shot_features.parquet"
+    output_dir = tmp_path / "diagnostic_v1"
+    source = _synthetic_diagnostic_frame().drop(
+        columns=[
+            "assist_category",
+            "chain_label",
+            "def_label",
+            "opponent_def_rating_global",
+            "pressure_state",
+            "set_piece_category",
+            "set_piece_phase",
+        ]
+    )
+    source.to_parquet(input_path, index=False)
+
+    frame, _, original_columns = load_raw_and_modeling_features(input_path)
+    resolved = resolve_features(
+        frame,
+        load_contract(DEFAULT_CONTRACT_PATH),
+        original_input_columns=original_columns,
+    )
+
+    assert "opponent_def_rating_global" not in resolved.source_available["numeric"]
+    assert "opponent_def_rating_global" in resolved.synthetic_default_features["numeric"]
+    assert "opponent_def_rating_global" in resolved.synthetic_default_excluded["numeric"]
+    assert "def_label" not in resolved.source_available["categorical"]
+    assert "def_label" in resolved.synthetic_default_features["categorical"]
+    assert "def_label" in resolved.synthetic_default_excluded["categorical"]
+    assert "def_label" not in resolved.categorical
+
+    outputs = run_diagnostic_training(
+        input_path=input_path,
+        output_dir=output_dir,
+        min_category_count=2,
+        random_state=11,
+    )
+    resolved_payload = json.loads(outputs["resolved_features"].read_text(encoding="utf-8"))
+    summary = pd.read_csv(outputs["feature_group_summary"])
+    metadata = json.loads(outputs["selected_model_metadata"].read_text(encoding="utf-8"))
+    candidate_features = {
+        feature
+        for candidate in metadata["model_candidates"]
+        for group in candidate["features"].values()
+        for feature in group
+    }
+
+    assert "def_label" in resolved_payload["synthetic_default_features"]["categorical"]
+    assert "def_label" in resolved_payload["synthetic_default_excluded"]["categorical"]
+    assert "def_label" not in candidate_features
+    assert "opponent_def_rating_global" not in candidate_features
+    def_label_row = summary.loc[summary["feature"] == "def_label"].iloc[0]
+    assert def_label_row["availability_source"] == "synthetic_default"
+    assert def_label_row["used_in_training"] is False or not def_label_row["used_in_training"]
+    assert def_label_row["excluded_reason"] == "constant_synthetic_default"
 
 
 def test_existing_cxg_baseline_import_still_works(tmp_path: Path):
