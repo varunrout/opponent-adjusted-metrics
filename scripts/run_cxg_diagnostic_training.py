@@ -18,6 +18,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.impute import SimpleImputer
@@ -277,15 +278,27 @@ def _candidate_pipeline(
     *,
     min_category_count: int,
     random_state: int,
+    calibration_cv: int | None = None,
 ) -> Pipeline:
     if candidate_name == "geometry_logistic":
         model = LogisticRegression(C=1.0, max_iter=2000, solver="lbfgs")
         scale = True
-    elif candidate_name == "diagnostic_logistic":
+    elif candidate_name in {
+        "diagnostic_logistic",
+        "diagnostic_baseline_parity_logistic",
+    }:
         model = LogisticRegression(C=0.5, max_iter=2000, solver="lbfgs")
+        scale = True
+    elif candidate_name == "calibrated_diagnostic_logistic_sigmoid":
+        base_model = LogisticRegression(C=0.5, max_iter=2000, solver="lbfgs")
+        model = _calibrated_model(base_model, calibration_cv)
         scale = True
     elif candidate_name == "gradient_boosting":
         model = GradientBoostingClassifier(random_state=random_state)
+        scale = False
+    elif candidate_name == "calibrated_gradient_boosting_sigmoid":
+        base_model = GradientBoostingClassifier(random_state=random_state)
+        model = _calibrated_model(base_model, calibration_cv)
         scale = False
     elif candidate_name == "extra_trees":
         model = ExtraTreesClassifier(
@@ -294,6 +307,15 @@ def _candidate_pipeline(
             random_state=random_state,
             n_jobs=1,
         )
+        scale = False
+    elif candidate_name == "calibrated_extra_trees_sigmoid":
+        base_model = ExtraTreesClassifier(
+            n_estimators=120,
+            min_samples_leaf=3,
+            random_state=random_state,
+            n_jobs=1,
+        )
+        model = _calibrated_model(base_model, calibration_cv)
         scale = False
     else:
         raise ValueError(f"Unsupported CxG diagnostic candidate: {candidate_name}")
@@ -312,6 +334,24 @@ def _candidate_pipeline(
             ("model", model),
         ]
     )
+
+
+def _calibrated_model(model: BaseEstimator, calibration_cv: int | None) -> BaseEstimator:
+    """Wrap a base classifier with sigmoid calibration inside the training subset."""
+
+    if calibration_cv is None:
+        return model
+    return CalibratedClassifierCV(estimator=model, method="sigmoid", cv=calibration_cv)
+
+
+def _calibration_cv(y_train: np.ndarray) -> int | None:
+    """Choose a safe inner calibration fold count from the current training subset."""
+
+    class_counts = pd.Series(y_train).value_counts()
+    min_class_count = int(class_counts.min()) if len(class_counts) else 0
+    if min_class_count < 2:
+        return None
+    return min(3, min_class_count)
 
 
 def _splitter(
@@ -373,7 +413,37 @@ def _fold_metric_row(
     else:
         row["roc_auc"] = np.nan
         row["roc_auc_status"] = "skipped_single_class_fold"
+    row["calibration_proxy_error"] = (
+        row["mean_predicted_probability"] - row["goal_rate"]
+        if pd.notna(row["goal_rate"])
+        else np.nan
+    )
+    row["absolute_calibration_proxy_error"] = abs(row["calibration_proxy_error"])
     return row
+
+
+def _calibration_summary_row(
+    y_true: np.ndarray,
+    probs: np.ndarray,
+    *,
+    candidate: str,
+    fold: int,
+) -> dict[str, Any]:
+    goal_rate = float(y_true.mean()) if len(y_true) else np.nan
+    mean_probability = float(np.mean(probs)) if len(probs) else np.nan
+    calibration_error = mean_probability - goal_rate if pd.notna(goal_rate) else np.nan
+    return {
+        "model_candidate": candidate,
+        "fold": fold,
+        "rows": int(len(y_true)),
+        "goals": int(y_true.sum()),
+        "goal_rate": goal_rate,
+        "mean_predicted_probability": mean_probability,
+        "calibration_error": calibration_error,
+        "absolute_calibration_error": (
+            abs(calibration_error) if pd.notna(calibration_error) else np.nan
+        ),
+    }
 
 
 def train_diagnostic_candidates(
@@ -383,7 +453,7 @@ def train_diagnostic_candidates(
     original_input_columns: set[str] | None = None,
     min_category_count: int,
     random_state: int,
-) -> tuple[Pipeline, dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[Pipeline, dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Train CxG diagnostic candidates and return the selected final model plus artifacts."""
 
     resolved = resolve_features(df, contract, original_input_columns=original_input_columns)
@@ -394,6 +464,7 @@ def train_diagnostic_candidates(
 
     candidate_defs = contract.get("model_candidates", [])
     fold_rows = []
+    calibration_rows = []
     prediction_parts = []
     candidate_metadata = []
     for candidate in candidate_defs:
@@ -424,6 +495,7 @@ def train_diagnostic_candidates(
                     categorical,
                     min_category_count=min_category_count,
                     random_state=random_state,
+                    calibration_cv=_calibration_cv(y[train_idx]),
                 )
                 model.fit(df.iloc[train_idx][feature_cols], y[train_idx])
                 probs = model.predict_proba(df.iloc[test_idx][feature_cols])[:, 1]
@@ -437,6 +509,14 @@ def train_diagnostic_candidates(
                     test_rows=len(test_idx),
                     feature_count=len(feature_cols),
                     excluded_count=len(resolved.excluded_present) + len(resolved.reference_present),
+                )
+            )
+            calibration_rows.append(
+                _calibration_summary_row(
+                    y[test_idx],
+                    probs,
+                    candidate=name,
+                    fold=fold,
                 )
             )
             prediction_parts.append(
@@ -453,13 +533,16 @@ def train_diagnostic_candidates(
                 "name": name,
                 "type": candidate.get("type"),
                 "feature_scope": candidate.get("feature_scope"),
+                "calibration": candidate.get("calibration"),
                 "features": {"numeric": numeric, "binary": binary, "categorical": categorical},
             }
         )
 
     fold_metrics = pd.DataFrame(fold_rows)
+    calibration_summary = pd.DataFrame(calibration_rows)
     comparison = _comparison_table(fold_metrics)
     selected_name = _select_candidate(comparison)
+    comparison["selected_model"] = comparison["model_candidate"] == selected_name
     selected_meta = next(item for item in candidate_metadata if item["name"] == selected_name)
     final_model = _candidate_pipeline(
         selected_name,
@@ -468,6 +551,7 @@ def train_diagnostic_candidates(
         selected_meta["features"]["categorical"],
         min_category_count=min_category_count,
         random_state=random_state,
+        calibration_cv=_calibration_cv(y),
     )
     final_features = (
         selected_meta["features"]["numeric"]
@@ -475,9 +559,25 @@ def train_diagnostic_candidates(
         + selected_meta["features"]["categorical"]
     )
     final_model.fit(df[final_features], y)
+    forbidden_features_used = _forbidden_features_used(final_features, contract)
+    candidate_feature_counts = {
+        item["name"]: sum(len(columns) for columns in item["features"].values())
+        for item in candidate_metadata
+    }
+    selected_reason = _selection_reason(comparison, selected_name)
     metadata = {
         "selected_model": selected_name,
-        "selected_reason": _selection_reason(comparison, selected_name),
+        "selected_reason": selected_reason,
+        "selection_reason": selected_reason,
+        "selection_metric": "log_loss_mean",
+        "selected_features": final_features,
+        "selected_feature_groups": selected_meta["features"],
+        "selected_feature_count": len(final_features),
+        "candidate_feature_counts": candidate_feature_counts,
+        "source_available_features": resolved.source_available,
+        "synthetic_default_features": resolved.synthetic_default_features,
+        "synthetic_default_excluded": resolved.synthetic_default_excluded,
+        "forbidden_features_used": forbidden_features_used,
         "split_metadata": split_metadata,
         "resolved_features": {
             "source_available": resolved.source_available,
@@ -500,7 +600,7 @@ def train_diagnostic_candidates(
         "model_candidates": candidate_metadata,
     }
     predictions = pd.concat(prediction_parts, ignore_index=True)
-    return final_model, metadata, comparison, fold_metrics, predictions
+    return final_model, metadata, comparison, fold_metrics, calibration_summary, predictions
 
 
 def _prediction_frame(
@@ -535,6 +635,8 @@ def _comparison_table(fold_metrics: pd.DataFrame) -> pd.DataFrame:
         goal_count=("goal_count", "sum"),
         goal_rate=("goal_rate", "mean"),
         mean_predicted_probability=("mean_predicted_probability", "mean"),
+        calibration_proxy_error=("calibration_proxy_error", "mean"),
+        absolute_calibration_proxy_error=("absolute_calibration_proxy_error", "mean"),
         feature_count=("feature_count", "max"),
         excluded_leakage_reference_column_count=(
             "excluded_leakage_reference_column_count",
@@ -542,10 +644,20 @@ def _comparison_table(fold_metrics: pd.DataFrame) -> pd.DataFrame:
         ),
     )
     grouped["selection_rank"] = (
-        grouped["log_loss_mean"].rank(method="first")
-        + grouped["brier_mean"].rank(method="first") * 0.25
+        grouped["log_loss_mean"].rank(method="first", ascending=True)
+        + grouped["brier_mean"].rank(method="first", ascending=True) * 0.01
+        + grouped["absolute_calibration_proxy_error"].rank(method="first", ascending=True) * 0.001
     )
-    return grouped.sort_values(["selection_rank", "log_loss_mean", "brier_mean"])
+    grouped["selected_model"] = False
+    return grouped.sort_values(
+        [
+            "log_loss_mean",
+            "brier_mean",
+            "absolute_calibration_proxy_error",
+            "roc_auc_mean",
+        ],
+        ascending=[True, True, True, False],
+    ).reset_index(drop=True)
 
 
 def _select_candidate(comparison: pd.DataFrame) -> str:
@@ -554,11 +666,30 @@ def _select_candidate(comparison: pd.DataFrame) -> str:
 
 def _selection_reason(comparison: pd.DataFrame, selected: str) -> str:
     row = comparison.loc[comparison["model_candidate"] == selected].iloc[0]
+    next_best = comparison.loc[comparison["model_candidate"] != selected].head(1)
+    gap_text = "No other candidate was available for comparison."
+    if not next_best.empty:
+        challenger = next_best.iloc[0]
+        gap_text = (
+            f"Next candidate `{challenger['model_candidate']}` had "
+            f"log_loss_mean={challenger['log_loss_mean']:.4f}, "
+            f"Brier={challenger['brier_mean']:.4f}; log-loss gap was "
+            f"{challenger['log_loss_mean'] - row['log_loss_mean']:.4f}."
+        )
     return (
-        f"Selected {selected} provisionally because it had the strongest combined "
-        f"log-loss/Brier ranking in training comparison "
-        f"(log_loss_mean={row['log_loss_mean']:.4f}, brier_mean={row['brier_mean']:.4f})."
+        f"Selected {selected} provisionally using lowest mean log loss as the primary "
+        f"training metric (log_loss_mean={row['log_loss_mean']:.4f}). "
+        f"Brier was the first tie-breaker (brier_mean={row['brier_mean']:.4f}); "
+        f"fold-level calibration proxy was used only after log loss and Brier "
+        f"(absolute_calibration_proxy_error={row['absolute_calibration_proxy_error']:.4f}). "
+        f"ROC AUC was retained as secondary context, not the selection driver. {gap_text}"
     )
+
+
+def _forbidden_features_used(features: list[str], contract: dict[str, Any]) -> list[str]:
+    forbidden = set(contract.get("reference_only_columns", []))
+    forbidden.update(contract.get("excluded_leakage_columns", []))
+    return sorted(forbidden.intersection(features))
 
 
 def write_training_artifacts(
@@ -569,6 +700,7 @@ def write_training_artifacts(
     metadata: dict[str, Any],
     comparison: pd.DataFrame,
     fold_metrics: pd.DataFrame,
+    calibration_summary: pd.DataFrame,
     predictions: pd.DataFrame,
     input_path: Path,
 ) -> dict[str, Path]:
@@ -592,6 +724,8 @@ def write_training_artifacts(
     predictions_path = predictions_dir / "cross_validated_predictions.parquet"
     comparison_path = reports_dir / "model_comparison.csv"
     fold_path = reports_dir / "fold_metrics.csv"
+    calibration_path = reports_dir / "candidate_calibration_summary.csv"
+    probability_path = reports_dir / "candidate_probability_summary.csv"
     report_path = reports_dir / "training_report.md"
     summary_path = reports_dir / "training_summary.json"
 
@@ -608,6 +742,9 @@ def write_training_artifacts(
     _feature_group_summary(contract, resolved_features).to_csv(feature_group_path, index=False)
     comparison.to_csv(comparison_path, index=False)
     fold_metrics.to_csv(fold_path, index=False)
+    calibration_summary.to_csv(calibration_path, index=False)
+    probability_summary = _candidate_probability_summary(predictions)
+    probability_summary.to_csv(probability_path, index=False)
     predictions.to_parquet(predictions_path, index=False)
     joblib.dump(model, model_path)
 
@@ -634,12 +771,25 @@ def write_training_artifacts(
         "model_candidates": candidates_path,
         "model_comparison": comparison_path,
         "fold_metrics": fold_path,
+        "candidate_calibration_summary": calibration_path,
+        "candidate_probability_summary": probability_path,
         "selected_model_metadata": metadata_path,
         "selected_model": model_path,
         "cross_validated_predictions": predictions_path,
         "training_report": report_path,
         "training_summary": summary_path,
     }
+
+
+def _candidate_probability_summary(predictions: pd.DataFrame) -> pd.DataFrame:
+    grouped = predictions.groupby("model_candidate", as_index=False).agg(
+        probability_min=("predicted_cxg", "min"),
+        probability_max=("predicted_cxg", "max"),
+        probability_mean=("predicted_cxg", "mean"),
+        probability_std=("predicted_cxg", "std"),
+        probability_null_count=("predicted_cxg", lambda values: int(values.isna().sum())),
+    )
+    return grouped
 
 
 def _excluded_columns_table(resolved_features: dict[str, Any]) -> pd.DataFrame:
@@ -720,6 +870,10 @@ def _training_summary(
     return {
         "selected_model": metadata["selected_model"],
         "selected_reason": metadata["selected_reason"],
+        "selection_metric": metadata.get("selection_metric"),
+        "selected_features": metadata.get("selected_features", []),
+        "selected_feature_count": metadata.get("selected_feature_count", 0),
+        "candidate_feature_counts": metadata.get("candidate_feature_counts", {}),
         "split_metadata": metadata["split_metadata"],
         "candidate_count": int(comparison["model_candidate"].nunique()),
         "fold_count": int(fold_metrics["fold"].nunique()),
@@ -742,6 +896,12 @@ def _training_report(
             "Diagnostic-informed training means the model matrix is built from the pre-model "
             "CxG analysis decisions: eligible features are separated from reference-only and "
             "leakage columns before candidate models are compared.",
+            "",
+            "This revision follows validation of `diagnostic_v1`, where the selected "
+            "`diagnostic_logistic` model was better calibrated than baseline but worse on "
+            "log loss, Brier, and ROC AUC. The candidate set now includes calibrated "
+            "logistic, gradient boosting, and extra-trees options, plus a baseline-parity "
+            "logistic candidate that uses the governed diagnostic feature set.",
             "",
             "## Diagnostic Inputs",
             "",
@@ -792,7 +952,8 @@ def _training_report(
             "",
             *[
                 f"- `{row.model_candidate}`: log loss {row.log_loss_mean:.4f}, "
-                f"Brier {row.brier_mean:.4f}, ROC AUC {row.roc_auc_mean:.4f}"
+                f"Brier {row.brier_mean:.4f}, calibration proxy "
+                f"{row.absolute_calibration_proxy_error:.4f}, ROC AUC {row.roc_auc_mean:.4f}"
                 for row in comparison.itertuples()
             ],
             "",
@@ -826,12 +987,14 @@ def run_diagnostic_training(
     df, resolved_input, original_input_columns = load_raw_and_modeling_features(input_path)
     resolved = resolve_features(df, contract, original_input_columns=original_input_columns)
     validate_no_forbidden_features(resolved.all_features, contract)
-    model, metadata, comparison, fold_metrics, predictions = train_diagnostic_candidates(
-        df,
-        contract,
-        original_input_columns=original_input_columns,
-        min_category_count=min_category_count,
-        random_state=random_state,
+    model, metadata, comparison, fold_metrics, calibration_summary, predictions = (
+        train_diagnostic_candidates(
+            df,
+            contract,
+            original_input_columns=original_input_columns,
+            min_category_count=min_category_count,
+            random_state=random_state,
+        )
     )
     return write_training_artifacts(
         output_dir=output_dir,
@@ -840,6 +1003,7 @@ def run_diagnostic_training(
         metadata=metadata,
         comparison=comparison,
         fold_metrics=fold_metrics,
+        calibration_summary=calibration_summary,
         predictions=predictions,
         input_path=resolved_input,
     )

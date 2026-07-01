@@ -166,14 +166,37 @@
       "feature_scope": "contract_all"
     },
     {
+      "name": "diagnostic_baseline_parity_logistic",
+      "type": "baseline_parity_logistic_regression",
+      "feature_scope": "contract_all"
+    },
+    {
+      "name": "calibrated_diagnostic_logistic_sigmoid",
+      "type": "calibrated_regularised_logistic_regression",
+      "feature_scope": "contract_all",
+      "calibration": "sigmoid_inner_cv"
+    },
+    {
       "name": "gradient_boosting",
       "type": "gradient_boosting_classifier",
       "feature_scope": "contract_all"
     },
     {
+      "name": "calibrated_gradient_boosting_sigmoid",
+      "type": "calibrated_gradient_boosting_classifier",
+      "feature_scope": "contract_all",
+      "calibration": "sigmoid_inner_cv"
+    },
+    {
       "name": "extra_trees",
       "type": "extra_trees_classifier",
       "feature_scope": "contract_all"
+    },
+    {
+      "name": "calibrated_extra_trees_sigmoid",
+      "type": "calibrated_extra_trees_classifier",
+      "feature_scope": "contract_all",
+      "calibration": "sigmoid_inner_cv"
     }
   ],
   "selected_model": null
