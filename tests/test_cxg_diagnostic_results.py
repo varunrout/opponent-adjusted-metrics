@@ -7,6 +7,7 @@ import pandas as pd
 
 from scripts.generate_cxg_diagnostic_results import (
     ResultPaths,
+    _blocked_limitations,
     build_entity_summary,
     generate_cxg_diagnostic_results,
     join_baseline_predictions,
@@ -143,7 +144,12 @@ def _write_result_artifacts(
         encoding="utf-8",
     )
     (validation_dir / "validation_summary.json").write_text(
-        json.dumps({"promotion_recommendation": recommendation}),
+        json.dumps(
+            {
+                "promotion_recommendation": recommendation,
+                "selected_diagnostic_model": "diagnostic_logistic",
+            }
+        ),
         encoding="utf-8",
     )
     pd.DataFrame(
@@ -223,6 +229,61 @@ def test_allow_non_promoted_generates_exploratory_outputs(tmp_path: Path):
 
     assert outputs["shot_predictions"].exists()
     assert summary["promotion_status"] == "exploratory"
+    shots = pd.read_parquet(outputs["shot_predictions"])
+    assert set(shots["prediction_source"]) == {"exploratory_model"}
+
+
+def test_promoted_outputs_use_promoted_prediction_source(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    shots = pd.read_parquet(outputs["shot_predictions"])
+
+    assert set(shots["prediction_source"]) == {"promoted_model"}
+
+
+def test_stale_validation_blocks_promoted_outputs(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
+    paths.validation_summary.write_text(
+        json.dumps(
+            {
+                "promotion_recommendation": "promote",
+                "selected_diagnostic_model": "old_diagnostic_logistic",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert "shot_predictions" not in outputs
+    assert summary["promotion_status"] == "blocked"
+    assert any("Validation is stale" in item for item in summary["known_limitations"])
+
+
+def test_stale_validation_blocks_exploratory_outputs(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="needs_revision")
+    paths.validation_summary.write_text(
+        json.dumps(
+            {
+                "promotion_recommendation": "needs_revision",
+                "selected_diagnostic_model": "old_diagnostic_logistic",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    outputs = generate_cxg_diagnostic_results(
+        input_path=feature_path,
+        paths=paths,
+        allow_non_promoted=True,
+    )
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert "shot_predictions" not in outputs
+    assert summary["promotion_status"] == "blocked"
+    assert any("Validation is stale" in item for item in summary["known_limitations"])
 
 
 def test_selected_model_metadata_drives_feature_selection(tmp_path: Path):
@@ -312,3 +373,35 @@ def test_governance_missing_blocks_promoted_outputs(tmp_path: Path):
     assert "shot_predictions" not in outputs
     assert summary["promotion_status"] == "blocked"
     assert summary["governance_summary"]["status"] == "failed"
+
+
+def test_governance_missing_blocks_exploratory_outputs(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="needs_revision")
+    paths.resolved_features.unlink()
+
+    outputs = generate_cxg_diagnostic_results(
+        input_path=feature_path,
+        paths=paths,
+        allow_non_promoted=True,
+    )
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert "shot_predictions" not in outputs
+    assert not (paths.output_dir / "shot_predictions.parquet").exists()
+    assert summary["promotion_status"] == "blocked"
+    assert summary["governance_summary"]["status"] == "failed"
+    assert any("governance" in item.lower() for item in summary["known_limitations"])
+
+
+def test_blocked_limitations_explain_governance_without_validation_blame():
+    limitations = _blocked_limitations(
+        "promote",
+        {
+            "missing_governance_artifacts": ["resolved_features.json"],
+            "forbidden_features_used": [],
+        },
+        blockers=["Feature governance failed; scoring outputs are blocked."],
+    )
+
+    assert limitations[0] == "Feature governance failed; scoring outputs are blocked."
+    assert not any("not allowed for promoted outputs" in item for item in limitations)

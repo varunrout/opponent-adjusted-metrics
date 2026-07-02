@@ -230,6 +230,41 @@ def promotion_status(recommendation: str, *, allow_non_promoted: bool) -> tuple[
     return "blocked", False
 
 
+def validation_selected_model(paths: ResultPaths) -> str | None:
+    """Return the diagnostic model name that validation evaluated, when available."""
+
+    if not paths.validation_summary.exists():
+        return None
+    validation_summary = _read_json(paths.validation_summary)
+    selected = validation_summary.get("selected_diagnostic_model")
+    return str(selected) if selected else None
+
+
+def blocking_reasons(
+    *,
+    selected_model: str,
+    validation_selected: str | None,
+    recommendation: str,
+    governance: dict[str, Any],
+    allow_non_promoted: bool,
+) -> list[str]:
+    """Return promotion/result-generation blockers that cannot be bypassed."""
+
+    reasons: list[str] = []
+    if validation_selected and validation_selected != selected_model:
+        reasons.append(
+            "Validation is stale: selected model metadata now points to "
+            f"`{selected_model}`, but validation evaluated `{validation_selected}`."
+        )
+    if governance.get("status") != "passed":
+        reasons.append("Feature governance failed; scoring outputs are blocked.")
+    if recommendation not in ALLOWED_PROMOTION_RECOMMENDATIONS and not allow_non_promoted:
+        reasons.append(
+            f"Validation recommendation `{recommendation}` is not allowed for promoted outputs."
+        )
+    return reasons
+
+
 def generate_cxg_diagnostic_results(
     *,
     input_path: Path | None = None,
@@ -248,6 +283,7 @@ def generate_cxg_diagnostic_results(
     recommendation_payload = _read_json(paths.promotion_recommendation)
     recommendation = str(recommendation_payload.get("recommendation", "unknown"))
     selected_model = selected_model_name(metadata)
+    validated_model = validation_selected_model(paths)
     selected_features, _ = selected_feature_columns(metadata)
     resolved_features = (
         _read_json(paths.resolved_features) if paths.resolved_features.exists() else {}
@@ -268,12 +304,19 @@ def generate_cxg_diagnostic_results(
         feature_group_summary,
         excluded_columns,
     )
+    blockers = blocking_reasons(
+        selected_model=selected_model,
+        validation_selected=validated_model,
+        recommendation=recommendation,
+        governance=governance,
+        allow_non_promoted=allow_non_promoted,
+    )
     status, gate_passed = promotion_status(
         recommendation,
         allow_non_promoted=allow_non_promoted,
     )
-    gate_passed = gate_passed and governance["status"] == "passed"
-    if not gate_passed and status != "exploratory":
+    gate_passed = gate_passed and not blockers
+    if blockers:
         status = "blocked"
 
     output_paths = _output_paths(paths.output_dir)
@@ -288,7 +331,11 @@ def generate_cxg_diagnostic_results(
             quality_checks={},
             validation_payloads=_validation_payloads(paths),
             output_paths={"model_promotion_summary": summary_path, "results_report": report_path},
-            known_limitations=_blocked_limitations(recommendation, governance),
+            known_limitations=_blocked_limitations(
+                recommendation,
+                governance,
+                blockers=blockers,
+            ),
         )
         _write_json(summary_path, summary)
         report_path.write_text(_results_report(summary, blocked=True), encoding="utf-8")
@@ -307,6 +354,7 @@ def generate_cxg_diagnostic_results(
         selected_model=selected_model,
         promotion_status_value=status,
         validation_recommendation=recommendation,
+        prediction_source=prediction_source_for_status(status),
     )
     shots, baseline_join = join_baseline_predictions(shots, paths.baseline_predictions)
     player_summary = build_entity_summary(shots, "player")
@@ -375,6 +423,7 @@ def build_shot_predictions(
     selected_model: str,
     promotion_status_value: str,
     validation_recommendation: str,
+    prediction_source: str,
 ) -> pd.DataFrame:
     prediction = pd.DataFrame(index=frame.index)
     for column in CONTEXT_COLUMNS:
@@ -383,10 +432,18 @@ def build_shot_predictions(
     prediction["predicted_cxg"] = probabilities
     prediction["model_version"] = MODEL_VERSION
     prediction["selected_model_candidate"] = selected_model
-    prediction["prediction_source"] = "promoted_model"
+    prediction["prediction_source"] = prediction_source
     prediction["promotion_status"] = promotion_status_value
     prediction["validation_recommendation"] = validation_recommendation
     return prediction.reset_index(drop=True)
+
+
+def prediction_source_for_status(status: str) -> str:
+    if status in {"promoted", "provisionally_promoted"}:
+        return "promoted_model"
+    if status == "exploratory":
+        return "exploratory_model"
+    raise ValueError(f"No shot prediction source is defined for promotion status `{status}`.")
 
 
 def join_baseline_predictions(
@@ -741,18 +798,35 @@ def _validation_metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return metrics
 
 
-def _blocked_limitations(recommendation: str, governance: dict[str, Any]) -> list[str]:
-    limitations = [
-        f"Validation recommendation `{recommendation}` is not allowed for promoted outputs."
-    ]
+def _blocked_limitations(
+    recommendation: str,
+    governance: dict[str, Any],
+    *,
+    blockers: list[str] | None = None,
+) -> list[str]:
+    limitations = list(blockers or [])
+    if not limitations and recommendation not in ALLOWED_PROMOTION_RECOMMENDATIONS:
+        limitations.append(
+            f"Validation recommendation `{recommendation}` is not allowed for promoted outputs."
+        )
     missing = governance.get("missing_governance_artifacts", [])
     if missing:
-        limitations.append("Required governance artifacts are missing: " + ", ".join(missing))
+        message = "Required governance artifacts are missing: " + ", ".join(missing)
+        if message not in limitations:
+            limitations.append(message)
     if governance.get("forbidden_features_used"):
-        limitations.append(
-            "Selected model metadata includes forbidden features: "
-            + ", ".join(governance["forbidden_features_used"])
+        message = "Selected model metadata includes forbidden features: " + ", ".join(
+            governance["forbidden_features_used"]
         )
+        if message not in limitations:
+            limitations.append(message)
+    if governance.get("synthetic_default_excluded_features_used"):
+        message = (
+            "Selected model metadata includes synthetic default features that training "
+            "excluded: " + ", ".join(governance["synthetic_default_excluded_features_used"])
+        )
+        if message not in limitations:
+            limitations.append(message)
     return limitations
 
 
