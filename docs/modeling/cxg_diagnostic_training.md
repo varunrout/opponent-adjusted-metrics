@@ -37,6 +37,13 @@ outputs/modeling/cxg/diagnostic_v1/
 diagnostic-informed CxG training layer that uses decisions from pre-model CxG
 analysis.
 
+After validation, `diagnostic_v1` needed a modelling-strength revision:
+validation found that the selected `diagnostic_logistic` model was cleaner and
+better calibrated than baseline, but worse on log loss, Brier score, and ROC
+AUC. The training layer therefore keeps the governance contract intact while
+expanding the candidate set and making selection more directly probability-score
+driven.
+
 The training script uses `configs/feature_contracts/cxg_diagnostic_v1.json` to
 resolve eligible numeric, binary, and categorical features from the shot-feature
 input. Reference-only columns such as provider xG and leakage/post-model columns
@@ -46,8 +53,17 @@ Candidate models:
 
 - `geometry_logistic`: simple location/geometry logistic baseline.
 - `diagnostic_logistic`: regularised logistic regression over the diagnostic feature contract.
+- `diagnostic_baseline_parity_logistic`: governed all-feature logistic candidate configured for baseline-parity comparison.
+- `calibrated_diagnostic_logistic_sigmoid`: diagnostic logistic candidate with sigmoid calibration inside each training fold.
 - `gradient_boosting`: deterministic nonlinear benchmark.
+- `calibrated_gradient_boosting_sigmoid`: gradient boosting with sigmoid calibration inside each training fold.
 - `extra_trees`: deterministic tree ensemble robustness benchmark.
+- `calibrated_extra_trees_sigmoid`: extra trees with sigmoid calibration inside each training fold.
+
+Candidate selection is primary-score first: lowest mean log loss wins, Brier is
+the first tie-breaker, fold-level calibration proxy is considered after those
+primary probability metrics, and ROC AUC remains secondary context. Validation
+still decides whether the selected model can be promoted.
 
 Outputs:
 
@@ -61,6 +77,8 @@ Outputs:
 - `predictions/cross_validated_predictions.parquet`: fold predictions for every candidate.
 - `reports/model_comparison.csv`: aggregate training comparison metrics.
 - `reports/fold_metrics.csv`: fold-level Brier, log loss, ROC AUC where valid, and support metrics.
+- `reports/candidate_calibration_summary.csv`: fold-level goal rate versus mean predicted probability by candidate.
+- `reports/candidate_probability_summary.csv`: candidate probability range, mean, spread, and null counts.
 - `reports/training_summary.json`: compact machine-readable training summary.
 - `reports/training_report.md`: training explanation and validation handoff notes.
 

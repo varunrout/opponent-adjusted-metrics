@@ -6,6 +6,8 @@ import pytest
 
 from scripts.run_cxg_diagnostic_training import (
     DEFAULT_CONTRACT_PATH,
+    _comparison_table,
+    _select_candidate,
     load_raw_and_modeling_features,
     load_contract,
     resolve_features,
@@ -83,8 +85,12 @@ def test_feature_contract_loads_with_expected_shape():
     assert {candidate["name"] for candidate in contract["model_candidates"]} == {
         "geometry_logistic",
         "diagnostic_logistic",
+        "diagnostic_baseline_parity_logistic",
+        "calibrated_diagnostic_logistic_sigmoid",
         "gradient_boosting",
+        "calibrated_gradient_boosting_sigmoid",
         "extra_trees",
+        "calibrated_extra_trees_sigmoid",
     }
 
 
@@ -161,6 +167,8 @@ def test_tiny_synthetic_training_run_writes_required_outputs(tmp_path: Path):
         "model_candidates",
         "model_comparison",
         "fold_metrics",
+        "candidate_calibration_summary",
+        "candidate_probability_summary",
         "selected_model_metadata",
         "selected_model",
         "cross_validated_predictions",
@@ -175,6 +183,7 @@ def test_tiny_synthetic_training_run_writes_required_outputs(tmp_path: Path):
     folds = pd.read_csv(outputs["fold_metrics"])
     predictions = pd.read_parquet(outputs["cross_validated_predictions"])
     metadata = json.loads(outputs["selected_model_metadata"].read_text(encoding="utf-8"))
+    calibration = pd.read_csv(outputs["candidate_calibration_summary"])
 
     assert outputs["feature_contract"] == output_dir / "contracts" / "feature_contract.json"
     assert outputs["excluded_columns"] == output_dir / "diagnostics" / "excluded_columns.csv"
@@ -190,19 +199,54 @@ def test_tiny_synthetic_training_run_writes_required_outputs(tmp_path: Path):
     assert outputs["training_report"] == output_dir / "reports" / "training_report.md"
     assert outputs["model_comparison"] == output_dir / "reports" / "model_comparison.csv"
     assert outputs["fold_metrics"] == output_dir / "reports" / "fold_metrics.csv"
+    assert outputs["candidate_calibration_summary"] == (
+        output_dir / "reports" / "candidate_calibration_summary.csv"
+    )
+    assert outputs["candidate_probability_summary"] == (
+        output_dir / "reports" / "candidate_probability_summary.csv"
+    )
     assert outputs["training_summary"] == output_dir / "reports" / "training_summary.json"
     assert set(comparison["model_candidate"]) == {
         "geometry_logistic",
         "diagnostic_logistic",
+        "diagnostic_baseline_parity_logistic",
+        "calibrated_diagnostic_logistic_sigmoid",
         "gradient_boosting",
+        "calibrated_gradient_boosting_sigmoid",
         "extra_trees",
+        "calibrated_extra_trees_sigmoid",
     }
+    assert comparison["selected_model"].sum() == 1
+    assert {
+        "calibration_proxy_error",
+        "absolute_calibration_proxy_error",
+        "selection_rank",
+        "selected_model",
+    }.issubset(comparison.columns)
+    assert {
+        "model_candidate",
+        "fold",
+        "rows",
+        "goals",
+        "goal_rate",
+        "mean_predicted_probability",
+        "calibration_error",
+        "absolute_calibration_error",
+    }.issubset(calibration.columns)
     assert set(predictions["prediction_source"]) == {"cross_validated"}
     assert {"shot_id", "event_id", "match_id", "team_id", "player_id", "is_goal"}.issubset(
         predictions.columns
     )
     assert folds["excluded_leakage_reference_column_count"].min() >= 1
     assert metadata["selected_model"] in set(comparison["model_candidate"])
+    assert metadata["selection_metric"] == "log_loss_mean"
+    assert metadata["selection_reason"] == metadata["selected_reason"]
+    assert metadata["selected_features"]
+    assert metadata["selected_feature_count"] == len(metadata["selected_features"])
+    assert metadata["candidate_feature_counts"]
+    assert "source_available_features" in metadata
+    assert "synthetic_default_features" in metadata
+    assert metadata["forbidden_features_used"] == []
     assert "statsbomb_xg" not in metadata["resolved_features"]["numeric"]
     assert "is_blocked" not in metadata["resolved_features"]["binary"]
     resolved_payload = json.loads(outputs["resolved_features"].read_text(encoding="utf-8"))
@@ -219,7 +263,7 @@ def test_single_class_folds_skip_roc_auc_safely():
     frame = _synthetic_diagnostic_frame(row_count=24)
     frame["is_goal"] = [1] * 6 + [0] * 18
 
-    _, _, _, fold_metrics, _ = train_diagnostic_candidates(
+    _, _, _, fold_metrics, _, _ = train_diagnostic_candidates(
         frame,
         contract,
         min_category_count=2,
@@ -227,6 +271,88 @@ def test_single_class_folds_skip_roc_auc_safely():
     )
 
     assert "skipped_single_class_fold" in set(fold_metrics["roc_auc_status"])
+
+
+def test_selected_model_uses_log_loss_as_primary_rule():
+    fold_metrics = pd.DataFrame(
+        [
+            {
+                "model_candidate": "low_brier",
+                "fold": 1,
+                "brier": 0.05,
+                "log_loss": 0.30,
+                "roc_auc": 0.9,
+                "row_count": 10,
+                "goal_count": 1,
+                "goal_rate": 0.1,
+                "mean_predicted_probability": 0.1,
+                "calibration_proxy_error": 0.0,
+                "absolute_calibration_proxy_error": 0.0,
+                "feature_count": 3,
+                "excluded_leakage_reference_column_count": 0,
+            },
+            {
+                "model_candidate": "low_log_loss",
+                "fold": 1,
+                "brier": 0.06,
+                "log_loss": 0.20,
+                "roc_auc": 0.7,
+                "row_count": 10,
+                "goal_count": 1,
+                "goal_rate": 0.1,
+                "mean_predicted_probability": 0.12,
+                "calibration_proxy_error": 0.02,
+                "absolute_calibration_proxy_error": 0.02,
+                "feature_count": 3,
+                "excluded_leakage_reference_column_count": 0,
+            },
+        ]
+    )
+
+    comparison = _comparison_table(fold_metrics)
+
+    assert _select_candidate(comparison) == "low_log_loss"
+
+
+def test_selected_model_uses_brier_as_first_tie_breaker():
+    fold_metrics = pd.DataFrame(
+        [
+            {
+                "model_candidate": "worse_brier",
+                "fold": 1,
+                "brier": 0.07,
+                "log_loss": 0.20,
+                "roc_auc": 0.9,
+                "row_count": 10,
+                "goal_count": 1,
+                "goal_rate": 0.1,
+                "mean_predicted_probability": 0.1,
+                "calibration_proxy_error": 0.0,
+                "absolute_calibration_proxy_error": 0.0,
+                "feature_count": 3,
+                "excluded_leakage_reference_column_count": 0,
+            },
+            {
+                "model_candidate": "better_brier",
+                "fold": 1,
+                "brier": 0.05,
+                "log_loss": 0.20,
+                "roc_auc": 0.7,
+                "row_count": 10,
+                "goal_count": 1,
+                "goal_rate": 0.1,
+                "mean_predicted_probability": 0.13,
+                "calibration_proxy_error": 0.03,
+                "absolute_calibration_proxy_error": 0.03,
+                "feature_count": 3,
+                "excluded_leakage_reference_column_count": 0,
+            },
+        ]
+    )
+
+    comparison = _comparison_table(fold_metrics)
+
+    assert _select_candidate(comparison) == "better_brier"
 
 
 def test_synthetic_default_columns_are_recorded_and_excluded(tmp_path: Path):

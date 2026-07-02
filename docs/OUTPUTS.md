@@ -151,6 +151,8 @@ outputs/modeling/cxg/diagnostic_v1/predictions/cross_validated_predictions.parqu
 outputs/modeling/cxg/diagnostic_v1/reports/training_report.md
 outputs/modeling/cxg/diagnostic_v1/reports/model_comparison.csv
 outputs/modeling/cxg/diagnostic_v1/reports/fold_metrics.csv
+outputs/modeling/cxg/diagnostic_v1/reports/candidate_calibration_summary.csv
+outputs/modeling/cxg/diagnostic_v1/reports/candidate_probability_summary.csv
 outputs/modeling/cxg/diagnostic_v1/reports/training_summary.json
 ```
 
@@ -185,6 +187,40 @@ outputs/validation/cxg/diagnostic_v1/plots/predicted_vs_actual_by_slice.png
 
 See `docs/modeling/cxg_diagnostic_validation.md` for validation and promotion
 logic.
+
+### Diagnostic CxG Results
+
+Command:
+
+```bash
+make generate-cxg-diagnostic-results
+```
+
+This layer consumes the selected diagnostic model and the validation promotion
+recommendation. It does not retrain or revalidate the model. Promoted result
+files are generated only when validation recommends `promote` or
+`provisional_promote`; rejected models write a blocked promotion summary unless
+the command is run explicitly with `--allow-non-promoted` for exploratory
+outputs.
+
+Generated files:
+
+```text
+outputs/results/cxg/diagnostic_v1/shot_predictions.parquet
+outputs/results/cxg/diagnostic_v1/player_cxg_summary.csv
+outputs/results/cxg/diagnostic_v1/team_cxg_summary.csv
+outputs/results/cxg/diagnostic_v1/model_promotion_summary.json
+outputs/results/cxg/diagnostic_v1/prediction_quality_checks.csv
+outputs/results/cxg/diagnostic_v1/cxg_results_report.md
+outputs/results/cxg/diagnostic_v1/player_cxg_summary.parquet
+outputs/results/cxg/diagnostic_v1/team_cxg_summary.parquet
+outputs/results/cxg/diagnostic_v1/top_players_by_cxg.csv
+outputs/results/cxg/diagnostic_v1/team_cxg_rankings.csv
+outputs/results/cxg/diagnostic_v1/baseline_vs_diagnostic_summary.csv
+```
+
+See `docs/modeling/cxg_diagnostic_results.md` for promotion and result-output
+guidance.
 
 ### Baseline CxG Modelling
 
