@@ -192,6 +192,10 @@ def test_promotion_gate_allows_promote_and_writes_outputs(tmp_path: Path):
     summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
     assert summary["promotion_status"] == "promoted"
     assert summary["promotion_gate_passed"] is True
+    assert summary["validation_model_matches_selected"] is True
+    assert summary["validation_selected_model"] == "diagnostic_logistic"
+    assert summary["current_selected_model"] == "diagnostic_logistic"
+    assert summary["stale_validation_detected"] is False
 
 
 def test_promotion_gate_allows_provisional_promote(tmp_path: Path):
@@ -242,6 +246,39 @@ def test_promoted_outputs_use_promoted_prediction_source(tmp_path: Path):
     assert set(shots["prediction_source"]) == {"promoted_model"}
 
 
+def test_missing_validation_summary_blocks_promoted_outputs(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
+    paths.validation_summary.unlink()
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert "shot_predictions" not in outputs
+    assert summary["promotion_status"] == "blocked"
+    assert summary["validation_selected_model"] is None
+    assert summary["validation_model_matches_selected"] is False
+    assert summary["stale_validation_detected"] is True
+    assert any("missing or stale" in item for item in summary["known_limitations"])
+
+
+def test_missing_validation_selected_model_blocks_promoted_outputs(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
+    paths.validation_summary.write_text(
+        json.dumps({"promotion_recommendation": "promote"}),
+        encoding="utf-8",
+    )
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert "shot_predictions" not in outputs
+    assert summary["promotion_status"] == "blocked"
+    assert summary["validation_selected_model"] is None
+    assert summary["validation_model_matches_selected"] is False
+    assert summary["stale_validation_detected"] is True
+    assert any("missing or stale" in item for item in summary["known_limitations"])
+
+
 def test_stale_validation_blocks_promoted_outputs(tmp_path: Path):
     paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
     paths.validation_summary.write_text(
@@ -259,15 +296,18 @@ def test_stale_validation_blocks_promoted_outputs(tmp_path: Path):
 
     assert "shot_predictions" not in outputs
     assert summary["promotion_status"] == "blocked"
-    assert any("Validation is stale" in item for item in summary["known_limitations"])
+    assert summary["validation_selected_model"] == "old_diagnostic_logistic"
+    assert summary["validation_model_matches_selected"] is False
+    assert summary["stale_validation_detected"] is True
+    assert any("missing or stale" in item for item in summary["known_limitations"])
 
 
-def test_stale_validation_blocks_exploratory_outputs(tmp_path: Path):
-    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="needs_revision")
+def test_stale_validation_allows_exploratory_outputs_with_flag(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
     paths.validation_summary.write_text(
         json.dumps(
             {
-                "promotion_recommendation": "needs_revision",
+                "promotion_recommendation": "promote",
                 "selected_diagnostic_model": "old_diagnostic_logistic",
             }
         ),
@@ -281,9 +321,14 @@ def test_stale_validation_blocks_exploratory_outputs(tmp_path: Path):
     )
     summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
 
-    assert "shot_predictions" not in outputs
-    assert summary["promotion_status"] == "blocked"
-    assert any("Validation is stale" in item for item in summary["known_limitations"])
+    assert outputs["shot_predictions"].exists()
+    assert summary["promotion_status"] == "exploratory"
+    assert summary["validation_selected_model"] == "old_diagnostic_logistic"
+    assert summary["validation_model_matches_selected"] is False
+    assert summary["stale_validation_detected"] is True
+    assert any("despite stale validation" in item for item in summary["known_limitations"])
+    shots = pd.read_parquet(outputs["shot_predictions"])
+    assert set(shots["prediction_source"]) == {"exploratory_model"}
 
 
 def test_selected_model_metadata_drives_feature_selection(tmp_path: Path):

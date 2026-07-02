@@ -251,10 +251,9 @@ def blocking_reasons(
     """Return promotion/result-generation blockers that cannot be bypassed."""
 
     reasons: list[str] = []
-    if validation_selected and validation_selected != selected_model:
+    if validation_selected != selected_model:
         reasons.append(
-            "Validation is stale: selected model metadata now points to "
-            f"`{selected_model}`, but validation evaluated `{validation_selected}`."
+            "Validation selected model was missing or stale, so promoted outputs were blocked."
         )
     if governance.get("status") != "passed":
         reasons.append("Feature governance failed; scoring outputs are blocked.")
@@ -263,6 +262,19 @@ def blocking_reasons(
             f"Validation recommendation `{recommendation}` is not allowed for promoted outputs."
         )
     return reasons
+
+
+def validation_model_state(
+    selected_model: str,
+    validation_selected: str | None,
+) -> dict[str, Any]:
+    matches = validation_selected == selected_model
+    return {
+        "validation_model_matches_selected": matches,
+        "validation_selected_model": validation_selected,
+        "current_selected_model": selected_model,
+        "stale_validation_detected": not matches,
+    }
 
 
 def generate_cxg_diagnostic_results(
@@ -284,6 +296,7 @@ def generate_cxg_diagnostic_results(
     recommendation = str(recommendation_payload.get("recommendation", "unknown"))
     selected_model = selected_model_name(metadata)
     validated_model = validation_selected_model(paths)
+    validation_state = validation_model_state(selected_model, validated_model)
     selected_features, _ = selected_feature_columns(metadata)
     resolved_features = (
         _read_json(paths.resolved_features) if paths.resolved_features.exists() else {}
@@ -315,9 +328,17 @@ def generate_cxg_diagnostic_results(
         recommendation,
         allow_non_promoted=allow_non_promoted,
     )
-    gate_passed = gate_passed and not blockers
-    if blockers:
+    governance_failed = governance.get("status") != "passed"
+    stale_validation = bool(validation_state["stale_validation_detected"])
+    validation_rejected = recommendation not in ALLOWED_PROMOTION_RECOMMENDATIONS
+    if allow_non_promoted and stale_validation and not governance_failed:
+        status = "exploratory"
+        gate_passed = False
+    elif blockers:
         status = "blocked"
+        gate_passed = False
+    else:
+        gate_passed = gate_passed and not validation_rejected
 
     output_paths = _output_paths(paths.output_dir)
     if status == "blocked":
@@ -330,6 +351,7 @@ def generate_cxg_diagnostic_results(
             governance=governance,
             quality_checks={},
             validation_payloads=_validation_payloads(paths),
+            validation_state=validation_state,
             output_paths={"model_promotion_summary": summary_path, "results_report": report_path},
             known_limitations=_blocked_limitations(
                 recommendation,
@@ -382,10 +404,17 @@ def generate_cxg_diagnostic_results(
         governance=governance,
         quality_checks=quality_payload,
         validation_payloads=_validation_payloads(paths),
+        validation_state=validation_state,
         output_paths=output_paths,
         input_path=resolved_input,
         baseline_join=baseline_join,
-        known_limitations=_known_limitations(status, recommendation, baseline_join, governance),
+        known_limitations=_known_limitations(
+            status,
+            recommendation,
+            baseline_join,
+            governance,
+            validation_state=validation_state,
+        ),
     )
     _write_json(output_paths["model_promotion_summary"], summary)
     output_paths["results_report"].write_text(_results_report(summary), encoding="utf-8")
@@ -742,6 +771,7 @@ def _promotion_summary(
     governance: dict[str, Any],
     quality_checks: dict[str, Any],
     validation_payloads: dict[str, Any],
+    validation_state: dict[str, Any],
     output_paths: dict[str, Path],
     input_path: Path | None = None,
     baseline_join: dict[str, Any] | None = None,
@@ -755,6 +785,10 @@ def _promotion_summary(
         "validation_recommendation": recommendation,
         "promotion_status": status,
         "promotion_gate_passed": gate_passed,
+        "validation_model_matches_selected": validation_state["validation_model_matches_selected"],
+        "validation_selected_model": validation_state["validation_selected_model"],
+        "current_selected_model": validation_state["current_selected_model"],
+        "stale_validation_detected": validation_state["stale_validation_detected"],
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "inputs": {
             "shot_features": str(input_path) if input_path else None,
@@ -835,11 +869,18 @@ def _known_limitations(
     recommendation: str,
     baseline_join: dict[str, Any],
     governance: dict[str, Any],
+    *,
+    validation_state: dict[str, Any],
 ) -> list[str]:
     limitations: list[str] = []
     if status == "exploratory":
         limitations.append(
             f"Outputs were generated with --allow-non-promoted after validation returned `{recommendation}`."
+        )
+    if status == "exploratory" and validation_state.get("stale_validation_detected"):
+        limitations.append(
+            "Exploratory outputs were generated despite stale validation because "
+            "--allow-non-promoted was used."
         )
     if baseline_join.get("join_rate", 0.0) < 1.0:
         limitations.append("Baseline comparison is partial or unavailable for some shot rows.")
