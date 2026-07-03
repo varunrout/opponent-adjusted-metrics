@@ -17,7 +17,7 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier
@@ -32,6 +32,11 @@ try:
     from scripts.run_cxg_end_to_end import _read_table, discover_feature_input, load_cxg_features
 except ModuleNotFoundError:  # pragma: no cover - direct script execution path
     from run_cxg_end_to_end import _read_table, discover_feature_input, load_cxg_features
+
+from opponent_adjusted.modeling.cxg.diagnostic_preprocessing import (
+    RareCategoryCollapser,
+    _coerce_binary_frame,
+)
 
 DEFAULT_CONTRACT_PATH = Path("configs/feature_contracts/cxg_diagnostic_v1.json")
 DEFAULT_OUTPUT_DIR = Path("outputs/modeling/cxg/diagnostic_v1")
@@ -57,41 +62,6 @@ class ResolvedFeatures:
     @property
     def all_features(self) -> list[str]:
         return self.numeric + self.binary + self.categorical
-
-
-class RareCategoryCollapser(BaseEstimator, TransformerMixin):
-    """Collapse infrequent categories before one-hot encoding."""
-
-    def __init__(self, min_count: int = 30, replacement: str = "__rare__") -> None:
-        self.min_count = min_count
-        self.replacement = replacement
-        self.frequent_values_: dict[str, set[str]] = {}
-
-    def fit(self, X: Any, y: Any = None) -> "RareCategoryCollapser":
-        frame = _as_frame(X)
-        self.frequent_values_ = {}
-        for column in frame.columns:
-            counts = frame[column].fillna("__missing__").astype(str).value_counts()
-            self.frequent_values_[column] = set(counts[counts >= self.min_count].index)
-        return self
-
-    def transform(self, X: Any) -> pd.DataFrame:
-        frame = _as_frame(X).copy()
-        for column in frame.columns:
-            frequent = self.frequent_values_.get(column, set())
-            values = frame[column].fillna("__missing__").astype(str)
-            frame[column] = values.where(values.isin(frequent), self.replacement)
-        return frame
-
-
-def _as_frame(X: Any) -> pd.DataFrame:
-    if isinstance(X, pd.DataFrame):
-        return X
-    return pd.DataFrame(X)
-
-
-def _coerce_binary_frame(X: Any) -> pd.DataFrame:
-    return _as_frame(X).astype(float)
 
 
 def load_contract(path: Path = DEFAULT_CONTRACT_PATH) -> dict[str, Any]:
