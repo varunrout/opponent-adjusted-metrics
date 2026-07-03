@@ -142,10 +142,17 @@ def _derive_score_context(df: pd.DataFrame) -> pd.DataFrame:
         derived["is_trailing"].append(score_diff < 0)
         derived["is_drawing"].append(score_diff == 0)
 
-        if str(row.outcome or "").strip().lower() == "goal":
+        outcome = str(row.outcome or "").strip().lower()
+        if outcome == "goal":
             match_scores[team_id] = team_score + 1
+        elif outcome == "own goal":
+            # Own goals credit the opponent. If the opponent mapping is missing,
+            # keep scores unchanged rather than assigning the goal to a dummy team.
+            if opponent_id:
+                match_scores[opponent_id] = opponent_score + 1
         else:
             match_scores.setdefault(team_id, team_score)
+        match_scores.setdefault(team_id, team_score)
         match_scores.setdefault(opponent_id, opponent_score)
 
     for column, values in derived.items():

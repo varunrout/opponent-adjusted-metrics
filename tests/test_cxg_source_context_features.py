@@ -220,3 +220,76 @@ def test_cxg_feature_store_derives_pre_shot_context_from_source_events(e2e_test_
         assert away_row["play_pattern"] == "From Corner"
         assert away_row["set_piece_category"] == "corner"
         assert away_row["set_piece_phase"] == "first_phase"
+
+
+def test_cxg_score_context_handles_own_goals_before_later_shot(e2e_test_env):
+    with session_scope() as session:
+        competition = Competition(
+            statsbomb_competition_id=1,
+            name="Own Goal Cup",
+            season="2026",
+        )
+        home = Team(statsbomb_team_id=10, name="Home")
+        away = Team(statsbomb_team_id=20, name="Away")
+        session.add_all([competition, home, away])
+        session.flush()
+        match = Match(
+            statsbomb_match_id=101,
+            competition_id=competition.id,
+            home_team_id=home.id,
+            away_team_id=away.id,
+            season="2026",
+        )
+        session.add(match)
+        session.flush()
+
+        own_goal_event = _add_event(
+            session,
+            match.id,
+            "own-goal-shot",
+            "Shot",
+            home,
+            1,
+            0,
+            10,
+            1,
+            {
+                "play_pattern": {"name": "Regular Play"},
+                "shot": {
+                    "outcome": {"name": "Own Goal"},
+                    "type": {"name": "Open Play"},
+                },
+            },
+        )
+        own_goal_shot = _add_shot(session, own_goal_event, home, away, "Own Goal")
+        later_shot_event = _add_event(
+            session,
+            match.id,
+            "later-shot",
+            "Shot",
+            home,
+            1,
+            0,
+            20,
+            2,
+            {
+                "play_pattern": {"name": "Regular Play"},
+                "shot": {
+                    "outcome": {"name": "Saved"},
+                    "type": {"name": "Open Play"},
+                },
+            },
+        )
+        later_shot = _add_shot(session, later_shot_event, home, away, "Saved")
+
+        shots = build_shots_dataset(session)
+
+        own_goal_row = shots.loc[shots["shot_id"] == own_goal_shot.id].iloc[0]
+        assert own_goal_row["score_diff_at_shot"] == 0
+        assert bool(own_goal_row["is_drawing"])
+
+        later_row = shots.loc[shots["shot_id"] == later_shot.id].iloc[0]
+        assert later_row["score_diff_at_shot"] == -1
+        assert bool(later_row["is_trailing"])
+        assert not bool(later_row["is_leading"])
+        assert not bool(later_row["is_drawing"])
