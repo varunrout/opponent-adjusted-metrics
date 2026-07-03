@@ -25,6 +25,14 @@ DEFAULT_BASELINE_DIR = Path("outputs/modeling/cxg/baseline")
 DEFAULT_OUTPUT_DIR = Path("outputs/results/cxg/diagnostic_v1")
 MODEL_VERSION = "diagnostic_v1"
 ALLOWED_PROMOTION_RECOMMENDATIONS = {"promote", "provisional_promote"}
+BLOCKING_QUALITY_CHECKS = {
+    "row_count",
+    "prediction_null_count",
+    "outside_0_1_count",
+    "missing_shot_id_count",
+    "model_loaded",
+    "governance_artifacts_present",
+}
 CONTEXT_COLUMNS = (
     "shot_id",
     "event_id",
@@ -389,12 +397,35 @@ def generate_cxg_diagnostic_results(
         governance_artifacts_present=governance["status"] == "passed",
         validation_recommendation=recommendation,
     )
+    quality_payload = _quality_payload(quality)
+    quality_blockers = blocking_quality_failures(quality)
+    if status in {"promoted", "provisionally_promoted"} and has_blocking_quality_failures(quality):
+        status = "blocked"
+        gate_passed = False
+        summary = _promotion_summary(
+            paths=paths,
+            selected_model=selected_model,
+            recommendation=recommendation,
+            status=status,
+            gate_passed=False,
+            governance=governance,
+            quality_checks=quality_payload,
+            validation_payloads=_validation_payloads(paths),
+            validation_state=validation_state,
+            output_paths={"model_promotion_summary": summary_path, "results_report": report_path},
+            input_path=resolved_input,
+            baseline_join=baseline_join,
+            known_limitations=_known_limitations_for_quality_blockers(quality_blockers),
+        )
+        _write_json(summary_path, summary)
+        report_path.write_text(_results_report(summary, blocked=True), encoding="utf-8")
+        return {"model_promotion_summary": summary_path, "results_report": report_path}
+
     baseline_summary = baseline_vs_diagnostic_summary(shots, baseline_join)
 
     _write_result_tables(
         output_paths, shots, player_summary, team_summary, quality, baseline_summary
     )
-    quality_payload = _quality_payload(quality)
     summary = _promotion_summary(
         paths=paths,
         selected_model=selected_model,
@@ -770,6 +801,27 @@ def _write_result_tables(
     team_summary.to_csv(output_paths["team_cxg_rankings"], index=False)
     baseline_summary.to_csv(output_paths["baseline_vs_diagnostic_summary"], index=False)
     quality.to_csv(output_paths["prediction_quality_checks"], index=False)
+
+
+def blocking_quality_failures(quality: pd.DataFrame) -> list[str]:
+    failed = quality.loc[
+        quality["check_name"].isin(BLOCKING_QUALITY_CHECKS) & (quality["status"] == "failed"),
+        "check_name",
+    ]
+    return sorted(str(name) for name in failed.tolist())
+
+
+def has_blocking_quality_failures(quality: pd.DataFrame) -> bool:
+    return bool(blocking_quality_failures(quality))
+
+
+def _known_limitations_for_quality_blockers(failed_checks: list[str]) -> list[str]:
+    checks = ", ".join(f"`{name}`" for name in failed_checks)
+    return [
+        "Promoted/provisionally promoted result outputs were blocked due to failed hard quality checks: "
+        + checks
+        + "."
+    ]
 
 
 def _quality_payload(quality: pd.DataFrame) -> dict[str, Any]:
