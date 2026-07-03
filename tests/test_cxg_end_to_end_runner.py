@@ -280,6 +280,7 @@ def test_cxg_metadata_schema_contains_api_loader_fields(tmp_path: Path):
     assert metadata["created_at"]
     assert metadata["features"]["numeric"]
     assert set(metadata["features"]).issuperset({"numeric", "binary", "categorical"})
+    assert "statsbomb_xg" not in metadata["features"]["numeric"]
 
 
 def test_cxg_api_positive_path_with_fixture_model(tmp_path: Path, monkeypatch):

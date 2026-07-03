@@ -50,7 +50,6 @@ DATASET_PREFERENCE = ["enriched", "filtered", "raw"]
 NUMERIC_FEATURES = [
     "shot_distance",
     "shot_angle",
-    "statsbomb_xg",
     "score_diff_at_shot",
     "minute",
     "time_gap_seconds",
