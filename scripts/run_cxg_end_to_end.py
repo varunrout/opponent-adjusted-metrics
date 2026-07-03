@@ -374,6 +374,7 @@ def _write_model_card(path: Path, metadata: dict[str, Any], metrics: dict[str, A
                 "",
                 "## Limitations",
                 "This is a pragmatic sklearn baseline using available event-derived context; it is not a production betting model and does not use tracking data.",
+                "StatsBomb `statsbomb_xg` is retained for reference benchmarking only and is excluded from both baseline and diagnostic training features.",
                 "",
             ]
         ),

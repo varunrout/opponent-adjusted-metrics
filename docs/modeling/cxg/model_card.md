@@ -44,6 +44,8 @@ The current CxG pipeline uses event-derived shot features:
 
 No tracking data is required.
 
+`statsbomb_xg` is retained as a provider reference/benchmark column only. It is excluded from both baseline and diagnostic training feature sets.
+
 ## Current V1 Metrics
 
 From `outputs/modeling/cxg/baseline/reports/metrics.json`:
