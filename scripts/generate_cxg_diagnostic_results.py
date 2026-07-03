@@ -587,19 +587,25 @@ def prediction_quality_checks(
     governance_artifacts_present: bool,
     validation_recommendation: str,
 ) -> pd.DataFrame:
-    id_column = (
-        "shot_id"
-        if "shot_id" in shots.columns
-        else "event_id" if "event_id" in shots.columns else None
+    # Per-column ID checks — shot_id is required; others are preserved if available.
+    missing_shot_id_count = (
+        int(shots["shot_id"].isna().sum()) if "shot_id" in shots.columns else len(shots)
     )
-    required_ids = [
-        column for column in ("match_id", "team_id", "player_id") if column in shots.columns
-    ]
-    required_ids.extend([id_column] if id_column else [])
-    missing_required_id_count = (
-        int(shots[required_ids].isna().any(axis=1).sum()) if required_ids else len(shots)
+    missing_match_id_count = (
+        int(shots["match_id"].isna().sum()) if "match_id" in shots.columns else 0
     )
-    duplicate_shot_count = int(shots[id_column].duplicated().sum()) if id_column else 0
+    missing_team_id_count = int(shots["team_id"].isna().sum()) if "team_id" in shots.columns else 0
+    missing_player_id_count = (
+        int(shots["player_id"].isna().sum()) if "player_id" in shots.columns else 0
+    )
+    # event_id is optional — absent when the prediction source is the feature store
+    # rather than a DB-backed scored predictions table.
+    missing_event_id_count = (
+        int(shots["event_id"].isna().sum()) if "event_id" in shots.columns else len(shots)
+    )
+    duplicate_shot_count = (
+        int(shots["shot_id"].duplicated().sum()) if "shot_id" in shots.columns else 0
+    )
     probabilities = (
         shots["predicted_cxg"] if "predicted_cxg" in shots.columns else pd.Series(dtype=float)
     )
@@ -630,16 +636,40 @@ def prediction_quality_checks(
             "Goal target is retained for audit.",
         ),
         _check(
+            "missing_shot_id_count",
+            missing_shot_id_count,
+            "passed" if missing_shot_id_count == 0 else "failed",
+            "shot_id is required for all scored rows.",
+        ),
+        _check(
+            "missing_match_id_count",
+            missing_match_id_count,
+            "passed" if missing_match_id_count == 0 else "warning",
+            "match_id should be present for all scored rows.",
+        ),
+        _check(
+            "missing_team_id_count",
+            missing_team_id_count,
+            "passed" if missing_team_id_count == 0 else "warning",
+            "team_id should be present when available from the feature source.",
+        ),
+        _check(
+            "missing_player_id_count",
+            missing_player_id_count,
+            "passed" if missing_player_id_count == 0 else "warning",
+            "player_id should be present when available from the feature source.",
+        ),
+        _check(
+            "missing_event_id_count",
+            missing_event_id_count,
+            "info",
+            "event_id is optional; absent when the prediction source is the feature store.",
+        ),
+        _check(
             "duplicate_shot_id_count",
             duplicate_shot_count,
             "passed" if duplicate_shot_count == 0 else "warning",
-            "Duplicate shot/event identifiers are not expected.",
-        ),
-        _check(
-            "missing_required_id_count",
-            missing_required_id_count,
-            "passed" if missing_required_id_count == 0 else "warning",
-            "Rows should retain joinable identifiers.",
+            "Duplicate shot identifiers are not expected.",
         ),
         _check(
             "baseline_join_rate",

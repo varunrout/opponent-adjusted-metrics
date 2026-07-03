@@ -448,6 +448,98 @@ def test_governance_missing_blocks_exploratory_outputs(tmp_path: Path):
     assert any("governance" in item.lower() for item in summary["known_limitations"])
 
 
+def test_required_id_checks_pass_when_shot_id_present_and_event_id_absent():
+    """Shots with shot_id/match_id/team_id/player_id but no event_id should pass required-ID checks."""
+    shots = pd.DataFrame(
+        {
+            "shot_id": [1, 2, 3],
+            "match_id": [10, 10, 20],
+            "team_id": [100, 100, 200],
+            "player_id": [1001, 1002, 1001],
+            "is_goal": [0, 1, 0],
+            "predicted_cxg": [0.1, 0.2, 0.15],
+        }
+    )
+
+    checks = prediction_quality_checks(
+        shots,
+        baseline_join_rate=1.0,
+        model_loaded=True,
+        promotion_gate_passed=True,
+        governance_artifacts_present=True,
+        validation_recommendation="promote",
+    )
+
+    statuses = dict(zip(checks["check_name"], checks["status"], strict=False))
+    assert statuses["missing_shot_id_count"] == "passed"
+    assert statuses["missing_match_id_count"] == "passed"
+    assert statuses["missing_team_id_count"] == "passed"
+    assert statuses["missing_player_id_count"] == "passed"
+    # event_id absent → optional check shows info, not failed or warning
+    assert statuses["missing_event_id_count"] == "info"
+    # old aggregate check must not be present
+    assert "missing_required_id_count" not in statuses
+
+
+def test_null_player_id_reports_warning_not_required_id_failure():
+    """All-null player_id (e.g. when feature store was built without player enrichment)
+    should produce a per-column warning, not block promotion or flag all rows as failing
+    the aggregate required-ID check."""
+    shots = pd.DataFrame(
+        {
+            "shot_id": [1, 2, 3],
+            "match_id": [10, 10, 20],
+            "team_id": [100, 100, 200],
+            "player_id": [None, None, None],
+            "is_goal": [0, 1, 0],
+            "predicted_cxg": [0.1, 0.2, 0.15],
+        }
+    )
+
+    checks = prediction_quality_checks(
+        shots,
+        baseline_join_rate=1.0,
+        model_loaded=True,
+        promotion_gate_passed=True,
+        governance_artifacts_present=True,
+        validation_recommendation="promote",
+    )
+
+    statuses = dict(zip(checks["check_name"], checks["status"], strict=False))
+    assert statuses["missing_shot_id_count"] == "passed"
+    assert statuses["missing_player_id_count"] == "warning"
+    # missing_required_id_count should no longer exist
+    assert "missing_required_id_count" not in statuses
+    values = dict(zip(checks["check_name"], checks["check_value"], strict=False))
+    assert values["missing_player_id_count"] == 3
+
+
+def test_missing_shot_id_reports_failed():
+    """Null shot_id must produce a failed check — shot_id is a hard requirement."""
+    shots = pd.DataFrame(
+        {
+            "shot_id": [None, None, None],
+            "match_id": [10, 10, 20],
+            "is_goal": [0, 1, 0],
+            "predicted_cxg": [0.1, 0.2, 0.15],
+        }
+    )
+
+    checks = prediction_quality_checks(
+        shots,
+        baseline_join_rate=1.0,
+        model_loaded=True,
+        promotion_gate_passed=True,
+        governance_artifacts_present=True,
+        validation_recommendation="promote",
+    )
+
+    statuses = dict(zip(checks["check_name"], checks["status"], strict=False))
+    assert statuses["missing_shot_id_count"] == "failed"
+    values = dict(zip(checks["check_name"], checks["check_value"], strict=False))
+    assert values["missing_shot_id_count"] == 3
+
+
 def test_blocked_limitations_explain_governance_without_validation_blame():
     limitations = _blocked_limitations(
         "promote",
