@@ -22,7 +22,6 @@ from opponent_adjusted.features.geometry import calculate_all_geometry_features
 from opponent_adjusted.features.context import (
     calculate_game_state,
     calculate_minute_bucket_label,
-    calculate_pressure_proxy_score,
 )
 from opponent_adjusted.ingestion.statsbomb_io import (
     extract_shot_info,
@@ -44,6 +43,12 @@ DEFENSIVE_ACTION_TYPES = {
 
 def _event_seconds(event: Event) -> float:
     return float((event.minute or 0) * 60 + (event.second or 0))
+
+
+def _pressure_proxy(under_pressure: bool, recent_def_actions_count: int) -> float:
+    """Return a bounded pre-shot pressure proxy for modelling."""
+
+    return 1.0 if under_pressure or recent_def_actions_count > 0 else 0.0
 
 
 def populate_possession_features(session, version: str) -> dict[str, int]:
@@ -98,42 +103,73 @@ def populate_possession_features(session, version: str) -> dict[str, int]:
         else:
             missing_possession_number += 1
 
-        previous_events = []
+        possession_events = []
         if event.possession is not None:
-            previous_events = (
+            possession_events = (
                 session.query(Event)
                 .filter(
                     Event.match_id == event.match_id,
                     Event.possession == event.possession,
-                    Event.id < event.id,
                 )
                 .order_by(
-                    Event.period.desc(),
-                    Event.minute.desc(),
-                    Event.second.desc(),
-                    Event.id.desc(),
+                    Event.period,
+                    Event.minute,
+                    Event.second,
+                    Event.id,
                 )
-                .limit(5)
                 .all()
             )
 
-        previous_event = previous_events[0] if previous_events else None
-        recent_def_actions_count = sum(
-            1 for previous in previous_events if previous.type in DEFENSIVE_ACTION_TYPES
+        shot_key = (
+            event.period or 0,
+            event.minute or 0,
+            event.second or 0,
+            event.id or 0,
         )
-        sequence_length = possession.event_count if possession else None
-        duration = possession.duration_seconds if possession else None
+        prior_events = [
+            previous
+            for previous in possession_events
+            if (
+                previous.period or 0,
+                previous.minute or 0,
+                previous.second or 0,
+                previous.id or 0,
+            )
+            < shot_key
+        ]
+        up_to_shot_events = [
+            previous
+            for previous in possession_events
+            if (
+                previous.period or 0,
+                previous.minute or 0,
+                previous.second or 0,
+                previous.id or 0,
+            )
+            <= shot_key
+        ]
+        previous_same_team = next(
+            (previous for previous in reversed(prior_events) if previous.team_id == event.team_id),
+            None,
+        )
+        recent_def_actions_count = sum(
+            1
+            for previous in prior_events
+            if previous.team_id != event.team_id and previous.type in DEFENSIVE_ACTION_TYPES
+        )
+        sequence_length = len(up_to_shot_events) if event.possession is not None else None
+        duration = (
+            max(0.0, _event_seconds(event) - _event_seconds(up_to_shot_events[0]))
+            if up_to_shot_events
+            else (0.0 if event.possession is not None else None)
+        )
         previous_action_gap = (
-            max(0.0, _event_seconds(event) - _event_seconds(previous_event))
-            if previous_event is not None
+            max(0.0, _event_seconds(event) - _event_seconds(previous_same_team))
+            if previous_same_team is not None
             else (0.0 if event.possession is not None else None)
         )
         pressure_proxy_score = (
-            calculate_pressure_proxy_score(
-                bool(event.under_pressure),
-                recent_def_actions_count,
-                float(duration or 0.0),
-            )
+            _pressure_proxy(bool(event.under_pressure), recent_def_actions_count)
             if event.possession is not None
             else None
         )

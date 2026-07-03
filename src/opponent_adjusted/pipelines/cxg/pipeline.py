@@ -17,7 +17,7 @@ from sqlalchemy import select
 
 from opponent_adjusted.config import settings, ensure_directories
 from opponent_adjusted.db.session import get_session
-from opponent_adjusted.db.models import Shot, Event, Match, Player, Team
+from opponent_adjusted.db.models import Shot, Event, Match, Player, Team, RawEvent, ShotFeature
 from opponent_adjusted.features.cxg.geometry import (
     calculate_distance,
     calculate_shot_angle,
@@ -48,6 +48,111 @@ def save_parquet(df: pd.DataFrame, name: str, output_dir: Path) -> Path:
     return filepath
 
 
+def _extract_name(value: object) -> str | None:
+    if isinstance(value, dict):
+        name = value.get("name")
+        return str(name) if name else None
+    return None
+
+
+def _score_state(score_diff: object) -> str:
+    if pd.isna(score_diff):
+        return "unknown"
+    diff = int(score_diff)
+    if diff > 0:
+        return "leading"
+    if diff < 0:
+        return "trailing"
+    return "drawing"
+
+
+def _set_piece_category(raw_json: dict, shot_type: object, play_pattern: object) -> str:
+    shot_type_name = str(shot_type or "").strip().lower()
+    pattern = str(play_pattern or "").strip().lower()
+    if shot_type_name == "penalty":
+        return "penalty"
+    if shot_type_name == "free kick":
+        return "free_kick"
+    if "corner" in pattern:
+        return "corner"
+    if "free kick" in pattern:
+        return "free_kick"
+    if "throw in" in pattern:
+        return "throw_in"
+    if pattern.startswith("from ") or pattern in {"from goal kick", "from kick off"}:
+        return "other_set_piece"
+    if raw_json:
+        return "open_play"
+    return "unknown"
+
+
+def _set_piece_phase(category: str, raw_json: dict) -> str:
+    if category in {"open_play", "unknown"}:
+        return "none"
+    if category in {"penalty", "free_kick"} and not (raw_json.get("shot") or {}).get("key_pass_id"):
+        return "direct"
+    if (raw_json.get("shot") or {}).get("key_pass_id"):
+        return "first_phase"
+    return "second_phase"
+
+
+def _pressure_state(under_pressure: object, recent_def_actions_count: object) -> str:
+    recent_count = 0 if pd.isna(recent_def_actions_count) else int(recent_def_actions_count)
+    if bool(under_pressure) or recent_count > 0:
+        return "pressured"
+    return "unpressured"
+
+
+def _pressure_proxy_score(under_pressure: object, recent_def_actions_count: object) -> float:
+    recent_count = 0 if pd.isna(recent_def_actions_count) else int(recent_def_actions_count)
+    return 1.0 if bool(under_pressure) or recent_count > 0 else 0.0
+
+
+def _def_label(under_pressure: object, recent_def_actions_count: object) -> str:
+    count = 0 if pd.isna(recent_def_actions_count) else int(recent_def_actions_count)
+    if bool(under_pressure) and count >= 2:
+        return "high"
+    if bool(under_pressure) or count > 0:
+        return "medium"
+    return "low"
+
+
+def _derive_score_context(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute score before each shot, excluding the current shot outcome."""
+
+    if df.empty:
+        return df
+    df = df.sort_values(["match_id", "period", "minute", "second", "event_id"]).copy()
+    score_by_match: dict[int, dict[int, int]] = {}
+    derived = {
+        "score_diff_at_shot": [],
+        "is_leading": [],
+        "is_trailing": [],
+        "is_drawing": [],
+    }
+    for row in df.itertuples(index=False):
+        match_scores = score_by_match.setdefault(int(row.match_id), {})
+        team_id = int(row.team_id) if pd.notna(row.team_id) else 0
+        opponent_id = int(row.opponent_team_id) if pd.notna(row.opponent_team_id) else 0
+        team_score = match_scores.get(team_id, 0)
+        opponent_score = match_scores.get(opponent_id, 0)
+        score_diff = team_score - opponent_score
+        derived["score_diff_at_shot"].append(score_diff)
+        derived["is_leading"].append(score_diff > 0)
+        derived["is_trailing"].append(score_diff < 0)
+        derived["is_drawing"].append(score_diff == 0)
+
+        if str(row.outcome or "").strip().lower() == "goal":
+            match_scores[team_id] = team_score + 1
+        else:
+            match_scores.setdefault(team_id, team_score)
+        match_scores.setdefault(opponent_id, opponent_score)
+
+    for column, values in derived.items():
+        df[column] = values
+    return df
+
+
 # ---------------------------------------------------------------------------
 # Pipeline stages
 # ---------------------------------------------------------------------------
@@ -60,6 +165,7 @@ def build_shots_dataset(session, competition_id: int = None) -> pd.DataFrame:
     stmt = (
         select(
             Shot.id.label("shot_id"),
+            Event.id.label("event_id"),
             Shot.match_id,
             Shot.team_id,
             Shot.player_id,
@@ -79,9 +185,22 @@ def build_shots_dataset(session, competition_id: int = None) -> pd.DataFrame:
             Event.location_x.label("shot_x"),
             Event.location_y.label("shot_y"),
             Event.under_pressure,
+            RawEvent.raw_json.label("source_raw_json"),
+            ShotFeature.score_diff_at_shot,
+            ShotFeature.is_leading,
+            ShotFeature.is_trailing,
+            ShotFeature.is_drawing,
+            ShotFeature.minute_bucket.label("feature_minute_bucket"),
+            ShotFeature.possession_sequence_length,
+            ShotFeature.possession_duration,
+            ShotFeature.previous_action_gap,
+            ShotFeature.recent_def_actions_count,
+            ShotFeature.pressure_proxy_score,
         )
         .select_from(Shot)
         .join(Event, Event.id == Shot.event_id)
+        .join(RawEvent, RawEvent.id == Event.raw_event_id)
+        .outerjoin(ShotFeature, ShotFeature.shot_id == Shot.id)
     )
 
     if competition_id:
@@ -97,6 +216,8 @@ def build_shots_dataset(session, competition_id: int = None) -> pd.DataFrame:
     if df.empty:
         logger.warning("No shots found")
         return df
+
+    df = _derive_score_context(df)
 
     # Add entity names
     player_ids = df["player_id"].dropna().unique().tolist()
@@ -140,8 +261,61 @@ def add_context_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.copy()
 
+    raw_json = (
+        df["source_raw_json"]
+        if "source_raw_json" in df.columns
+        else pd.Series([{} for _ in range(len(df))], index=df.index)
+    )
+
+    df["play_pattern"] = raw_json.map(
+        lambda value: _extract_name((value or {}).get("play_pattern"))
+    )
+    df["play_pattern"] = df["play_pattern"].fillna("unknown")
+    df["set_piece_category"] = [
+        _set_piece_category(raw or {}, shot_type, play_pattern)
+        for raw, shot_type, play_pattern in zip(
+            raw_json,
+            df.get("shot_type", pd.Series([None] * len(df), index=df.index)),
+            df["play_pattern"],
+        )
+    ]
+    df["set_piece_phase"] = [
+        _set_piece_phase(category, raw or {})
+        for category, raw in zip(df["set_piece_category"], raw_json)
+    ]
+
+    if "score_diff_at_shot" not in df.columns:
+        df["score_diff_at_shot"] = 0
+    df["score_state"] = df["score_diff_at_shot"].apply(_score_state)
+    df["simple_state"] = df["score_state"]
+
     df["minute_bucket"] = df["minute"].apply(calculate_minute_bucket_label)
+    df["minute_bucket_label"] = df["minute_bucket"]
     df["under_pressure_binary"] = df["under_pressure"].fillna(False).astype(int)
+    if "time_gap_seconds" not in df.columns:
+        df["time_gap_seconds"] = (
+            df["previous_action_gap"] if "previous_action_gap" in df.columns else pd.NA
+        )
+    if "possession_match" not in df.columns:
+        df["possession_match"] = (
+            df["previous_action_gap"].notna() & df["possession"].notna()
+            if "previous_action_gap" in df.columns
+            else False
+        )
+    if "pressure_state" not in df.columns:
+        df["pressure_state"] = [
+            _pressure_state(pressure, recent)
+            for pressure, recent in zip(df["under_pressure"], df["recent_def_actions_count"])
+        ]
+    df["pressure_proxy_score"] = [
+        _pressure_proxy_score(pressure, recent)
+        for pressure, recent in zip(df["under_pressure"], df["recent_def_actions_count"])
+    ]
+    if "def_label" not in df.columns:
+        df["def_label"] = [
+            _def_label(pressure, recent)
+            for pressure, recent in zip(df["under_pressure"], df["recent_def_actions_count"])
+        ]
 
     df["is_first_half"] = (df["period"] == 1).astype(int)
     df["is_second_half"] = (df["period"] == 2).astype(int)
@@ -154,6 +328,9 @@ def add_context_features(df: pd.DataFrame) -> pd.DataFrame:
     df["is_header"] = (df["body_part"] == "Head").astype(int)
     df["is_right_foot"] = (df["body_part"] == "Right Foot").astype(int)
     df["is_left_foot"] = (df["body_part"] == "Left Foot").astype(int)
+
+    if "source_raw_json" in df.columns:
+        df = df.drop(columns=["source_raw_json"])
 
     logger.info("Added context features")
     return df

@@ -65,6 +65,32 @@ the first tie-breaker, fold-level calibration proxy is considered after those
 primary probability metrics, and ROC AUC remains secondary context. Validation
 still decides whether the selected model can be promoted.
 
+## Source-Derived CxG Context Features
+
+Follow-up validation showed the revised diagnostic candidates were governed and
+better calibrated, but still worse than baseline on log loss and Brier. The
+remaining bottleneck was feature signal rather than leakage, fold instability,
+or the promotion gate.
+
+The CxG feature pipeline now exports additional pre-shot context directly from
+StatsBomb raw/normalized events so diagnostic training can resolve them as
+source-available features:
+
+- `play_pattern`, `set_piece_category`, and `set_piece_phase` from shot event
+  context.
+- `score_diff_at_shot`, `is_leading`, `is_trailing`, `is_drawing`,
+  `score_state`, and `simple_state` from cumulative score before the shot.
+- `possession_sequence_length`, `possession_duration`,
+  `previous_action_gap`, `time_gap_seconds`, and `possession_match` from
+  same-possession events up to the shot.
+- `pressure_state`, `pressure_proxy_score`, `recent_def_actions_count`, and
+  `def_label` from shot pressure flags and preceding opponent defensive events.
+
+These fields are all derived before the shot outcome is applied. Provider xG,
+shot outcome, blocked status, and model output columns remain reference-only or
+excluded from diagnostic model matrices. Validation still decides whether any
+diagnostic model is promotable.
+
 Outputs:
 
 - `contracts/feature_contract.json`: resolved contract copy with provisional selected model.

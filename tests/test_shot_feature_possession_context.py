@@ -35,7 +35,14 @@ def test_shot_features_are_enriched_with_possession_context(e2e_test_env):
         session.flush()
 
         events = []
-        for index, event_type in enumerate(("Pass", "Carry", "Pressure", "Shot"), start=1):
+        event_plan = (
+            ("Pass", home.id, 2),
+            ("Carry", home.id, 6),
+            ("Pressure", away.id, 7),
+            ("Shot", home.id, 8),
+            ("Carry", home.id, 14),
+        )
+        for index, (event_type, team_id, second) in enumerate(event_plan, start=1):
             raw = RawEvent(
                 match_id=match.id,
                 statsbomb_event_id=f"event-{index}",
@@ -43,19 +50,19 @@ def test_shot_features_are_enriched_with_possession_context(e2e_test_env):
                 type=event_type,
                 period=1,
                 minute=0,
-                second=index * 2,
+                second=second,
             )
             session.add(raw)
             session.flush()
             event = Event(
                 raw_event_id=raw.id,
                 match_id=match.id,
-                team_id=home.id,
+                team_id=team_id,
                 player_id=None,
                 type=event_type,
                 period=1,
                 minute=0,
-                second=index * 2,
+                second=second,
                 possession=7,
                 location_x=50.0 + index,
                 location_y=40.0,
@@ -72,11 +79,11 @@ def test_shot_features_are_enriched_with_possession_context(e2e_test_env):
             end_event_id=events[-1].id,
             start_minute=0,
             end_minute=0,
-            duration_seconds=6.0,
-            event_count=4,
+            duration_seconds=12.0,
+            event_count=5,
         )
         shot = Shot(
-            event_id=events[-1].id,
+            event_id=events[3].id,
             match_id=match.id,
             team_id=home.id,
             player_id=None,
@@ -103,7 +110,7 @@ def test_shot_features_are_enriched_with_possession_context(e2e_test_env):
         assert feature.possession_duration == 6.0
         assert feature.previous_action_gap == 2.0
         assert feature.recent_def_actions_count == 1
-        assert feature.pressure_proxy_score is not None
+        assert feature.pressure_proxy_score == 1.0
 
         second_run = populate_possession_features(session, "v1")
 
