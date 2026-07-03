@@ -15,6 +15,7 @@ from opponent_adjusted.db.models import (
     RawEvent,
     Event,
     Possession,
+    Player,
     Shot,
     ShotFeature,
     Team,
@@ -300,13 +301,18 @@ def populate_game_state_features(session, version: str) -> int:
 def get_or_create_event(session, raw_ev: RawEvent, team_id: int | None) -> Event:
     ev = session.query(Event).filter_by(raw_event_id=raw_ev.id).first()
     if ev:
+        if ev.player_id is None:
+            recovered_player_id = _get_or_create_player_id(session, raw_ev.raw_json)
+            if recovered_player_id is not None:
+                ev.player_id = recovered_player_id
+                session.flush()
         return ev
 
     # Minimal event fields
     x, y = extract_event_location(raw_ev.raw_json)
     ts = raw_ev.raw_json.get("timestamp")
     possession = raw_ev.raw_json.get("possession")
-    player_id = None  # optional; can be filled by a separate normalization step
+    player_id = _get_or_create_player_id(session, raw_ev.raw_json)
 
     ev = Event(
         raw_event_id=raw_ev.id,
@@ -348,6 +354,22 @@ def get_team_ids(session, raw_ev: RawEvent) -> tuple[int | None, int | None]:
     return (team.id if team else None, None)
 
 
+def _get_or_create_player_id(session, raw_json: dict) -> int | None:
+    player_dict = raw_json.get("player") or {}
+    sb_player_id = player_dict.get("id")
+    if sb_player_id is None:
+        return None
+    player = session.query(Player).filter_by(statsbomb_player_id=sb_player_id).first()
+    if player is None:
+        player = Player(
+            statsbomb_player_id=sb_player_id,
+            name=player_dict.get("name") or f"Player {sb_player_id}",
+        )
+        session.add(player)
+        session.flush()
+    return player.id
+
+
 def upsert_shot_and_features(session, raw_ev: RawEvent, version: str) -> str:
     team_id, opponent_team_id = get_team_ids(session, raw_ev)
     ev = get_or_create_event(session, raw_ev, team_id)
@@ -362,7 +384,7 @@ def upsert_shot_and_features(session, raw_ev: RawEvent, version: str) -> str:
             event_id=ev.id,
             match_id=ev.match_id,
             team_id=team_id if team_id is not None else 0,
-            player_id=None,
+            player_id=ev.player_id,
             opponent_team_id=opponent_team_id if opponent_team_id is not None else 0,
             statsbomb_xg=shot_info.get("statsbomb_xg"),
             body_part=shot_info.get("body_part"),
@@ -373,6 +395,9 @@ def upsert_shot_and_features(session, raw_ev: RawEvent, version: str) -> str:
             is_blocked=is_blocked,
         )
         session.add(shot)
+        session.flush()
+    elif shot.player_id is None and ev.player_id is not None:
+        shot.player_id = ev.player_id
         session.flush()
 
     # Compute geometry features from location
