@@ -2,6 +2,7 @@ from opponent_adjusted.db.models import (
     Competition,
     Event,
     Match,
+    Player,
     Possession,
     RawEvent,
     Shot,
@@ -9,7 +10,8 @@ from opponent_adjusted.db.models import (
     Team,
 )
 from opponent_adjusted.db.session import session_scope
-from scripts.build_shot_features import populate_possession_features
+from opponent_adjusted.pipelines.cxg.pipeline import build_shots_dataset
+from scripts.build_shot_features import populate_possession_features, upsert_shot_and_features
 
 
 def test_shot_features_are_enriched_with_possession_context(e2e_test_env):
@@ -237,3 +239,116 @@ def test_recent_def_actions_count_uses_bounded_lookback(e2e_test_env):
         assert old_feature.pressure_proxy_score == 0.0
         assert recent_feature.recent_def_actions_count == 1
         assert recent_feature.pressure_proxy_score == 1.0
+
+
+def test_upsert_shot_preserves_player_id_from_linked_event(e2e_test_env):
+    with session_scope() as session:
+        match, home, away = _seed_match(session)
+        player = Player(statsbomb_player_id=5001, name="Shooter")
+        session.add(player)
+        session.flush()
+
+        raw = RawEvent(
+            match_id=match.id,
+            statsbomb_event_id="shot-1",
+            raw_json={
+                "id": "shot-1",
+                "type": {"name": "Shot"},
+                "team": {"id": home.statsbomb_team_id, "name": home.name},
+                "player": {"id": player.statsbomb_player_id, "name": player.name},
+                "location": [102.0, 40.0],
+                "shot": {
+                    "statsbomb_xg": 0.12,
+                    "outcome": {"name": "Saved"},
+                    "body_part": {"name": "Right Foot"},
+                    "technique": {"name": "Normal"},
+                    "type": {"name": "Open Play"},
+                },
+            },
+            type="Shot",
+            period=1,
+            minute=10,
+            second=5,
+        )
+        session.add(raw)
+        session.flush()
+
+        event = Event(
+            raw_event_id=raw.id,
+            match_id=match.id,
+            team_id=home.id,
+            player_id=player.id,
+            type="Shot",
+            period=1,
+            minute=10,
+            second=5,
+            possession=3,
+            location_x=102.0,
+            location_y=40.0,
+        )
+        session.add(event)
+        session.flush()
+
+        status = upsert_shot_and_features(session, raw, "v1")
+
+        shot = session.query(Shot).filter_by(event_id=event.id).one()
+        assert status == "inserted"
+        assert shot.player_id == player.id
+
+
+def test_build_shots_dataset_preserves_player_id_from_shots(e2e_test_env):
+    with session_scope() as session:
+        match, home, away = _seed_match(session)
+        player = Player(statsbomb_player_id=5002, name="Dataset Shooter")
+        session.add(player)
+        session.flush()
+
+        raw = RawEvent(
+            match_id=match.id,
+            statsbomb_event_id="shot-2",
+            raw_json={
+                "id": "shot-2",
+                "type": {"name": "Shot"},
+                "team": {"id": home.statsbomb_team_id},
+            },
+            type="Shot",
+            period=1,
+            minute=12,
+            second=0,
+        )
+        session.add(raw)
+        session.flush()
+
+        event = Event(
+            raw_event_id=raw.id,
+            match_id=match.id,
+            team_id=home.id,
+            player_id=player.id,
+            type="Shot",
+            period=1,
+            minute=12,
+            second=0,
+            possession=4,
+            location_x=101.0,
+            location_y=41.0,
+        )
+        session.add(event)
+        session.flush()
+
+        shot = Shot(
+            event_id=event.id,
+            match_id=match.id,
+            team_id=home.id,
+            player_id=player.id,
+            opponent_team_id=away.id,
+            outcome="Saved",
+            first_time=False,
+            is_blocked=False,
+        )
+        session.add(shot)
+        session.flush()
+
+        dataset = build_shots_dataset(session)
+        row = dataset.loc[dataset["shot_id"] == shot.id].iloc[0]
+
+        assert int(row["player_id"]) == player.id

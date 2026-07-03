@@ -208,6 +208,16 @@ def test_promotion_gate_allows_provisional_promote(tmp_path: Path):
     assert summary["promotion_status"] == "provisionally_promoted"
 
 
+def test_promoted_player_summary_uses_real_player_ids(tmp_path: Path):
+    paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    player_summary = pd.read_csv(outputs["player_cxg_summary_csv"])
+
+    assert not player_summary["player_id"].isna().any()
+    assert set(player_summary["player_id"]).issubset(set(_feature_frame()["player_id"]))
+
+
 def test_promotion_gate_blocks_rejected_recommendations(tmp_path: Path):
     paths, feature_path = _write_result_artifacts(tmp_path, recommendation="needs_revision")
 
