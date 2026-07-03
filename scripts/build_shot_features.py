@@ -8,6 +8,8 @@ version tag.
 import argparse
 from typing import Dict
 
+from sqlalchemy import and_, or_
+
 from opponent_adjusted.db.session import session_scope
 from opponent_adjusted.db.models import (
     RawEvent,
@@ -22,7 +24,6 @@ from opponent_adjusted.features.geometry import calculate_all_geometry_features
 from opponent_adjusted.features.context import (
     calculate_game_state,
     calculate_minute_bucket_label,
-    calculate_pressure_proxy_score,
 )
 from opponent_adjusted.ingestion.statsbomb_io import (
     extract_shot_info,
@@ -40,10 +41,37 @@ DEFENSIVE_ACTION_TYPES = {
     "Duel",
     "Tackle",
 }
+RECENT_DEF_ACTION_LOOKBACK_SECONDS = 5.0
 
 
 def _event_seconds(event: Event) -> float:
     return float((event.minute or 0) * 60 + (event.second or 0))
+
+
+def _event_order_filter(event: Event):
+    """Portable ordering predicate for events up to and including a shot."""
+
+    return or_(
+        Event.period < event.period,
+        and_(Event.period == event.period, Event.minute < event.minute),
+        and_(
+            Event.period == event.period,
+            Event.minute == event.minute,
+            Event.second < event.second,
+        ),
+        and_(
+            Event.period == event.period,
+            Event.minute == event.minute,
+            Event.second == event.second,
+            Event.id <= event.id,
+        ),
+    )
+
+
+def _pressure_proxy(under_pressure: bool, recent_def_actions_count: int) -> float:
+    """Return a bounded pre-shot pressure proxy for modelling."""
+
+    return 1.0 if under_pressure or recent_def_actions_count > 0 else 0.0
 
 
 def populate_possession_features(session, version: str) -> dict[str, int]:
@@ -98,42 +126,77 @@ def populate_possession_features(session, version: str) -> dict[str, int]:
         else:
             missing_possession_number += 1
 
-        previous_events = []
+        possession_events = []
         if event.possession is not None:
-            previous_events = (
+            possession_events = (
                 session.query(Event)
                 .filter(
                     Event.match_id == event.match_id,
                     Event.possession == event.possession,
-                    Event.id < event.id,
+                    _event_order_filter(event),
                 )
                 .order_by(
-                    Event.period.desc(),
-                    Event.minute.desc(),
-                    Event.second.desc(),
-                    Event.id.desc(),
+                    Event.period,
+                    Event.minute,
+                    Event.second,
+                    Event.id,
                 )
-                .limit(5)
                 .all()
             )
 
-        previous_event = previous_events[0] if previous_events else None
-        recent_def_actions_count = sum(
-            1 for previous in previous_events if previous.type in DEFENSIVE_ACTION_TYPES
+        shot_key = (
+            event.period or 0,
+            event.minute or 0,
+            event.second or 0,
+            event.id or 0,
         )
-        sequence_length = possession.event_count if possession else None
-        duration = possession.duration_seconds if possession else None
+        prior_events = [
+            previous
+            for previous in possession_events
+            if (
+                previous.period or 0,
+                previous.minute or 0,
+                previous.second or 0,
+                previous.id or 0,
+            )
+            < shot_key
+        ]
+        up_to_shot_events = [
+            previous
+            for previous in possession_events
+            if (
+                previous.period or 0,
+                previous.minute or 0,
+                previous.second or 0,
+                previous.id or 0,
+            )
+            <= shot_key
+        ]
+        previous_event = prior_events[-1] if prior_events else None
+        shot_seconds = _event_seconds(event)
+        recent_prior_events = [
+            previous
+            for previous in prior_events
+            if 0.0 <= shot_seconds - _event_seconds(previous) <= RECENT_DEF_ACTION_LOOKBACK_SECONDS
+        ]
+        recent_def_actions_count = sum(
+            1
+            for previous in recent_prior_events
+            if previous.team_id != event.team_id and previous.type in DEFENSIVE_ACTION_TYPES
+        )
+        sequence_length = len(up_to_shot_events) if event.possession is not None else None
+        duration = (
+            max(0.0, shot_seconds - _event_seconds(up_to_shot_events[0]))
+            if up_to_shot_events
+            else (0.0 if event.possession is not None else None)
+        )
         previous_action_gap = (
-            max(0.0, _event_seconds(event) - _event_seconds(previous_event))
+            max(0.0, shot_seconds - _event_seconds(previous_event))
             if previous_event is not None
             else (0.0 if event.possession is not None else None)
         )
         pressure_proxy_score = (
-            calculate_pressure_proxy_score(
-                bool(event.under_pressure),
-                recent_def_actions_count,
-                float(duration or 0.0),
-            )
+            _pressure_proxy(bool(event.under_pressure), recent_def_actions_count)
             if event.possession is not None
             else None
         )

@@ -137,6 +137,12 @@ contract while keeping the baseline CxG modelling path intact. It uses the same
 shot-feature input discovery as the baseline runner and writes separate training
 artifacts for validation issue #56.
 
+The upstream CxG feature store now includes source-derived, pre-shot context
+features such as play pattern, set-piece category/phase, score state before the
+shot, possession timing up to the shot, and pressure/defensive-trigger proxies.
+These fields give diagnostic training richer signal without relying on provider
+xG, post-shot outcomes, prediction outputs, or synthetic modelling defaults.
+
 Generated files:
 
 ```text

@@ -412,6 +412,62 @@ def test_synthetic_default_columns_are_recorded_and_excluded(tmp_path: Path):
     assert def_label_row["excluded_reason"] == "constant_synthetic_default"
 
 
+def test_source_derived_context_features_resolve_as_source_available(tmp_path: Path):
+    input_path = tmp_path / "source_context_shot_features.parquet"
+    frame = _synthetic_diagnostic_frame().drop(
+        columns=[
+            "opponent_def_rating_global",
+            "opponent_def_zone_rating",
+            "opponent_zone_block_rate",
+            "cxg_raw",
+            "model_registry",
+            "shot_predictions",
+        ],
+        errors="ignore",
+    )
+    frame["simple_state"] = frame["score_state"]
+    frame["possession_match"] = (frame["previous_action_gap"] <= 3).astype(int)
+    frame.to_parquet(input_path, index=False)
+
+    model_frame, _, original_columns = load_raw_and_modeling_features(input_path)
+    contract = load_contract(DEFAULT_CONTRACT_PATH)
+    resolved = resolve_features(
+        model_frame,
+        contract,
+        original_input_columns=original_columns,
+    )
+
+    for column in [
+        "play_pattern",
+        "set_piece_category",
+        "set_piece_phase",
+        "score_state",
+        "simple_state",
+        "pressure_state",
+        "def_label",
+    ]:
+        assert column in resolved.source_available["categorical"]
+        assert column not in resolved.synthetic_default_features["categorical"]
+
+    for column in [
+        "score_diff_at_shot",
+        "time_gap_seconds",
+        "possession_sequence_length",
+        "possession_duration",
+        "previous_action_gap",
+        "recent_def_actions_count",
+        "pressure_proxy_score",
+    ]:
+        assert column in resolved.source_available["numeric"]
+
+    for column in ["is_leading", "is_trailing", "is_drawing", "possession_match"]:
+        assert column in resolved.source_available["binary"]
+
+    training_features = set(resolved.all_features)
+    for forbidden in ["statsbomb_xg", "outcome", "is_blocked", "is_goal"]:
+        assert forbidden not in training_features
+
+
 def test_existing_cxg_baseline_import_still_works(tmp_path: Path):
     input_path = tmp_path / "baseline_shot_features.parquet"
     _synthetic_diagnostic_frame().drop(
