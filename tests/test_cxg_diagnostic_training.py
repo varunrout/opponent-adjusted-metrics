@@ -485,3 +485,45 @@ def test_existing_cxg_baseline_import_still_works(tmp_path: Path):
 
     assert outputs.model_path.exists()
     assert outputs.scored_predictions_path.exists()
+
+
+def test_diagnostic_model_artifact_is_loadable_from_different_module_context(tmp_path: Path):
+    """Selected model joblib must be loadable outside the training script's __main__."""
+    import importlib
+
+    input_path = tmp_path / "shot_features.parquet"
+    _synthetic_diagnostic_frame().to_parquet(input_path, index=False)
+
+    outputs = run_diagnostic_training(
+        input_path=input_path,
+        output_dir=tmp_path / "diag",
+        min_category_count=2,
+        random_state=5,
+    )
+
+    model_path = outputs["selected_model"]
+    assert model_path.exists()
+
+    # Simulate loading from a different entry point by reimporting joblib in a
+    # clean namespace (no __main__ reference to the training script).
+    joblib_fresh = importlib.import_module("joblib")
+    loaded_model = joblib_fresh.load(model_path)
+
+    # Use the normalised frame (same preprocessing path the model was trained on).
+    normalised_frame, _, _ = load_raw_and_modeling_features(input_path)
+    metadata = json.loads(outputs["selected_model_metadata"].read_text(encoding="utf-8"))
+    feature_cols = metadata["selected_features"]
+    present_cols = [col for col in feature_cols if col in normalised_frame.columns]
+    assert present_cols, "No selected features found in normalised frame"
+
+    probs = loaded_model.predict_proba(normalised_frame[present_cols])[:, 1]
+    assert len(probs) == len(normalised_frame)
+    assert all(0.0 <= p <= 1.0 for p in probs)
+
+    # The stored module paths must not reference __main__.
+    pickled_bytes = model_path.read_bytes()
+    assert b"__main__" not in pickled_bytes, (
+        "selected_model.joblib contains __main__ references; "
+        "ensure transformer helpers are defined in an importable module, "
+        "not inline in the training script."
+    )
