@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import json
 from pathlib import Path
 from typing import Any
 
@@ -48,6 +49,22 @@ EXAMPLE_INTERPRETATIONS = [
     "CxG evaluates shot quality, not whether the shot became a goal.",
     "Baseline CxT is location-threat movement, not full possession-state value.",
 ]
+PORTFOLIO_ROOT = Path("outputs/portfolio/cxg")
+PORTFOLIO_CHARTS = PORTFOLIO_ROOT / "charts"
+PORTFOLIO_SCORECARD_PATH = PORTFOLIO_ROOT / "cxg_model_scorecard.json"
+PORTFOLIO_SUMMARY_PATH = PORTFOLIO_ROOT / "cxg_portfolio_summary.md"
+PORTFOLIO_TEAM_RANKINGS_PATH = PORTFOLIO_ROOT / "cxg_team_rankings.csv"
+PORTFOLIO_PLAYER_RANKINGS_PATH = PORTFOLIO_ROOT / "cxg_player_rankings.csv"
+PORTFOLIO_FEATURE_DRIVERS_PATH = PORTFOLIO_ROOT / "cxg_feature_driver_summary.csv"
+PORTFOLIO_CATEGORY_INSIGHTS_PATH = PORTFOLIO_ROOT / "cxg_category_insights.csv"
+PORTFOLIO_CHART_FILES = [
+    "model_metric_comparison.png",
+    "feature_group_impact.png",
+    "top_feature_importance.png",
+    "team_cxg_ranking.png",
+    "player_cxg_ranking.png",
+    "goals_minus_cxg_teams.png",
+]
 
 
 @st.cache_data(show_spinner=False)
@@ -82,6 +99,150 @@ def _json_report(
     if resource is None:
         return {}
     return resource.json_data
+
+
+def _resolve_project_path(path: Path) -> Path:
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def load_text_file(path: Path) -> str:
+    """Load optional text output, returning an empty string when missing."""
+
+    resolved = _resolve_project_path(path)
+    if not resolved.exists():
+        return ""
+    return resolved.read_text(encoding="utf-8")
+
+
+def load_portfolio_markdown(path: Path = PORTFOLIO_SUMMARY_PATH) -> str:
+    """Load the static CxG portfolio Markdown summary."""
+
+    return load_text_file(path)
+
+
+def load_portfolio_scorecard(path: Path = PORTFOLIO_SCORECARD_PATH) -> dict[str, Any]:
+    """Load the static CxG portfolio scorecard if it exists."""
+
+    resolved = _resolve_project_path(path)
+    if not resolved.exists():
+        return {}
+    return json.loads(resolved.read_text(encoding="utf-8"))
+
+
+def load_portfolio_table(path: Path) -> pd.DataFrame:
+    """Load an optional CxG portfolio table, returning an empty frame when missing."""
+
+    resolved = _resolve_project_path(path)
+    if not resolved.exists():
+        return pd.DataFrame()
+    if resolved.suffix.lower() == ".parquet":
+        return pd.read_parquet(resolved)
+    return pd.read_csv(resolved)
+
+
+def _format_metric_value(value: Any) -> str:
+    if value is None:
+        return "n/a"
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.4f}"
+    return str(value)
+
+
+def render_scorecard_metrics(scorecard: dict[str, Any]) -> None:
+    """Render promoted CxG status cards from the static scorecard."""
+
+    if not scorecard:
+        st.info(
+            "Promoted CxG portfolio outputs are missing. Run the CxG generation chain "
+            "and `make build-cxg-portfolio-summary`."
+        )
+        return
+
+    cards = [
+        ("Promotion status", scorecard.get("promotion_status")),
+        ("Promotion gate", scorecard.get("promotion_gate_passed")),
+        ("Governance", scorecard.get("governance_status")),
+        ("Baseline join rate", scorecard.get("baseline_join_rate")),
+        ("Selected features", scorecard.get("selected_feature_count")),
+    ]
+    cols = st.columns(len(cards))
+    for col, (label, value) in zip(cols, cards, strict=False):
+        col.metric(label, _format_metric_value(value))
+
+
+def render_metric_comparison_table(scorecard: dict[str, Any]) -> None:
+    """Render baseline-vs-diagnostic model metrics and deltas."""
+
+    comparison = scorecard.get("metric_comparison", {}) if scorecard else {}
+    baseline = comparison.get("baseline", {})
+    diagnostic = comparison.get("diagnostic", {})
+    deltas = comparison.get("diagnostic_minus_baseline", {})
+    metric_order = ["log_loss", "brier", "roc_auc", "expected_calibration_error"]
+    directions = {
+        "log_loss": "Lower is better",
+        "brier": "Lower is better",
+        "roc_auc": "Higher is better",
+        "expected_calibration_error": "Lower is better",
+    }
+    rows = [
+        {
+            "metric": metric,
+            "baseline": baseline.get(metric),
+            "diagnostic": diagnostic.get(metric),
+            "diagnostic_minus_baseline": deltas.get(metric),
+            "direction": directions[metric],
+        }
+        for metric in metric_order
+        if metric in baseline or metric in diagnostic or metric in deltas
+    ]
+    st.subheader("Model Scorecard")
+    if not rows:
+        st.info("Model scorecard metrics are not available yet.")
+        return
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
+def render_portfolio_chart(chart_name: str, title: str) -> None:
+    """Render a static portfolio chart if available."""
+
+    chart_path = _resolve_project_path(PORTFOLIO_CHARTS / chart_name)
+    st.subheader(title)
+    if not chart_path.exists():
+        st.info(f"Chart not available yet: `{PORTFOLIO_CHARTS / chart_name}`")
+        return
+    st.image(str(chart_path), caption=title, use_container_width=True)
+
+
+def _search_filter(df: pd.DataFrame, column: str, label: str, key: str) -> pd.DataFrame:
+    if df.empty or column not in df.columns:
+        return df
+    query = st.text_input(label, key=key).strip().lower()
+    if not query:
+        return df
+    return df[df[column].fillna("").astype(str).str.lower().str.contains(query)]
+
+
+def render_portfolio_table(
+    df: pd.DataFrame,
+    title: str,
+    *,
+    max_rows: int = 50,
+    sort_column: str | None = None,
+) -> None:
+    """Render a static portfolio table with graceful empty handling."""
+
+    st.subheader(title)
+    if df.empty:
+        st.info(f"No rows available for {title}.")
+        return
+    table = df.copy()
+    if sort_column and sort_column in table.columns:
+        table = table.sort_values(sort_column, ascending=False)
+    st.dataframe(table.head(max_rows), use_container_width=True, hide_index=True)
 
 
 def _availability_card(resources: dict[str, dict[str, DashboardResource]]) -> None:
@@ -306,6 +467,112 @@ def team_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
     _show_table(cxg_teams, "CxG Team Aggregates")
 
 
+def promoted_cxg_portfolio_tab() -> None:
+    render_page_intro(
+        "Promoted CxG Portfolio",
+        "Review the governed diagnostic CxG model through static portfolio outputs.",
+        "Why did the promoted diagnostic CxG model improve on the fair baseline?",
+        (
+            "This page reads the generated portfolio pack. It does not train, validate, "
+            "or promote models inside Streamlit."
+        ),
+    )
+    st.caption(
+        "Fair baseline excludes StatsBomb xG as a training feature. Calibration remains "
+        "monitored alongside log loss, Brier score, and ROC AUC."
+    )
+
+    scorecard = load_portfolio_scorecard()
+    team_rankings = load_portfolio_table(PORTFOLIO_TEAM_RANKINGS_PATH)
+    player_rankings = load_portfolio_table(PORTFOLIO_PLAYER_RANKINGS_PATH)
+    feature_drivers = load_portfolio_table(PORTFOLIO_FEATURE_DRIVERS_PATH)
+    category_insights = load_portfolio_table(PORTFOLIO_CATEGORY_INSIGHTS_PATH)
+    summary_markdown = load_portfolio_markdown()
+
+    if (
+        not scorecard
+        and team_rankings.empty
+        and player_rankings.empty
+        and feature_drivers.empty
+        and category_insights.empty
+        and not summary_markdown
+    ):
+        st.info(
+            "Promoted CxG portfolio outputs are missing. Run the CxG generation chain "
+            "and `make build-cxg-portfolio-summary`."
+        )
+        return
+
+    render_scorecard_metrics(scorecard)
+    render_metric_comparison_table(scorecard)
+
+    st.subheader("Static Portfolio Charts")
+    chart_pairs = [
+        ("model_metric_comparison.png", "Baseline vs Diagnostic Metrics"),
+        ("feature_group_impact.png", "Feature Group Impact"),
+        ("top_feature_importance.png", "Top Feature Importance"),
+        ("team_cxg_ranking.png", "Team CxG Ranking"),
+        ("player_cxg_ranking.png", "Player CxG Ranking"),
+        ("goals_minus_cxg_teams.png", "Team Goals Minus CxG"),
+    ]
+    for left, right in zip(chart_pairs[0::2], chart_pairs[1::2], strict=False):
+        col1, col2 = st.columns(2)
+        with col1:
+            render_portfolio_chart(left[0], left[1])
+        with col2:
+            render_portfolio_chart(right[0], right[1])
+    if len(chart_pairs) % 2:
+        render_portfolio_chart(chart_pairs[-1][0], chart_pairs[-1][1])
+
+    st.subheader("Interactive Portfolio Tables")
+    team_limit = st.slider("Top teams to show", min_value=5, max_value=50, value=15, step=5)
+    filtered_teams = _search_filter(
+        team_rankings, "team_name", "Filter teams by name", "portfolio_team_search"
+    )
+    render_portfolio_table(
+        filtered_teams,
+        "Team Rankings",
+        max_rows=team_limit,
+        sort_column="total_cxg",
+    )
+
+    player_limit = st.slider("Top players to show", min_value=5, max_value=100, value=20, step=5)
+    filtered_players = _search_filter(
+        player_rankings, "team_name", "Filter players by team", "portfolio_player_team_search"
+    )
+    filtered_players = _search_filter(
+        filtered_players, "player_name", "Filter players by name", "portfolio_player_search"
+    )
+    if "player_id" in player_rankings.columns and int(player_rankings["player_id"].isna().sum()):
+        st.warning("Player rankings contain missing `player_id` values.")
+    render_portfolio_table(
+        filtered_players,
+        "Player Rankings",
+        max_rows=player_limit,
+        sort_column="total_cxg",
+    )
+
+    render_portfolio_table(
+        feature_drivers,
+        "Feature Driver Summary",
+        max_rows=50,
+        sort_column="log_loss_delta",
+    )
+    render_portfolio_table(
+        category_insights,
+        "Category Insights",
+        max_rows=100,
+        sort_column="total_predicted_cxg",
+    )
+
+    st.subheader("Narrative Summary")
+    if summary_markdown:
+        with st.expander("Read portfolio summary", expanded=False):
+            st.markdown(summary_markdown)
+    else:
+        st.info("Run `make build-cxg-portfolio-summary` to generate the Markdown summary.")
+
+
 def cxg_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
     render_page_intro(
         "CxG",
@@ -464,6 +731,7 @@ def main() -> None:
             "Overview",
             "Player analysis",
             "Team analysis",
+            "Promoted CxG portfolio",
             "CxG",
             "CxA",
             "CxT",
@@ -480,16 +748,18 @@ def main() -> None:
     with tabs[2]:
         team_tab(resources)
     with tabs[3]:
-        cxg_tab(resources)
+        promoted_cxg_portfolio_tab()
     with tabs[4]:
-        cxa_tab(resources)
+        cxg_tab(resources)
     with tabs[5]:
-        cxt_tab(resources)
+        cxa_tab(resources)
     with tabs[6]:
-        action_explorer_tab(resources)
+        cxt_tab(resources)
     with tabs[7]:
-        diagnostics_tab(resources)
+        action_explorer_tab(resources)
     with tabs[8]:
+        diagnostics_tab(resources)
+    with tabs[9]:
         methodology_tab()
 
 

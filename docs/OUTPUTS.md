@@ -276,8 +276,9 @@ make build-cxg-portfolio-summary
 This reporting layer converts promoted diagnostic CxG results and feature-impact
 artifacts into static portfolio outputs for GitHub or reviewer-facing Markdown.
 It does not retrain models, change validation/promotion behavior, or replace the
-future Streamlit dashboard. Streamlit can later provide interactive views over
-the same generated data.
+active Streamlit dashboard. The `make dashboard` app now reads these files for
+the promoted CxG portfolio overview and still degrades gracefully when they are
+missing.
 
 Generated files:
 
@@ -480,12 +481,15 @@ The persistence layer is idempotent by model family/version. Re-running a model 
 ## Dashboard Consumption
 
 The Streamlit dashboard v1 reads generated outputs through `configs/dashboard/v1_dashboard_contract.json`.
+The active entry point is `app/streamlit_app.py`; `dashboard/` is retained as a
+legacy/experimental path. The promoted CxG portfolio tab consumes the static
+portfolio pack under `outputs/portfolio/cxg/`.
 
 ```bash
 make dashboard
 ```
 
-The dashboard is a demo/portfolio shell, not a production deployment. It starts even when generated outputs are missing and shows availability status plus empty tables for missing files. Regenerate CxG, CxA, and CxT outputs locally to populate the analysis pages.
+The dashboard is a demo/portfolio shell, not a production deployment. It starts even when generated outputs are missing and shows availability status plus empty tables for missing files. Regenerate CxG, CxA, CxT, and the CxG portfolio summary outputs locally to populate the analysis pages.
 
 ## What Should Be Committed
 
