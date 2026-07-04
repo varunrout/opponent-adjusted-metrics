@@ -10,6 +10,7 @@ from scripts.generate_cxg_diagnostic_results import (
     _blocked_limitations,
     build_entity_summary,
     generate_cxg_diagnostic_results,
+    has_blocking_quality_failures,
     join_baseline_predictions,
     prediction_quality_checks,
     selected_feature_columns,
@@ -55,7 +56,7 @@ def _feature_frame() -> pd.DataFrame:
 
 
 def _write_result_artifacts(
-    root: Path, recommendation: str = "promote"
+    root: Path, recommendation: str = "promote", feature_frame: pd.DataFrame | None = None
 ) -> tuple[ResultPaths, Path]:
     diagnostic_dir = root / "outputs" / "modeling" / "cxg" / "diagnostic_v1"
     validation_dir = root / "outputs" / "validation" / "cxg" / "diagnostic_v1"
@@ -74,7 +75,9 @@ def _write_result_artifacts(
     ):
         directory.mkdir(parents=True, exist_ok=True)
 
-    _feature_frame().to_parquet(feature_path, index=False)
+    (feature_frame if feature_frame is not None else _feature_frame()).to_parquet(
+        feature_path, index=False
+    )
     joblib.dump(DummyCxGModel(), diagnostic_dir / "models" / "selected_model.joblib")
     metadata = {
         "selected_model": "diagnostic_logistic",
@@ -216,6 +219,68 @@ def test_promoted_player_summary_uses_real_player_ids(tmp_path: Path):
 
     assert not player_summary["player_id"].isna().any()
     assert set(player_summary["player_id"]).issubset(set(_feature_frame()["player_id"]))
+
+
+def test_missing_shot_id_blocks_promoted_result_tables(tmp_path: Path):
+    frame = _feature_frame()
+    frame["shot_id"] = np.nan
+    paths, feature_path = _write_result_artifacts(
+        tmp_path, recommendation="promote", feature_frame=frame
+    )
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert "shot_predictions" not in outputs
+    assert "player_cxg_summary_csv" not in outputs
+    assert "team_cxg_summary_csv" not in outputs
+    assert "baseline_vs_diagnostic_summary" not in outputs
+    assert outputs["model_promotion_summary"].exists()
+    assert outputs["results_report"].exists()
+    assert not (paths.output_dir / "shot_predictions.parquet").exists()
+    assert not (paths.output_dir / "player_cxg_summary.csv").exists()
+    assert not (paths.output_dir / "team_cxg_summary.csv").exists()
+    assert not (paths.output_dir / "baseline_vs_diagnostic_summary.csv").exists()
+    assert summary["promotion_status"] == "blocked"
+    assert summary["promotion_gate_passed"] is False
+    assert summary["quality_checks"]["missing_shot_id_count"]["status"] == "failed"
+    assert any("hard quality checks" in item for item in summary["known_limitations"])
+
+
+def test_null_player_id_does_not_block_promoted_result_tables(tmp_path: Path):
+    frame = _feature_frame()
+    frame["player_id"] = [None] * len(frame)
+    paths, feature_path = _write_result_artifacts(
+        tmp_path, recommendation="promote", feature_frame=frame
+    )
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert outputs["shot_predictions"].exists()
+    assert outputs["player_cxg_summary_csv"].exists()
+    assert outputs["team_cxg_summary_csv"].exists()
+    assert outputs["baseline_vs_diagnostic_summary"].exists()
+    assert summary["promotion_status"] == "promoted"
+    assert summary["promotion_gate_passed"] is True
+    assert summary["quality_checks"]["missing_player_id_count"]["status"] == "warning"
+
+
+def test_missing_event_id_does_not_block_promoted_result_tables(tmp_path: Path):
+    frame = _feature_frame().drop(columns=["event_id"])
+    paths, feature_path = _write_result_artifacts(
+        tmp_path, recommendation="promote", feature_frame=frame
+    )
+
+    outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    summary = json.loads(outputs["model_promotion_summary"].read_text(encoding="utf-8"))
+
+    assert outputs["shot_predictions"].exists()
+    assert outputs["player_cxg_summary_csv"].exists()
+    assert outputs["team_cxg_summary_csv"].exists()
+    assert outputs["baseline_vs_diagnostic_summary"].exists()
+    assert summary["promotion_status"] == "promoted"
+    assert summary["quality_checks"]["missing_event_id_count"]["status"] == "info"
 
 
 def test_promotion_gate_blocks_rejected_recommendations(tmp_path: Path):
@@ -416,6 +481,7 @@ def test_prediction_quality_checks_catch_invalid_probabilities():
     assert statuses["prediction_null_count"] == "failed"
     assert statuses["outside_0_1_count"] == "failed"
     assert statuses["duplicate_shot_id_count"] == "warning"
+    assert has_blocking_quality_failures(checks) is True
 
 
 def test_governance_missing_blocks_promoted_outputs(tmp_path: Path):
@@ -446,6 +512,98 @@ def test_governance_missing_blocks_exploratory_outputs(tmp_path: Path):
     assert summary["promotion_status"] == "blocked"
     assert summary["governance_summary"]["status"] == "failed"
     assert any("governance" in item.lower() for item in summary["known_limitations"])
+
+
+def test_required_id_checks_pass_when_shot_id_present_and_event_id_absent():
+    """Shots with shot_id/match_id/team_id/player_id but no event_id should pass required-ID checks."""
+    shots = pd.DataFrame(
+        {
+            "shot_id": [1, 2, 3],
+            "match_id": [10, 10, 20],
+            "team_id": [100, 100, 200],
+            "player_id": [1001, 1002, 1001],
+            "is_goal": [0, 1, 0],
+            "predicted_cxg": [0.1, 0.2, 0.15],
+        }
+    )
+
+    checks = prediction_quality_checks(
+        shots,
+        baseline_join_rate=1.0,
+        model_loaded=True,
+        promotion_gate_passed=True,
+        governance_artifacts_present=True,
+        validation_recommendation="promote",
+    )
+
+    statuses = dict(zip(checks["check_name"], checks["status"], strict=False))
+    assert statuses["missing_shot_id_count"] == "passed"
+    assert statuses["missing_match_id_count"] == "passed"
+    assert statuses["missing_team_id_count"] == "passed"
+    assert statuses["missing_player_id_count"] == "passed"
+    # event_id absent → optional check shows info, not failed or warning
+    assert statuses["missing_event_id_count"] == "info"
+    # old aggregate check must not be present
+    assert "missing_required_id_count" not in statuses
+
+
+def test_null_player_id_reports_warning_not_required_id_failure():
+    """All-null player_id (e.g. when feature store was built without player enrichment)
+    should produce a per-column warning, not block promotion or flag all rows as failing
+    the aggregate required-ID check."""
+    shots = pd.DataFrame(
+        {
+            "shot_id": [1, 2, 3],
+            "match_id": [10, 10, 20],
+            "team_id": [100, 100, 200],
+            "player_id": [None, None, None],
+            "is_goal": [0, 1, 0],
+            "predicted_cxg": [0.1, 0.2, 0.15],
+        }
+    )
+
+    checks = prediction_quality_checks(
+        shots,
+        baseline_join_rate=1.0,
+        model_loaded=True,
+        promotion_gate_passed=True,
+        governance_artifacts_present=True,
+        validation_recommendation="promote",
+    )
+
+    statuses = dict(zip(checks["check_name"], checks["status"], strict=False))
+    assert statuses["missing_shot_id_count"] == "passed"
+    assert statuses["missing_player_id_count"] == "warning"
+    # missing_required_id_count should no longer exist
+    assert "missing_required_id_count" not in statuses
+    values = dict(zip(checks["check_name"], checks["check_value"], strict=False))
+    assert values["missing_player_id_count"] == 3
+
+
+def test_missing_shot_id_reports_failed():
+    """Null shot_id must produce a failed check — shot_id is a hard requirement."""
+    shots = pd.DataFrame(
+        {
+            "shot_id": [None, None, None],
+            "match_id": [10, 10, 20],
+            "is_goal": [0, 1, 0],
+            "predicted_cxg": [0.1, 0.2, 0.15],
+        }
+    )
+
+    checks = prediction_quality_checks(
+        shots,
+        baseline_join_rate=1.0,
+        model_loaded=True,
+        promotion_gate_passed=True,
+        governance_artifacts_present=True,
+        validation_recommendation="promote",
+    )
+
+    statuses = dict(zip(checks["check_name"], checks["status"], strict=False))
+    assert statuses["missing_shot_id_count"] == "failed"
+    values = dict(zip(checks["check_name"], checks["check_value"], strict=False))
+    assert values["missing_shot_id_count"] == 3
 
 
 def test_blocked_limitations_explain_governance_without_validation_blame():

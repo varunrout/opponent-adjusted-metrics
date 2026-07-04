@@ -70,6 +70,26 @@ then by a conservative multi-column fallback. Missing or unjoinable baseline
 outputs do not fail result generation; they are recorded in the promotion summary
 and quality checks.
 
+## Quality Checks
+
+`prediction_quality_checks.csv` contains per-check results after result generation.
+ID checks are at column-level granularity:
+
+| Check name | Required | Status on failure |
+|---|---|---|
+| `missing_shot_id_count` | Yes | `failed` |
+| `missing_match_id_count` | Preserved if available | `warning` |
+| `missing_team_id_count` | Preserved if available | `warning` |
+| `missing_player_id_count` | Preserved if available | `warning` |
+| `missing_event_id_count` | Optional | `info` |
+
+`event_id` is optional because the CxG feature store is the prediction source; it is not
+always propagated there. Baseline comparison joins on `shot_id`. `missing_event_id_count`
+never contributes to a required-ID failure.
+
+`shot_id` is the only hard-required ID. Null or absent `shot_id` produces `status: failed`
+and blocks promoted outputs.
+
 ## Dashboard Use
 
 The result files under `outputs/results/cxg/diagnostic_v1/` are the stable
