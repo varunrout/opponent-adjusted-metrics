@@ -66,6 +66,19 @@ PLAYER_COLUMNS = [
     "total_cxg_delta_vs_baseline",
     "rank_total_cxg",
 ]
+CATEGORY_COLUMNS = [
+    "category_column",
+    "category",
+    "shots",
+    "goals",
+    "goal_rate",
+    "mean_predicted_cxg",
+    "total_predicted_cxg",
+    "mean_baseline_cxg",
+    "total_baseline_cxg",
+    "mean_delta_vs_baseline",
+    "total_delta_vs_baseline",
+]
 
 
 @dataclass(frozen=True)
@@ -258,7 +271,7 @@ def team_rankings(team_summary: pd.DataFrame, team_rankings_df: pd.DataFrame) ->
 
 
 def player_rankings(player_summary: pd.DataFrame, top_players: pd.DataFrame) -> pd.DataFrame:
-    source = top_players if not top_players.empty else player_summary
+    source = player_summary if not player_summary.empty else top_players
     result = _ensure_columns(source.copy(), PLAYER_COLUMNS)
     if result["player_id"].isna().any():
         missing = int(result["player_id"].isna().sum())
@@ -357,22 +370,9 @@ def category_insights(feature_impact_dir: Path) -> tuple[pd.DataFrame, list[str]
             frame.insert(0, "category_column", category)
         frames.append(frame)
     if not frames:
-        return pd.DataFrame(), skipped
+        return pd.DataFrame(columns=CATEGORY_COLUMNS), skipped
     result = pd.concat(frames, ignore_index=True)
-    columns = [
-        "category_column",
-        "category",
-        "shots",
-        "goals",
-        "goal_rate",
-        "mean_predicted_cxg",
-        "total_predicted_cxg",
-        "mean_baseline_cxg",
-        "total_baseline_cxg",
-        "mean_delta_vs_baseline",
-        "total_delta_vs_baseline",
-    ]
-    return _ensure_columns(result, columns), skipped
+    return _ensure_columns(result, CATEGORY_COLUMNS), skipped
 
 
 def build_scorecard(
@@ -558,15 +558,31 @@ def create_charts(
         ("shot_type", "category_lift_shot_type"),
         ("set_piece_category", "category_lift_set_piece_category"),
     ):
-        frame = categories.loc[categories["category_column"] == category]
+        frame = _category_rows(categories, category)
         _plot_horizontal_bars(
-            frame.nlargest(12, "total_predicted_cxg"),
+            _top_category_rows(frame),
             label_col="category",
             value_col="mean_predicted_cxg",
             path=charts[chart_key],
             title=f"Mean diagnostic CxG by {category.replace('_', ' ')}",
             xlabel="Mean predicted CxG",
         )
+
+
+def _category_rows(categories: pd.DataFrame, category: str) -> pd.DataFrame:
+    if categories.empty or "category_column" not in categories.columns:
+        return pd.DataFrame(columns=CATEGORY_COLUMNS)
+    return categories.loc[categories["category_column"] == category]
+
+
+def _top_category_rows(frame: pd.DataFrame, count: int = 12) -> pd.DataFrame:
+    if frame.empty or "total_predicted_cxg" not in frame.columns:
+        return pd.DataFrame(columns=CATEGORY_COLUMNS)
+    sortable = frame.copy()
+    sortable["total_predicted_cxg"] = pd.to_numeric(
+        sortable["total_predicted_cxg"], errors="coerce"
+    )
+    return sortable.nlargest(count, "total_predicted_cxg")
 
 
 def _plot_model_metric_comparison(metrics: dict[str, dict[str, Any]], path: Path) -> None:

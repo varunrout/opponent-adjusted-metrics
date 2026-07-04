@@ -97,6 +97,28 @@ def _player_frame(missing_player_id: bool = False) -> pd.DataFrame:
     )
 
 
+def _large_player_frame(row_count: int = 30) -> pd.DataFrame:
+    rows = []
+    for idx in range(row_count):
+        rows.append(
+            {
+                "player_id": 1000 + idx,
+                "player_name": f"Player {idx}",
+                "team_id": 1 + (idx % 3),
+                "team_name": ["Alpha", "Beta", "Gamma"][idx % 3],
+                "shots": 10 + idx,
+                "goals": idx % 5,
+                "total_cxg": float(row_count - idx),
+                "mean_cxg_per_shot": 0.1 + idx * 0.001,
+                "goals_minus_cxg": float(idx % 4) - 1.0,
+                "baseline_total_cxg": float(row_count - idx) * 0.95,
+                "total_cxg_delta_vs_baseline": float(row_count - idx) * 0.05,
+                "rank_total_cxg": idx + 1,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def _group_frame() -> pd.DataFrame:
     return pd.DataFrame(
         {
@@ -184,6 +206,11 @@ def _write_artifacts(root: Path) -> PortfolioPaths:
     )
 
 
+def _remove_category_tables(paths: PortfolioPaths) -> None:
+    for path in paths.feature_impact_dir.glob("category_lift_*.csv"):
+        path.unlink()
+
+
 def test_scorecard_extracts_metrics_and_join_rate():
     comparison = metric_comparison(_promotion_summary(), _impact_summary(), pd.DataFrame())
     scorecard = build_scorecard(
@@ -226,6 +253,16 @@ def test_player_rankings_validate_non_null_player_id():
         player_rankings(_player_frame(missing_player_id=True), pd.DataFrame())
 
 
+def test_player_rankings_prefers_full_summary_over_top_preview():
+    full_summary = _large_player_frame(row_count=30)
+    top_preview = full_summary.head(25)
+
+    ranked = player_rankings(full_summary, top_preview)
+
+    assert len(ranked) == 30
+    assert set(ranked["player_id"]) == set(full_summary["player_id"])
+
+
 def test_feature_driver_summary_combines_groups_and_features_without_statsbomb_xg():
     drivers = feature_driver_summary(_group_frame(), _permutation_frame())
 
@@ -242,6 +279,26 @@ def test_category_insights_combines_available_tables_and_skips_missing(tmp_path:
     assert set(insights["category_column"]) == {"body_part", "shot_type"}
     assert "set_piece_category" in skipped
     assert "pressure_state" in skipped
+
+
+def test_category_insights_empty_output_has_expected_schema(tmp_path: Path):
+    insights, skipped = category_insights(tmp_path)
+
+    assert insights.empty
+    assert {
+        "category_column",
+        "category",
+        "shots",
+        "goals",
+        "goal_rate",
+        "mean_predicted_cxg",
+        "total_predicted_cxg",
+        "mean_baseline_cxg",
+        "total_baseline_cxg",
+        "mean_delta_vs_baseline",
+        "total_delta_vs_baseline",
+    }.issubset(insights.columns)
+    assert set(skipped) == {"body_part", "shot_type", "set_piece_category", "pressure_state"}
 
 
 def test_portfolio_summary_writes_outputs_and_charts(tmp_path: Path):
@@ -276,3 +333,44 @@ def test_portfolio_summary_writes_outputs_and_charts(tmp_path: Path):
     scorecard = json.loads(outputs["scorecard_json"].read_text(encoding="utf-8"))
     assert scorecard["governance_status"] == "passed"
     assert scorecard["metric_comparison"]["diagnostic"]["roc_auc"] == 0.796411
+
+
+def test_portfolio_summary_keeps_full_players_beyond_top_preview(tmp_path: Path):
+    paths = _write_artifacts(tmp_path)
+    full_players = _large_player_frame(row_count=30)
+    full_players.to_csv(paths.player_summary, index=False)
+    full_players.head(25).to_csv(paths.top_players, index=False)
+
+    outputs = build_cxg_portfolio_summary(
+        paths=paths,
+        top_n_teams=2,
+        top_n_players=5,
+        top_n_features=2,
+    )
+
+    player_output = pd.read_csv(outputs["player_rankings_csv"])
+    assert len(player_output) == 30
+    assert set(player_output["player_id"]) == set(full_players["player_id"])
+
+
+def test_portfolio_summary_writes_placeholder_category_charts_when_all_missing(
+    tmp_path: Path,
+):
+    paths = _write_artifacts(tmp_path)
+    _remove_category_tables(paths)
+
+    outputs = build_cxg_portfolio_summary(
+        paths=paths,
+        top_n_teams=2,
+        top_n_players=2,
+        top_n_features=2,
+    )
+
+    insights = pd.read_csv(outputs["category_insights_csv"])
+    assert insights.empty
+    for key in (
+        "chart_category_lift_body_part",
+        "chart_category_lift_shot_type",
+        "chart_category_lift_set_piece_category",
+    ):
+        assert outputs[key].exists()
