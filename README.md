@@ -82,6 +82,10 @@ Reviewer docs:
 
 ## Dashboard
 
+The active dashboard entry point is `app/streamlit_app.py`. The older
+`dashboard/` directory is retained as a legacy/experimental path and is not the
+primary CxG portfolio app.
+
 Run:
 
 ```bash
@@ -107,7 +111,7 @@ Dashboard sections:
 - Reports / diagnostics
 - About methodology
 
-Suggested demo flow: start with Overview, compare Player and Team analysis, explain CxG/CxA/CxT pages, use Action explorer to trace aggregate values back to actions, then show Reports / diagnostics.
+Suggested demo flow: start with Overview, open Promoted CxG portfolio for the governed CxG model story, then use Player, Team, CxG, CxA, CxT, and Action explorer tabs for supporting generated outputs.
 
 ## Main Workflows
 
