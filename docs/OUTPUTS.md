@@ -265,6 +265,40 @@ Missing optional category columns are skipped and recorded in
 `feature_impact_summary.json`. `statsbomb_xg` remains reference-only and is not
 included as a model-impact feature.
 
+### Static CxG Portfolio Summary
+
+Command:
+
+```bash
+make build-cxg-portfolio-summary
+```
+
+This reporting layer converts promoted diagnostic CxG results and feature-impact
+artifacts into static portfolio outputs for GitHub or reviewer-facing Markdown.
+It does not retrain models, change validation/promotion behavior, or replace the
+future Streamlit dashboard. Streamlit can later provide interactive views over
+the same generated data.
+
+Generated files:
+
+```text
+outputs/portfolio/cxg/cxg_portfolio_summary.md
+outputs/portfolio/cxg/cxg_model_scorecard.json
+outputs/portfolio/cxg/cxg_team_rankings.csv
+outputs/portfolio/cxg/cxg_player_rankings.csv
+outputs/portfolio/cxg/cxg_feature_driver_summary.csv
+outputs/portfolio/cxg/cxg_category_insights.csv
+outputs/portfolio/cxg/charts/model_metric_comparison.png
+outputs/portfolio/cxg/charts/feature_group_impact.png
+outputs/portfolio/cxg/charts/top_feature_importance.png
+outputs/portfolio/cxg/charts/team_cxg_ranking.png
+outputs/portfolio/cxg/charts/player_cxg_ranking.png
+outputs/portfolio/cxg/charts/goals_minus_cxg_teams.png
+outputs/portfolio/cxg/charts/category_lift_body_part.png
+outputs/portfolio/cxg/charts/category_lift_shot_type.png
+outputs/portfolio/cxg/charts/category_lift_set_piece_category.png
+```
+
 ### Baseline CxG Modelling
 
 Command:
