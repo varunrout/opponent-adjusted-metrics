@@ -364,6 +364,30 @@ DB persistence:
 
 `make cxa-smoke` only builds a small action-feature smoke dataset and does not populate the full CxA model outputs.
 
+### CxA Current-State Audit Layer (Pre-Diagnostic Promotion)
+
+Command:
+
+```bash
+make audit-cxa-current-state
+```
+
+Generated files:
+
+```text
+outputs/audits/cxa/cxa_current_state_audit.md
+outputs/audits/cxa/cxa_current_state_audit.json
+outputs/audits/cxa/cxa_output_inventory.csv
+outputs/audits/cxa/cxa_id_quality.csv
+outputs/audits/cxa/cxa_feature_inventory.csv
+outputs/audits/cxa/cxa_target_audit.csv
+outputs/audits/cxa/cxa_prediction_audit.csv
+outputs/audits/cxa/cxa_aggregate_audit.csv
+outputs/audits/cxa/cxa_risk_register.csv
+```
+
+This audit layer reports current CxA output readiness and leakage/lineage risks before diagnostic CxA modeling and promotion.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis

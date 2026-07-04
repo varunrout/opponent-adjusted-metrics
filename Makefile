@@ -4,7 +4,7 @@
 	normalize-events build-possessions ingestion-report data-smoke \
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
-	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa \
+	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state \
 	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results analyze-cxg-feature-impact build-cxg-portfolio-summary check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
@@ -95,6 +95,9 @@ cxa-smoke: cxa-action-features-smoke  ## Alias for the local CxA feature smoke
 
 analysis-cxa:  ## Run pre-model CxA target and action-feature analysis
 	poetry run python scripts/run_cxa_analysis.py
+
+audit-cxa-current-state:  ## Audit current CxA outputs and feature/ID contract readiness
+	poetry run python scripts/audit_cxa_current_state.py
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline
