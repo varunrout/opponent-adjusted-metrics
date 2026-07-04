@@ -93,6 +93,7 @@ FOOTBALL_FEATURE_GROUPS = {
         "opponent_team_name",
     ],
 }
+HEADLINE_METRICS = ("log_loss", "brier", "roc_auc", "expected_calibration_error")
 
 
 @dataclass(frozen=True)
@@ -467,6 +468,102 @@ def result_integrity_checks(
     return checks
 
 
+def _baseline_join_rate(promotion_summary: dict[str, Any]) -> Any:
+    comparison = promotion_summary.get("baseline_comparison", {})
+    if not isinstance(comparison, dict):
+        return None
+    return comparison.get("join_rate", comparison.get("baseline_join_rate"))
+
+
+def validation_metric_headline(
+    promotion_summary: dict[str, Any],
+    baseline_summary: pd.DataFrame,
+) -> dict[str, Any]:
+    """Return baseline-vs-diagnostic headline metrics for the report."""
+
+    validation_metrics = promotion_summary.get("validation_metrics", {})
+    if isinstance(validation_metrics, dict) and validation_metrics:
+        baseline = validation_metrics.get("baseline", {})
+        diagnostic_key = next(
+            (
+                key
+                for key in validation_metrics
+                if key != "baseline" and str(key).startswith("diagnostic")
+            ),
+            None,
+        )
+        if diagnostic_key is None:
+            diagnostic_key = next((key for key in validation_metrics if key != "baseline"), None)
+        diagnostic = validation_metrics.get(diagnostic_key, {}) if diagnostic_key else {}
+        return _headline_payload(
+            source="model_promotion_summary.validation_metrics",
+            baseline=baseline,
+            diagnostic=diagnostic,
+            diagnostic_label=str(diagnostic_key) if diagnostic_key else None,
+        )
+    return _headline_from_baseline_summary(baseline_summary)
+
+
+def _headline_from_baseline_summary(baseline_summary: pd.DataFrame) -> dict[str, Any]:
+    if baseline_summary.empty or not {"metric", "value"}.issubset(baseline_summary.columns):
+        return _headline_payload(
+            source="unavailable",
+            baseline={},
+            diagnostic={},
+            diagnostic_label=None,
+        )
+    values = {
+        str(row.metric): row.value
+        for row in baseline_summary[["metric", "value"]].itertuples(index=False)
+    }
+    baseline = {
+        metric: values.get(f"baseline_{metric}")
+        for metric in HEADLINE_METRICS
+        if f"baseline_{metric}" in values
+    }
+    diagnostic = {
+        metric: values.get(f"diagnostic_{metric}")
+        for metric in HEADLINE_METRICS
+        if f"diagnostic_{metric}" in values
+    }
+    return _headline_payload(
+        source="baseline_vs_diagnostic_summary.csv",
+        baseline=baseline,
+        diagnostic=diagnostic,
+        diagnostic_label="diagnostic",
+    )
+
+
+def _headline_payload(
+    *,
+    source: str,
+    baseline: dict[str, Any],
+    diagnostic: dict[str, Any],
+    diagnostic_label: str | None,
+) -> dict[str, Any]:
+    baseline_metrics = {metric: baseline.get(metric) for metric in HEADLINE_METRICS}
+    diagnostic_metrics = {metric: diagnostic.get(metric) for metric in HEADLINE_METRICS}
+    deltas = {
+        metric: _metric_delta(diagnostic_metrics.get(metric), baseline_metrics.get(metric))
+        for metric in HEADLINE_METRICS
+    }
+    return {
+        "source": source,
+        "diagnostic_label": diagnostic_label,
+        "baseline": baseline_metrics,
+        "diagnostic": diagnostic_metrics,
+        "diagnostic_minus_baseline": deltas,
+    }
+
+
+def _metric_delta(diagnostic_value: Any, baseline_value: Any) -> float | None:
+    if diagnostic_value is None or baseline_value is None:
+        return None
+    if pd.isna(diagnostic_value) or pd.isna(baseline_value):
+        return None
+    return float(diagnostic_value) - float(baseline_value)
+
+
 def analyze_cxg_feature_impact(
     *,
     feature_path: Path = DEFAULT_FEATURE_PATH,
@@ -534,9 +631,7 @@ def analyze_cxg_feature_impact(
         "selected_model_candidate": selected_model,
         "promotion_status": promotion_summary.get("promotion_status"),
         "promotion_gate_passed": promotion_summary.get("promotion_gate_passed"),
-        "baseline_join_rate": promotion_summary.get("baseline_comparison", {}).get(
-            "baseline_join_rate"
-        ),
+        "baseline_join_rate": _baseline_join_rate(promotion_summary),
         "governance_status": promotion_summary.get("governance_summary", {}).get("status"),
         "selected_feature_count": len(selected_features),
         "impact_feature_count": len(impact_features),
@@ -550,6 +645,10 @@ def analyze_cxg_feature_impact(
         ),
         "selected_feature_groups": grouped_features,
         "promoted_metrics_on_feature_frame": promoted_metrics,
+        "validation_metric_headline": validation_metric_headline(
+            promotion_summary,
+            baseline_summary,
+        ),
         "baseline_vs_diagnostic_summary": _baseline_summary_records(baseline_summary),
         "skipped_category_lift_tables": skipped_tables,
         "category_lift_outputs": category_outputs,
@@ -649,6 +748,7 @@ def build_feature_impact_report(
     )
     integrity = summary["result_integrity_checks"]
     metrics = summary.get("promoted_metrics_on_feature_frame", {})
+    headline = summary.get("validation_metric_headline", {})
     skipped = summary.get("skipped_category_lift_tables", [])
     category_outputs = summary.get("category_lift_outputs", {})
     return "\n".join(
@@ -674,6 +774,9 @@ def build_feature_impact_report(
             f"- Brier: `{metrics.get('brier')}`",
             f"- ROC AUC: `{metrics.get('roc_auc')}`",
             f"- Goal rate: `{metrics.get('goal_rate')}`",
+            "",
+            "## Baseline vs Diagnostic Headline",
+            *baseline_diagnostic_headline_lines(headline),
             "",
             "## Selected Feature Groups",
             *[
@@ -717,6 +820,37 @@ def build_feature_impact_report(
             "",
         ]
     )
+
+
+def baseline_diagnostic_headline_lines(headline: dict[str, Any]) -> list[str]:
+    """Render validation headline metrics for the Markdown report."""
+
+    source = headline.get("source", "unavailable")
+    baseline = headline.get("baseline", {})
+    diagnostic = headline.get("diagnostic", {})
+    deltas = headline.get("diagnostic_minus_baseline", {})
+    lines = [f"- Source: `{source}`"]
+    if not baseline and not diagnostic:
+        lines.append("- Baseline-vs-diagnostic validation metrics were unavailable.")
+        return lines
+    for metric in HEADLINE_METRICS:
+        baseline_value = baseline.get(metric)
+        diagnostic_value = diagnostic.get(metric)
+        delta = deltas.get(metric)
+        lines.append(
+            f"- `{metric}`: baseline `{_format_metric(baseline_value)}`, "
+            f"diagnostic `{_format_metric(diagnostic_value)}`, "
+            f"diagnostic-minus-baseline `{_format_metric(delta)}`"
+        )
+    return lines
+
+
+def _format_metric(value: Any) -> str:
+    if value is None or pd.isna(value):
+        return "unavailable"
+    if isinstance(value, int):
+        return str(value)
+    return f"{float(value):.6f}"
 
 
 def parse_args() -> argparse.Namespace:

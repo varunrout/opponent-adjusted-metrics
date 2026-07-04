@@ -7,8 +7,10 @@ import pandas as pd
 
 from scripts.analyze_cxg_feature_impact import (
     FeatureImpactPaths,
+    _baseline_join_rate,
     align_selected_feature_matrix,
     analyze_cxg_feature_impact,
+    baseline_diagnostic_headline_lines,
     category_lift_table,
     group_perturbation_summary,
     map_feature_groups,
@@ -154,8 +156,22 @@ def _write_artifacts(
             {
                 "promotion_status": "promoted",
                 "promotion_gate_passed": True,
-                "baseline_comparison": {"baseline_join_rate": 1.0},
+                "baseline_comparison": {"join_rate": 1.0, "baseline_join_rate": 0.5},
                 "governance_summary": {"status": "passed"},
+                "validation_metrics": {
+                    "baseline": {
+                        "log_loss": 0.2767783170122783,
+                        "brier": 0.0781790068298933,
+                        "roc_auc": 0.7804466980829132,
+                        "expected_calibration_error": 0.0029334321673896,
+                    },
+                    "diagnostic_v1:calibrated_gradient_boosting_sigmoid": {
+                        "log_loss": 0.2618236945652078,
+                        "brier": 0.0738251637506254,
+                        "roc_auc": 0.8088004437739705,
+                        "expected_calibration_error": 0.0068871993757628,
+                    },
+                },
             }
         ),
         encoding="utf-8",
@@ -257,7 +273,13 @@ def test_report_and_summary_files_are_written(tmp_path: Path):
     assert outputs["feature_impact_report"].exists()
     summary = json.loads(outputs["feature_impact_summary"].read_text(encoding="utf-8"))
     assert summary["reference_columns_selected"] == []
+    assert summary["baseline_join_rate"] == 1.0
+    assert summary["validation_metric_headline"]["baseline"]["log_loss"] == 0.2767783170122783
+    assert summary["validation_metric_headline"]["diagnostic"]["log_loss"] == 0.2618236945652078
     assert summary["result_integrity_checks"]["shot_predictions_player_id_missing_count"] == 0
+    report = outputs["feature_impact_report"].read_text(encoding="utf-8")
+    assert "## Baseline vs Diagnostic Headline" in report
+    assert "diagnostic-minus-baseline `-0.014955`" in report
     assert (paths.output_dir / "category_lift_body_part.csv").exists()
 
 
@@ -281,3 +303,28 @@ def test_player_id_integrity_checks_report_zero_missing_when_present():
 
     assert checks["feature_frame_player_id_missing_count"] == 0
     assert checks["shot_predictions_player_id_missing_count"] == 0
+
+
+def test_baseline_join_rate_prefers_join_rate_with_legacy_fallback():
+    assert _baseline_join_rate({"baseline_comparison": {"join_rate": 1.0}}) == 1.0
+    assert _baseline_join_rate({"baseline_comparison": {"baseline_join_rate": 0.75}}) == 0.75
+    assert (
+        _baseline_join_rate({"baseline_comparison": {"join_rate": 0.9, "baseline_join_rate": 0.75}})
+        == 0.9
+    )
+
+
+def test_baseline_diagnostic_headline_lines_handle_unavailable_metrics():
+    lines = baseline_diagnostic_headline_lines(
+        {
+            "source": "unavailable",
+            "baseline": {},
+            "diagnostic": {},
+            "diagnostic_minus_baseline": {},
+        }
+    )
+
+    assert lines == [
+        "- Source: `unavailable`",
+        "- Baseline-vs-diagnostic validation metrics were unavailable.",
+    ]
