@@ -228,6 +228,43 @@ outputs/results/cxg/diagnostic_v1/baseline_vs_diagnostic_summary.csv
 See `docs/modeling/cxg_diagnostic_results.md` for promotion and result-output
 guidance.
 
+### Promoted Diagnostic CxG Feature Impact
+
+Command:
+
+```bash
+make analyze-cxg-feature-impact
+```
+
+This post-promotion analysis explains why the promoted diagnostic CxG model
+wins without retraining it or changing validation, promotion, governance, or
+result-generation behavior. It loads the selected diagnostic model, the selected
+feature metadata, the CxG feature store, and promoted shot predictions, then
+computes model-agnostic feature impact artifacts.
+
+Generated files:
+
+```text
+outputs/modeling/cxg/diagnostic_v1/feature_impact/permutation_importance.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/group_perturbation_summary.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_body_part.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_technique.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_shot_type.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_play_pattern.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_set_piece_category.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_set_piece_phase.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_pressure_state.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_score_state.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_def_label.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/category_lift_minute_bucket_label.csv
+outputs/modeling/cxg/diagnostic_v1/feature_impact/feature_impact_summary.json
+outputs/modeling/cxg/diagnostic_v1/feature_impact/feature_impact_report.md
+```
+
+Missing optional category columns are skipped and recorded in
+`feature_impact_summary.json`. `statsbomb_xg` remains reference-only and is not
+included as a model-impact feature.
+
 ### Baseline CxG Modelling
 
 Command:

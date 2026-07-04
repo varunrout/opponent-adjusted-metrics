@@ -5,7 +5,7 @@
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
 	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa \
-	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results check-cxg-outputs cxg-validate cxg-run cxg-smoke \
+	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results analyze-cxg-feature-impact check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
 
@@ -117,6 +117,9 @@ generate-cxg-diagnostic-results:  ## Generate promoted diagnostic CxG result out
 	poetry run python scripts/generate_cxg_diagnostic_results.py
 
 cxg-diagnostic-results: generate-cxg-diagnostic-results  ## Alias for diagnostic CxG results
+
+analyze-cxg-feature-impact:  ## Analyze promoted diagnostic CxG feature impact
+	poetry run python scripts/analyze_cxg_feature_impact.py
 
 check-cxg-outputs:  ## Validate generated CxG output contract and Git ignore rules
 	poetry run python scripts/check_cxg_outputs.py
