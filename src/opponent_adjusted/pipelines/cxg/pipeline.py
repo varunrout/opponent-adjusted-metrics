@@ -228,7 +228,12 @@ def build_shots_dataset(session, competition_id: int = None) -> pd.DataFrame:
 
     # Add entity names
     player_ids = df["player_id"].dropna().unique().tolist()
-    team_ids = df["team_id"].dropna().unique().tolist()
+    team_ids = (
+        pd.concat([df["team_id"], df["opponent_team_id"]], ignore_index=True)
+        .dropna()
+        .unique()
+        .tolist()
+    )
 
     if player_ids:
         player_stmt = select(Player.id, Player.name).where(Player.id.in_(player_ids))
@@ -239,6 +244,7 @@ def build_shots_dataset(session, competition_id: int = None) -> pd.DataFrame:
         team_stmt = select(Team.id, Team.name).where(Team.id.in_(team_ids))
         team_map = {r.id: r.name for r in session.execute(team_stmt).all()}
         df["team_name"] = df["team_id"].map(team_map)
+        df["opponent_team_name"] = df["opponent_team_id"].map(team_map)
 
     # Derive is_goal
     df["is_goal"] = (df["outcome"] == "Goal").astype(int)

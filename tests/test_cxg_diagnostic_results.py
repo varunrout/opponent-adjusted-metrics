@@ -212,10 +212,14 @@ def test_promoted_player_summary_uses_real_player_ids(tmp_path: Path):
     paths, feature_path = _write_result_artifacts(tmp_path, recommendation="promote")
 
     outputs = generate_cxg_diagnostic_results(input_path=feature_path, paths=paths)
+    shot_predictions = pd.read_parquet(outputs["shot_predictions"])
     player_summary = pd.read_csv(outputs["player_cxg_summary_csv"])
+    team_summary = pd.read_csv(outputs["team_cxg_summary_csv"])
 
+    assert not shot_predictions["player_id"].isna().any()
     assert not player_summary["player_id"].isna().any()
     assert set(player_summary["player_id"]).issubset(set(_feature_frame()["player_id"]))
+    assert len(player_summary) > len(team_summary)
 
 
 def test_promotion_gate_blocks_rejected_recommendations(tmp_path: Path):

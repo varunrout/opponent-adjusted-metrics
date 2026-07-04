@@ -1,17 +1,22 @@
+import pandas as pd
+
 from opponent_adjusted.db.models import (
     Competition,
     Event,
     Match,
+    Player,
     RawEvent,
     Shot,
     ShotFeature,
     Team,
 )
 from opponent_adjusted.db.session import session_scope
+from opponent_adjusted.config import settings
 from opponent_adjusted.pipelines.cxg.pipeline import (
     add_context_features,
     add_geometric_features,
     build_shots_dataset,
+    run_pipeline,
 )
 
 
@@ -77,12 +82,13 @@ def _add_shot(
     opponent: Team,
     outcome: str,
     shot_type: str = "Open Play",
+    player: Player | None = None,
 ) -> Shot:
     shot = Shot(
         event_id=event.id,
         match_id=event.match_id,
         team_id=team.id,
-        player_id=None,
+        player_id=player.id if player is not None else None,
         opponent_team_id=opponent.id,
         statsbomb_xg=0.1,
         body_part="Right Foot",
@@ -293,3 +299,91 @@ def test_cxg_score_context_handles_own_goals_before_later_shot(e2e_test_env):
         assert bool(later_row["is_trailing"])
         assert not bool(later_row["is_leading"])
         assert not bool(later_row["is_drawing"])
+
+
+def test_cxg_pipeline_overwrites_stale_feature_store_player_ids(e2e_test_env, tmp_path):
+    original_feature_store = settings.feature_store_path
+    settings.feature_store_path = tmp_path / "feature_store"
+    try:
+        with session_scope() as session:
+            competition = Competition(
+                statsbomb_competition_id=1,
+                name="Identifier Cup",
+                season="2026",
+            )
+            home = Team(statsbomb_team_id=10, name="Home")
+            away = Team(statsbomb_team_id=20, name="Away")
+            player_one = Player(statsbomb_player_id=5001, name="Shooter One")
+            player_two = Player(statsbomb_player_id=5002, name="Shooter Two")
+            session.add_all([competition, home, away, player_one, player_two])
+            session.flush()
+            match = Match(
+                statsbomb_match_id=102,
+                competition_id=competition.id,
+                home_team_id=home.id,
+                away_team_id=away.id,
+                season="2026",
+            )
+            session.add(match)
+            session.flush()
+
+            first_event = _add_event(
+                session,
+                match.id,
+                "player-shot-1",
+                "Shot",
+                home,
+                1,
+                0,
+                10,
+                1,
+                {
+                    "play_pattern": {"name": "Regular Play"},
+                    "shot": {"outcome": {"name": "Saved"}, "type": {"name": "Open Play"}},
+                },
+            )
+            second_event = _add_event(
+                session,
+                match.id,
+                "player-shot-2",
+                "Shot",
+                away,
+                1,
+                0,
+                20,
+                2,
+                {
+                    "play_pattern": {"name": "Regular Play"},
+                    "shot": {"outcome": {"name": "Saved"}, "type": {"name": "Open Play"}},
+                },
+            )
+            first_shot = _add_shot(session, first_event, home, away, "Saved", player=player_one)
+            second_shot = _add_shot(session, second_event, away, home, "Saved", player=player_two)
+            first_shot_id = first_shot.id
+            second_shot_id = second_shot.id
+            home_id = home.id
+            away_id = away.id
+            player_ids = {player_one.id, player_two.id}
+            player_names = {player_one.name, player_two.name}
+            team_names = {home.name, away.name}
+
+        stale_path = settings.feature_store_path / "cxg" / "shot_features.parquet"
+        stale_path.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(
+            {
+                "shot_id": [first_shot_id, second_shot_id],
+                "player_id": [None, None],
+                "team_id": [home_id, away_id],
+            }
+        ).to_parquet(stale_path, index=False)
+
+        outputs = run_pipeline()
+        exported = pd.read_parquet(outputs["shot_features"])
+
+        assert exported["player_id"].isna().sum() == 0
+        assert set(exported["player_id"]) == player_ids
+        assert set(exported["player_name"]) == player_names
+        assert set(exported["team_name"]) == team_names
+        assert set(exported["opponent_team_name"]) == team_names
+    finally:
+        settings.feature_store_path = original_feature_store

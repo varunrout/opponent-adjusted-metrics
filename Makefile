@@ -72,6 +72,7 @@ data-smoke: migrate-up fetch-data ingest-all normalize-events build-possessions 
 # Features
 build-features:  ## Build shot features (VERSION=v1)
 	poetry run python scripts/build_shot_features.py --version $(or $(VERSION),v1)
+	poetry run python scripts/run_cxg_pipeline.py
 
 build-profiles:  ## Build opponent profiles (VERSION=v1)
 	poetry run python scripts/build_opponent_profiles.py --version $(or $(VERSION),v1)
