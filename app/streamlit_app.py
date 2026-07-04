@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import sys
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +65,18 @@ PORTFOLIO_CHART_FILES = [
     "player_cxg_ranking.png",
     "goals_minus_cxg_teams.png",
 ]
+CXG_PORTFOLIO_REGENERATION_STEPS = """Promoted CxG portfolio outputs are missing. Run:
+
+```bash
+make build-features
+make run-cxg-end-to-end
+make run-cxg-diagnostic-training
+make validate-cxg-diagnostic
+make generate-cxg-diagnostic-results
+make analyze-cxg-feature-impact
+make build-cxg-portfolio-summary
+make dashboard
+```"""
 
 
 @st.cache_data(show_spinner=False)
@@ -156,10 +168,7 @@ def render_scorecard_metrics(scorecard: dict[str, Any]) -> None:
     """Render promoted CxG status cards from the static scorecard."""
 
     if not scorecard:
-        st.info(
-            "Promoted CxG portfolio outputs are missing. Run the CxG generation chain "
-            "and `make build-cxg-portfolio-summary`."
-        )
+        st.info(CXG_PORTFOLIO_REGENERATION_STEPS)
         return
 
     cards = [
@@ -206,6 +215,16 @@ def render_metric_comparison_table(scorecard: dict[str, Any]) -> None:
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
 
+def render_streamlit_image(path: str, caption: str, image_func: Any | None = None) -> None:
+    """Render an image across Streamlit versions with renamed width arguments."""
+
+    image = image_func or st.image
+    try:
+        image(path, caption=caption, use_container_width=True)
+    except TypeError:
+        image(path, caption=caption, use_column_width=True)
+
+
 def render_portfolio_chart(chart_name: str, title: str) -> None:
     """Render a static portfolio chart if available."""
 
@@ -214,7 +233,7 @@ def render_portfolio_chart(chart_name: str, title: str) -> None:
     if not chart_path.exists():
         st.info(f"Chart not available yet: `{PORTFOLIO_CHARTS / chart_name}`")
         return
-    st.image(str(chart_path), caption=title, use_container_width=True)
+    render_streamlit_image(str(chart_path), title)
 
 
 def _search_filter(df: pd.DataFrame, column: str, label: str, key: str) -> pd.DataFrame:
@@ -497,10 +516,7 @@ def promoted_cxg_portfolio_tab() -> None:
         and category_insights.empty
         and not summary_markdown
     ):
-        st.info(
-            "Promoted CxG portfolio outputs are missing. Run the CxG generation chain "
-            "and `make build-cxg-portfolio-summary`."
-        )
+        st.info(CXG_PORTFOLIO_REGENERATION_STEPS)
         return
 
     render_scorecard_metrics(scorecard)
@@ -722,8 +738,9 @@ def main() -> None:
     st.title("Opponent-Adjusted Football Metrics")
     st.caption("CxG, CxA, and baseline CxT dashboard v1")
     st.write(
-        "Guided demo flow: start with Overview, compare Player and Team analysis, "
-        "then drill into CxG, CxA, CxT, and Action explorer tabs."
+        "Guided demo flow: start with Overview, then open Promoted CxG portfolio "
+        "for the governed model story. Use the legacy CxG, CxA, CxT, Player, Team, "
+        "and Action explorer tabs for supporting generated outputs."
     )
 
     tabs = st.tabs(
