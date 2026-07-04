@@ -1,5 +1,10 @@
 # CxG Analytics Dashboard
 
+> Legacy/experimental dashboard path. The active dashboard entry point is
+> `app/streamlit_app.py`, and the repository `make dashboard` target runs
+> `poetry run streamlit run app/streamlit_app.py`. New promoted CxG portfolio
+> views should be added to the active app, not to `dashboard/app.py`.
+
 Interactive dashboard for Contextual Expected Goals (CxG) analysis.
 
 ## Features

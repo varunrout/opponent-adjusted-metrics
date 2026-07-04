@@ -7,6 +7,7 @@
     "project_overview",
     "player_analysis",
     "team_analysis",
+    "promoted_cxg_portfolio",
     "cxg_analysis",
     "cxa_analysis",
     "cxt_analysis",
@@ -23,8 +24,12 @@
         "player_analysis",
         "team_analysis",
         "cxg_analysis",
+        "promoted_cxg_portfolio",
         "model_report_diagnostics"
       ],
+      "portfolio_summary": {
+        "path": "outputs/portfolio/cxg/cxg_portfolio_summary.md"
+      },
       "inputs": {
         "predictions": {
           "path": "outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet",
@@ -96,6 +101,90 @@
             "baseline_comparison",
             "grouped_validation",
             "slice_metrics"
+          ]
+        },
+        "portfolio_scorecard": {
+          "path": "outputs/portfolio/cxg/cxg_model_scorecard.json",
+          "required_fields": [
+            "model_version",
+            "promotion_status",
+            "promotion_gate_passed"
+          ],
+          "optional_fields": [
+            "selected_model_candidate",
+            "governance_status",
+            "baseline_join_rate",
+            "selected_feature_count",
+            "metric_comparison"
+          ]
+        },
+        "portfolio_team_rankings": {
+          "path": "outputs/portfolio/cxg/cxg_team_rankings.csv",
+          "required_columns": [
+            "team_id",
+            "shots",
+            "goals",
+            "total_cxg",
+            "rank_total_cxg"
+          ],
+          "optional_columns": [
+            "team_name",
+            "mean_cxg_per_shot",
+            "goals_minus_cxg",
+            "baseline_total_cxg",
+            "total_cxg_delta_vs_baseline"
+          ]
+        },
+        "portfolio_player_rankings": {
+          "path": "outputs/portfolio/cxg/cxg_player_rankings.csv",
+          "required_columns": [
+            "player_id",
+            "shots",
+            "goals",
+            "total_cxg",
+            "rank_total_cxg"
+          ],
+          "optional_columns": [
+            "player_name",
+            "team_id",
+            "team_name",
+            "mean_cxg_per_shot",
+            "goals_minus_cxg",
+            "baseline_total_cxg",
+            "total_cxg_delta_vs_baseline"
+          ]
+        },
+        "portfolio_feature_drivers": {
+          "path": "outputs/portfolio/cxg/cxg_feature_driver_summary.csv",
+          "required_columns": [
+            "driver_type",
+            "name",
+            "rank"
+          ],
+          "optional_columns": [
+            "feature_group",
+            "log_loss_delta",
+            "brier_delta",
+            "roc_auc_delta",
+            "absolute_probability_delta_mean"
+          ]
+        },
+        "portfolio_category_insights": {
+          "path": "outputs/portfolio/cxg/cxg_category_insights.csv",
+          "required_columns": [
+            "category_column",
+            "category",
+            "shots",
+            "mean_predicted_cxg",
+            "total_predicted_cxg"
+          ],
+          "optional_columns": [
+            "goals",
+            "goal_rate",
+            "mean_baseline_cxg",
+            "total_baseline_cxg",
+            "mean_delta_vs_baseline",
+            "total_delta_vs_baseline"
           ]
         }
       }

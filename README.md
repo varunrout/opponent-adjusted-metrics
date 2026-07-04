@@ -6,6 +6,31 @@ Portfolio/demo release for contextual football analytics built on StatsBomb-styl
 
 This is not a production deployment. It is a reviewable v1 analytics product surface that shows how raw events become feature tables, model outputs, reports, database rows, and football insight.
 
+## Promoted Diagnostic CxG Portfolio
+
+The promoted diagnostic CxG model is the governed shot-quality layer for the portfolio. It scores shot-level CxG from pre-shot, leakage-safe features, then rolls those predictions into player, team, feature-driver, and category insight outputs.
+
+The fair CxG baseline excludes StatsBomb xG as a training feature. Against that fair baseline, the promoted diagnostic model improves log loss, Brier score, and ROC AUC; expected calibration error remains transparently monitored because the baseline is slightly better calibrated in the latest run.
+
+Portfolio entry points:
+
+- [CxG portfolio summary](outputs/portfolio/cxg/cxg_portfolio_summary.md)
+- [CxG model scorecard](outputs/portfolio/cxg/cxg_model_scorecard.json)
+- [CxG portfolio charts](outputs/portfolio/cxg/charts/)
+
+Regenerate the promoted CxG portfolio locally:
+
+```bash
+make build-features
+make run-cxg-end-to-end
+make run-cxg-diagnostic-training
+make validate-cxg-diagnostic
+make generate-cxg-diagnostic-results
+make analyze-cxg-feature-impact
+make build-cxg-portfolio-summary
+make dashboard
+```
+
 ## Core Metrics
 
 - **CxG:** contextual shot quality. It answers: how good was the shot?
@@ -74,6 +99,7 @@ Dashboard sections:
 - Overview and v1 status
 - Player analysis
 - Team analysis
+- Promoted CxG portfolio
 - CxG
 - CxA
 - CxT
