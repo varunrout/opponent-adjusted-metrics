@@ -444,6 +444,37 @@ Validation and promotion are separate follow-up steps. CxA+ and Advanced CxA
 state-value enhancements remain out of scope for this diagnostic candidate
 training layer.
 
+### CxA Diagnostic Validation
+
+Command:
+
+```bash
+make validate-cxa-diagnostic
+```
+
+This validation layer compares the selected diagnostic CxA model against the
+current fair baseline CxA predictions. It evaluates probability quality,
+calibration, average precision, top-k retrieval, slice stability, join quality,
+and prediction quality checks before writing a promotion recommendation. It does
+not generate promoted CxA result outputs.
+
+Generated files:
+
+```text
+outputs/validation/cxa/diagnostic_v1/validation_summary.json
+outputs/validation/cxa/diagnostic_v1/promotion_recommendation.json
+outputs/validation/cxa/diagnostic_v1/validation_report.md
+outputs/validation/cxa/diagnostic_v1/baseline_vs_diagnostic_metrics.csv
+outputs/validation/cxa/diagnostic_v1/calibration_summary.csv
+outputs/validation/cxa/diagnostic_v1/threshold_summary.csv
+outputs/validation/cxa/diagnostic_v1/slice_summary.csv
+outputs/validation/cxa/diagnostic_v1/validation_quality_checks.csv
+```
+
+If validation recommends promotion or provisional promotion, a later results PR
+should generate governed promoted CxA outputs. CxA+ and Advanced CxA remain out
+of scope for this validation layer.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
