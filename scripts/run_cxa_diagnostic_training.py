@@ -47,6 +47,10 @@ MODEL_CANDIDATES = (
     "gradient_boosting",
     "calibrated_gradient_boosting_sigmoid",
 )
+CALIBRATED_BASE_CANDIDATES = {
+    "calibrated_logistic_regression": "logistic_regression",
+    "calibrated_gradient_boosting_sigmoid": "gradient_boosting",
+}
 EXCLUDED_BUCKETS = (
     "target_columns",
     "reference_only_columns",
@@ -383,12 +387,35 @@ def _split_indices(
     )
 
 
-def _candidate_status(y_train: np.ndarray, candidate_name: str) -> tuple[bool, int]:
+def _candidate_status(y_train: np.ndarray, candidate_name: str) -> dict[str, Any]:
     class_counts = pd.Series(y_train).value_counts()
     if len(class_counts) < 2:
-        return True, 2
+        return {
+            "use_dummy": True,
+            "calibration_cv": 2,
+            "effective_candidate_name": candidate_name,
+            "status": "trained_dummy_single_class_fold",
+            "note": "At least one fold had a single training class; prior dummy used for that fold.",
+        }
     min_class = int(class_counts.min())
-    return False, min(2, min_class)
+    if candidate_name in CALIBRATED_BASE_CANDIDATES and min_class < 2:
+        return {
+            "use_dummy": False,
+            "calibration_cv": 2,
+            "effective_candidate_name": CALIBRATED_BASE_CANDIDATES[candidate_name],
+            "status": "trained_with_uncalibrated_fallback",
+            "note": (
+                "At least one fold had only one minority-class example; "
+                "uncalibrated estimator used because CalibratedClassifierCV requires cv >= 2."
+            ),
+        }
+    return {
+        "use_dummy": False,
+        "calibration_cv": 2,
+        "effective_candidate_name": candidate_name,
+        "status": "trained",
+        "note": "",
+    }
 
 
 def _prediction_frame(
@@ -427,19 +454,20 @@ def _train_candidate_cv(
     fold_labels = np.zeros(len(df), dtype=int)
     fold_rows: list[dict[str, Any]] = []
     status = "trained"
-    notes = ""
+    notes: list[str] = []
     for fold, (train_idx, test_idx) in enumerate(splits, start=1):
         y_train = y[train_idx]
-        use_dummy, calibration_cv = _candidate_status(y_train, candidate_name)
-        if use_dummy:
-            status = "trained_dummy_single_class_fold"
-            notes = "At least one fold had a single training class; prior dummy used for that fold."
+        candidate_status = _candidate_status(y_train, candidate_name)
+        if candidate_status["status"] != "trained":
+            status = candidate_status["status"]
+        if candidate_status["note"] and candidate_status["note"] not in notes:
+            notes.append(candidate_status["note"])
         model = build_candidate_model(
-            candidate_name,
+            candidate_status["effective_candidate_name"],
             feature_groups,
             random_state=random_state,
-            calibration_cv=calibration_cv,
-            use_dummy=use_dummy,
+            calibration_cv=candidate_status["calibration_cv"],
+            use_dummy=candidate_status["use_dummy"],
         )
         model.fit(df.iloc[train_idx][feature_cols], y_train)
         probs = _positive_class_probability(model, df.iloc[test_idx][feature_cols])
@@ -470,7 +498,7 @@ def _train_candidate_cv(
         },
         "leakage_checks": {"passed": True, "source": "diagnostic_v1_feature_contract"},
         "status": status,
-        "notes": notes,
+        "notes": " ".join(notes),
     }
     predictions_df = _prediction_frame(
         df,
@@ -528,13 +556,13 @@ def _fit_final_model(
 ) -> Any:
     feature_cols = _all_features(feature_groups)
     y = df[TARGET_COLUMN].astype(int).to_numpy()
-    use_dummy, calibration_cv = _candidate_status(y, candidate_name)
+    candidate_status = _candidate_status(y, candidate_name)
     model = build_candidate_model(
-        candidate_name,
+        candidate_status["effective_candidate_name"],
         feature_groups,
         random_state=random_state,
-        calibration_cv=calibration_cv,
-        use_dummy=use_dummy,
+        calibration_cv=candidate_status["calibration_cv"],
+        use_dummy=candidate_status["use_dummy"],
     )
     model.fit(df[feature_cols], y)
     return model

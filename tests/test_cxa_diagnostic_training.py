@@ -219,6 +219,41 @@ def test_cross_validated_predictions_have_required_columns_and_probabilities(
     assert "cxa_value" not in predictions.columns
 
 
+def test_calibrated_candidates_fallback_when_fold_minority_count_is_one(tmp_path: Path):
+    df = _synthetic_actions(row_count=8)
+    df["match_id"] = [1, 1, 1, 1, 2, 2, 2, 2]
+    df["shot_created"] = [1, 0, 0, 0, 1, 0, 0, 0]
+    feature_path = tmp_path / "action_features.parquet"
+    contract_path = tmp_path / "feature_contract.json"
+    df.to_parquet(feature_path, index=False)
+    contract_path.write_text(json.dumps(_contract()), encoding="utf-8")
+
+    outputs = run_cxa_diagnostic_training(
+        input_path=feature_path,
+        contract_path=contract_path,
+        output_dir=tmp_path / "outputs" / "modeling" / "cxa" / "diagnostic_v1",
+    )
+
+    candidates = _load_json(outputs.model_candidates)["candidates"]
+    by_name = {candidate["candidate_name"]: candidate for candidate in candidates}
+    for candidate_name in (
+        "calibrated_logistic_regression",
+        "calibrated_gradient_boosting_sigmoid",
+    ):
+        candidate = by_name[candidate_name]
+        assert candidate["status"] == "trained_with_uncalibrated_fallback"
+        assert "CalibratedClassifierCV requires cv >= 2" in candidate["notes"]
+
+    predictions = pd.read_parquet(outputs.cross_validated_predictions)
+    calibrated_predictions = predictions[
+        predictions["model_candidate"].isin(
+            ["calibrated_logistic_regression", "calibrated_gradient_boosting_sigmoid"]
+        )
+    ]
+    assert not calibrated_predictions.empty
+    assert calibrated_predictions["predicted_shot_created_probability"].between(0, 1).all()
+
+
 def test_selected_model_metadata_records_counts_and_positive_rate(tmp_path: Path):
     feature_path, contract_path = _write_inputs(tmp_path)
     outputs = run_cxa_diagnostic_training(
