@@ -63,12 +63,27 @@ REVIEWED_SPATIAL_CONTEXT_COLUMNS = {
     "angle_to_goal_before",
     "angle_to_goal_after",
 }
-FUTURE_LEAKAGE_TOKENS = (
-    "post",
-    "outcome",
+FUTURE_LEAKAGE_EXACT_COLUMNS = {
+    "shot_outcome",
+    "goal_outcome",
+    "final_shot",
+    "future_shot",
+    "actions_until_shot",
+    "next_action_is_shot",
+    "total_possession_length",
+}
+FUTURE_LEAKAGE_PREFIXES = (
+    "future_",
+    "post_",
+    "outcome_",
+)
+FUTURE_LEAKAGE_SUFFIXES = ("_outcome",)
+FUTURE_LEAKAGE_CONTAINS = (
     "result",
-    "future",
-    "final",
+    "final_shot",
+    "future_shot",
+    "actions_until_shot",
+    "next_action_is_shot",
 )
 PROVIDER_REFERENCE_TOKENS = ("provider", "reference", "statsbomb")
 
@@ -143,6 +158,15 @@ def _feature_group_for_allowed(column: str) -> str:
     return "action_identity_context"
 
 
+def _is_future_leakage_name(name: str) -> bool:
+    return (
+        name in FUTURE_LEAKAGE_EXACT_COLUMNS
+        or name.startswith(FUTURE_LEAKAGE_PREFIXES)
+        or name.endswith(FUTURE_LEAKAGE_SUFFIXES)
+        or any(pattern in name for pattern in FUTURE_LEAKAGE_CONTAINS)
+    )
+
+
 def classify_column(column: str, series: pd.Series) -> ColumnDecision:
     """Classify a CxA feature-store column for diagnostic modelling."""
 
@@ -208,7 +232,7 @@ def classify_column(column: str, series: pd.Series) -> ColumnDecision:
             "high",
             True,
         )
-    if any(token in name for token in FUTURE_LEAKAGE_TOKENS):
+    if _is_future_leakage_name(name):
         return ColumnDecision(
             column,
             "leakage_excluded",

@@ -40,12 +40,18 @@ def _synthetic_cxa_features() -> pd.DataFrame:
             "length": [15.0, 10.0, 11.0],
             "is_pass": [1, 0, 1],
             "under_pressure": [0, 1, 0],
+            "enters_final_third": [1, 0, 1],
             "action_type": ["Pass", "Carry", "Pass"],
             "play_pattern": ["Open Play", "Open Play", "From Throw In"],
             "distance_to_goal_before": [60.0, 50.0, 45.0],
             "distance_to_goal_after": [45.0, 40.0, 35.0],
             "angle_to_goal_before": [0.2, 0.3, 0.4],
             "angle_to_goal_after": [0.3, 0.4, 0.5],
+            "final_shot_xg": [0.25, 0.0, 0.0],
+            "future_shot_xg": [0.25, 0.0, 0.0],
+            "shot_outcome": ["Goal", None, None],
+            "actions_until_shot": [1, None, None],
+            "next_action_is_shot": [1, 0, 0],
             "post_action_result": ["complete", "complete", "turnover"],
         }
     )
@@ -156,9 +162,35 @@ def test_allowed_candidates_keep_safe_numeric_binary_and_categorical_features(tm
     assert {"is_pass", "under_pressure"}.issubset(
         set(contract["selected_feature_candidates"]["binary"])
     )
+    assert "enters_final_third" in contract["selected_feature_candidates"]["binary"]
     assert {"action_type", "play_pattern"}.issubset(
         set(contract["selected_feature_candidates"]["categorical"])
     )
+
+
+def test_final_third_context_is_allowed_but_future_shot_patterns_are_leakage(
+    tmp_path: Path,
+):
+    outputs = prepare_cxa_diagnostic_feature_contract(
+        input_path=_write_features(tmp_path),
+        output_dir=tmp_path / "outputs" / "modeling" / "cxa" / "diagnostic_v1",
+    )
+    contract = _load_json(outputs["feature_contract"])
+    group_summary = pd.read_csv(outputs["feature_group_summary"])
+
+    assert "enters_final_third" in contract["selected_feature_candidates"]["binary"]
+    final_third = group_summary[group_summary["column"] == "enters_final_third"].iloc[0]
+    assert final_third["classification"] == "allowed_binary"
+
+    leakage_columns = set(contract["excluded_columns"]["leakage_excluded_columns"])
+    assert {
+        "final_shot_xg",
+        "future_shot_xg",
+        "shot_outcome",
+        "actions_until_shot",
+        "next_action_is_shot",
+        "post_action_result",
+    }.issubset(leakage_columns)
 
 
 def test_contract_artifacts_are_written_with_expected_shapes(tmp_path: Path):
