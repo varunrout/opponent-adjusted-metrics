@@ -4,7 +4,7 @@
 	normalize-events build-possessions ingestion-report data-smoke \
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
-	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract \
+	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train \
 	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results analyze-cxg-feature-impact build-cxg-portfolio-summary check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
@@ -101,6 +101,11 @@ audit-cxa-current-state:  ## Audit current CxA outputs and feature/ID contract r
 
 prepare-cxa-diagnostic-contract:  ## Prepare diagnostic CxA feature contract and leakage exclusions
 	poetry run python scripts/prepare_cxa_diagnostic_feature_contract.py
+
+run-cxa-diagnostic-training:  ## Train diagnostic CxA model candidates from the feature contract
+	poetry run python scripts/run_cxa_diagnostic_training.py
+
+cxa-diagnostic-train: run-cxa-diagnostic-training  ## Alias for diagnostic CxA training
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline
