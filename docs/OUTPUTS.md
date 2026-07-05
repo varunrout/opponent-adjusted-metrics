@@ -415,6 +415,35 @@ outputs/modeling/cxa/diagnostic_v1/reports/feature_contract_report.md
 Identifier columns remain available for audit, joins, and aggregation but are
 excluded from feature candidates.
 
+### CxA Diagnostic Training
+
+Command:
+
+```bash
+make run-cxa-diagnostic-training
+```
+
+This diagnostic training layer fits candidate CxA classifiers from
+`outputs/modeling/cxa/diagnostic_v1/contracts/feature_contract.json` using
+`shot_created` as the primary target. It enforces the contract leakage guard and
+does not replace baseline CxA outputs or promote a model.
+
+Generated files:
+
+```text
+outputs/modeling/cxa/diagnostic_v1/models/model_candidates.json
+outputs/modeling/cxa/diagnostic_v1/models/selected_model.joblib
+outputs/modeling/cxa/diagnostic_v1/models/selected_model_metadata.json
+outputs/modeling/cxa/diagnostic_v1/predictions/cross_validated_predictions.parquet
+outputs/modeling/cxa/diagnostic_v1/reports/model_comparison.csv
+outputs/modeling/cxa/diagnostic_v1/reports/training_report.md
+outputs/modeling/cxa/diagnostic_v1/reports/training_summary.json
+```
+
+Validation and promotion are separate follow-up steps. CxA+ and Advanced CxA
+state-value enhancements remain out of scope for this diagnostic candidate
+training layer.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
