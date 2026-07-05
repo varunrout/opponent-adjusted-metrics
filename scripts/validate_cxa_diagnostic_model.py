@@ -52,6 +52,7 @@ class CxAValidationPaths:
     model_comparison: Path
     feature_contract: Path
     baseline_predictions: Path
+    baseline_oof_predictions: Path
     baseline_metrics: Path
     output_dir: Path
 
@@ -70,6 +71,9 @@ class CxAValidationPaths:
             model_comparison=diagnostic_dir / "reports" / "model_comparison.csv",
             feature_contract=diagnostic_dir / "contracts" / "feature_contract.json",
             baseline_predictions=baseline_dir / "predictions" / "action_predictions.parquet",
+            baseline_oof_predictions=baseline_dir
+            / "predictions"
+            / "cross_validated_predictions.parquet",
             baseline_metrics=baseline_dir / "reports" / "metrics.json",
             output_dir=output_dir,
         )
@@ -118,6 +122,48 @@ def detect_baseline_prediction_column(df: pd.DataFrame) -> str:
         "Could not find a baseline CxA prediction column. Expected one of "
         f"{BASELINE_PREDICTION_CANDIDATES}."
     )
+
+
+def resolve_baseline_prediction_source(paths: CxAValidationPaths) -> dict[str, Any]:
+    """Resolve whether baseline predictions are fair OOF/holdout or reference-only."""
+
+    metrics = _read_json(paths.baseline_metrics) if paths.baseline_metrics.exists() else {}
+    metadata_source = str(
+        metrics.get("prediction_source")
+        or metrics.get("validation_prediction_source")
+        or metrics.get("evaluation_source")
+        or ""
+    ).lower()
+    fair_tokens = ("cross_validated", "out_of_fold", "oof", "holdout")
+    if paths.baseline_oof_predictions.exists():
+        return {
+            "path": paths.baseline_oof_predictions,
+            "baseline_prediction_source": paths.baseline_oof_predictions.as_posix(),
+            "baseline_prediction_provenance": "out_of_fold",
+            "baseline_is_fair_comparator": True,
+            "strict_promotion_comparison_enabled": True,
+            "notes": "Baseline OOF/holdout-equivalent predictions were used.",
+        }
+    if metadata_source and any(token in metadata_source for token in fair_tokens):
+        return {
+            "path": paths.baseline_predictions,
+            "baseline_prediction_source": paths.baseline_predictions.as_posix(),
+            "baseline_prediction_provenance": metadata_source,
+            "baseline_is_fair_comparator": True,
+            "strict_promotion_comparison_enabled": True,
+            "notes": "Baseline metadata marks predictions as OOF/holdout-equivalent.",
+        }
+    return {
+        "path": paths.baseline_predictions,
+        "baseline_prediction_source": paths.baseline_predictions.as_posix(),
+        "baseline_prediction_provenance": "full_data_in_sample",
+        "baseline_is_fair_comparator": False,
+        "strict_promotion_comparison_enabled": False,
+        "notes": (
+            "Baseline action_predictions.parquet appears to be full-data/in-sample; "
+            "metrics are reference-only against diagnostic OOF predictions."
+        ),
+    }
 
 
 def selected_diagnostic_model(metadata: dict[str, Any]) -> str:
@@ -411,7 +457,12 @@ def join_predictions(
     return joined, join_key, join_quality
 
 
-def quality_checks(join_quality: dict[str, Any], *, candidate_matches: bool) -> pd.DataFrame:
+def quality_checks(
+    join_quality: dict[str, Any],
+    *,
+    candidate_matches: bool,
+    baseline_provenance: dict[str, Any],
+) -> pd.DataFrame:
     checks = [
         (
             "joined_row_count",
@@ -449,9 +500,26 @@ def quality_checks(join_quality: dict[str, Any], *, candidate_matches: bool) -> 
             join_quality["target_mismatch_count"] == 0,
         ),
         ("selected_candidate_match", candidate_matches, candidate_matches),
+        (
+            "baseline_prediction_provenance",
+            baseline_provenance["baseline_prediction_provenance"],
+            True,
+        ),
     ]
     rows = []
     for name, value, passed in checks:
+        if name == "baseline_prediction_provenance":
+            fair = bool(baseline_provenance["baseline_is_fair_comparator"])
+            rows.append(
+                {
+                    "check_name": name,
+                    "value": value,
+                    "status": "passed" if fair else "warning",
+                    "severity": "info" if fair else "warning",
+                    "notes": baseline_provenance["notes"],
+                }
+            )
+            continue
         rows.append(
             {
                 "check_name": name,
@@ -538,6 +606,7 @@ def promotion_recommendation(
     diagnostic_metrics: dict[str, Any],
     checks: pd.DataFrame,
     slices: pd.DataFrame,
+    strict_promotion_comparison_enabled: bool,
 ) -> dict[str, Any]:
     failed_blockers = checks.loc[
         (checks["severity"] == "blocker") & (checks["status"] == "failed"), "check_name"
@@ -567,17 +636,28 @@ def promotion_recommendation(
         f"expected_calibration_error_delta={ece_delta:.6f}",
         f"severe_slice_regressions={severe_slice_regressions}",
     ]
+    limitations = []
     if log_loss_delta <= 1e-6 and brier_delta <= 1e-6 and ap_delta > 0 and ece_delta <= 0.01:
         recommendation = "promote"
     elif ap_delta > 0.005 and log_loss_delta <= 0.02 and brier_delta <= 0.01:
         recommendation = "provisional_promote"
     else:
         recommendation = "needs_revision"
+    if not strict_promotion_comparison_enabled:
+        reasons.append(
+            "Baseline predictions are reference-only/in-sample; strict promotion comparison is disabled."
+        )
+        limitations.append(
+            "Baseline metrics are full-data/in-sample reference metrics, not a fair OOF/holdout comparator."
+        )
+        if recommendation == "promote":
+            recommendation = "provisional_promote"
     return {
         "recommendation": recommendation,
         "reasons": reasons,
         "known_limitations": (
-            ["Some slice regressions should be reviewed."] if severe_slice_regressions else []
+            limitations
+            + (["Some slice regressions should be reviewed."] if severe_slice_regressions else [])
         ),
     }
 
@@ -625,6 +705,7 @@ def _validation_report(
     *,
     selected_model: str,
     baseline_prediction_column: str,
+    baseline_provenance: dict[str, Any],
     join_key: list[str],
     comparison: pd.DataFrame,
     checks: pd.DataFrame,
@@ -642,6 +723,11 @@ def _validation_report(
             "- This PR validates but does not promote result outputs.",
             "",
             "## Baseline vs diagnostic comparison",
+            (
+                "- Baseline comparison status: fair OOF/holdout comparator."
+                if baseline_provenance["baseline_is_fair_comparator"]
+                else "- Baseline comparison status: reference-only/in-sample; not eligible for strict promotion comparison."
+            ),
             "```text",
             comparison_preview,
             "```",
@@ -649,6 +735,8 @@ def _validation_report(
             "## Join quality",
             f"- Join key: `{'+'.join(join_key)}`.",
             f"- Baseline prediction column: `{baseline_prediction_column}`.",
+            f"- Baseline prediction source: `{baseline_provenance['baseline_prediction_source']}`.",
+            f"- Baseline prediction provenance: `{baseline_provenance['baseline_prediction_provenance']}`.",
             "",
             "## Prediction quality checks",
             f"- Failed checks: {', '.join(failed_checks) if failed_checks else 'none'}.",
@@ -678,6 +766,34 @@ def _validation_report(
             "",
         ]
     )
+
+
+def _write_blocked_outputs(
+    *,
+    output_paths: dict[str, Path],
+    summary: dict[str, Any],
+    recommendation: dict[str, Any],
+    checks: pd.DataFrame,
+    report_lines: list[str],
+) -> dict[str, Path]:
+    output_paths["validation_summary"].write_text(
+        json.dumps(_json_safe(summary), indent=2),
+        encoding="utf-8",
+    )
+    output_paths["promotion_recommendation"].write_text(
+        json.dumps(_json_safe(recommendation), indent=2),
+        encoding="utf-8",
+    )
+    output_paths["validation_report"].write_text(
+        "\n".join(report_lines),
+        encoding="utf-8",
+    )
+    pd.DataFrame().to_csv(output_paths["baseline_vs_diagnostic_metrics"], index=False)
+    pd.DataFrame().to_csv(output_paths["calibration_summary"], index=False)
+    pd.DataFrame().to_csv(output_paths["threshold_summary"], index=False)
+    pd.DataFrame().to_csv(output_paths["slice_summary"], index=False)
+    checks.to_csv(output_paths["validation_quality_checks"], index=False)
+    return output_paths
 
 
 def validate_cxa_diagnostic(
@@ -732,6 +848,10 @@ def validate_cxa_diagnostic(
             "model_version": "diagnostic_v1",
             "selected_diagnostic_model": None,
             "baseline_prediction_column": None,
+            "baseline_prediction_source": None,
+            "baseline_prediction_provenance": None,
+            "baseline_is_fair_comparator": False,
+            "strict_promotion_comparison_enabled": False,
             "join_key": [],
             "row_counts": {},
             "quality_check_summary": {
@@ -746,45 +866,113 @@ def validate_cxa_diagnostic(
             "inputs": required_paths,
             "outputs": output_paths,
         }
-        output_paths["validation_summary"].write_text(
-            json.dumps(_json_safe(summary), indent=2),
-            encoding="utf-8",
+        return _write_blocked_outputs(
+            output_paths=output_paths,
+            summary=summary,
+            recommendation=recommendation,
+            checks=checks,
+            report_lines=[
+                "# Diagnostic CxA Validation Report",
+                "",
+                "## Executive summary",
+                "- Validation is blocked because required inputs are missing.",
+                "",
+                "## Promotion recommendation",
+                "- `blocked`",
+                "",
+                "## Missing inputs",
+                *[f"- `{item['path']}`" for item in missing_inputs],
+                "",
+            ],
         )
-        output_paths["promotion_recommendation"].write_text(
-            json.dumps(_json_safe(recommendation), indent=2),
-            encoding="utf-8",
-        )
-        output_paths["validation_report"].write_text(
-            "\n".join(
-                [
-                    "# Diagnostic CxA Validation Report",
-                    "",
-                    "## Executive summary",
-                    "- Validation is blocked because required inputs are missing.",
-                    "",
-                    "## Promotion recommendation",
-                    "- `blocked`",
-                    "",
-                    "## Missing inputs",
-                    *[f"- `{item['path']}`" for item in missing_inputs],
-                    "",
-                ]
-            ),
-            encoding="utf-8",
-        )
-        pd.DataFrame().to_csv(output_paths["baseline_vs_diagnostic_metrics"], index=False)
-        pd.DataFrame().to_csv(output_paths["calibration_summary"], index=False)
-        pd.DataFrame().to_csv(output_paths["threshold_summary"], index=False)
-        pd.DataFrame().to_csv(output_paths["slice_summary"], index=False)
-        checks.to_csv(output_paths["validation_quality_checks"], index=False)
-        return output_paths
 
     metadata = _read_json(paths.selected_model_metadata)
     selected_model = selected_diagnostic_model(metadata)
     diagnostic = _read_table(paths.diagnostic_predictions)
-    baseline = _read_table(paths.baseline_predictions)
+    baseline_provenance = resolve_baseline_prediction_source(paths)
+    baseline = _read_table(baseline_provenance["path"])
     baseline_prediction_column = detect_baseline_prediction_column(baseline)
     candidate_matches = bool((diagnostic.get("model_candidate") == selected_model).any())
+    if not candidate_matches:
+        checks = quality_checks(
+            {
+                "joined_row_count": 0,
+                "baseline_join_rate": 0.0,
+                "diagnostic_prediction_null_count": 0,
+                "baseline_prediction_null_count": 0,
+                "diagnostic_prediction_outside_0_1_count": 0,
+                "baseline_prediction_outside_0_1_count": 0,
+                "target_mismatch_count": 0,
+            },
+            candidate_matches=False,
+            baseline_provenance=baseline_provenance,
+        )
+        recommendation = {
+            "recommendation": "blocked",
+            "reasons": [
+                f"Selected diagnostic model `{selected_model}` is not present in cross-validated predictions."
+            ],
+            "known_limitations": [
+                "Validation artifacts are stale or from a different selected model."
+            ],
+        }
+        summary = {
+            "metric": "cxa",
+            "model_version": "diagnostic_v1",
+            "selected_diagnostic_model": selected_model,
+            "baseline_prediction_column": baseline_prediction_column,
+            "baseline_prediction_source": baseline_provenance["baseline_prediction_source"],
+            "baseline_prediction_provenance": baseline_provenance["baseline_prediction_provenance"],
+            "baseline_is_fair_comparator": baseline_provenance["baseline_is_fair_comparator"],
+            "strict_promotion_comparison_enabled": baseline_provenance[
+                "strict_promotion_comparison_enabled"
+            ],
+            "join_key": [],
+            "row_counts": {},
+            "quality_check_summary": {
+                "failed_blocker_count": int(
+                    ((checks["severity"] == "blocker") & (checks["status"] == "failed")).sum()
+                ),
+                "failed_checks": checks.loc[checks["status"] == "failed", "check_name"].tolist(),
+            },
+            "baseline_metrics": {},
+            "diagnostic_metrics": {},
+            "metric_deltas": {},
+            "promotion_recommendation": "blocked",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "inputs": {
+                "diagnostic_predictions": paths.diagnostic_predictions,
+                "selected_model_metadata": paths.selected_model_metadata,
+                "model_comparison": paths.model_comparison,
+                "feature_contract": paths.feature_contract,
+                "baseline_predictions": baseline_provenance["path"],
+                "baseline_metrics": paths.baseline_metrics,
+            },
+            "outputs": output_paths,
+        }
+        return _write_blocked_outputs(
+            output_paths=output_paths,
+            summary=summary,
+            recommendation=recommendation,
+            checks=checks,
+            report_lines=[
+                "# Diagnostic CxA Validation Report",
+                "",
+                "## Executive summary",
+                "- Validation is blocked because the selected diagnostic model is missing from prediction artifacts.",
+                f"- Selected diagnostic model: `{selected_model}`.",
+                "",
+                "## Prediction quality checks",
+                "- `selected_candidate_match` failed as a blocker.",
+                "",
+                "## Promotion recommendation",
+                "- `blocked`",
+                "",
+                "## Limitations",
+                "- Validation artifacts are stale or were generated for a different selected model.",
+                "",
+            ],
+        )
     joined, join_key, join_quality = join_predictions(
         diagnostic,
         baseline,
@@ -834,12 +1022,19 @@ def validate_cxa_diagnostic(
         ignore_index=True,
     )
     slices = slice_summary(joined_eval, min_rows=min_slice_rows)
-    checks = quality_checks(join_quality, candidate_matches=candidate_matches)
+    checks = quality_checks(
+        join_quality,
+        candidate_matches=candidate_matches,
+        baseline_provenance=baseline_provenance,
+    )
     recommendation = promotion_recommendation(
         baseline_metrics=baseline_metrics,
         diagnostic_metrics=diagnostic_metrics,
         checks=checks,
         slices=slices,
+        strict_promotion_comparison_enabled=baseline_provenance[
+            "strict_promotion_comparison_enabled"
+        ],
     )
     metric_deltas = {
         row["metric"]: row["diagnostic_minus_baseline"]
@@ -850,6 +1045,12 @@ def validate_cxa_diagnostic(
         "model_version": "diagnostic_v1",
         "selected_diagnostic_model": selected_model,
         "baseline_prediction_column": baseline_prediction_column,
+        "baseline_prediction_source": baseline_provenance["baseline_prediction_source"],
+        "baseline_prediction_provenance": baseline_provenance["baseline_prediction_provenance"],
+        "baseline_is_fair_comparator": baseline_provenance["baseline_is_fair_comparator"],
+        "strict_promotion_comparison_enabled": baseline_provenance[
+            "strict_promotion_comparison_enabled"
+        ],
         "join_key": join_key,
         "row_counts": join_quality,
         "quality_check_summary": {
@@ -868,7 +1069,7 @@ def validate_cxa_diagnostic(
             "selected_model_metadata": paths.selected_model_metadata,
             "model_comparison": paths.model_comparison,
             "feature_contract": paths.feature_contract,
-            "baseline_predictions": paths.baseline_predictions,
+            "baseline_predictions": baseline_provenance["path"],
             "baseline_metrics": paths.baseline_metrics,
         },
         "outputs": output_paths,
@@ -885,6 +1086,16 @@ def validate_cxa_diagnostic(
                     "baseline_metrics": baseline_metrics,
                     "diagnostic_metrics": diagnostic_metrics,
                     "metric_deltas": metric_deltas,
+                    "baseline_prediction_source": baseline_provenance["baseline_prediction_source"],
+                    "baseline_prediction_provenance": baseline_provenance[
+                        "baseline_prediction_provenance"
+                    ],
+                    "baseline_is_fair_comparator": baseline_provenance[
+                        "baseline_is_fair_comparator"
+                    ],
+                    "strict_promotion_comparison_enabled": baseline_provenance[
+                        "strict_promotion_comparison_enabled"
+                    ],
                     "next_issue": (
                         "generate governed promoted CxA outputs if promoted/provisional; "
                         "otherwise revise diagnostic training"
@@ -899,6 +1110,7 @@ def validate_cxa_diagnostic(
         _validation_report(
             selected_model=selected_model,
             baseline_prediction_column=baseline_prediction_column,
+            baseline_provenance=baseline_provenance,
             join_key=join_key,
             comparison=comparison,
             checks=checks,

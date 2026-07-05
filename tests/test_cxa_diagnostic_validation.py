@@ -70,7 +70,15 @@ def _prediction_rows(count: int = 80) -> tuple[pd.DataFrame, pd.DataFrame]:
     return pd.DataFrame(baseline_rows), pd.DataFrame(diagnostic_rows)
 
 
-def _write_artifacts(root: Path, *, baseline_count: int = 80, bad_probability: bool = False):
+def _write_artifacts(
+    root: Path,
+    *,
+    baseline_count: int = 80,
+    bad_probability: bool = False,
+    selected_model: str = "calibrated_gradient_boosting_sigmoid",
+    write_oof_baseline: bool = False,
+    baseline_metrics: dict | None = None,
+):
     baseline, diagnostic = _prediction_rows()
     baseline = baseline.head(baseline_count).copy()
     if bad_probability:
@@ -91,8 +99,13 @@ def _write_artifacts(root: Path, *, baseline_count: int = 80, bad_probability: b
         index=False,
     )
     baseline.to_parquet(baseline_dir / "predictions" / "action_predictions.parquet", index=False)
+    if write_oof_baseline:
+        baseline.to_parquet(
+            baseline_dir / "predictions" / "cross_validated_predictions.parquet",
+            index=False,
+        )
     (diagnostic_dir / "models" / "selected_model_metadata.json").write_text(
-        json.dumps({"selected_model_candidate": "calibrated_gradient_boosting_sigmoid"}),
+        json.dumps({"selected_model_candidate": selected_model}),
         encoding="utf-8",
     )
     pd.DataFrame(
@@ -102,7 +115,10 @@ def _write_artifacts(root: Path, *, baseline_count: int = 80, bad_probability: b
         "{}",
         encoding="utf-8",
     )
-    (baseline_dir / "reports" / "metrics.json").write_text("{}", encoding="utf-8")
+    (baseline_dir / "reports" / "metrics.json").write_text(
+        json.dumps(baseline_metrics or {}),
+        encoding="utf-8",
+    )
 
     return CxAValidationPaths.from_roots(
         diagnostic_dir=diagnostic_dir,
@@ -197,6 +213,62 @@ def test_quality_checks_fail_when_probabilities_are_outside_bounds(tmp_path: Pat
     assert recommendation["recommendation"] == "blocked"
 
 
+def test_full_data_baseline_is_reference_only_and_caps_promotion(tmp_path: Path):
+    paths = _write_artifacts(tmp_path)
+    outputs = validate_cxa_diagnostic(paths, min_slice_rows=1)
+
+    summary = json.loads(outputs["validation_summary"].read_text(encoding="utf-8"))
+    recommendation = json.loads(outputs["promotion_recommendation"].read_text(encoding="utf-8"))
+    checks = pd.read_csv(outputs["validation_quality_checks"])
+    report = outputs["validation_report"].read_text(encoding="utf-8")
+
+    assert summary["baseline_prediction_provenance"] == "full_data_in_sample"
+    assert summary["baseline_is_fair_comparator"] is False
+    assert summary["strict_promotion_comparison_enabled"] is False
+    assert recommendation["recommendation"] != "promote"
+    assert "reference-only/in-sample" in report
+    assert (
+        checks.loc[checks["check_name"] == "baseline_prediction_provenance", "status"].item()
+        == "warning"
+    )
+
+
+def test_oof_baseline_enables_strict_comparison(tmp_path: Path):
+    paths = _write_artifacts(tmp_path, write_oof_baseline=True)
+    outputs = validate_cxa_diagnostic(paths, min_slice_rows=1)
+
+    summary = json.loads(outputs["validation_summary"].read_text(encoding="utf-8"))
+    checks = pd.read_csv(outputs["validation_quality_checks"])
+    report = outputs["validation_report"].read_text(encoding="utf-8")
+
+    assert summary["baseline_prediction_provenance"] == "out_of_fold"
+    assert summary["baseline_is_fair_comparator"] is True
+    assert summary["strict_promotion_comparison_enabled"] is True
+    assert "fair OOF/holdout comparator" in report
+    assert (
+        checks.loc[checks["check_name"] == "baseline_prediction_provenance", "status"].item()
+        == "passed"
+    )
+
+
+def test_stale_selected_candidate_blocks_without_crashing(tmp_path: Path):
+    paths = _write_artifacts(tmp_path, selected_model="stale_candidate")
+
+    outputs = validate_cxa_diagnostic(paths, min_slice_rows=1)
+
+    recommendation = json.loads(outputs["promotion_recommendation"].read_text(encoding="utf-8"))
+    summary = json.loads(outputs["validation_summary"].read_text(encoding="utf-8"))
+    checks = pd.read_csv(outputs["validation_quality_checks"])
+    report = outputs["validation_report"].read_text(encoding="utf-8")
+
+    assert recommendation["recommendation"] == "blocked"
+    assert summary["selected_diagnostic_model"] == "stale_candidate"
+    selected_check = checks.loc[checks["check_name"] == "selected_candidate_match"].iloc[0]
+    assert selected_check["status"] == "failed"
+    assert selected_check["severity"] == "blocker"
+    assert "selected diagnostic model is missing" in report
+
+
 def test_promotion_recommendation_logic_categories():
     passed_checks = pd.DataFrame(
         [{"check_name": "joined_row_count", "status": "passed", "severity": "info"}]
@@ -236,6 +308,7 @@ def test_promotion_recommendation_logic_categories():
             diagnostic_metrics=promote,
             checks=passed_checks,
             slices=empty_slices,
+            strict_promotion_comparison_enabled=True,
         )["recommendation"]
         == "promote"
     )
@@ -245,6 +318,7 @@ def test_promotion_recommendation_logic_categories():
             diagnostic_metrics=provisional,
             checks=passed_checks,
             slices=empty_slices,
+            strict_promotion_comparison_enabled=True,
         )["recommendation"]
         == "provisional_promote"
     )
@@ -254,6 +328,7 @@ def test_promotion_recommendation_logic_categories():
             diagnostic_metrics=revise,
             checks=passed_checks,
             slices=empty_slices,
+            strict_promotion_comparison_enabled=True,
         )["recommendation"]
         == "needs_revision"
     )
@@ -263,8 +338,19 @@ def test_promotion_recommendation_logic_categories():
             diagnostic_metrics=promote,
             checks=blocked_checks,
             slices=empty_slices,
+            strict_promotion_comparison_enabled=True,
         )["recommendation"]
         == "blocked"
+    )
+    assert (
+        promotion_recommendation(
+            baseline_metrics=baseline,
+            diagnostic_metrics=promote,
+            checks=passed_checks,
+            slices=empty_slices,
+            strict_promotion_comparison_enabled=False,
+        )["recommendation"]
+        == "provisional_promote"
     )
 
 
