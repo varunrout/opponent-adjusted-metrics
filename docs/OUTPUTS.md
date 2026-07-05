@@ -388,6 +388,33 @@ outputs/audits/cxa/cxa_risk_register.csv
 
 This audit layer reports current CxA output readiness and leakage/lineage risks before diagnostic CxA modeling and promotion.
 
+### CxA Diagnostic Feature Contract
+
+Command:
+
+```bash
+make prepare-cxa-diagnostic-contract
+```
+
+This contract-prep layer separates diagnostic CxA model input candidates from
+targets, attribution/reference values, model outputs, identifiers, and leakage
+risks. It does not train a model or change existing baseline CxA outputs.
+
+Generated files:
+
+```text
+outputs/modeling/cxa/diagnostic_v1/contracts/feature_contract.json
+outputs/modeling/cxa/diagnostic_v1/diagnostics/resolved_features.json
+outputs/modeling/cxa/diagnostic_v1/diagnostics/excluded_columns.csv
+outputs/modeling/cxa/diagnostic_v1/diagnostics/feature_group_summary.csv
+outputs/modeling/cxa/diagnostic_v1/reports/feature_contract_report.md
+```
+
+`shot_created` is the primary binary diagnostic target. `created_shot_cxg` and
+`cxa_value` are attribution/reference outputs, not model input features.
+Identifier columns remain available for audit, joins, and aggregation but are
+excluded from feature candidates.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
