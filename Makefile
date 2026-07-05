@@ -4,7 +4,7 @@
 	normalize-events build-possessions ingestion-report data-smoke \
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
-	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train \
+	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train validate-cxa-diagnostic cxa-diagnostic-validate \
 	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results analyze-cxg-feature-impact build-cxg-portfolio-summary check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
@@ -106,6 +106,11 @@ run-cxa-diagnostic-training:  ## Train diagnostic CxA model candidates from the 
 	poetry run python scripts/run_cxa_diagnostic_training.py
 
 cxa-diagnostic-train: run-cxa-diagnostic-training  ## Alias for diagnostic CxA training
+
+validate-cxa-diagnostic:  ## Validate diagnostic CxA against the fair baseline
+	poetry run python scripts/validate_cxa_diagnostic_model.py
+
+cxa-diagnostic-validate: validate-cxa-diagnostic  ## Alias for diagnostic CxA validation
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline
