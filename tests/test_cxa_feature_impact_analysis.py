@@ -76,22 +76,27 @@ def _feature_frame(*, include_optional_columns: bool = True) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _contract() -> dict:
+def _contract(
+    *,
+    leakage_excluded_columns: list[str] | None = None,
+    selected_feature_candidates: dict[str, list[str]] | None = None,
+) -> dict:
+    selected = selected_feature_candidates or {
+        "numeric": ["start_x", "length", "minute"],
+        "binary": [
+            "is_pass",
+            "under_pressure",
+            "is_progressive",
+            "enters_final_third",
+            "enters_penalty_area",
+        ],
+        "categorical": ["action_type", "play_pattern", "start_zone"],
+    }
     return {
         "metric": "cxa",
         "model_version": "diagnostic_v1",
         "primary_target": "shot_created",
-        "selected_feature_candidates": {
-            "numeric": ["start_x", "length", "minute"],
-            "binary": [
-                "is_pass",
-                "under_pressure",
-                "is_progressive",
-                "enters_final_third",
-                "enters_penalty_area",
-            ],
-            "categorical": ["action_type", "play_pattern", "start_zone"],
-        },
+        "selected_feature_candidates": selected,
         "excluded_columns": {
             "target_columns": ["shot_created"],
             "reference_only_columns": ["created_shot_cxg", "created_shot_id"],
@@ -105,27 +110,38 @@ def _contract() -> dict:
                 "sequence_id",
                 "possession",
             ],
-            "leakage_excluded_columns": [],
+            "leakage_excluded_columns": leakage_excluded_columns or [],
             "requires_review_columns": ["distance_to_goal_before"],
             "excluded_unknown_columns": ["teammate_receipt_pressure"],
         },
     }
 
 
-def _metadata(selected_feature_count: int = 10) -> dict:
+def _metadata(
+    *,
+    selected_feature_count: int = 10,
+    numeric_feature_count: int = 3,
+    binary_feature_count: int = 5,
+    categorical_feature_count: int = 2,
+) -> dict:
     return {
         "metric": "cxa",
         "model_version": "diagnostic_v1",
         "selected_model_candidate": "calibrated_gradient_boosting_sigmoid",
         "selected_feature_count": selected_feature_count,
-        "numeric_feature_count": 3,
-        "binary_feature_count": 5,
-        "categorical_feature_count": 2,
+        "numeric_feature_count": numeric_feature_count,
+        "binary_feature_count": binary_feature_count,
+        "categorical_feature_count": categorical_feature_count,
     }
 
 
-def _promotion_summary(*, status: str = "provisionally_promoted", gate_passed: bool = True) -> dict:
-    selected_features = [
+def _promotion_summary(
+    *,
+    status: str | None = "provisionally_promoted",
+    gate_passed: bool = True,
+    selected_features: list[str] | None = None,
+) -> dict:
+    selected = selected_features or [
         "start_x",
         "length",
         "minute",
@@ -149,8 +165,8 @@ def _promotion_summary(*, status: str = "provisionally_promoted", gate_passed: b
         "promotion_gate_passed": gate_passed,
         "governance_summary": {
             "status": "passed",
-            "selected_feature_count": len(selected_features),
-            "selected_features": selected_features,
+            "selected_feature_count": len(selected),
+            "selected_features": selected,
             "forbidden_features_used": [],
         },
     }
@@ -167,6 +183,10 @@ def _write_artifacts(
     promotion_status: str = "provisionally_promoted",
     gate_passed: bool = True,
     include_optional_columns: bool = True,
+    include_promotion_status: bool = True,
+    leakage_excluded_columns: list[str] | None = None,
+    selected_feature_candidates: dict[str, list[str]] | None = None,
+    selected_features: list[str] | None = None,
 ) -> tuple[CxAFeatureImpactPaths, Path]:
     feature_path = root / "feature_store" / "cxa" / "action_features.parquet"
     diagnostic_dir = root / "outputs" / "modeling" / "cxa" / "diagnostic_v1"
@@ -182,8 +202,38 @@ def _write_artifacts(
     results_dir.mkdir(parents=True, exist_ok=True)
 
     joblib.dump(DummyCxAImpactModel(), diagnostic_dir / "models" / "selected_model.joblib")
-    _write_json(diagnostic_dir / "models" / "selected_model_metadata.json", _metadata())
-    _write_json(diagnostic_dir / "contracts" / "feature_contract.json", _contract())
+    contract = _contract(
+        leakage_excluded_columns=leakage_excluded_columns,
+        selected_feature_candidates=selected_feature_candidates,
+    )
+    promotion_summary = _promotion_summary(
+        status=promotion_status,
+        gate_passed=gate_passed,
+        selected_features=selected_features,
+    )
+    selected_set = set(promotion_summary["governance_summary"]["selected_features"])
+    grouped_selected_counts = {
+        key: len(
+            [
+                feature
+                for feature in contract["selected_feature_candidates"].get(key, [])
+                if feature in selected_set
+            ]
+        )
+        for key in ("numeric", "binary", "categorical")
+    }
+    _write_json(
+        diagnostic_dir / "models" / "selected_model_metadata.json",
+        _metadata(
+            selected_feature_count=len(selected_set),
+            numeric_feature_count=grouped_selected_counts["numeric"],
+            binary_feature_count=grouped_selected_counts["binary"],
+            categorical_feature_count=grouped_selected_counts["categorical"],
+        ),
+    )
+    _write_json(diagnostic_dir / "contracts" / "feature_contract.json", contract)
+    if not include_promotion_status:
+        promotion_summary.pop("promotion_status", None)
 
     predictions = feature_frame[
         [
@@ -203,7 +253,10 @@ def _write_artifacts(
         ]
     ].copy()
     model = DummyCxAImpactModel()
-    selected_columns = _promotion_summary()["governance_summary"]["selected_features"]
+    selected_columns = promotion_summary["governance_summary"]["selected_features"]
+    for column in selected_columns:
+        if column not in feature_frame.columns:
+            feature_frame[column] = 0.0
     matrix = feature_frame[selected_columns]
     predictions["predicted_shot_created_probability"] = model.predict_proba(matrix)[:, 1]
     predictions["diagnostic_cxa"] = predictions["predicted_shot_created_probability"]
@@ -220,7 +273,7 @@ def _write_artifacts(
 
     _write_json(
         results_dir / "model_promotion_summary.json",
-        _promotion_summary(status=promotion_status, gate_passed=gate_passed),
+        promotion_summary,
     )
 
     paths = CxAFeatureImpactPaths.from_roots(
@@ -245,6 +298,53 @@ def test_forbidden_reference_columns_are_excluded():
     assert "created_shot_cxg" not in selected
     assert "cxa_value" not in selected
     assert "created_shot_id" not in selected
+
+
+def test_leakage_excluded_columns_in_contract_block_analysis(tmp_path: Path):
+    selected_feature_candidates = {
+        "numeric": ["start_x", "length", "minute", "actions_until_shot"],
+        "binary": [
+            "is_pass",
+            "under_pressure",
+            "is_progressive",
+            "enters_final_third",
+            "enters_penalty_area",
+        ],
+        "categorical": ["action_type", "play_pattern"],
+    }
+    selected_features = [
+        "start_x",
+        "length",
+        "minute",
+        "actions_until_shot",
+        "is_pass",
+        "under_pressure",
+        "is_progressive",
+        "enters_final_third",
+        "enters_penalty_area",
+        "action_type",
+        "play_pattern",
+    ]
+    paths, feature_path = _write_artifacts(
+        tmp_path,
+        leakage_excluded_columns=["actions_until_shot"],
+        selected_feature_candidates=selected_feature_candidates,
+        selected_features=selected_features,
+    )
+    frame = pd.read_parquet(feature_path)
+    frame["actions_until_shot"] = np.arange(len(frame)) % 4
+    frame.to_parquet(feature_path, index=False)
+
+    with pytest.raises(
+        ValueError, match="Forbidden/reference columns were selected as model features"
+    ):
+        analyze_cxa_feature_impact(
+            feature_path=feature_path,
+            paths=paths,
+            sample_size=20,
+            n_repeats=1,
+            random_state=7,
+        )
 
 
 def test_feature_impact_output_files_are_written(tmp_path: Path):
@@ -322,10 +422,61 @@ def test_report_mentions_created_shot_cxg_and_cxa_value_are_not_model_features(t
     assert "`created_shot_cxg` and `cxa_value` are not model features" in report
 
 
-def test_blocked_promotion_status_prevents_full_analysis(tmp_path: Path):
-    paths, feature_path = _write_artifacts(tmp_path, promotion_status="blocked", gate_passed=False)
+@pytest.mark.parametrize("promotion_status", ["promoted", "provisionally_promoted"])
+def test_allowed_promotion_statuses_pass(tmp_path: Path, promotion_status: str):
+    paths, feature_path = _write_artifacts(
+        tmp_path, promotion_status=promotion_status, gate_passed=True
+    )
 
-    with pytest.raises(ValueError, match="promoted or provisionally promoted"):
+    outputs = analyze_cxa_feature_impact(
+        feature_path=feature_path,
+        paths=paths,
+        sample_size=20,
+        n_repeats=1,
+        random_state=7,
+    )
+    assert outputs["feature_impact_summary_json"].exists()
+
+
+@pytest.mark.parametrize(
+    "promotion_status", ["blocked", "needs_revision", "unknown", "not_promoted"]
+)
+def test_unrecognized_or_non_allowed_promotion_statuses_fail(tmp_path: Path, promotion_status: str):
+    paths, feature_path = _write_artifacts(
+        tmp_path, promotion_status=promotion_status, gate_passed=True
+    )
+    with pytest.raises(ValueError, match="requires promotion_status in"):
+        analyze_cxa_feature_impact(
+            feature_path=feature_path,
+            paths=paths,
+            sample_size=20,
+            n_repeats=1,
+            random_state=7,
+        )
+
+
+def test_missing_promotion_status_fails(tmp_path: Path):
+    paths, feature_path = _write_artifacts(
+        tmp_path,
+        promotion_status="provisionally_promoted",
+        gate_passed=True,
+        include_promotion_status=False,
+    )
+    with pytest.raises(ValueError, match="requires promotion_status in"):
+        analyze_cxa_feature_impact(
+            feature_path=feature_path,
+            paths=paths,
+            sample_size=20,
+            n_repeats=1,
+            random_state=7,
+        )
+
+
+def test_false_promotion_gate_fails_even_for_provisional(tmp_path: Path):
+    paths, feature_path = _write_artifacts(
+        tmp_path, promotion_status="provisionally_promoted", gate_passed=False
+    )
+    with pytest.raises(ValueError, match="requires promotion_status in"):
         analyze_cxa_feature_impact(
             feature_path=feature_path,
             paths=paths,

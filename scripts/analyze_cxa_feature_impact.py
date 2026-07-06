@@ -30,12 +30,20 @@ TARGET_COLUMN = "shot_created"
 PREDICTION_COLUMN = "predicted_shot_created_probability"
 DIAGNOSTIC_VALUE_COLUMN = "diagnostic_cxa"
 PROMOTION_ALLOWED = {"promoted", "provisionally_promoted"}
-PROMOTION_BLOCKED = {"blocked", "needs_revision"}
 EXPLICIT_FORBIDDEN_COLUMNS = {
     "shot_created",
     "created_shot_cxg",
     "cxa_value",
     "created_shot_id",
+}
+EXPLICIT_IDENTIFIER_COLUMNS = {
+    "action_id",
+    "event_id",
+    "match_id",
+    "team_id",
+    "player_id",
+    "sequence_id",
+    "possession",
 }
 RESULT_PREDICTION_COLUMNS = {
     "predicted_shot_created_probability",
@@ -184,16 +192,10 @@ def forbidden_columns(
     contract: dict[str, Any], prediction_columns: set[str] | None = None
 ) -> set[str]:
     excluded = contract.get("excluded_columns", {})
-    columns = set(EXPLICIT_FORBIDDEN_COLUMNS)
-    for key in (
-        "target_columns",
-        "reference_only_columns",
-        "output_prediction_columns",
-        "identifier_columns",
-        "requires_review_columns",
-        "excluded_unknown_columns",
-    ):
-        columns.update(str(column) for column in excluded.get(key, []))
+    columns = set(EXPLICIT_FORBIDDEN_COLUMNS | EXPLICIT_IDENTIFIER_COLUMNS)
+    for key, value in excluded.items():
+        if isinstance(value, list):
+            columns.update(str(column) for column in value)
     columns.update(str(column) for column in prediction_columns or set())
     return columns
 
@@ -269,11 +271,12 @@ def validate_artifact_consistency(
 
 def validate_promotion_status(promotion_summary: dict[str, Any]) -> list[str]:
     status = str(promotion_summary.get("promotion_status", "")).strip()
-    recommendation = str(promotion_summary.get("promotion_recommendation", "")).strip()
     gate_passed = bool(promotion_summary.get("promotion_gate_passed"))
-    if status in PROMOTION_BLOCKED or recommendation in PROMOTION_BLOCKED or not gate_passed:
+    if status not in PROMOTION_ALLOWED or not gate_passed:
         raise ValueError(
-            "Diagnostic CxA feature impact analysis requires a promoted or provisionally promoted model"
+            "Diagnostic CxA feature impact analysis requires promotion_status in "
+            f"{sorted(PROMOTION_ALLOWED)} with promotion_gate_passed=true; "
+            f"got promotion_status={status!r}, promotion_gate_passed={gate_passed!r}"
         )
     warnings: list[str] = []
     if status == "provisionally_promoted":
