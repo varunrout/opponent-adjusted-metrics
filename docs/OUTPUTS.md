@@ -475,6 +475,44 @@ If validation recommends promotion or provisional promotion, a later results PR
 should generate governed promoted CxA outputs. CxA+ and Advanced CxA remain out
 of scope for this validation layer.
 
+### Diagnostic CxA Results
+
+Command:
+
+```bash
+make generate-cxa-diagnostic-results
+```
+
+This results layer scores the full CxA action feature table with the selected
+diagnostic model and writes governed action/player/team/sequence outputs. It
+does not retrain or revalidate the model. If validation returns
+`provisional_promote`, outputs are labelled `provisionally_promoted` because the
+current baseline comparison is reference-only/in-sample rather than a strict
+OOF/holdout comparator.
+
+Generated files:
+
+```text
+outputs/results/cxa/diagnostic_v1/action_predictions.parquet
+outputs/results/cxa/diagnostic_v1/player_cxa_summary.csv
+outputs/results/cxa/diagnostic_v1/player_cxa_summary.parquet
+outputs/results/cxa/diagnostic_v1/team_cxa_summary.csv
+outputs/results/cxa/diagnostic_v1/team_cxa_summary.parquet
+outputs/results/cxa/diagnostic_v1/sequence_cxa_summary.csv
+outputs/results/cxa/diagnostic_v1/sequence_cxa_summary.parquet
+outputs/results/cxa/diagnostic_v1/top_players_by_cxa.csv
+outputs/results/cxa/diagnostic_v1/team_cxa_rankings.csv
+outputs/results/cxa/diagnostic_v1/baseline_vs_diagnostic_summary.csv
+outputs/results/cxa/diagnostic_v1/model_promotion_summary.json
+outputs/results/cxa/diagnostic_v1/prediction_quality_checks.csv
+outputs/results/cxa/diagnostic_v1/cxa_results_report.md
+```
+
+`diagnostic_cxa` is the model-estimated probability that an action creates a
+shot. `created_shot_cxg` and `created_shot_id` may appear only as clearly named
+reference columns and are not model features. CxA+ and Advanced CxA value
+attribution remain later work.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
