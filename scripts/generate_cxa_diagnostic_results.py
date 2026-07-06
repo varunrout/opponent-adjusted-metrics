@@ -22,6 +22,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution path
 DEFAULT_FEATURE_PATH = Path("feature_store") / "cxa" / "action_features.parquet"
 DEFAULT_DIAGNOSTIC_DIR = Path("outputs") / "modeling" / "cxa" / "diagnostic_v1"
 DEFAULT_VALIDATION_DIR = Path("outputs") / "validation" / "cxa" / "diagnostic_v1"
+DEFAULT_BASELINE_DIR = Path("outputs") / "modeling" / "cxa" / "baseline"
 DEFAULT_OUTPUT_DIR = Path("outputs") / "results" / "cxa" / "diagnostic_v1"
 MODEL_VERSION = "diagnostic_v1"
 METRIC = "cxa"
@@ -73,6 +74,8 @@ class CxAResultPaths:
     validation_summary: Path
     promotion_recommendation: Path
     baseline_vs_diagnostic_metrics: Path
+    baseline_predictions: Path
+    legacy_baseline_predictions: Path
     output_dir: Path
 
     @classmethod
@@ -82,8 +85,12 @@ class CxAResultPaths:
         feature_path: Path = DEFAULT_FEATURE_PATH,
         diagnostic_dir: Path = DEFAULT_DIAGNOSTIC_DIR,
         validation_dir: Path = DEFAULT_VALIDATION_DIR,
+        baseline_dir: Path = DEFAULT_BASELINE_DIR,
         output_dir: Path = DEFAULT_OUTPUT_DIR,
     ) -> "CxAResultPaths":
+        legacy_baseline_dir = (
+            baseline_dir.parent if baseline_dir.name == "baseline" else baseline_dir
+        )
         return cls(
             feature_path=feature_path,
             selected_model=diagnostic_dir / "models" / "selected_model.joblib",
@@ -92,6 +99,10 @@ class CxAResultPaths:
             validation_summary=validation_dir / "validation_summary.json",
             promotion_recommendation=validation_dir / "promotion_recommendation.json",
             baseline_vs_diagnostic_metrics=validation_dir / "baseline_vs_diagnostic_metrics.csv",
+            baseline_predictions=baseline_dir / "predictions" / "action_predictions.parquet",
+            legacy_baseline_predictions=legacy_baseline_dir
+            / "predictions"
+            / "action_predictions.parquet",
             output_dir=output_dir,
         )
 
@@ -111,6 +122,23 @@ class CxAResultOutputs:
     model_promotion_summary: Path
     prediction_quality_checks: Path
     cxa_results_report: Path
+
+    @property
+    def full_output_artifacts(self) -> tuple[Path, ...]:
+        """Scoring outputs that must not survive a blocked result run."""
+
+        return (
+            self.action_predictions,
+            self.player_cxa_summary_csv,
+            self.player_cxa_summary_parquet,
+            self.team_cxa_summary_csv,
+            self.team_cxa_summary_parquet,
+            self.sequence_cxa_summary_csv,
+            self.sequence_cxa_summary_parquet,
+            self.top_players_by_cxa,
+            self.team_cxa_rankings,
+            self.baseline_vs_diagnostic_summary,
+        )
 
 
 def output_paths(output_dir: Path) -> CxAResultOutputs:
@@ -168,6 +196,12 @@ def _read_table(path: Path) -> pd.DataFrame:
     if path.suffix.lower() == ".csv":
         return pd.read_csv(path)
     raise ValueError(f"Unsupported table format: {path.suffix}")
+
+
+def _existing_path(primary: Path, fallback: Path) -> Path:
+    if primary.exists():
+        return primary
+    return fallback
 
 
 def selected_model_name(metadata: dict[str, Any]) -> str:
@@ -742,6 +776,10 @@ def promotion_summary(
             "validation_summary": paths.validation_summary,
             "promotion_recommendation": paths.promotion_recommendation,
             "baseline_vs_diagnostic_metrics": paths.baseline_vs_diagnostic_metrics,
+            "baseline_predictions": _existing_path(
+                paths.baseline_predictions,
+                paths.legacy_baseline_predictions,
+            ),
         },
         "outputs": {
             "action_predictions": outputs.action_predictions,
@@ -823,6 +861,7 @@ def write_blocked_outputs(
     validation_summary_payload: dict[str, Any] | None,
     feature_columns: list[str] | None = None,
 ) -> dict[str, Path]:
+    remove_full_output_artifacts(outputs)
     summary = promotion_summary(
         paths=paths,
         outputs=outputs,
@@ -847,6 +886,14 @@ def write_blocked_outputs(
         "prediction_quality_checks": outputs.prediction_quality_checks,
         "cxa_results_report": outputs.cxa_results_report,
     }
+
+
+def remove_full_output_artifacts(outputs: CxAResultOutputs) -> None:
+    """Remove stale scoring outputs before writing a blocked governance result."""
+
+    for path in outputs.full_output_artifacts:
+        if path.exists():
+            path.unlink()
 
 
 def generate_cxa_diagnostic_results(paths: CxAResultPaths) -> dict[str, Path]:
@@ -981,6 +1028,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--feature-path", type=Path, default=DEFAULT_FEATURE_PATH)
     parser.add_argument("--diagnostic-dir", type=Path, default=DEFAULT_DIAGNOSTIC_DIR)
     parser.add_argument("--validation-dir", type=Path, default=DEFAULT_VALIDATION_DIR)
+    parser.add_argument("--baseline-dir", type=Path, default=DEFAULT_BASELINE_DIR)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     return parser.parse_args()
 
@@ -991,6 +1039,7 @@ def main() -> None:
         feature_path=args.feature_path,
         diagnostic_dir=args.diagnostic_dir,
         validation_dir=args.validation_dir,
+        baseline_dir=args.baseline_dir,
         output_dir=args.output_dir,
     )
     outputs = generate_cxa_diagnostic_results(paths)

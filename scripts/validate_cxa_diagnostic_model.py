@@ -54,15 +54,21 @@ class CxAValidationPaths:
     baseline_predictions: Path
     baseline_oof_predictions: Path
     baseline_metrics: Path
+    legacy_baseline_predictions: Path
+    legacy_baseline_oof_predictions: Path
+    legacy_baseline_metrics: Path
     output_dir: Path
 
     @classmethod
     def from_roots(
         cls,
         diagnostic_dir: Path = Path("outputs/modeling/cxa/diagnostic_v1"),
-        baseline_dir: Path = Path("outputs/modeling/cxa"),
+        baseline_dir: Path = Path("outputs/modeling/cxa/baseline"),
         output_dir: Path = Path("outputs/validation/cxa/diagnostic_v1"),
     ) -> "CxAValidationPaths":
+        legacy_baseline_dir = (
+            baseline_dir.parent if baseline_dir.name == "baseline" else baseline_dir
+        )
         return cls(
             diagnostic_predictions=diagnostic_dir
             / "predictions"
@@ -75,6 +81,13 @@ class CxAValidationPaths:
             / "predictions"
             / "cross_validated_predictions.parquet",
             baseline_metrics=baseline_dir / "reports" / "metrics.json",
+            legacy_baseline_predictions=legacy_baseline_dir
+            / "predictions"
+            / "action_predictions.parquet",
+            legacy_baseline_oof_predictions=legacy_baseline_dir
+            / "predictions"
+            / "cross_validated_predictions.parquet",
+            legacy_baseline_metrics=legacy_baseline_dir / "reports" / "metrics.json",
             output_dir=output_dir,
         )
 
@@ -114,6 +127,12 @@ def _read_table(path: Path) -> pd.DataFrame:
     raise ValueError(f"Unsupported table format: {path.suffix}")
 
 
+def _existing_path(primary: Path, fallback: Path) -> Path:
+    if primary.exists():
+        return primary
+    return fallback
+
+
 def detect_baseline_prediction_column(df: pd.DataFrame) -> str:
     for column in BASELINE_PREDICTION_CANDIDATES:
         if column in df.columns:
@@ -127,7 +146,19 @@ def detect_baseline_prediction_column(df: pd.DataFrame) -> str:
 def resolve_baseline_prediction_source(paths: CxAValidationPaths) -> dict[str, Any]:
     """Resolve whether baseline predictions are fair OOF/holdout or reference-only."""
 
-    metrics = _read_json(paths.baseline_metrics) if paths.baseline_metrics.exists() else {}
+    baseline_metrics_path = _existing_path(
+        paths.baseline_metrics,
+        paths.legacy_baseline_metrics,
+    )
+    baseline_predictions_path = _existing_path(
+        paths.baseline_predictions,
+        paths.legacy_baseline_predictions,
+    )
+    baseline_oof_path = _existing_path(
+        paths.baseline_oof_predictions,
+        paths.legacy_baseline_oof_predictions,
+    )
+    metrics = _read_json(baseline_metrics_path) if baseline_metrics_path.exists() else {}
     metadata_source = str(
         metrics.get("prediction_source")
         or metrics.get("validation_prediction_source")
@@ -135,27 +166,29 @@ def resolve_baseline_prediction_source(paths: CxAValidationPaths) -> dict[str, A
         or ""
     ).lower()
     fair_tokens = ("cross_validated", "out_of_fold", "oof", "holdout")
-    if paths.baseline_oof_predictions.exists():
+    if baseline_oof_path.exists():
         return {
-            "path": paths.baseline_oof_predictions,
-            "baseline_prediction_source": paths.baseline_oof_predictions.as_posix(),
+            "path": baseline_oof_path,
+            "baseline_prediction_source": baseline_oof_path.as_posix(),
             "baseline_prediction_provenance": "out_of_fold",
             "baseline_is_fair_comparator": True,
             "strict_promotion_comparison_enabled": True,
             "notes": "Baseline OOF/holdout-equivalent predictions were used.",
+            "baseline_metrics_path": baseline_metrics_path,
         }
     if metadata_source and any(token in metadata_source for token in fair_tokens):
         return {
-            "path": paths.baseline_predictions,
-            "baseline_prediction_source": paths.baseline_predictions.as_posix(),
+            "path": baseline_predictions_path,
+            "baseline_prediction_source": baseline_predictions_path.as_posix(),
             "baseline_prediction_provenance": metadata_source,
             "baseline_is_fair_comparator": True,
             "strict_promotion_comparison_enabled": True,
             "notes": "Baseline metadata marks predictions as OOF/holdout-equivalent.",
+            "baseline_metrics_path": baseline_metrics_path,
         }
     return {
-        "path": paths.baseline_predictions,
-        "baseline_prediction_source": paths.baseline_predictions.as_posix(),
+        "path": baseline_predictions_path,
+        "baseline_prediction_source": baseline_predictions_path.as_posix(),
         "baseline_prediction_provenance": "full_data_in_sample",
         "baseline_is_fair_comparator": False,
         "strict_promotion_comparison_enabled": False,
@@ -163,6 +196,7 @@ def resolve_baseline_prediction_source(paths: CxAValidationPaths) -> dict[str, A
             "Baseline action_predictions.parquet appears to be full-data/in-sample; "
             "metrics are reference-only against diagnostic OOF predictions."
         ),
+        "baseline_metrics_path": baseline_metrics_path,
     }
 
 
@@ -812,13 +846,21 @@ def validate_cxa_diagnostic(
         "slice_summary": paths.output_dir / "slice_summary.csv",
         "validation_quality_checks": paths.output_dir / "validation_quality_checks.csv",
     }
+    baseline_prediction_path = _existing_path(
+        paths.baseline_predictions,
+        paths.legacy_baseline_predictions,
+    )
+    baseline_metrics_path = _existing_path(
+        paths.baseline_metrics,
+        paths.legacy_baseline_metrics,
+    )
     required_paths = {
         "diagnostic_predictions": paths.diagnostic_predictions,
         "selected_model_metadata": paths.selected_model_metadata,
         "model_comparison": paths.model_comparison,
         "feature_contract": paths.feature_contract,
-        "baseline_predictions": paths.baseline_predictions,
-        "baseline_metrics": paths.baseline_metrics,
+        "baseline_predictions": baseline_prediction_path,
+        "baseline_metrics": baseline_metrics_path,
     }
     missing_inputs = [
         {"check_name": f"{name}_exists", "path": path}
@@ -946,7 +988,7 @@ def validate_cxa_diagnostic(
                 "model_comparison": paths.model_comparison,
                 "feature_contract": paths.feature_contract,
                 "baseline_predictions": baseline_provenance["path"],
-                "baseline_metrics": paths.baseline_metrics,
+                "baseline_metrics": baseline_provenance["baseline_metrics_path"],
             },
             "outputs": output_paths,
         }
@@ -1070,7 +1112,7 @@ def validate_cxa_diagnostic(
             "model_comparison": paths.model_comparison,
             "feature_contract": paths.feature_contract,
             "baseline_predictions": baseline_provenance["path"],
-            "baseline_metrics": paths.baseline_metrics,
+            "baseline_metrics": baseline_provenance["baseline_metrics_path"],
         },
         "outputs": output_paths,
     }
@@ -1133,7 +1175,11 @@ def main() -> None:
         type=Path,
         default=Path("outputs/modeling/cxa/diagnostic_v1"),
     )
-    parser.add_argument("--baseline-dir", type=Path, default=Path("outputs/modeling/cxa"))
+    parser.add_argument(
+        "--baseline-dir",
+        type=Path,
+        default=Path("outputs/modeling/cxa/baseline"),
+    )
     parser.add_argument(
         "--output-dir",
         type=Path,

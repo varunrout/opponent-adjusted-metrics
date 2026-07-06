@@ -8,6 +8,7 @@ import pytest
 
 from scripts.generate_cxa_diagnostic_results import (
     CxAResultPaths,
+    output_paths,
     generate_cxa_diagnostic_results,
 )
 
@@ -160,6 +161,24 @@ def test_blocked_recommendation_writes_only_summary_checks_and_report(tmp_path: 
     assert summary["promotion_gate_passed"] is False
 
 
+def test_blocked_run_removes_stale_full_output_artifacts(tmp_path: Path):
+    paths = _write_artifacts(tmp_path, recommendation="blocked")
+    stale_outputs = output_paths(paths.output_dir)
+    paths.output_dir.mkdir(parents=True, exist_ok=True)
+    for artifact in stale_outputs.full_output_artifacts:
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_bytes(b"stale")
+
+    outputs = generate_cxa_diagnostic_results(paths)
+
+    assert outputs["model_promotion_summary"].exists()
+    assert outputs["prediction_quality_checks"].exists()
+    assert outputs["cxa_results_report"].exists()
+    for artifact in stale_outputs.full_output_artifacts:
+        assert not artifact.exists()
+    assert not stale_outputs.action_predictions.exists()
+
+
 def test_provisional_promote_writes_full_outputs_with_expected_status(tmp_path: Path):
     paths = _write_artifacts(tmp_path)
 
@@ -240,3 +259,20 @@ def test_missing_optional_ids_do_not_crash_result_generation(tmp_path: Path):
 
     assert len(predictions) == 12
     assert sequences.empty
+
+
+def test_result_paths_prefer_new_baseline_layout_with_legacy_fallback(tmp_path: Path):
+    canonical = tmp_path / "outputs" / "modeling" / "cxa" / "baseline"
+    legacy = tmp_path / "outputs" / "modeling" / "cxa"
+
+    paths = CxAResultPaths.from_roots(
+        diagnostic_dir=tmp_path / "outputs" / "modeling" / "cxa" / "diagnostic_v1",
+        validation_dir=tmp_path / "outputs" / "validation" / "cxa" / "diagnostic_v1",
+        baseline_dir=canonical,
+        output_dir=tmp_path / "outputs" / "results" / "cxa" / "diagnostic_v1",
+    )
+
+    assert paths.baseline_predictions == canonical / "predictions" / "action_predictions.parquet"
+    assert (
+        paths.legacy_baseline_predictions == legacy / "predictions" / "action_predictions.parquet"
+    )

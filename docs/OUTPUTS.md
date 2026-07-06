@@ -344,15 +344,21 @@ Generated files:
 ```text
 feature_store/cxa/action_features.parquet
 feature_store/cxa/pipeline_metadata.json
-outputs/modeling/cxa/models/baseline_model.joblib
-outputs/modeling/cxa/models/baseline_model.json
-outputs/modeling/cxa/reports/metrics.json
-outputs/modeling/cxa/reports/attribution_summary.json
-outputs/modeling/cxa/predictions/action_predictions.parquet
-outputs/modeling/cxa/aggregates/player_cxa.parquet
-outputs/modeling/cxa/aggregates/team_cxa.parquet
-outputs/modeling/cxa/aggregates/sequence_cxa.parquet
+outputs/modeling/cxa/baseline/models/baseline_model.joblib
+outputs/modeling/cxa/baseline/models/baseline_model.json
+outputs/modeling/cxa/baseline/reports/metrics.json
+outputs/modeling/cxa/baseline/reports/attribution_summary.json
+outputs/modeling/cxa/baseline/predictions/action_predictions.parquet
+outputs/modeling/cxa/baseline/aggregates/player_cxa.parquet
+outputs/modeling/cxa/baseline/aggregates/team_cxa.parquet
+outputs/modeling/cxa/baseline/aggregates/sequence_cxa.parquet
 ```
+
+CxA modelling outputs follow the same versioned layout as CxG:
+`outputs/modeling/cxa/baseline/` contains the existing baseline layer and
+`outputs/modeling/cxa/diagnostic_v1/` contains diagnostic contract/training
+artifacts. Readers should prefer `baseline/` and fall back to the older loose
+`outputs/modeling/cxa/...` paths only for legacy compatibility.
 
 DB persistence:
 
@@ -610,16 +616,16 @@ Baseline CxT calculates `cxt_value = end_threat - start_threat` from a determini
 |---|---|
 | `feature_store/cxa/action_features.parquet` | `action_features` |
 | `outputs/modeling/cxg/baseline/models/contextual_model.joblib` and `.json` | `model_registry` |
-| `outputs/modeling/cxa/models/baseline_model.joblib` and `.json` | `model_registry` |
+| `outputs/modeling/cxa/baseline/models/baseline_model.joblib` and `.json` | `model_registry` |
 | `outputs/modeling/cxt/threat_grid.parquet` | `model_registry` artifact path for baseline CxT |
 | `outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet` | `shot_predictions` |
-| `outputs/modeling/cxa/predictions/action_predictions.parquet` | `action_predictions` |
+| `outputs/modeling/cxa/baseline/predictions/action_predictions.parquet` | `action_predictions` |
 | `outputs/modeling/cxt/predictions/action_threat.parquet` | `action_threat_predictions` |
 | `outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet` | `aggregates_player` |
 | `outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet` | `aggregates_team` |
-| `outputs/modeling/cxa/aggregates/player_cxa.parquet` | `aggregates_player` |
-| `outputs/modeling/cxa/aggregates/team_cxa.parquet` | `aggregates_team` |
-| `outputs/modeling/cxa/aggregates/sequence_cxa.parquet` | `aggregates_sequence` |
+| `outputs/modeling/cxa/baseline/aggregates/player_cxa.parquet` | `aggregates_player` |
+| `outputs/modeling/cxa/baseline/aggregates/team_cxa.parquet` | `aggregates_team` |
+| `outputs/modeling/cxa/baseline/aggregates/sequence_cxa.parquet` | `aggregates_sequence` |
 | `outputs/modeling/cxt/aggregates/player_cxt.parquet` | `aggregates_player` |
 | `outputs/modeling/cxt/aggregates/team_cxt.parquet` | `aggregates_team` |
 | `outputs/modeling/cxt/aggregates/sequence_cxt.parquet` | `aggregates_sequence` |
