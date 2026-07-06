@@ -4,7 +4,7 @@
 	normalize-events build-possessions ingestion-report data-smoke \
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
-	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train validate-cxa-diagnostic cxa-diagnostic-validate generate-cxa-diagnostic-results cxa-diagnostic-results \
+	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train validate-cxa-diagnostic cxa-diagnostic-validate generate-cxa-diagnostic-results cxa-diagnostic-results analyze-cxa-feature-impact cxa-feature-impact \
 	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results analyze-cxg-feature-impact build-cxg-portfolio-summary check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
@@ -116,6 +116,11 @@ generate-cxa-diagnostic-results:  ## Generate provisionally promoted diagnostic 
 	poetry run python scripts/generate_cxa_diagnostic_results.py
 
 cxa-diagnostic-results: generate-cxa-diagnostic-results  ## Alias for diagnostic CxA results
+
+analyze-cxa-feature-impact:  ## Analyze provisionally promoted diagnostic CxA feature impact
+	poetry run python scripts/analyze_cxa_feature_impact.py
+
+cxa-feature-impact: analyze-cxa-feature-impact  ## Alias for diagnostic CxA feature impact
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline

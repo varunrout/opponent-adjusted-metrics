@@ -519,6 +519,35 @@ shot. `created_shot_cxg` and `created_shot_id` may appear only as clearly named
 reference columns and are not model features. CxA+ and Advanced CxA value
 attribution remain later work.
 
+### Promoted Diagnostic CxA Feature Impact
+
+Command:
+
+```bash
+make analyze-cxa-feature-impact
+```
+
+This reporting layer explains the provisionally promoted diagnostic CxA model
+without retraining it, changing validation, or changing governed result
+generation. It reads the selected diagnostic model, governed feature contract,
+action feature store, and promoted diagnostic action predictions, then computes
+lightweight model-agnostic feature impact artifacts.
+
+Generated files:
+
+```text
+outputs/modeling/cxa/diagnostic_v1/feature_impact/feature_impact_summary.csv
+outputs/modeling/cxa/diagnostic_v1/feature_impact/feature_group_impact.csv
+outputs/modeling/cxa/diagnostic_v1/feature_impact/top_feature_examples.csv
+outputs/modeling/cxa/diagnostic_v1/feature_impact/feature_impact_report.md
+outputs/modeling/cxa/diagnostic_v1/feature_impact/feature_impact_summary.json
+```
+
+`created_shot_cxg`, `cxa_value`, identifiers, prediction outputs,
+requires-review columns, and excluded-unknown columns remain outside the model
+feature set. This layer explains the current diagnostic CxA probability model
+only; CxA+ and Advanced CxA remain later work.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
