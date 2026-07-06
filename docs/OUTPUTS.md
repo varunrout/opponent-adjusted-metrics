@@ -344,15 +344,21 @@ Generated files:
 ```text
 feature_store/cxa/action_features.parquet
 feature_store/cxa/pipeline_metadata.json
-outputs/modeling/cxa/models/baseline_model.joblib
-outputs/modeling/cxa/models/baseline_model.json
-outputs/modeling/cxa/reports/metrics.json
-outputs/modeling/cxa/reports/attribution_summary.json
-outputs/modeling/cxa/predictions/action_predictions.parquet
-outputs/modeling/cxa/aggregates/player_cxa.parquet
-outputs/modeling/cxa/aggregates/team_cxa.parquet
-outputs/modeling/cxa/aggregates/sequence_cxa.parquet
+outputs/modeling/cxa/baseline/models/baseline_model.joblib
+outputs/modeling/cxa/baseline/models/baseline_model.json
+outputs/modeling/cxa/baseline/reports/metrics.json
+outputs/modeling/cxa/baseline/reports/attribution_summary.json
+outputs/modeling/cxa/baseline/predictions/action_predictions.parquet
+outputs/modeling/cxa/baseline/aggregates/player_cxa.parquet
+outputs/modeling/cxa/baseline/aggregates/team_cxa.parquet
+outputs/modeling/cxa/baseline/aggregates/sequence_cxa.parquet
 ```
+
+CxA modelling outputs follow the same versioned layout as CxG:
+`outputs/modeling/cxa/baseline/` contains the existing baseline layer and
+`outputs/modeling/cxa/diagnostic_v1/` contains diagnostic contract/training
+artifacts. Readers should prefer `baseline/` and fall back to the older loose
+`outputs/modeling/cxa/...` paths only for legacy compatibility.
 
 DB persistence:
 
@@ -475,6 +481,44 @@ If validation recommends promotion or provisional promotion, a later results PR
 should generate governed promoted CxA outputs. CxA+ and Advanced CxA remain out
 of scope for this validation layer.
 
+### Diagnostic CxA Results
+
+Command:
+
+```bash
+make generate-cxa-diagnostic-results
+```
+
+This results layer scores the full CxA action feature table with the selected
+diagnostic model and writes governed action/player/team/sequence outputs. It
+does not retrain or revalidate the model. If validation returns
+`provisional_promote`, outputs are labelled `provisionally_promoted` because the
+current baseline comparison is reference-only/in-sample rather than a strict
+OOF/holdout comparator.
+
+Generated files:
+
+```text
+outputs/results/cxa/diagnostic_v1/action_predictions.parquet
+outputs/results/cxa/diagnostic_v1/player_cxa_summary.csv
+outputs/results/cxa/diagnostic_v1/player_cxa_summary.parquet
+outputs/results/cxa/diagnostic_v1/team_cxa_summary.csv
+outputs/results/cxa/diagnostic_v1/team_cxa_summary.parquet
+outputs/results/cxa/diagnostic_v1/sequence_cxa_summary.csv
+outputs/results/cxa/diagnostic_v1/sequence_cxa_summary.parquet
+outputs/results/cxa/diagnostic_v1/top_players_by_cxa.csv
+outputs/results/cxa/diagnostic_v1/team_cxa_rankings.csv
+outputs/results/cxa/diagnostic_v1/baseline_vs_diagnostic_summary.csv
+outputs/results/cxa/diagnostic_v1/model_promotion_summary.json
+outputs/results/cxa/diagnostic_v1/prediction_quality_checks.csv
+outputs/results/cxa/diagnostic_v1/cxa_results_report.md
+```
+
+`diagnostic_cxa` is the model-estimated probability that an action creates a
+shot. `created_shot_cxg` and `created_shot_id` may appear only as clearly named
+reference columns and are not model features. CxA+ and Advanced CxA value
+attribution remain later work.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
@@ -572,16 +616,16 @@ Baseline CxT calculates `cxt_value = end_threat - start_threat` from a determini
 |---|---|
 | `feature_store/cxa/action_features.parquet` | `action_features` |
 | `outputs/modeling/cxg/baseline/models/contextual_model.joblib` and `.json` | `model_registry` |
-| `outputs/modeling/cxa/models/baseline_model.joblib` and `.json` | `model_registry` |
+| `outputs/modeling/cxa/baseline/models/baseline_model.joblib` and `.json` | `model_registry` |
 | `outputs/modeling/cxt/threat_grid.parquet` | `model_registry` artifact path for baseline CxT |
 | `outputs/modeling/cxg/baseline/predictions/shot_predictions.parquet` | `shot_predictions` |
-| `outputs/modeling/cxa/predictions/action_predictions.parquet` | `action_predictions` |
+| `outputs/modeling/cxa/baseline/predictions/action_predictions.parquet` | `action_predictions` |
 | `outputs/modeling/cxt/predictions/action_threat.parquet` | `action_threat_predictions` |
 | `outputs/modeling/cxg/baseline/aggregates/player_cxg.parquet` | `aggregates_player` |
 | `outputs/modeling/cxg/baseline/aggregates/team_cxg.parquet` | `aggregates_team` |
-| `outputs/modeling/cxa/aggregates/player_cxa.parquet` | `aggregates_player` |
-| `outputs/modeling/cxa/aggregates/team_cxa.parquet` | `aggregates_team` |
-| `outputs/modeling/cxa/aggregates/sequence_cxa.parquet` | `aggregates_sequence` |
+| `outputs/modeling/cxa/baseline/aggregates/player_cxa.parquet` | `aggregates_player` |
+| `outputs/modeling/cxa/baseline/aggregates/team_cxa.parquet` | `aggregates_team` |
+| `outputs/modeling/cxa/baseline/aggregates/sequence_cxa.parquet` | `aggregates_sequence` |
 | `outputs/modeling/cxt/aggregates/player_cxt.parquet` | `aggregates_player` |
 | `outputs/modeling/cxt/aggregates/team_cxt.parquet` | `aggregates_team` |
 | `outputs/modeling/cxt/aggregates/sequence_cxt.parquet` | `aggregates_sequence` |

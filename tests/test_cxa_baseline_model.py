@@ -427,14 +427,14 @@ def test_cxa_generated_paths_are_git_ignored():
     assert_git_ignored(
         (
             Path("feature_store/cxa/action_features.parquet"),
-            Path("outputs/modeling/cxa/models/baseline_model.joblib"),
-            Path("outputs/modeling/cxa/models/baseline_model.json"),
-            Path("outputs/modeling/cxa/reports/metrics.json"),
-            Path("outputs/modeling/cxa/reports/attribution_summary.json"),
-            Path("outputs/modeling/cxa/predictions/action_predictions.parquet"),
-            Path("outputs/modeling/cxa/aggregates/player_cxa.parquet"),
-            Path("outputs/modeling/cxa/aggregates/team_cxa.parquet"),
-            Path("outputs/modeling/cxa/aggregates/sequence_cxa.parquet"),
+            Path("outputs/modeling/cxa/baseline/models/baseline_model.joblib"),
+            Path("outputs/modeling/cxa/baseline/models/baseline_model.json"),
+            Path("outputs/modeling/cxa/baseline/reports/metrics.json"),
+            Path("outputs/modeling/cxa/baseline/reports/attribution_summary.json"),
+            Path("outputs/modeling/cxa/baseline/predictions/action_predictions.parquet"),
+            Path("outputs/modeling/cxa/baseline/aggregates/player_cxa.parquet"),
+            Path("outputs/modeling/cxa/baseline/aggregates/team_cxa.parquet"),
+            Path("outputs/modeling/cxa/baseline/aggregates/sequence_cxa.parquet"),
         ),
         Path.cwd(),
     )

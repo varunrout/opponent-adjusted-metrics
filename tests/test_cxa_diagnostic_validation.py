@@ -10,6 +10,7 @@ from scripts.validate_cxa_diagnostic_model import (
     join_predictions,
     metric_summary,
     promotion_recommendation,
+    resolve_baseline_prediction_source,
     threshold_summary,
     validate_cxa_diagnostic,
 )
@@ -85,7 +86,7 @@ def _write_artifacts(
         diagnostic.loc[0, "predicted_shot_created_probability"] = 1.5
 
     diagnostic_dir = root / "outputs" / "modeling" / "cxa" / "diagnostic_v1"
-    baseline_dir = root / "outputs" / "modeling" / "cxa"
+    baseline_dir = root / "outputs" / "modeling" / "cxa" / "baseline"
     output_dir = root / "outputs" / "validation" / "cxa" / "diagnostic_v1"
     (diagnostic_dir / "predictions").mkdir(parents=True)
     (diagnostic_dir / "models").mkdir(parents=True)
@@ -249,6 +250,30 @@ def test_oof_baseline_enables_strict_comparison(tmp_path: Path):
         checks.loc[checks["check_name"] == "baseline_prediction_provenance", "status"].item()
         == "passed"
     )
+
+
+def test_baseline_paths_prefer_versioned_baseline_directory(tmp_path: Path):
+    paths = _write_artifacts(tmp_path)
+
+    provenance = resolve_baseline_prediction_source(paths)
+
+    assert "/baseline/" in provenance["baseline_prediction_source"].replace("\\", "/")
+    assert provenance["path"] == paths.baseline_predictions
+
+
+def test_legacy_loose_baseline_paths_still_work_as_fallback(tmp_path: Path):
+    paths = _write_artifacts(tmp_path)
+    legacy_predictions = paths.legacy_baseline_predictions
+    legacy_metrics = paths.legacy_baseline_metrics
+    legacy_predictions.parent.mkdir(parents=True, exist_ok=True)
+    legacy_metrics.parent.mkdir(parents=True, exist_ok=True)
+    paths.baseline_predictions.replace(legacy_predictions)
+    paths.baseline_metrics.replace(legacy_metrics)
+
+    provenance = resolve_baseline_prediction_source(paths)
+
+    assert provenance["path"] == legacy_predictions
+    assert provenance["baseline_metrics_path"] == legacy_metrics
 
 
 def test_stale_selected_candidate_blocks_without_crashing(tmp_path: Path):

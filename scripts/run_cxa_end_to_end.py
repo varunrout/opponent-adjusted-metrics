@@ -26,7 +26,7 @@ from opponent_adjusted.config import settings
 from opponent_adjusted.db.model_output_persistence import persist_cxa_outputs_to_database
 
 FEATURE_STORE_INPUT = settings.feature_store_path / "cxa" / "action_features.parquet"
-DEFAULT_OUTPUT_DIR = Path("outputs") / "modeling" / "cxa"
+DEFAULT_OUTPUT_DIR = Path("outputs") / "modeling" / "cxa" / "baseline"
 CONTRACT_PATH = Path("configs") / "feature_contracts" / "cxa_v1.json"
 MODEL_VERSION_PREFIX = "cxa_baseline"
 TARGET_COLUMN = "shot_created"
