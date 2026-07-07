@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import textwrap
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -23,6 +24,8 @@ DEFAULT_RESULTS_DIR = Path("outputs/results/cxa/diagnostic_v1")
 DEFAULT_VALIDATION_DIR = Path("outputs/validation/cxa/diagnostic_v1")
 DEFAULT_FEATURE_IMPACT_DIR = Path("outputs/modeling/cxa/diagnostic_v1/feature_impact")
 DEFAULT_OUTPUT_DIR = Path("outputs/portfolio/cxa")
+DEFAULT_FEATURE_PATH = Path("feature_store/cxa/action_features.parquet")
+DEFAULT_DATABASE_PATH = Path("data/opponent_adjusted.db")
 MODEL_METRICS = (
     "log_loss",
     "brier",
@@ -40,6 +43,8 @@ REQUIRED_CHARTS = {
     "prediction_distribution": "prediction_distribution.png",
 }
 PLAYER_COLUMNS = [
+    "player_name",
+    "team_name",
     "player_id",
     "team_id",
     "actions",
@@ -50,6 +55,7 @@ PLAYER_COLUMNS = [
     "rank",
 ]
 TEAM_COLUMNS = [
+    "team_name",
     "team_id",
     "actions",
     "shot_creating_actions",
@@ -61,6 +67,7 @@ TEAM_COLUMNS = [
 SEQUENCE_COLUMNS = [
     "sequence_id",
     "match_id",
+    "team_name",
     "team_id",
     "possession",
     "actions",
@@ -89,6 +96,8 @@ class CxAPortfolioPaths:
     validation_dir: Path
     feature_impact_dir: Path
     output_dir: Path
+    feature_path: Path = DEFAULT_FEATURE_PATH
+    database_path: Path = DEFAULT_DATABASE_PATH
 
     @property
     def charts_dir(self) -> Path:
@@ -141,12 +150,16 @@ class CxAPortfolioPaths:
         validation_dir: Path = DEFAULT_VALIDATION_DIR,
         feature_impact_dir: Path = DEFAULT_FEATURE_IMPACT_DIR,
         output_dir: Path = DEFAULT_OUTPUT_DIR,
+        feature_path: Path = DEFAULT_FEATURE_PATH,
+        database_path: Path = DEFAULT_DATABASE_PATH,
     ) -> "CxAPortfolioPaths":
         return cls(
             results_dir=results_dir,
             validation_dir=validation_dir,
             feature_impact_dir=feature_impact_dir,
             output_dir=output_dir,
+            feature_path=feature_path,
+            database_path=database_path,
         )
 
 
@@ -223,6 +236,183 @@ def entity_rankings(frame: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     return ranked.sort_values("total_diagnostic_cxa", ascending=False, na_position="last")
 
 
+def _read_optional_parquet(path: Path) -> pd.DataFrame:
+    return pd.read_parquet(path) if path.exists() else pd.DataFrame()
+
+
+def _read_sqlite_name_lookup_frame(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        with sqlite3.connect(path) as conn:
+            player_frame = pd.read_sql_query(
+                "SELECT id AS player_id, name AS player_name FROM players",
+                conn,
+            )
+            team_frame = pd.read_sql_query(
+                "SELECT id AS team_id, name AS team_name FROM teams",
+                conn,
+            )
+    except (sqlite3.Error, pd.errors.DatabaseError):
+        return pd.DataFrame()
+    return pd.concat([player_frame, team_frame], axis=1)
+
+
+def build_player_team_lookup(
+    actions: pd.DataFrame,
+    feature_frame: pd.DataFrame | None = None,
+    database_frame: pd.DataFrame | None = None,
+) -> dict[str, Any]:
+    sources = []
+    player_maps = []
+    team_maps = []
+    for source_name, frame in (
+        ("action_predictions", actions),
+        ("feature_store", feature_frame if feature_frame is not None else pd.DataFrame()),
+        ("sqlite_database", database_frame if database_frame is not None else pd.DataFrame()),
+    ):
+        if frame.empty:
+            continue
+        if {"player_id", "player_name"}.issubset(frame.columns):
+            mapping = _most_frequent_name_map(frame, "player_id", "player_name")
+            if mapping:
+                player_maps.append(mapping)
+                sources.append(source_name)
+        if {"team_id", "team_name"}.issubset(frame.columns):
+            mapping = _most_frequent_name_map(frame, "team_id", "team_name")
+            if mapping:
+                team_maps.append(mapping)
+                sources.append(source_name)
+
+    player_lookup: dict[Any, str] = {}
+    team_lookup: dict[Any, str] = {}
+    for mapping in reversed(player_maps):
+        player_lookup.update(mapping)
+    for mapping in reversed(team_maps):
+        team_lookup.update(mapping)
+
+    source_used = "+".join(dict.fromkeys(sources)) if sources else "fallback_only"
+    return {
+        "player_names": player_lookup,
+        "team_names": team_lookup,
+        "name_source_used": source_used,
+    }
+
+
+def _most_frequent_name_map(frame: pd.DataFrame, id_col: str, name_col: str) -> dict[Any, str]:
+    valid = frame[[id_col, name_col]].dropna(subset=[id_col, name_col]).copy()
+    valid[name_col] = valid[name_col].astype(str).str.strip()
+    valid = valid.loc[valid[name_col] != ""]
+    if valid.empty:
+        return {}
+    counts = (
+        valid.groupby([id_col, name_col], dropna=True)
+        .size()
+        .reset_index(name="count")
+        .sort_values([id_col, "count", name_col], ascending=[True, False, True])
+    )
+    winners = counts.drop_duplicates(subset=[id_col], keep="first")
+    return dict(zip(winners[id_col], winners[name_col], strict=False))
+
+
+def enrich_player_summary(frame: pd.DataFrame, lookup: dict[str, Any]) -> pd.DataFrame:
+    enriched = frame.copy()
+    enriched["player_name"] = [
+        _resolved_name(
+            row.get("player_name"),
+            row.get("player_id"),
+            lookup.get("player_names", {}),
+            "Unknown player",
+        )
+        for _, row in enriched.iterrows()
+    ]
+    enriched["team_name"] = [
+        _resolved_name(
+            row.get("team_name"),
+            row.get("team_id"),
+            lookup.get("team_names", {}),
+            "Unknown team",
+        )
+        for _, row in enriched.iterrows()
+    ]
+    return _ensure_columns(enriched, PLAYER_COLUMNS)
+
+
+def enrich_team_summary(frame: pd.DataFrame, lookup: dict[str, Any]) -> pd.DataFrame:
+    enriched = frame.copy()
+    enriched["team_name"] = [
+        _resolved_name(
+            row.get("team_name"),
+            row.get("team_id"),
+            lookup.get("team_names", {}),
+            "Unknown team",
+        )
+        for _, row in enriched.iterrows()
+    ]
+    return _ensure_columns(enriched, TEAM_COLUMNS)
+
+
+def enrich_sequence_summary(frame: pd.DataFrame, lookup: dict[str, Any]) -> pd.DataFrame:
+    enriched = frame.copy()
+    enriched["team_name"] = [
+        _resolved_name(
+            row.get("team_name"),
+            row.get("team_id"),
+            lookup.get("team_names", {}),
+            "Unknown team",
+        )
+        for _, row in enriched.iterrows()
+    ]
+    return _ensure_columns(enriched, SEQUENCE_COLUMNS)
+
+
+def _resolved_name(
+    existing: Any,
+    entity_id: Any,
+    lookup: dict[Any, str],
+    prefix: str,
+) -> str:
+    if isinstance(existing, str) and existing.strip():
+        return existing.strip()
+    if not pd.isna(entity_id) and entity_id in lookup:
+        return lookup[entity_id]
+    return f"{prefix} {_format_id(entity_id)}"
+
+
+def _format_id(value: Any) -> str:
+    if pd.isna(value):
+        return "unknown"
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
+
+
+def display_player_label(row: pd.Series) -> str:
+    player = _display_name_or_fallback(
+        row.get("player_name"), "Unknown player", row.get("player_id")
+    )
+    team = _display_name_or_fallback(row.get("team_name"), "Unknown team", row.get("team_id"))
+    return f"{player} ({team})"
+
+
+def display_team_label(row: pd.Series) -> str:
+    return _display_name_or_fallback(row.get("team_name"), "Unknown team", row.get("team_id"))
+
+
+def _display_name_or_fallback(value: Any, prefix: str, entity_id: Any) -> str:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return f"{prefix} {_format_id(entity_id)}"
+
+
+def _name_coverage(frame: pd.DataFrame, name_col: str, unknown_prefix: str) -> float:
+    if frame.empty or name_col not in frame.columns:
+        return 0.0
+    names = frame[name_col].astype(str)
+    known = ~names.str.startswith(unknown_prefix, na=False)
+    return float(known.mean()) if len(known) else 0.0
+
+
 def metric_comparison(metrics: pd.DataFrame) -> dict[str, dict[str, Any]]:
     if not {"metric", "baseline", "diagnostic", "diagnostic_minus_baseline"}.issubset(
         metrics.columns
@@ -293,12 +483,17 @@ def build_headline_metrics(
     promotion: dict[str, Any],
     impact_summary: dict[str, Any],
     actions: pd.DataFrame,
+    players: pd.DataFrame,
+    teams: pd.DataFrame,
+    name_source_used: str,
     comparison: dict[str, dict[str, Any]],
     drivers: pd.DataFrame,
 ) -> dict[str, Any]:
     probability = pd.to_numeric(actions["predicted_shot_created_probability"], errors="coerce")
     top_feature = _top_driver(drivers, "feature")
     top_group = _top_driver(drivers, "feature_group")
+    player_name_coverage = _name_coverage(players, "player_name", "Unknown player")
+    team_name_coverage = _name_coverage(teams, "team_name", "Unknown team")
     return {
         "action_row_count": int(len(actions)),
         "total_diagnostic_cxa": float(actions["diagnostic_cxa"].sum()),
@@ -314,9 +509,25 @@ def build_headline_metrics(
         ),
         "top_feature_driver": top_feature,
         "top_feature_group_driver": top_group,
+        "player_name_coverage": player_name_coverage,
+        "team_name_coverage": team_name_coverage,
+        "name_source_used": name_source_used,
+        "name_quality_warnings": _name_quality_warnings(
+            player_name_coverage,
+            team_name_coverage,
+        ),
         "baseline_vs_diagnostic": comparison,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def _name_quality_warnings(player_coverage: float, team_coverage: float) -> list[str]:
+    warnings = []
+    if player_coverage < 0.95:
+        warnings.append(f"Player name coverage is below 95% ({player_coverage:.1%}).")
+    if team_coverage < 0.95:
+        warnings.append(f"Team name coverage is below 95% ({team_coverage:.1%}).")
+    return warnings
 
 
 def _top_driver(drivers: pd.DataFrame, driver_type: str) -> dict[str, Any] | None:
@@ -350,9 +561,21 @@ def build_cxa_portfolio_summary(
     validate_promotion(promotion)
     impact_json = _read_json(paths.feature_impact_summary_json)
     actions = pd.read_parquet(paths.action_predictions)
-    players = entity_rankings(pd.read_csv(paths.player_summary), PLAYER_COLUMNS)
-    teams = entity_rankings(pd.read_csv(paths.team_summary), TEAM_COLUMNS)
-    sequences = entity_rankings(pd.read_csv(paths.sequence_summary), SEQUENCE_COLUMNS)
+    feature_frame = _read_optional_parquet(paths.feature_path)
+    database_frame = _read_sqlite_name_lookup_frame(paths.database_path)
+    name_lookup = build_player_team_lookup(actions, feature_frame, database_frame)
+    players = enrich_player_summary(
+        entity_rankings(pd.read_csv(paths.player_summary), PLAYER_COLUMNS),
+        name_lookup,
+    )
+    teams = enrich_team_summary(
+        entity_rankings(pd.read_csv(paths.team_summary), TEAM_COLUMNS),
+        name_lookup,
+    )
+    sequences = enrich_sequence_summary(
+        entity_rankings(pd.read_csv(paths.sequence_summary), SEQUENCE_COLUMNS),
+        name_lookup,
+    )
     baseline_metrics = pd.read_csv(paths.baseline_metrics)
     comparison = metric_comparison(baseline_metrics)
     feature_impact = pd.read_csv(paths.feature_impact_summary_csv)
@@ -378,6 +601,9 @@ def build_cxa_portfolio_summary(
         promotion=promotion,
         impact_summary=impact_json,
         actions=actions,
+        players=players,
+        teams=teams,
+        name_source_used=name_lookup["name_source_used"],
         comparison=comparison,
         drivers=drivers,
     )
@@ -420,17 +646,21 @@ def create_charts(
     top_n_players: int,
     top_n_teams: int,
 ) -> None:
+    player_plot = players.head(top_n_players).copy()
+    player_plot["display_label"] = [display_player_label(row) for _, row in player_plot.iterrows()]
+    team_plot = teams.head(top_n_teams).copy()
+    team_plot["display_label"] = [display_team_label(row) for _, row in team_plot.iterrows()]
     _plot_horizontal_bars(
-        players.head(top_n_players),
-        label_col="player_id",
+        player_plot,
+        label_col="display_label",
         value_col="total_diagnostic_cxa",
         path=charts["top_players_by_cxa"],
         title=f"Top {top_n_players} players by diagnostic CxA",
         xlabel="Total diagnostic CxA",
     )
     _plot_horizontal_bars(
-        teams.head(top_n_teams),
-        label_col="team_id",
+        team_plot,
+        label_col="display_label",
         value_col="total_diagnostic_cxa",
         path=charts["top_teams_by_cxa"],
         title=f"Top {top_n_teams} teams by diagnostic CxA",
@@ -591,15 +821,19 @@ def build_markdown_summary(
             f"- Mean predicted probability: `{headline['mean_predicted_probability']:.6f}`",
             f"- Probability range: `{headline['probability_min']:.6f}` to `{headline['probability_max']:.6f}`",
             f"- Selected feature count: `{headline.get('selected_feature_count')}`",
+            f"- Player name coverage: `{headline['player_name_coverage']:.1%}`",
+            f"- Team name coverage: `{headline['team_name_coverage']:.1%}`",
+            f"- Name source used: `{headline['name_source_used']}`",
+            *_name_warning_rows(headline.get("name_quality_warnings", [])),
             "",
             "## Top players",
-            *_bullet_rows(players.head(top_n_players), "player_id", "total_diagnostic_cxa"),
+            *_player_bullet_rows(players.head(top_n_players), "total_diagnostic_cxa"),
             "",
             "## Top teams",
-            *_bullet_rows(teams.head(top_n_teams), "team_id", "total_diagnostic_cxa"),
+            *_team_bullet_rows(teams.head(top_n_teams), "total_diagnostic_cxa"),
             "",
             "## Top sequences",
-            *_bullet_rows(sequences.head(top_n_sequences), "sequence_id", "total_diagnostic_cxa"),
+            *_sequence_bullet_rows(sequences.head(top_n_sequences), "total_diagnostic_cxa"),
             "",
             "## Feature impact interpretation",
             "Feature impact is computed from existing promoted artifacts and explains which inputs most change diagnostic CxA probability quality.",
@@ -665,11 +899,57 @@ def _bullet_rows(frame: pd.DataFrame, label_col: str, value_col: str) -> list[st
     return rows
 
 
+def _player_bullet_rows(frame: pd.DataFrame, value_col: str) -> list[str]:
+    if frame.empty or value_col not in frame.columns:
+        return ["- No rows available."]
+    rows = []
+    for _, row in frame.iterrows():
+        rows.append(
+            "- "
+            f"`{row['player_name']}` (`{row['team_name']}`, player_id `{_format_id(row['player_id'])}`): "
+            f"{_fmt(row[value_col])}"
+        )
+    return rows
+
+
+def _team_bullet_rows(frame: pd.DataFrame, value_col: str) -> list[str]:
+    if frame.empty or value_col not in frame.columns:
+        return ["- No rows available."]
+    rows = []
+    for _, row in frame.iterrows():
+        rows.append(
+            f"- `{row['team_name']}` (team_id `{_format_id(row['team_id'])}`): "
+            f"{_fmt(row[value_col])}"
+        )
+    return rows
+
+
+def _sequence_bullet_rows(frame: pd.DataFrame, value_col: str) -> list[str]:
+    if frame.empty or value_col not in frame.columns:
+        return ["- No rows available."]
+    rows = []
+    for _, row in frame.iterrows():
+        rows.append(
+            "- "
+            f"`{row['sequence_id']}` (`{row['team_name']}`, team_id `{_format_id(row['team_id'])}`): "
+            f"{_fmt(row[value_col])}"
+        )
+    return rows
+
+
+def _name_warning_rows(warnings: list[str]) -> list[str]:
+    if not warnings:
+        return []
+    return ["", "Name enrichment warnings:", *[f"- {warning}" for warning in warnings]]
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)
     parser.add_argument("--validation-dir", type=Path, default=DEFAULT_VALIDATION_DIR)
     parser.add_argument("--feature-impact-dir", type=Path, default=DEFAULT_FEATURE_IMPACT_DIR)
+    parser.add_argument("--feature-path", type=Path, default=DEFAULT_FEATURE_PATH)
+    parser.add_argument("--database-path", type=Path, default=DEFAULT_DATABASE_PATH)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--top-n-players", type=int, default=20)
     parser.add_argument("--top-n-teams", type=int, default=15)
@@ -685,6 +965,8 @@ def main() -> None:
             validation_dir=args.validation_dir,
             feature_impact_dir=args.feature_impact_dir,
             output_dir=args.output_dir,
+            feature_path=args.feature_path,
+            database_path=args.database_path,
         ),
         top_n_players=args.top_n_players,
         top_n_teams=args.top_n_teams,

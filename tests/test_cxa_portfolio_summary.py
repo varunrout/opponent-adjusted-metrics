@@ -1,13 +1,18 @@
 import json
+import sqlite3
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
+import scripts.build_cxa_portfolio_summary as portfolio
 from scripts.build_cxa_portfolio_summary import (
     CxAPortfolioPaths,
     build_cxa_portfolio_summary,
     build_headline_metrics,
+    build_player_team_lookup,
+    display_player_label,
+    display_team_label,
     feature_driver_summary,
     metric_comparison,
 )
@@ -37,6 +42,26 @@ def _actions() -> pd.DataFrame:
             "action_id": [f"a{i}" for i in range(8)],
             "player_id": [10, 10, 11, 12, 12, 13, 14, 14],
             "team_id": [1, 1, 1, 2, 2, 2, 3, 3],
+            "player_name": [
+                "Alex Action",
+                "Alex Action",
+                "Bea Ball",
+                "Cam Carry",
+                "Cam Carry",
+                pd.NA,
+                pd.NA,
+                pd.NA,
+            ],
+            "team_name": [
+                "Alpha FC",
+                "Alpha FC",
+                "Alpha FC",
+                "Beta FC",
+                "Beta FC",
+                "Beta FC",
+                pd.NA,
+                pd.NA,
+            ],
             "shot_created": [1, 0, 0, 1, 0, 0, 0, 1],
             "predicted_shot_created_probability": [0.4, 0.1, 0.2, 0.5, 0.05, 0.08, 0.03, 0.6],
             "diagnostic_cxa": [0.4, 0.1, 0.2, 0.5, 0.05, 0.08, 0.03, 0.6],
@@ -189,6 +214,8 @@ def _write_artifacts(
         validation_dir=validation_dir,
         feature_impact_dir=impact_dir,
         output_dir=root / "outputs" / "portfolio" / "cxa",
+        feature_path=root / "feature_store" / "cxa" / "action_features.parquet",
+        database_path=root / "data" / "opponent_adjusted.db",
     )
 
 
@@ -199,6 +226,9 @@ def test_metric_comparison_and_headline_fields():
         promotion=_promotion_summary(),
         impact_summary=_impact_summary(),
         actions=_actions(),
+        players=_players(),
+        teams=_teams(),
+        name_source_used="action_predictions",
         comparison=comparison,
         drivers=drivers,
     )
@@ -208,6 +238,7 @@ def test_metric_comparison_and_headline_fields():
     assert headline["promotion_status"] == "provisionally_promoted"
     assert headline["top_feature_driver"]["name"] == "end_x"
     assert headline["top_feature_group_driver"]["name"] == "progression/location"
+    assert headline["name_source_used"] == "action_predictions"
 
 
 def test_feature_group_skipped_rows_do_not_break_rankings():
@@ -250,6 +281,162 @@ def test_portfolio_summary_writes_outputs_and_charts(tmp_path: Path):
     assert pd.isna(skipped["rank"])
 
 
+def test_portfolio_outputs_are_enriched_with_player_and_team_names(tmp_path: Path):
+    outputs = build_cxa_portfolio_summary(
+        paths=_write_artifacts(tmp_path),
+        top_n_players=4,
+        top_n_teams=3,
+        top_n_sequences=3,
+    )
+
+    players = pd.read_csv(outputs["top_players_csv"])
+    teams = pd.read_csv(outputs["top_teams_csv"])
+    sequences = pd.read_csv(outputs["top_sequences_csv"])
+
+    assert players.columns[:10].tolist() == [
+        "player_name",
+        "team_name",
+        "player_id",
+        "team_id",
+        "actions",
+        "shot_creating_actions",
+        "total_diagnostic_cxa",
+        "mean_diagnostic_cxa",
+        "max_diagnostic_cxa",
+        "rank",
+    ]
+    assert teams.columns[:8].tolist() == [
+        "team_name",
+        "team_id",
+        "actions",
+        "shot_creating_actions",
+        "total_diagnostic_cxa",
+        "mean_diagnostic_cxa",
+        "max_diagnostic_cxa",
+        "rank",
+    ]
+    assert sequences.columns[:12].tolist() == [
+        "sequence_id",
+        "match_id",
+        "team_name",
+        "team_id",
+        "possession",
+        "actions",
+        "shot_creating_actions",
+        "total_diagnostic_cxa",
+        "max_diagnostic_cxa",
+        "mean_diagnostic_cxa",
+        "sequence_led_to_shot",
+        "rank",
+    ]
+    assert set(["player_id", "team_id"]).issubset(players.columns)
+    assert "Alpha FC" in set(teams["team_name"])
+    assert "Unknown player 14" in set(players["player_name"])
+    assert "Unknown team 3" in set(teams["team_name"])
+
+
+def test_portfolio_markdown_displays_names_instead_of_raw_ids(tmp_path: Path):
+    outputs = build_cxa_portfolio_summary(paths=_write_artifacts(tmp_path), top_n_players=4)
+    markdown = outputs["summary_md"].read_text(encoding="utf-8")
+
+    assert "`Alex Action` (`Alpha FC`, player_id `10`)" in markdown
+    assert "`Alpha FC` (team_id `1`)" in markdown
+    assert "`s1` (`Alpha FC`, team_id `1`)" in markdown
+    assert "- `10`:" not in markdown
+
+
+def test_chart_labels_use_names_where_available(monkeypatch, tmp_path: Path):
+    captured: dict[str, list[str]] = {}
+
+    def fake_plot(
+        frame: pd.DataFrame, *, label_col: str, value_col: str, path: Path, title: str, xlabel: str
+    ) -> None:
+        captured[path.name] = frame[label_col].astype(str).tolist()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"png")
+
+    monkeypatch.setattr(portfolio, "_plot_horizontal_bars", fake_plot)
+    build_cxa_portfolio_summary(
+        paths=_write_artifacts(tmp_path),
+        top_n_players=4,
+        top_n_teams=3,
+    )
+
+    assert "Alex Action (Alpha FC)" in captured["top_players_by_cxa.png"]
+    assert "Alpha FC" in captured["top_teams_by_cxa.png"]
+    assert "Unknown player 14 (Unknown team 3)" in captured["top_players_by_cxa.png"]
+
+
+def test_name_lookup_uses_most_frequent_non_null_name_and_fallbacks():
+    actions = pd.DataFrame(
+        {
+            "player_id": [7, 7, 7, 8],
+            "player_name": ["Frequent Name", "Rare Name", "Frequent Name", pd.NA],
+            "team_id": [2, 2, 3, 4],
+            "team_name": ["Two FC", "Two FC", "Wrong FC", pd.NA],
+        }
+    )
+    lookup = build_player_team_lookup(actions)
+    fallback_row = pd.Series({"player_id": 8, "team_id": 4})
+
+    assert lookup["player_names"][7] == "Frequent Name"
+    assert lookup["team_names"][2] == "Two FC"
+    named_row = pd.Series(
+        {
+            "player_id": 7,
+            "player_name": lookup["player_names"][7],
+            "team_id": 2,
+            "team_name": "Two FC",
+        }
+    )
+    assert display_player_label(named_row) == "Frequent Name (Two FC)"
+    assert display_player_label(fallback_row) == "Unknown player 8 (Unknown team 4)"
+    assert display_team_label(fallback_row) == "Unknown team 4"
+
+
+def test_name_lookup_can_fill_from_feature_store_when_action_predictions_lack_names():
+    actions = pd.DataFrame({"player_id": [9], "team_id": [5]})
+    feature_frame = pd.DataFrame(
+        {
+            "player_id": [9, 9],
+            "player_name": ["Feature Player", "Feature Player"],
+            "team_id": [5, 5],
+            "team_name": ["Feature Team", "Feature Team"],
+        }
+    )
+
+    lookup = build_player_team_lookup(actions, feature_frame)
+
+    assert lookup["name_source_used"] == "feature_store"
+    assert lookup["player_names"][9] == "Feature Player"
+    assert lookup["team_names"][5] == "Feature Team"
+
+
+def test_portfolio_can_enrich_names_from_sqlite_when_parquet_names_are_absent(tmp_path: Path):
+    paths = _write_artifacts(tmp_path)
+    actions = _actions().drop(columns=["player_name", "team_name"])
+    actions.to_parquet(paths.action_predictions, index=False)
+    paths.database_path.parent.mkdir(parents=True)
+    with sqlite3.connect(paths.database_path) as conn:
+        conn.execute("CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+        conn.execute("CREATE TABLE teams (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+        conn.executemany(
+            "INSERT INTO players (id, name) VALUES (?, ?)",
+            [(10, "Database Player"), (14, "Database Finisher")],
+        )
+        conn.executemany(
+            "INSERT INTO teams (id, name) VALUES (?, ?)",
+            [(1, "Database Team"), (3, "Database Third")],
+        )
+
+    outputs = build_cxa_portfolio_summary(paths=paths, top_n_players=4, top_n_teams=3)
+    players = pd.read_csv(outputs["top_players_csv"])
+    teams = pd.read_csv(outputs["top_teams_csv"])
+
+    assert "Database Player" in set(players["player_name"])
+    assert "Database Team" in set(teams["team_name"])
+
+
 def test_markdown_contains_required_portfolio_story(tmp_path: Path):
     outputs = build_cxa_portfolio_summary(paths=_write_artifacts(tmp_path))
     markdown = outputs["summary_md"].read_text(encoding="utf-8")
@@ -270,6 +457,10 @@ def test_headline_metrics_json_contains_required_fields(tmp_path: Path):
     assert headline["selected_model"] == "calibrated_gradient_boosting_sigmoid"
     assert headline["promotion_gate_passed"] is True
     assert headline["selected_feature_count"] == 37
+    assert headline["name_source_used"] == "action_predictions"
+    assert headline["player_name_coverage"] < 1.0
+    assert headline["team_name_coverage"] < 1.0
+    assert headline["name_quality_warnings"]
     assert (
         "precision_at_top_1pct" in headline["baseline_vs_diagnostic"]["diagnostic_minus_baseline"]
     )
