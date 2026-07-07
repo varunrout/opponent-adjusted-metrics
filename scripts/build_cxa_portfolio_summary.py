@@ -72,6 +72,15 @@ SEQUENCE_COLUMNS = [
     "rank",
 ]
 FORBIDDEN_MODEL_FEATURES = {"created_shot_cxg", "cxa_value", "created_shot_id"}
+DRIVER_COLUMNS = [
+    "driver_type",
+    "name",
+    "feature_group",
+    "status",
+    "impact",
+    "mean_probability_shift",
+    "rank",
+]
 
 
 @dataclass(frozen=True)
@@ -252,51 +261,30 @@ def feature_driver_summary(
         groups = group_impact.copy()
         groups["driver_type"] = "feature_group"
         groups["name"] = groups["feature_group"]
-        groups["rank"] = groups["impact"].rank(method="first", ascending=False).astype(int)
-        rows.append(
-            _ensure_columns(
-                groups,
-                [
-                    "driver_type",
-                    "name",
-                    "feature_group",
-                    "impact",
-                    "mean_probability_shift",
-                    "rank",
-                ],
+        groups["impact"] = pd.to_numeric(groups["impact"], errors="coerce")
+        groups["rank"] = pd.Series(pd.NA, index=groups.index, dtype="Int64")
+        if "status" in groups.columns:
+            computed = groups["status"].fillna("computed").astype(str).str.lower().eq("computed")
+        else:
+            computed = pd.Series(True, index=groups.index)
+        computed &= groups["impact"].notna()
+        if computed.any():
+            groups.loc[computed, "rank"] = (
+                groups.loc[computed, "impact"].rank(method="first", ascending=False).astype("Int64")
             )
-        )
+        rows.append(_ensure_columns(groups, DRIVER_COLUMNS))
     if not feature_impact.empty:
         features = feature_impact.copy()
         features = features.loc[~features["feature_name"].isin(FORBIDDEN_MODEL_FEATURES)].copy()
         features["driver_type"] = "feature"
         features["name"] = features["feature_name"]
-        rows.append(
-            _ensure_columns(
-                features,
-                [
-                    "driver_type",
-                    "name",
-                    "feature_group",
-                    "impact",
-                    "mean_probability_shift",
-                    "rank",
-                ],
-            )
-        )
+        if "rank" in features.columns:
+            features["rank"] = pd.to_numeric(features["rank"], errors="coerce").astype("Int64")
+        rows.append(_ensure_columns(features, DRIVER_COLUMNS))
     if not rows:
-        return pd.DataFrame(
-            columns=[
-                "driver_type",
-                "name",
-                "feature_group",
-                "impact",
-                "mean_probability_shift",
-                "rank",
-            ]
-        )
+        return pd.DataFrame(columns=DRIVER_COLUMNS)
     return pd.concat(rows, ignore_index=True).sort_values(
-        ["driver_type", "rank"], ascending=[True, True]
+        ["driver_type", "rank"], ascending=[True, True], na_position="last"
     )
 
 
@@ -333,6 +321,8 @@ def build_headline_metrics(
 
 def _top_driver(drivers: pd.DataFrame, driver_type: str) -> dict[str, Any] | None:
     subset = drivers.loc[drivers["driver_type"] == driver_type]
+    if driver_type == "feature_group":
+        subset = _computed_feature_group_drivers(drivers)
     if subset.empty:
         return None
     row = subset.sort_values("rank").iloc[0]
@@ -446,11 +436,8 @@ def create_charts(
         title=f"Top {top_n_teams} teams by diagnostic CxA",
         xlabel="Total diagnostic CxA",
     )
-    group_rows = drivers.loc[drivers["driver_type"] == "feature_group"].sort_values(
-        "impact", ascending=False
-    )
     _plot_horizontal_bars(
-        group_rows,
+        _computed_feature_group_drivers(drivers).sort_values("impact", ascending=False),
         label_col="name",
         value_col="impact",
         path=charts["feature_group_impact"],
@@ -524,6 +511,20 @@ def _plot_prediction_distribution(actions: pd.DataFrame, path: Path) -> None:
     _save_figure(fig, path)
 
 
+def _computed_feature_group_drivers(drivers: pd.DataFrame) -> pd.DataFrame:
+    if drivers.empty or "driver_type" not in drivers.columns:
+        return pd.DataFrame(columns=DRIVER_COLUMNS)
+    groups = drivers.loc[drivers["driver_type"] == "feature_group"].copy()
+    if groups.empty:
+        return groups
+    groups["impact"] = pd.to_numeric(groups["impact"], errors="coerce")
+    if "status" in groups.columns:
+        groups = groups.loc[
+            groups["status"].fillna("computed").astype(str).str.lower().eq("computed")
+        ].copy()
+    return groups.dropna(subset=["impact"])
+
+
 def _save_figure(fig: plt.Figure, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
@@ -560,7 +561,7 @@ def build_markdown_summary(
     top_n_sequences: int,
 ) -> str:
     top_features = drivers.loc[drivers["driver_type"] == "feature"].nsmallest(10, "rank")
-    top_groups = drivers.loc[drivers["driver_type"] == "feature_group"].nsmallest(5, "rank")
+    top_groups = _computed_feature_group_drivers(drivers).nsmallest(5, "rank")
     return "\n".join(
         [
             "# Diagnostic CxA Portfolio Summary",

@@ -125,10 +125,11 @@ def _feature_impact() -> pd.DataFrame:
 def _group_impact() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "feature_group": ["progression/location", "action-type/context"],
-            "feature_count": [12, 14],
-            "impact": [0.10, 0.03],
-            "mean_probability_shift": [0.01, 0.003],
+            "feature_group": ["progression/location", "action-type/context", "pressure"],
+            "feature_count": [12, 14, 0],
+            "impact": [0.10, 0.03, pd.NA],
+            "mean_probability_shift": [0.01, 0.003, pd.NA],
+            "status": ["computed", "computed", "skipped"],
         }
     )
 
@@ -209,6 +210,15 @@ def test_metric_comparison_and_headline_fields():
     assert headline["top_feature_group_driver"]["name"] == "progression/location"
 
 
+def test_feature_group_skipped_rows_do_not_break_rankings():
+    drivers = feature_driver_summary(_feature_impact(), _group_impact())
+
+    groups = drivers.loc[drivers["driver_type"] == "feature_group"].copy()
+    assert groups.loc[groups["name"] == "progression/location", "rank"].iloc[0] == 1
+    assert groups.loc[groups["name"] == "action-type/context", "rank"].iloc[0] == 2
+    assert pd.isna(groups.loc[groups["name"] == "pressure", "rank"].iloc[0])
+
+
 def test_portfolio_summary_writes_outputs_and_charts(tmp_path: Path):
     paths = _write_artifacts(tmp_path)
 
@@ -234,6 +244,10 @@ def test_portfolio_summary_writes_outputs_and_charts(tmp_path: Path):
     for key in chart_keys:
         assert outputs[key].exists()
         assert outputs[key].suffix == ".png"
+    drivers = pd.read_csv(outputs["feature_driver_summary_csv"])
+    skipped = drivers.loc[drivers["name"] == "pressure"].iloc[0]
+    assert skipped["status"] == "skipped"
+    assert pd.isna(skipped["rank"])
 
 
 def test_markdown_contains_required_portfolio_story(tmp_path: Path):
