@@ -8,6 +8,7 @@
     "player_analysis",
     "team_analysis",
     "promoted_cxg_portfolio",
+    "provisionally_promoted_cxa_portfolio",
     "cxg_analysis",
     "cxa_analysis",
     "cxt_analysis",
@@ -197,9 +198,13 @@
         "player_analysis",
         "team_analysis",
         "cxa_analysis",
+        "provisionally_promoted_cxa_portfolio",
         "action_level_explorer",
         "model_report_diagnostics"
       ],
+      "portfolio_summary": {
+        "path": "outputs/portfolio/cxa/portfolio_summary.md"
+      },
       "inputs": {
         "predictions": {
           "path": "outputs/modeling/cxa/predictions/action_predictions.parquet",
@@ -289,6 +294,88 @@
           "optional_fields": [
             "skipped_fields",
             "distribution"
+          ]
+        },
+        "portfolio_headline_metrics": {
+          "path": "outputs/portfolio/cxa/headline_metrics.json",
+          "required_fields": [
+            "promotion_status",
+            "selected_model",
+            "action_row_count",
+            "total_diagnostic_cxa",
+            "mean_predicted_probability"
+          ],
+          "optional_fields": [
+            "selected_feature_count",
+            "player_name_coverage",
+            "team_name_coverage",
+            "name_source_used",
+            "top_feature_driver",
+            "top_feature_group_driver"
+          ]
+        },
+        "portfolio_player_rankings": {
+          "path": "outputs/portfolio/cxa/top_players_by_cxa.csv",
+          "required_columns": [
+            "player_name",
+            "team_name",
+            "total_diagnostic_cxa",
+            "mean_diagnostic_cxa",
+            "shot_creating_actions",
+            "actions",
+            "rank"
+          ],
+          "optional_columns": [
+            "player_id",
+            "team_id",
+            "max_diagnostic_cxa"
+          ]
+        },
+        "portfolio_team_rankings": {
+          "path": "outputs/portfolio/cxa/top_teams_by_cxa.csv",
+          "required_columns": [
+            "team_name",
+            "total_diagnostic_cxa",
+            "mean_diagnostic_cxa",
+            "shot_creating_actions",
+            "actions",
+            "rank"
+          ],
+          "optional_columns": [
+            "team_id",
+            "max_diagnostic_cxa"
+          ]
+        },
+        "portfolio_sequence_rankings": {
+          "path": "outputs/portfolio/cxa/top_sequences_by_cxa.csv",
+          "required_columns": [
+            "sequence_id",
+            "team_name",
+            "match_id",
+            "total_diagnostic_cxa",
+            "mean_diagnostic_cxa",
+            "sequence_led_to_shot",
+            "rank"
+          ],
+          "optional_columns": [
+            "team_id",
+            "possession",
+            "actions",
+            "shot_creating_actions"
+          ]
+        },
+        "portfolio_feature_drivers": {
+          "path": "outputs/portfolio/cxa/feature_driver_summary.csv",
+          "required_columns": [
+            "driver_type",
+            "name",
+            "feature_group",
+            "impact"
+          ],
+          "optional_columns": [
+            "mean_probability_shift",
+            "rank",
+            "status"
           ]
         }
       }

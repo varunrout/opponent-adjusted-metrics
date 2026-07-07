@@ -31,6 +31,29 @@ make build-cxg-portfolio-summary
 make dashboard
 ```
 
+## Provisionally Promoted Diagnostic CxA Portfolio
+
+The provisionally promoted diagnostic CxA model is the governed chance-creation
+layer for the portfolio. It estimates the probability that an action creates a
+shot, then surfaces name-enriched player, team, sequence, and feature-driver
+outputs for review.
+
+The CxA baseline comparison is reference-only/in-sample, so the dashboard labels
+this model as provisionally promoted. CxA+ and Advanced CxA remain later work.
+
+Portfolio entry points:
+
+- [CxA portfolio summary](outputs/portfolio/cxa/portfolio_summary.md)
+- [CxA headline metrics](outputs/portfolio/cxa/headline_metrics.json)
+- [CxA portfolio charts](outputs/portfolio/cxa/charts/)
+
+Regenerate the static CxA portfolio locally:
+
+```bash
+make build-cxa-portfolio-summary
+make dashboard
+```
+
 ## Core Metrics
 
 - **CxG:** contextual shot quality. It answers: how good was the shot?
@@ -104,6 +127,7 @@ Dashboard sections:
 - Player analysis
 - Team analysis
 - Promoted CxG portfolio
+- Provisionally Promoted CxA portfolio
 - CxG
 - CxA
 - CxT
@@ -111,7 +135,10 @@ Dashboard sections:
 - Reports / diagnostics
 - About methodology
 
-Suggested demo flow: start with Overview, open Promoted CxG portfolio for the governed CxG model story, then use Player, Team, CxG, CxA, CxT, and Action explorer tabs for supporting generated outputs.
+Suggested demo flow: start with Overview, open Promoted CxG portfolio and
+Provisionally Promoted CxA portfolio for the governed model stories, then use
+Player, Team, CxG, CxA, CxT, and Action explorer tabs for supporting generated
+outputs.
 
 ## Main Workflows
 
