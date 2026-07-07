@@ -548,6 +548,40 @@ requires-review columns, and excluded-unknown columns remain outside the model
 feature set. This layer explains the current diagnostic CxA probability model
 only; CxA+ and Advanced CxA remain later work.
 
+### Diagnostic CxA Portfolio Summary
+
+Command:
+
+```bash
+make build-cxa-portfolio-summary
+```
+
+This static portfolio layer converts the provisionally promoted diagnostic CxA
+results and feature-impact artifacts into reviewer-facing Markdown, JSON, CSV,
+and PNG chart outputs. It does not retrain, revalidate, alter result generation,
+or implement CxA+.
+
+Generated files:
+
+```text
+outputs/portfolio/cxa/portfolio_summary.md
+outputs/portfolio/cxa/headline_metrics.json
+outputs/portfolio/cxa/top_players_by_cxa.csv
+outputs/portfolio/cxa/top_teams_by_cxa.csv
+outputs/portfolio/cxa/top_sequences_by_cxa.csv
+outputs/portfolio/cxa/feature_driver_summary.csv
+outputs/portfolio/cxa/charts/top_players_by_cxa.png
+outputs/portfolio/cxa/charts/top_teams_by_cxa.png
+outputs/portfolio/cxa/charts/feature_group_impact.png
+outputs/portfolio/cxa/charts/baseline_vs_diagnostic_metrics.png
+outputs/portfolio/cxa/charts/prediction_distribution.png
+```
+
+The report states that diagnostic CxA estimates shot-creation probability,
+current promotion is provisional because the baseline comparison is
+reference-only/in-sample, and `created_shot_cxg` / `cxa_value` are not model
+features.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
