@@ -580,7 +580,10 @@ outputs/portfolio/cxa/charts/prediction_distribution.png
 The report states that diagnostic CxA estimates shot-creation probability,
 current promotion is provisional because the baseline comparison is
 reference-only/in-sample, and `created_shot_cxg` / `cxa_value` are not model
-features.
+features. The player, team, and sequence portfolio CSVs preserve the source IDs
+for traceability while adding `player_name` and/or `team_name` display columns
+where available. If names are unavailable, the portfolio layer writes
+deterministic labels such as `Unknown player 776` or `Unknown team 44`.
 
 ## CxT Outputs
 
