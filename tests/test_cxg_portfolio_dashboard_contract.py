@@ -188,8 +188,22 @@ def test_promoted_cxg_missing_output_guidance_lists_full_generation_chain():
 def test_provisionally_promoted_cxa_dashboard_is_static_display_only():
     app_source = APP_PATH.read_text(encoding="utf-8")
 
+    for command in (
+        "make run-cxa-end-to-end",
+        "make prepare-cxa-diagnostic-contract",
+        "make run-cxa-diagnostic-training",
+        "make validate-cxa-diagnostic",
+        "make generate-cxa-diagnostic-results",
+        "make analyze-cxa-feature-impact",
+        "make build-cxa-portfolio-summary",
+    ):
+        assert command in app_source
+
     assert "make build-cxa-portfolio-summary" in app_source
     assert "provisionally promoted" in app_source.lower()
+    assert "diagnostic pipeline, validation, governed results, and feature-impact artifacts" in (
+        app_source
+    )
     assert "baseline comparison is reference-only/in-sample" in app_source
     assert "CxA+ and Advanced CxA are later work" in app_source
     assert "run_cxa_diagnostic_training" not in app_source
