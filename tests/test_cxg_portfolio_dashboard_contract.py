@@ -10,7 +10,15 @@ if importlib.util.find_spec("streamlit") is None:
     streamlit_stub.cache_data = lambda **_: lambda func: func
     sys.modules["streamlit"] = streamlit_stub
 
-from app.streamlit_app import load_portfolio_table, load_text_file, render_streamlit_image
+from app.streamlit_app import (
+    CXA_PORTFOLIO_PLAYERS_PATH,
+    CXA_PORTFOLIO_SEQUENCES_PATH,
+    CXA_PORTFOLIO_TEAMS_PATH,
+    load_portfolio_scorecard,
+    load_portfolio_table,
+    load_text_file,
+    render_streamlit_image,
+)
 
 
 DASHBOARD_CONTRACT_PATH = Path("configs/dashboard/v1_dashboard_contract.json")
@@ -50,6 +58,30 @@ def test_dashboard_contract_declares_promoted_cxg_portfolio_outputs():
 def test_portfolio_helpers_handle_missing_outputs(tmp_path: Path):
     assert load_text_file(tmp_path / "missing.md") == ""
     assert load_portfolio_table(tmp_path / "missing.csv").empty
+    assert load_portfolio_scorecard(tmp_path / "missing.json") == {}
+
+
+def test_cxa_portfolio_scorecard_helper_parses_headline_metrics(tmp_path: Path):
+    path = tmp_path / "headline_metrics.json"
+    path.write_text(
+        json.dumps(
+            {
+                "promotion_status": "provisionally_promoted",
+                "selected_model": "calibrated_gradient_boosting_sigmoid",
+                "action_row_count": 100,
+                "player_name_coverage": 1.0,
+                "team_name_coverage": 1.0,
+                "name_source_used": "sqlite_database",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    headline = load_portfolio_scorecard(path)
+
+    assert headline["promotion_status"] == "provisionally_promoted"
+    assert headline["selected_model"] == "calibrated_gradient_boosting_sigmoid"
+    assert headline["name_source_used"] == "sqlite_database"
 
 
 def test_streamlit_image_helper_falls_back_to_legacy_width_argument():
@@ -78,6 +110,51 @@ def test_readme_links_promoted_cxg_portfolio_outputs_and_commands():
     assert "make build-cxg-portfolio-summary" in readme
 
 
+def test_dashboard_contract_declares_provisionally_promoted_cxa_portfolio_outputs():
+    contract = _contract()
+    cxa = contract["metric_sections"]["cxa"]
+    inputs = cxa["inputs"]
+
+    assert "provisionally_promoted_cxa_portfolio" in contract["dashboard_pages"]
+    assert cxa["portfolio_summary"]["path"] == "outputs/portfolio/cxa/portfolio_summary.md"
+    assert inputs["portfolio_headline_metrics"]["path"] == (
+        "outputs/portfolio/cxa/headline_metrics.json"
+    )
+    assert inputs["portfolio_player_rankings"]["path"] == (
+        "outputs/portfolio/cxa/top_players_by_cxa.csv"
+    )
+    assert inputs["portfolio_team_rankings"]["path"] == (
+        "outputs/portfolio/cxa/top_teams_by_cxa.csv"
+    )
+    assert inputs["portfolio_sequence_rankings"]["path"] == (
+        "outputs/portfolio/cxa/top_sequences_by_cxa.csv"
+    )
+    assert inputs["portfolio_feature_drivers"]["path"] == (
+        "outputs/portfolio/cxa/feature_driver_summary.csv"
+    )
+    assert "player_name" in inputs["portfolio_player_rankings"]["required_columns"]
+    assert "team_name" in inputs["portfolio_team_rankings"]["required_columns"]
+    assert "team_name" in inputs["portfolio_sequence_rankings"]["required_columns"]
+
+
+def test_cxa_portfolio_paths_use_name_enriched_static_outputs():
+    assert CXA_PORTFOLIO_PLAYERS_PATH.as_posix() == "outputs/portfolio/cxa/top_players_by_cxa.csv"
+    assert CXA_PORTFOLIO_TEAMS_PATH.as_posix() == "outputs/portfolio/cxa/top_teams_by_cxa.csv"
+    assert (
+        CXA_PORTFOLIO_SEQUENCES_PATH.as_posix() == "outputs/portfolio/cxa/top_sequences_by_cxa.csv"
+    )
+
+
+def test_readme_links_cxa_portfolio_outputs_and_commands():
+    readme = README_PATH.read_text(encoding="utf-8")
+
+    assert "Provisionally Promoted Diagnostic CxA Portfolio" in readme
+    assert "outputs/portfolio/cxa/portfolio_summary.md" in readme
+    assert "outputs/portfolio/cxa/headline_metrics.json" in readme
+    assert "outputs/portfolio/cxa/charts/" in readme
+    assert "make build-cxa-portfolio-summary" in readme
+
+
 def test_active_dashboard_command_and_tab_are_documented():
     makefile = MAKEFILE_PATH.read_text(encoding="utf-8")
     readme = README_PATH.read_text(encoding="utf-8")
@@ -87,7 +164,8 @@ def test_active_dashboard_command_and_tab_are_documented():
     assert "streamlit run app/streamlit_app.py" in makefile
     assert "poetry run streamlit run app/streamlit_app.py" in readme
     assert "Promoted CxG portfolio" in app_source
-    assert "for the governed model story" in app_source
+    assert "Provisionally Promoted CxA portfolio" in app_source
+    assert "for the governed model stories" in app_source
     assert "dashboard/app.py" not in readme
 
 
@@ -105,3 +183,15 @@ def test_promoted_cxg_missing_output_guidance_lists_full_generation_chain():
         "make dashboard",
     ):
         assert command in app_source
+
+
+def test_provisionally_promoted_cxa_dashboard_is_static_display_only():
+    app_source = APP_PATH.read_text(encoding="utf-8")
+
+    assert "make build-cxa-portfolio-summary" in app_source
+    assert "provisionally promoted" in app_source.lower()
+    assert "baseline comparison is reference-only/in-sample" in app_source
+    assert "CxA+ and Advanced CxA are later work" in app_source
+    assert "run_cxa_diagnostic_training" not in app_source
+    assert "validate_cxa_diagnostic_model" not in app_source
+    assert "generate_cxa_diagnostic_results" not in app_source

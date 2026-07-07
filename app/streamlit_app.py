@@ -65,6 +65,21 @@ PORTFOLIO_CHART_FILES = [
     "player_cxg_ranking.png",
     "goals_minus_cxg_teams.png",
 ]
+CXA_PORTFOLIO_ROOT = Path("outputs/portfolio/cxa")
+CXA_PORTFOLIO_CHARTS = CXA_PORTFOLIO_ROOT / "charts"
+CXA_PORTFOLIO_SUMMARY_PATH = CXA_PORTFOLIO_ROOT / "portfolio_summary.md"
+CXA_PORTFOLIO_HEADLINE_PATH = CXA_PORTFOLIO_ROOT / "headline_metrics.json"
+CXA_PORTFOLIO_PLAYERS_PATH = CXA_PORTFOLIO_ROOT / "top_players_by_cxa.csv"
+CXA_PORTFOLIO_TEAMS_PATH = CXA_PORTFOLIO_ROOT / "top_teams_by_cxa.csv"
+CXA_PORTFOLIO_SEQUENCES_PATH = CXA_PORTFOLIO_ROOT / "top_sequences_by_cxa.csv"
+CXA_PORTFOLIO_FEATURE_DRIVERS_PATH = CXA_PORTFOLIO_ROOT / "feature_driver_summary.csv"
+CXA_PORTFOLIO_CHART_FILES = [
+    "baseline_vs_diagnostic_metrics.png",
+    "feature_group_impact.png",
+    "prediction_distribution.png",
+    "top_players_by_cxa.png",
+    "top_teams_by_cxa.png",
+]
 CXG_PORTFOLIO_REGENERATION_STEPS = """Promoted CxG portfolio outputs are missing. Run:
 
 ```bash
@@ -75,6 +90,12 @@ make validate-cxg-diagnostic
 make generate-cxg-diagnostic-results
 make analyze-cxg-feature-impact
 make build-cxg-portfolio-summary
+make dashboard
+```"""
+CXA_PORTFOLIO_REGENERATION_STEPS = """CxA portfolio outputs are missing. Run:
+
+```bash
+make build-cxa-portfolio-summary
 make dashboard
 ```"""
 
@@ -225,13 +246,17 @@ def render_streamlit_image(path: str, caption: str, image_func: Any | None = Non
         image(path, caption=caption, use_column_width=True)
 
 
-def render_portfolio_chart(chart_name: str, title: str) -> None:
+def render_portfolio_chart(
+    chart_name: str,
+    title: str,
+    charts_dir: Path = PORTFOLIO_CHARTS,
+) -> None:
     """Render a static portfolio chart if available."""
 
-    chart_path = _resolve_project_path(PORTFOLIO_CHARTS / chart_name)
+    chart_path = _resolve_project_path(charts_dir / chart_name)
     st.subheader(title)
     if not chart_path.exists():
-        st.info(f"Chart not available yet: `{PORTFOLIO_CHARTS / chart_name}`")
+        st.info(f"Chart not available yet: `{charts_dir / chart_name}`")
         return
     render_streamlit_image(str(chart_path), title)
 
@@ -262,6 +287,10 @@ def render_portfolio_table(
     if sort_column and sort_column in table.columns:
         table = table.sort_values(sort_column, ascending=False)
     st.dataframe(table.head(max_rows), use_container_width=True, hide_index=True)
+
+
+def _select_existing_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    return df[[column for column in columns if column in df.columns]].copy()
 
 
 def _availability_card(resources: dict[str, dict[str, DashboardResource]]) -> None:
@@ -589,6 +618,193 @@ def promoted_cxg_portfolio_tab() -> None:
         st.info("Run `make build-cxg-portfolio-summary` to generate the Markdown summary.")
 
 
+def render_cxa_headline_metrics(headline: dict[str, Any]) -> None:
+    """Render provisionally promoted CxA status cards from static headline metrics."""
+
+    if not headline:
+        st.info(CXA_PORTFOLIO_REGENERATION_STEPS)
+        return
+
+    cards = [
+        ("Promotion status", headline.get("promotion_status")),
+        ("Selected model", headline.get("selected_model")),
+        ("Actions", headline.get("action_row_count")),
+        ("Total diagnostic CxA", headline.get("total_diagnostic_cxa")),
+        ("Mean probability", headline.get("mean_predicted_probability")),
+        ("Selected features", headline.get("selected_feature_count")),
+        ("Player names", headline.get("player_name_coverage")),
+        ("Team names", headline.get("team_name_coverage")),
+        ("Name source", headline.get("name_source_used")),
+    ]
+    cols = st.columns(3)
+    for index, (label, value) in enumerate(cards):
+        cols[index % len(cols)].metric(label, _format_metric_value(value))
+
+
+def provisionally_promoted_cxa_portfolio_tab() -> None:
+    render_page_intro(
+        "Provisionally Promoted CxA Portfolio",
+        "Review the provisionally promoted diagnostic CxA model through static portfolio outputs.",
+        "Which actions and contributors create the most shot-creation probability?",
+        (
+            "This page reads the generated CxA portfolio pack only. It does not train, "
+            "validate, regenerate results, or implement CxA+ inside Streamlit."
+        ),
+    )
+    st.caption(
+        "CxA is provisionally promoted because the diagnostic model improves the current "
+        "baseline reference metrics, but that baseline comparison is full-data/in-sample. "
+        "CxA+ and Advanced CxA are later work."
+    )
+
+    headline = load_portfolio_scorecard(CXA_PORTFOLIO_HEADLINE_PATH)
+    players = load_portfolio_table(CXA_PORTFOLIO_PLAYERS_PATH)
+    teams = load_portfolio_table(CXA_PORTFOLIO_TEAMS_PATH)
+    sequences = load_portfolio_table(CXA_PORTFOLIO_SEQUENCES_PATH)
+    feature_drivers = load_portfolio_table(CXA_PORTFOLIO_FEATURE_DRIVERS_PATH)
+    summary_markdown = load_portfolio_markdown(CXA_PORTFOLIO_SUMMARY_PATH)
+
+    if (
+        not headline
+        and players.empty
+        and teams.empty
+        and sequences.empty
+        and feature_drivers.empty
+        and not summary_markdown
+    ):
+        st.info(CXA_PORTFOLIO_REGENERATION_STEPS)
+        return
+
+    render_cxa_headline_metrics(headline)
+    st.warning(
+        "Promotion status is provisional: the baseline comparison is reference-only/in-sample, "
+        "so this page should be read as a governed portfolio overview, not a final CxA+ claim."
+    )
+
+    top_feature = headline.get("top_feature_driver") or {}
+    top_group = headline.get("top_feature_group_driver") or {}
+    col1, col2 = st.columns(2)
+    col1.metric("Top feature driver", _format_metric_value(top_feature.get("name")))
+    col2.metric("Top feature group", _format_metric_value(top_group.get("name")))
+
+    st.subheader("Static Portfolio Charts")
+    chart_pairs = [
+        ("baseline_vs_diagnostic_metrics.png", "Baseline vs Diagnostic Metrics"),
+        ("feature_group_impact.png", "Feature Group Impact"),
+        ("prediction_distribution.png", "Prediction Distribution"),
+        ("top_players_by_cxa.png", "Top Players By CxA"),
+        ("top_teams_by_cxa.png", "Top Teams By CxA"),
+    ]
+    for left, right in zip(chart_pairs[0::2], chart_pairs[1::2], strict=False):
+        chart_col1, chart_col2 = st.columns(2)
+        with chart_col1:
+            render_portfolio_chart(left[0], left[1], CXA_PORTFOLIO_CHARTS)
+        with chart_col2:
+            render_portfolio_chart(right[0], right[1], CXA_PORTFOLIO_CHARTS)
+    if len(chart_pairs) % 2:
+        render_portfolio_chart(chart_pairs[-1][0], chart_pairs[-1][1], CXA_PORTFOLIO_CHARTS)
+
+    st.subheader("Top CxA Contributors")
+    player_limit = st.slider(
+        "Top CxA players to show", min_value=5, max_value=100, value=20, step=5
+    )
+    filtered_players = _search_filter(
+        players, "team_name", "Filter CxA players by team", "cxa_portfolio_player_team_search"
+    )
+    filtered_players = _search_filter(
+        filtered_players,
+        "player_name",
+        "Filter CxA players by name",
+        "cxa_portfolio_player_search",
+    )
+    render_portfolio_table(
+        _select_existing_columns(
+            filtered_players,
+            [
+                "player_name",
+                "team_name",
+                "total_diagnostic_cxa",
+                "mean_diagnostic_cxa",
+                "shot_creating_actions",
+                "actions",
+                "rank",
+            ],
+        ),
+        "Top Players",
+        max_rows=player_limit,
+        sort_column="total_diagnostic_cxa",
+    )
+    with st.expander("Player IDs and full player table", expanded=False):
+        render_portfolio_table(
+            filtered_players,
+            "Full Player Ranking",
+            max_rows=player_limit,
+            sort_column="total_diagnostic_cxa",
+        )
+
+    team_limit = st.slider("Top CxA teams to show", min_value=5, max_value=50, value=15, step=5)
+    filtered_teams = _search_filter(
+        teams, "team_name", "Filter CxA teams by name", "cxa_portfolio_team_search"
+    )
+    render_portfolio_table(
+        _select_existing_columns(
+            filtered_teams,
+            [
+                "team_name",
+                "total_diagnostic_cxa",
+                "mean_diagnostic_cxa",
+                "shot_creating_actions",
+                "actions",
+                "rank",
+            ],
+        ),
+        "Top Teams",
+        max_rows=team_limit,
+        sort_column="total_diagnostic_cxa",
+    )
+
+    sequence_limit = st.slider(
+        "Top CxA sequences to show", min_value=5, max_value=100, value=20, step=5
+    )
+    filtered_sequences = _search_filter(
+        sequences,
+        "team_name",
+        "Filter CxA sequences by team",
+        "cxa_portfolio_sequence_team_search",
+    )
+    render_portfolio_table(
+        _select_existing_columns(
+            filtered_sequences,
+            [
+                "sequence_id",
+                "team_name",
+                "match_id",
+                "total_diagnostic_cxa",
+                "mean_diagnostic_cxa",
+                "sequence_led_to_shot",
+                "rank",
+            ],
+        ),
+        "Top Sequences",
+        max_rows=sequence_limit,
+        sort_column="total_diagnostic_cxa",
+    )
+
+    render_portfolio_table(
+        feature_drivers,
+        "Feature Driver Summary",
+        max_rows=50,
+        sort_column="impact",
+    )
+
+    st.subheader("Narrative Summary")
+    if summary_markdown:
+        with st.expander("Read CxA portfolio summary", expanded=False):
+            st.markdown(summary_markdown)
+    else:
+        st.info("Run `make build-cxa-portfolio-summary` to generate the Markdown summary.")
+
+
 def cxg_tab(resources: dict[str, dict[str, DashboardResource]]) -> None:
     render_page_intro(
         "CxG",
@@ -739,8 +955,9 @@ def main() -> None:
     st.caption("CxG, CxA, and baseline CxT dashboard v1")
     st.write(
         "Guided demo flow: start with Overview, then open Promoted CxG portfolio "
-        "for the governed model story. Use the legacy CxG, CxA, CxT, Player, Team, "
-        "and Action explorer tabs for supporting generated outputs."
+        "and Provisionally Promoted CxA portfolio for the governed model stories. "
+        "Use the legacy CxG, CxA, CxT, Player, Team, and Action explorer tabs for "
+        "supporting generated outputs."
     )
 
     tabs = st.tabs(
@@ -749,6 +966,7 @@ def main() -> None:
             "Player analysis",
             "Team analysis",
             "Promoted CxG portfolio",
+            "Provisionally Promoted CxA portfolio",
             "CxG",
             "CxA",
             "CxT",
@@ -767,16 +985,18 @@ def main() -> None:
     with tabs[3]:
         promoted_cxg_portfolio_tab()
     with tabs[4]:
-        cxg_tab(resources)
+        provisionally_promoted_cxa_portfolio_tab()
     with tabs[5]:
-        cxa_tab(resources)
+        cxg_tab(resources)
     with tabs[6]:
-        cxt_tab(resources)
+        cxa_tab(resources)
     with tabs[7]:
-        action_explorer_tab(resources)
+        cxt_tab(resources)
     with tabs[8]:
-        diagnostics_tab(resources)
+        action_explorer_tab(resources)
     with tabs[9]:
+        diagnostics_tab(resources)
+    with tabs[10]:
         methodology_tab()
 
 
