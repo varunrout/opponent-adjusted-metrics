@@ -553,6 +553,12 @@ only; CxA+ and Advanced CxA remain later work.
 Command:
 
 ```bash
+make run-cxa-end-to-end
+make prepare-cxa-diagnostic-contract
+make run-cxa-diagnostic-training
+make validate-cxa-diagnostic
+make generate-cxa-diagnostic-results
+make analyze-cxa-feature-impact
 make build-cxa-portfolio-summary
 ```
 
@@ -704,13 +710,20 @@ The persistence layer is idempotent by model family/version. Re-running a model 
 The Streamlit dashboard v1 reads generated outputs through `configs/dashboard/v1_dashboard_contract.json`.
 The active entry point is `app/streamlit_app.py`; `dashboard/` is retained as a
 legacy/experimental path. The promoted CxG portfolio tab consumes the static
-portfolio pack under `outputs/portfolio/cxg/`.
+portfolio pack under `outputs/portfolio/cxg/`; the provisionally promoted CxA
+portfolio tab consumes the name-enriched static pack under
+`outputs/portfolio/cxa/`.
 
 ```bash
 make dashboard
 ```
 
-The dashboard is a demo/portfolio shell, not a production deployment. It starts even when generated outputs are missing and shows availability status plus empty tables for missing files. Regenerate CxG, CxA, CxT, and the CxG portfolio summary outputs locally to populate the analysis pages.
+The dashboard is a demo/portfolio shell, not a production deployment. It starts
+even when generated outputs are missing and shows availability status plus empty
+tables for missing files. CxG is promoted and portfolio/dashboard-ready. CxA is
+provisionally promoted and portfolio/dashboard-ready with the in-sample baseline
+caveat kept visible. CxT analysis is available, but modelling/promotion remains
+pending; CxA+ and Advanced CxA are future extensions.
 
 ## What Should Be Committed
 
