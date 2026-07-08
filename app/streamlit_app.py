@@ -130,6 +130,7 @@ make dashboard
 CXA_PORTFOLIO_REGENERATION_STEPS = """CxA portfolio outputs are missing. The static CxA portfolio pack depends on the diagnostic pipeline, validation, governed results, and feature-impact artifacts. Run:
 
 ```bash
+make build-cxa-action-features
 make run-cxa-end-to-end
 make prepare-cxa-diagnostic-contract
 make run-cxa-diagnostic-training

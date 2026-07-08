@@ -69,6 +69,7 @@ Portfolio entry points:
 Regenerate the static CxA portfolio locally:
 
 ```bash
+make build-cxa-action-features
 make run-cxa-end-to-end
 make prepare-cxa-diagnostic-contract
 make run-cxa-diagnostic-training

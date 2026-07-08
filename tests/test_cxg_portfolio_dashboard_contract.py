@@ -179,6 +179,7 @@ def test_readme_links_cxa_portfolio_outputs_and_commands():
     assert "outputs/portfolio/cxa/headline_metrics.json" in readme
     assert "outputs/portfolio/cxa/charts/" in readme
     for command in (
+        "make build-cxa-action-features",
         "make run-cxa-end-to-end",
         "make prepare-cxa-diagnostic-contract",
         "make run-cxa-diagnostic-training",
@@ -239,6 +240,7 @@ def test_provisionally_promoted_cxa_dashboard_is_static_display_only():
     app_source = APP_PATH.read_text(encoding="utf-8")
 
     for command in (
+        "make build-cxa-action-features",
         "make run-cxa-end-to-end",
         "make prepare-cxa-diagnostic-contract",
         "make run-cxa-diagnostic-training",

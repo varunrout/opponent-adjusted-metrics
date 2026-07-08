@@ -553,6 +553,7 @@ only; CxA+ and Advanced CxA remain later work.
 Command:
 
 ```bash
+make build-cxa-action-features
 make run-cxa-end-to-end
 make prepare-cxa-diagnostic-contract
 make run-cxa-diagnostic-training
