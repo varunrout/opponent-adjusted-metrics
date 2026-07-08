@@ -592,6 +592,44 @@ for traceability while adding `player_name` and/or `team_name` display columns
 where available. If names are unavailable, the portfolio layer writes
 deterministic labels such as `Unknown player 776` or `Unknown team 44`.
 
+### CxA+ Possession-Window Design Analysis
+
+Command:
+
+```bash
+make analyze-cxa-plus-design
+```
+
+This analysis/design layer audits the next CxA+ modelling step without
+training, validating, regenerating current CxA outputs, or changing the
+dashboard. It evaluates whether action rows can be ordered inside possessions,
+builds downstream shot diagnostics for next-action and rest-of-possession
+windows, compares candidate CxA+ targets, and records leakage risks for future
+target-builder work.
+
+By default, required-field availability is audited on the full action feature
+table, while possession-window diagnostics use a deterministic possession-prefix
+sample to keep the design command lightweight. Pass `--max-window-actions 0` to
+the script for a full-row window audit when needed.
+
+Generated files:
+
+```text
+outputs/analysis/cxa_plus/design/cxa_plus_design_report.md
+outputs/analysis/cxa_plus/design/cxa_plus_design_summary.json
+outputs/analysis/cxa_plus/design/possession_window_coverage.csv
+outputs/analysis/cxa_plus/design/downstream_shot_window_rates.csv
+outputs/analysis/cxa_plus/design/candidate_targets.csv
+outputs/analysis/cxa_plus/design/leakage_risk_register.csv
+outputs/analysis/cxa_plus/design/required_fields_audit.csv
+outputs/analysis/cxa_plus/design/sequence_window_examples.csv
+```
+
+The report distinguishes diagnostic CxA (`shot_created` probability), CxA+
+(downstream possession-window chance creation), and Advanced CxA (future
+state-value delta). It recommends the first safe CxA+ modelling path before any
+model is trained.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
