@@ -33,15 +33,50 @@ st.set_page_config(
 V1_IMPLEMENTED = [
     "CxG",
     "CxA",
-    "baseline CxT",
+    "CxT analysis artifacts",
     "dashboard shell",
     "aggregate/report views",
 ]
 V1_DEFERRED = [
+    "CxT modelling and promotion",
     "CxT+",
     "Contextual CxT",
     "Advanced CxT",
+    "CxA+",
+    "Advanced CxA",
     "OD-CxT / OD-CxT+",
+]
+PROJECT_STATUS = [
+    {
+        "metric": "CxG",
+        "status": "promoted",
+        "dashboard": "portfolio/dashboard-ready",
+        "next_step": "Monitor calibration and use the promoted portfolio outputs.",
+    },
+    {
+        "metric": "CxA",
+        "status": "provisionally promoted",
+        "dashboard": "portfolio/dashboard-ready",
+        "next_step": "Keep the in-sample baseline caveat visible until a fair OOF baseline exists.",
+    },
+    {
+        "metric": "CxT",
+        "status": "analysis completed",
+        "dashboard": "modelling pending",
+        "next_step": "Complete modelling before portfolio promotion.",
+    },
+    {
+        "metric": "CxA+",
+        "status": "pending",
+        "dashboard": "not implemented",
+        "next_step": "Future extension after the current CxA probability layer.",
+    },
+    {
+        "metric": "Advanced CxA",
+        "status": "pending",
+        "dashboard": "not implemented",
+        "next_step": "Future extension; not a current dashboard claim.",
+    },
 ]
 EXAMPLE_INTERPRETATIONS = [
     "A high CxT player repeatedly moves the ball into more dangerous areas.",
@@ -95,6 +130,7 @@ make dashboard
 CXA_PORTFOLIO_REGENERATION_STEPS = """CxA portfolio outputs are missing. The static CxA portfolio pack depends on the diagnostic pipeline, validation, governed results, and feature-impact artifacts. Run:
 
 ```bash
+make build-cxa-action-features
 make run-cxa-end-to-end
 make prepare-cxa-diagnostic-contract
 make run-cxa-diagnostic-training
@@ -376,6 +412,22 @@ def render_v1_scope_banner() -> None:
             st.markdown(f"- {item}")
 
 
+def render_project_status_navigation() -> None:
+    """Show the portfolio-ready status of each metric family."""
+
+    st.subheader("Current Project Status")
+    st.dataframe(pd.DataFrame(PROJECT_STATUS), use_container_width=True, hide_index=True)
+    render_insight_card(
+        "Portfolio navigation",
+        (
+            "Start with Promoted CxG portfolio, then Provisionally Promoted CxA "
+            "portfolio. CxT remains an analysis/modelling workstream, while CxA+ "
+            "and Advanced CxA are future extensions."
+        ),
+        status="Navigation",
+    )
+
+
 def render_reviewer_walkthrough() -> None:
     """Give reviewers a suggested first path through the dashboard."""
 
@@ -440,6 +492,7 @@ def overview_tab(
         "explains ball progression into more threatening pitch zones."
     )
     render_v1_scope_banner()
+    render_project_status_navigation()
     render_reviewer_walkthrough()
     _availability_card(resources)
 
@@ -932,6 +985,7 @@ def methodology_tab() -> None:
         "This project is a demo and portfolio surface, not a production deployment claim.",
     )
     render_v1_scope_banner()
+    render_project_status_navigation()
     st.markdown(
         """
         **CxG** asks how good a shot was.

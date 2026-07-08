@@ -2,9 +2,28 @@
 
 Portfolio/demo release for contextual football analytics built on StatsBomb-style event data.
 
-**v1.0.0 status:** CxG, CxA, baseline CxT, aggregate reports, interpretation reports, DB persistence, and Streamlit dashboard v1 are implemented. Generated outputs and the local SQLite database are reproducible locally and intentionally ignored by Git.
+**v1.0.0 status:** CxG and CxA portfolio layers are dashboard-ready, CxT analysis is available with modelling/promotion pending, and Streamlit dashboard v1 is implemented. Generated outputs and the local SQLite database are reproducible locally and intentionally ignored by Git.
 
 This is not a production deployment. It is a reviewable v1 analytics product surface that shows how raw events become feature tables, model outputs, reports, database rows, and football insight.
+
+## Current Project Status
+
+| Metric layer | Current status | Portfolio/dashboard status | Notes |
+|---|---|---|---|
+| CxG | Promoted | Portfolio/dashboard-ready | Fair baseline excludes StatsBomb xG leakage; diagnostic CxG is the governed shot-quality model. |
+| CxA | Provisionally promoted | Portfolio/dashboard-ready | Baseline comparator is reference-only/in-sample, so the promotion caveat stays visible. |
+| CxT | Analysis completed | Modelling pending | Pre-model analysis exists; Baseline CxT modelling/promotion and portfolio outputs are not complete yet. |
+| CxA+ | Pending | Not implemented | Future extension after the current CxA shot-creation probability layer. |
+| Advanced CxA | Pending | Not implemented | Future extension; not a current dashboard claim. |
+
+## What This Project Demonstrates
+
+- Governed football metric development from raw events to portfolio outputs.
+- Leakage-aware feature contracts and reference-only field separation.
+- Baseline vs diagnostic model comparison with explicit validation caveats.
+- Model promotion gates that can promote, provisionally promote, block, or defer.
+- Portfolio-ready metric reporting with player/team names and static charts.
+- Streamlit dashboard presentation over generated, reproducible local artifacts.
 
 ## Promoted Diagnostic CxG Portfolio
 
@@ -50,6 +69,13 @@ Portfolio entry points:
 Regenerate the static CxA portfolio locally:
 
 ```bash
+make build-cxa-action-features
+make run-cxa-end-to-end
+make prepare-cxa-diagnostic-contract
+make run-cxa-diagnostic-training
+make validate-cxa-diagnostic
+make generate-cxa-diagnostic-results
+make analyze-cxa-feature-impact
 make build-cxa-portfolio-summary
 make dashboard
 ```
@@ -57,10 +83,10 @@ make dashboard
 ## Core Metrics
 
 - **CxG:** contextual shot quality. It answers: how good was the shot?
-- **CxA:** baseline chance-creation action value. It answers: which actions moved possessions toward chances?
-- **Baseline CxT:** threat added by moving the ball between pitch zones. It answers: who progresses the ball into more dangerous areas?
+- **CxA:** provisionally promoted chance-creation action value. It answers: which actions moved possessions toward chances?
+- **CxT:** current pre-model ball progression analysis. It answers: where is progression signal and coverage strong enough for modelling?
 
-Deferred until after v1: CxT+, Contextual CxT, Advanced CxT, OD-CxT, OD-CxT+, production deployment, live data ingestion, and tracking-data workflows.
+Deferred until after the current portfolio layer: CxT modelling/promotion, CxT+, Contextual CxT, Advanced CxT, CxA+, Advanced CxA, OD-CxT, OD-CxT+, production deployment, live data ingestion, and tracking-data workflows.
 
 ## 5-10 Minute Reviewer Quickstart
 

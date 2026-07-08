@@ -14,6 +14,7 @@ from app.streamlit_app import (
     CXA_PORTFOLIO_PLAYERS_PATH,
     CXA_PORTFOLIO_SEQUENCES_PATH,
     CXA_PORTFOLIO_TEAMS_PATH,
+    PROJECT_STATUS,
     load_portfolio_scorecard,
     load_portfolio_table,
     load_text_file,
@@ -107,7 +108,32 @@ def test_readme_links_promoted_cxg_portfolio_outputs_and_commands():
     assert "outputs/portfolio/cxg/cxg_portfolio_summary.md" in readme
     assert "outputs/portfolio/cxg/cxg_model_scorecard.json" in readme
     assert "outputs/portfolio/cxg/charts/" in readme
-    assert "make build-cxg-portfolio-summary" in readme
+    for command in (
+        "make build-features",
+        "make run-cxg-end-to-end",
+        "make run-cxg-diagnostic-training",
+        "make validate-cxg-diagnostic",
+        "make generate-cxg-diagnostic-results",
+        "make analyze-cxg-feature-impact",
+        "make build-cxg-portfolio-summary",
+    ):
+        assert command in readme
+
+
+def test_readme_documents_current_project_status_and_demonstration_scope():
+    readme = README_PATH.read_text(encoding="utf-8")
+
+    assert "## Current Project Status" in readme
+    assert "| CxG | Promoted | Portfolio/dashboard-ready |" in readme
+    assert "| CxA | Provisionally promoted | Portfolio/dashboard-ready |" in readme
+    assert "| CxT | Analysis completed | Modelling pending |" in readme
+    assert "| CxA+ | Pending | Not implemented |" in readme
+    assert "| Advanced CxA | Pending | Not implemented |" in readme
+    assert "## What This Project Demonstrates" in readme
+    assert "Leakage-aware feature contracts" in readme
+    assert "Model promotion gates" in readme
+    assert "StatsBomb xG leakage" in readme
+    assert "baseline comparison is reference-only/in-sample" in readme
 
 
 def test_dashboard_contract_declares_provisionally_promoted_cxa_portfolio_outputs():
@@ -152,7 +178,17 @@ def test_readme_links_cxa_portfolio_outputs_and_commands():
     assert "outputs/portfolio/cxa/portfolio_summary.md" in readme
     assert "outputs/portfolio/cxa/headline_metrics.json" in readme
     assert "outputs/portfolio/cxa/charts/" in readme
-    assert "make build-cxa-portfolio-summary" in readme
+    for command in (
+        "make build-cxa-action-features",
+        "make run-cxa-end-to-end",
+        "make prepare-cxa-diagnostic-contract",
+        "make run-cxa-diagnostic-training",
+        "make validate-cxa-diagnostic",
+        "make generate-cxa-diagnostic-results",
+        "make analyze-cxa-feature-impact",
+        "make build-cxa-portfolio-summary",
+    ):
+        assert command in readme
 
 
 def test_active_dashboard_command_and_tab_are_documented():
@@ -167,6 +203,21 @@ def test_active_dashboard_command_and_tab_are_documented():
     assert "Provisionally Promoted CxA portfolio" in app_source
     assert "for the governed model stories" in app_source
     assert "dashboard/app.py" not in readme
+
+
+def test_dashboard_project_status_navigation_declares_metric_readiness():
+    statuses = {row["metric"]: row for row in PROJECT_STATUS}
+    app_source = APP_PATH.read_text(encoding="utf-8")
+
+    assert statuses["CxG"]["status"] == "promoted"
+    assert statuses["CxG"]["dashboard"] == "portfolio/dashboard-ready"
+    assert statuses["CxA"]["status"] == "provisionally promoted"
+    assert statuses["CxA"]["dashboard"] == "portfolio/dashboard-ready"
+    assert statuses["CxT"]["status"] == "analysis completed"
+    assert statuses["CxT"]["dashboard"] == "modelling pending"
+    assert statuses["CxA+"]["status"] == "pending"
+    assert statuses["Advanced CxA"]["status"] == "pending"
+    assert "render_project_status_navigation()" in app_source
 
 
 def test_promoted_cxg_missing_output_guidance_lists_full_generation_chain():
@@ -189,6 +240,7 @@ def test_provisionally_promoted_cxa_dashboard_is_static_display_only():
     app_source = APP_PATH.read_text(encoding="utf-8")
 
     for command in (
+        "make build-cxa-action-features",
         "make run-cxa-end-to-end",
         "make prepare-cxa-diagnostic-contract",
         "make run-cxa-diagnostic-training",
