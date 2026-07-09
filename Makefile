@@ -4,7 +4,7 @@
 	normalize-events build-possessions ingestion-report data-smoke \
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
-	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train validate-cxa-diagnostic cxa-diagnostic-validate generate-cxa-diagnostic-results cxa-diagnostic-results analyze-cxa-feature-impact cxa-feature-impact build-cxa-portfolio-summary cxa-portfolio-summary analyze-cxa-plus-design \
+	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train validate-cxa-diagnostic cxa-diagnostic-validate generate-cxa-diagnostic-results cxa-diagnostic-results analyze-cxa-feature-impact cxa-feature-impact build-cxa-portfolio-summary cxa-portfolio-summary analyze-cxa-plus-design build-cxa-plus-targets \
 	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results analyze-cxg-feature-impact build-cxg-portfolio-summary check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
@@ -129,6 +129,9 @@ cxa-portfolio-summary: build-cxa-portfolio-summary  ## Alias for static CxA port
 
 analyze-cxa-plus-design:  ## Design and audit CxA+ possession-window attribution targets
 	poetry run python scripts/analyze_cxa_plus_design.py
+
+build-cxa-plus-targets:  ## Build governed CxA+ possession-window target dataset
+	poetry run python scripts/build_cxa_plus_targets.py
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline

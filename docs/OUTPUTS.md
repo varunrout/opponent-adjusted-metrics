@@ -630,6 +630,37 @@ The report distinguishes diagnostic CxA (`shot_created` probability), CxA+
 state-value delta). It recommends the first safe CxA+ modelling path before any
 model is trained.
 
+### CxA+ Possession-Window Target Dataset
+
+Command:
+
+```bash
+make build-cxa-plus-targets
+```
+
+This target-construction layer builds the first governed CxA+ dataset without
+training a model, modifying the existing CxA action feature store, changing
+current CxA results, or adding dashboard/model scoring logic. The primary target
+is `shot_within_next_5_actions`: whether a future action within the next five
+actions in the same match and possession has `shot_created = 1`.
+
+Generated files:
+
+```text
+feature_store/cxa_plus/cxa_plus_action_targets.parquet
+feature_store/cxa_plus/cxa_plus_target_summary.json
+feature_store/cxa_plus/cxa_plus_target_quality.csv
+feature_store/cxa_plus/cxa_plus_leakage_exclusions.csv
+feature_store/cxa_plus/cxa_plus_target_report.md
+```
+
+The target dataset includes action identifiers, available action context, the
+primary next-5 target, supporting next-1/next-3/rest-of-possession targets,
+future created-shot value diagnostics, and reference-only current diagnostic CxA
+fields. Leakage exclusions explicitly mark target, reference, model-output,
+future-window, downstream-value, outcome, and result columns as unavailable for
+future CxA+ model feature matrices.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
