@@ -173,60 +173,164 @@ def _output_columns(frame: pd.DataFrame) -> list[str]:
 def _compute_group_targets(group: pd.DataFrame) -> dict[str, np.ndarray]:
     shot = pd.to_numeric(group.get("shot_created", 0), errors="coerce").fillna(0).gt(0).to_numpy()
     created_values = pd.to_numeric(group.get("created_shot_cxg", 0.0), errors="coerce").to_numpy()
-    shot_values = np.where(shot & ~np.isnan(created_values), created_values, 0.0)
+    shot_ids = (
+        group["created_shot_id"].to_numpy(dtype=object)
+        if "created_shot_id" in group.columns
+        else np.array([None] * len(group), dtype=object)
+    )
+    n_rows = len(group)
+    next_1 = np.zeros(n_rows, dtype=int)
+    next_3 = np.zeros(n_rows, dtype=int)
+    next_5 = np.zeros(n_rows, dtype=int)
+    rest = np.zeros(n_rows, dtype=int)
+    max_next_5 = np.zeros(n_rows, dtype=float)
+    sum_rest = np.zeros(n_rows, dtype=float)
+    discounted = np.zeros(n_rows, dtype=float)
+
+    for current_position in range(n_rows):
+        future_1 = _dedup_future_shot_positions(
+            current_position,
+            range(current_position + 1, min(n_rows, current_position + 2)),
+            shot,
+            shot_ids,
+        )
+        future_3 = _dedup_future_shot_positions(
+            current_position,
+            range(current_position + 1, min(n_rows, current_position + 4)),
+            shot,
+            shot_ids,
+        )
+        future_5 = _dedup_future_shot_positions(
+            current_position,
+            range(current_position + 1, min(n_rows, current_position + 6)),
+            shot,
+            shot_ids,
+        )
+        next_1[current_position] = int(bool(future_1))
+        next_3[current_position] = int(bool(future_3))
+        next_5[current_position] = int(bool(future_5))
+        max_next_5[current_position] = _max_value(created_values, future_5)
+
+    rest, sum_rest, discounted = _rest_of_possession_values(shot, shot_ids, created_values)
     return {
-        "shot_within_next_1_action": _future_any(shot, 1).astype(int),
-        "shot_within_next_3_actions": _future_any(shot, 3).astype(int),
-        "shot_within_next_5_actions": _future_any(shot, 5).astype(int),
-        "shot_later_in_possession": _future_rest_any(shot).astype(int),
-        "max_created_shot_cxg_within_next_5_actions": _future_max(shot_values, 5),
-        "sum_created_shot_cxg_rest_of_possession": _future_rest_sum(shot_values),
-        "discounted_downstream_shot_value": _future_discounted_sum(shot, created_values),
+        "shot_within_next_1_action": next_1,
+        "shot_within_next_3_actions": next_3,
+        "shot_within_next_5_actions": next_5,
+        "shot_later_in_possession": rest,
+        "max_created_shot_cxg_within_next_5_actions": max_next_5,
+        "sum_created_shot_cxg_rest_of_possession": sum_rest,
+        "discounted_downstream_shot_value": discounted,
     }
 
 
-def _future_any(values: np.ndarray, window: int) -> np.ndarray:
-    result = np.zeros(len(values), dtype=bool)
-    for offset in range(1, window + 1):
-        if offset >= len(values):
-            break
-        result[:-offset] |= values[offset:]
-    return result
+def _rest_of_possession_values(
+    shot: np.ndarray, shot_ids: np.ndarray, values: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    n_rows = len(shot)
+    rest = np.zeros(n_rows, dtype=int)
+    sum_rest = np.zeros(n_rows, dtype=float)
+    discounted = np.zeros(n_rows, dtype=float)
+    future_by_id: dict[str, tuple[int, float]] = {}
+    future_missing_id: list[tuple[int, float]] = []
+    future_id_value_sum = 0.0
+    future_missing_value_sum = 0.0
+
+    for current_position in range(n_rows - 1, -1, -1):
+        current_shot_id = shot_ids[current_position] if current_position < len(shot_ids) else None
+        excluded_key = (
+            _shot_id_key(current_shot_id)
+            if bool(shot[current_position]) and _has_shot_id(current_shot_id)
+            else None
+        )
+        excluded = future_by_id.get(excluded_key) if excluded_key is not None else None
+        future_count = len(future_by_id) + len(future_missing_id) - (1 if excluded else 0)
+        rest[current_position] = int(future_count > 0)
+        excluded_value = _safe_value(excluded[1]) if excluded else 0.0
+        sum_rest[current_position] = future_id_value_sum + future_missing_value_sum - excluded_value
+        discounted[current_position] = _discounted_from_future_state(
+            current_position,
+            future_by_id,
+            future_missing_id,
+            excluded_key,
+        )
+
+        if shot[current_position]:
+            current_value = values[current_position]
+            if _has_shot_id(current_shot_id):
+                shot_key = _shot_id_key(current_shot_id)
+                previous = future_by_id.get(shot_key)
+                if previous is not None:
+                    future_id_value_sum -= _safe_value(previous[1])
+                future_by_id[shot_key] = (current_position, current_value)
+                future_id_value_sum += _safe_value(current_value)
+            else:
+                future_missing_id.append((current_position, current_value))
+                future_missing_value_sum += _safe_value(current_value)
+    return rest, sum_rest, discounted
 
 
-def _future_rest_any(values: np.ndarray) -> np.ndarray:
-    if len(values) == 0:
-        return values.astype(bool)
-    future_counts = np.cumsum(values[::-1])[::-1] - values.astype(int)
-    return future_counts > 0
-
-
-def _future_max(values: np.ndarray, window: int) -> np.ndarray:
-    result = np.zeros(len(values), dtype=float)
-    for offset in range(1, window + 1):
-        if offset >= len(values):
-            break
-        result[:-offset] = np.maximum(result[:-offset], values[offset:])
-    return result
-
-
-def _future_rest_sum(values: np.ndarray) -> np.ndarray:
-    if len(values) == 0:
-        return values.astype(float)
-    return np.cumsum(values[::-1])[::-1] - values
-
-
-def _future_discounted_sum(shot: np.ndarray, values: np.ndarray) -> np.ndarray:
-    result = np.zeros(len(values), dtype=float)
-    shot_positions = np.flatnonzero(shot)
-    for shot_position in shot_positions:
-        value = values[shot_position]
-        if pd.isna(value):
+def _discounted_from_future_state(
+    current_position: int,
+    future_by_id: dict[str, tuple[int, float]],
+    future_missing_id: list[tuple[int, float]],
+    excluded_key: str | None,
+) -> float:
+    total = 0.0
+    for shot_key, (future_position, value) in future_by_id.items():
+        if shot_key == excluded_key:
             continue
-        previous_positions = np.arange(shot_position)
-        if len(previous_positions):
-            result[previous_positions] += float(value) / (shot_position - previous_positions)
-    return result
+        total += _safe_value(value) / (future_position - current_position)
+    for future_position, value in future_missing_id:
+        total += _safe_value(value) / (future_position - current_position)
+    return float(total)
+
+
+def _safe_value(value: Any) -> float:
+    return 0.0 if pd.isna(value) else float(value)
+
+
+def _dedup_future_shot_positions(
+    current_position: int,
+    candidate_positions: range,
+    shot: np.ndarray,
+    shot_ids: np.ndarray,
+) -> list[int]:
+    current_shot_id = shot_ids[current_position] if current_position < len(shot_ids) else None
+    exclude_current_shot_id = bool(shot[current_position]) and _has_shot_id(current_shot_id)
+    seen_shot_ids: set[str] = set()
+    selected: list[int] = []
+    for future_position in candidate_positions:
+        if not shot[future_position]:
+            continue
+        future_shot_id = shot_ids[future_position] if future_position < len(shot_ids) else None
+        if (
+            exclude_current_shot_id
+            and _has_shot_id(future_shot_id)
+            and _shot_id_key(future_shot_id) == _shot_id_key(current_shot_id)
+        ):
+            continue
+        if _has_shot_id(future_shot_id):
+            shot_key = _shot_id_key(future_shot_id)
+            if shot_key in seen_shot_ids:
+                continue
+            seen_shot_ids.add(shot_key)
+        selected.append(future_position)
+    return selected
+
+
+def _has_shot_id(value: Any) -> bool:
+    return not pd.isna(value) and str(value) != ""
+
+
+def _shot_id_key(value: Any) -> str:
+    return str(value)
+
+
+def _max_value(values: np.ndarray, positions: list[int]) -> float:
+    valid_values = [
+        float(values[position]) for position in positions if not pd.isna(values[position])
+    ]
+    return max(valid_values) if valid_values else 0.0
 
 
 def compute_quality_checks(
@@ -390,10 +494,26 @@ def _has_future_shot_within(targets: pd.DataFrame, *, window: int) -> pd.Series:
     result = pd.Series(False, index=targets.index)
     if "shot_created" not in targets.columns:
         return result
-    working = _sorted_actions(targets)
+    indexed_targets = targets.copy()
+    indexed_targets["__original_index"] = targets.index
+    working = _sorted_actions(indexed_targets)
     for _, group in working.groupby(["match_id", "possession"], sort=False, dropna=False):
         shot = pd.to_numeric(group["shot_created"], errors="coerce").fillna(0).gt(0).to_numpy()
-        result.loc[group.index] = _future_any(shot, window)
+        shot_ids = (
+            group["created_shot_id"].to_numpy(dtype=object)
+            if "created_shot_id" in group.columns
+            else np.array([None] * len(group), dtype=object)
+        )
+        group_result = np.zeros(len(group), dtype=bool)
+        for current_position in range(len(group)):
+            future_positions = _dedup_future_shot_positions(
+                current_position,
+                range(current_position + 1, min(len(group), current_position + window + 1)),
+                shot,
+                shot_ids,
+            )
+            group_result[current_position] = bool(future_positions)
+        result.loc[group["__original_index"].to_numpy()] = group_result
     return result.reindex(targets.index).fillna(False)
 
 

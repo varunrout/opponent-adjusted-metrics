@@ -10,6 +10,7 @@ from scripts.build_cxa_plus_targets import (
     build_cxa_plus_target_dataset,
     build_cxa_plus_targets,
     build_leakage_exclusions,
+    compute_quality_checks,
     validate_required_columns,
 )
 
@@ -195,6 +196,177 @@ def test_target_does_not_cross_match_boundaries():
 
     assert by_id.loc["b1", "match_id"] != by_id.loc["c1", "match_id"]
     assert by_id.loc["b1", PRIMARY_TARGET] == 0
+
+
+def test_same_created_shot_id_is_not_counted_as_downstream_for_current_shot():
+    frame = pd.DataFrame(
+        [
+            {
+                "action_id": "a1",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 1,
+                "team_id": 100,
+                "player_id": 1,
+                "shot_created": 1,
+                "created_shot_id": "shot-1",
+                "created_shot_cxg": 0.25,
+            },
+            {
+                "action_id": "a2",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 2,
+                "team_id": 100,
+                "player_id": 2,
+                "shot_created": 1,
+                "created_shot_id": "shot-1",
+                "created_shot_cxg": 0.25,
+            },
+            {
+                "action_id": "a3",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 3,
+                "team_id": 100,
+                "player_id": 3,
+                "shot_created": 0,
+                "created_shot_id": None,
+                "created_shot_cxg": 0.0,
+            },
+        ]
+    )
+
+    targets = build_cxa_plus_targets(frame).set_index("action_id")
+
+    assert targets.loc["a1", "shot_within_next_1_action"] == 0
+    assert targets.loc["a1", PRIMARY_TARGET] == 0
+    assert targets.loc["a1", "shot_later_in_possession"] == 0
+    assert targets.loc["a1", "max_created_shot_cxg_within_next_5_actions"] == 0.0
+    assert targets.loc["a1", "sum_created_shot_cxg_rest_of_possession"] == 0.0
+    assert targets.loc["a1", "discounted_downstream_shot_value"] == 0.0
+
+
+def test_value_targets_deduplicate_repeated_future_created_shot_id():
+    frame = pd.DataFrame(
+        [
+            {
+                "action_id": "a1",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 1,
+                "team_id": 100,
+                "player_id": 1,
+                "shot_created": 0,
+                "created_shot_id": None,
+                "created_shot_cxg": 0.0,
+            },
+            {
+                "action_id": "a2",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 2,
+                "team_id": 100,
+                "player_id": 2,
+                "shot_created": 1,
+                "created_shot_id": "shot-1",
+                "created_shot_cxg": 0.40,
+            },
+            {
+                "action_id": "a3",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 3,
+                "team_id": 100,
+                "player_id": 3,
+                "shot_created": 1,
+                "created_shot_id": "shot-1",
+                "created_shot_cxg": 0.40,
+            },
+            {
+                "action_id": "a4",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 4,
+                "team_id": 100,
+                "player_id": 4,
+                "shot_created": 1,
+                "created_shot_id": "shot-2",
+                "created_shot_cxg": 0.10,
+            },
+        ]
+    )
+
+    targets = build_cxa_plus_targets(frame).set_index("action_id")
+
+    assert targets.loc["a1", PRIMARY_TARGET] == 1
+    assert targets.loc["a1", "max_created_shot_cxg_within_next_5_actions"] == 0.40
+    assert targets.loc["a1", "sum_created_shot_cxg_rest_of_possession"] == pytest.approx(0.50)
+    assert targets.loc["a1", "discounted_downstream_shot_value"] == pytest.approx(0.40 + (0.10 / 3))
+
+
+def test_missing_future_created_shot_ids_are_not_collapsed_together():
+    frame = pd.DataFrame(
+        [
+            {
+                "action_id": "a1",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 1,
+                "shot_created": 0,
+                "created_shot_id": None,
+                "created_shot_cxg": 0.0,
+            },
+            {
+                "action_id": "a2",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 2,
+                "shot_created": 1,
+                "created_shot_id": None,
+                "created_shot_cxg": 0.20,
+            },
+            {
+                "action_id": "a3",
+                "match_id": 1,
+                "possession": 10,
+                "sequence_id": "s1",
+                "action_position": 3,
+                "shot_created": 1,
+                "created_shot_id": None,
+                "created_shot_cxg": 0.30,
+            },
+        ]
+    )
+
+    targets = build_cxa_plus_targets(frame).set_index("action_id")
+
+    assert targets.loc["a1", "sum_created_shot_cxg_rest_of_possession"] == pytest.approx(0.50)
+
+
+def test_quality_check_catches_same_created_shot_id_current_label_leakage():
+    bad_targets = build_cxa_plus_targets(_action_features())
+    bad_targets = bad_targets.loc[bad_targets["action_id"].isin(["a3", "a4"])].copy()
+    bad_targets.loc[bad_targets["action_id"] == "a4", "shot_created"] = 1
+    bad_targets.loc[bad_targets["action_id"] == "a4", "created_shot_id"] = "shot-1"
+    bad_targets.loc[bad_targets["action_id"] == "a3", PRIMARY_TARGET] = 1
+
+    quality = compute_quality_checks(bad_targets, missing_order_fields=[])
+    current_leakage = quality.loc[
+        quality["check_name"] == "no_current_action_label_leakage_check"
+    ].iloc[0]
+
+    assert current_leakage["status"] == "failed"
+    assert int(current_leakage["value"]) == 1
 
 
 def test_deterministic_ordering_is_used():
