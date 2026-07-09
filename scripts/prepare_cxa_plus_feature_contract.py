@@ -64,6 +64,7 @@ EXPLICIT_FORBIDDEN_COLUMNS = {
 }
 LEAKAGE_TOKENS = ("future", "downstream", "outcome", "result", "rest_of_possession")
 MODEL_OUTPUT_TOKENS = ("predicted", "model_", "probability", "score")
+CREATED_SHOT_PREFIX = "created_shot_"
 
 
 @dataclass(frozen=True)
@@ -143,6 +144,15 @@ def classify_column(column: str, series: pd.Series) -> ColumnDecision:
             "reference_only",
             "reference_only_columns",
             "Reference-only current-label field excluded from model features.",
+            "high",
+            True,
+        )
+    if name.startswith(CREATED_SHOT_PREFIX):
+        return ColumnDecision(
+            column,
+            "reference_only",
+            "reference_only_columns",
+            "Created-shot reference field excluded from model features.",
             "high",
             True,
         )
@@ -349,7 +359,7 @@ def _report_markdown(
             "",
             "## Primary target definition",
             "- Primary target: `shot_within_next_5_actions`.",
-            "- Target means a same-team, same-possession future shot occurs within the next five actions.",
+            "- Target means a future shot-created action occurs within the next five actions in the same match and possession. Same-team consistency is audited separately and is not enforced by this first governed target.",
             f"- Split/group column for first model: `{contract['split_group_column']}`.",
             "",
             "## Allowed feature families",

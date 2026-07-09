@@ -32,6 +32,9 @@ def _build_targets_frame() -> pd.DataFrame:
             "shot_created": [0, 1, 0, 0],
             "created_shot_id": ["", "shot-9", "", ""],
             "created_shot_cxg": [0.0, 0.32, 0.0, 0.0],
+            "created_shot_distance": [0.0, 11.2, 0.0, 0.0],
+            "created_shot_angle": [0.0, 0.7, 0.0, 0.0],
+            "created_shot_event_id": ["", "event-9", "", ""],
             "shot_within_next_1_action": [0, 1, 0, 0],
             "shot_within_next_3_actions": [1, 1, 0, 1],
             "shot_within_next_5_actions": [1, 1, 0, 1],
@@ -80,6 +83,9 @@ def test_required_leakage_and_reference_columns_excluded(tmp_path: Path) -> None
     assert "shot_created" in excluded
     assert "created_shot_id" in excluded
     assert "created_shot_cxg" in excluded
+    assert "created_shot_distance" in excluded
+    assert "created_shot_angle" in excluded
+    assert "created_shot_event_id" in excluded
     assert "max_created_shot_cxg_within_next_5_actions" in excluded
     assert "sum_created_shot_cxg_rest_of_possession" in excluded
     assert "discounted_downstream_shot_value" in excluded
@@ -155,3 +161,16 @@ def test_script_does_not_import_or_execute_training() -> None:
     assert ".fit(" not in source
     assert "joblib" not in source
     assert "train_" not in source
+
+
+def test_report_target_wording_does_not_claim_same_team_is_enforced(tmp_path: Path) -> None:
+    frame = _build_targets_frame()
+    input_path = tmp_path / "targets.parquet"
+    output_dir = tmp_path / "outputs"
+    frame.to_parquet(input_path, index=False)
+
+    prepare_cxa_plus_feature_contract(input_path=input_path, output_dir=output_dir)
+    report = (output_dir / "reports" / "feature_contract_report.md").read_text(encoding="utf-8")
+
+    assert "same-team consistency is audited separately and is not enforced" in report.lower()
+    assert "same-team, same-possession" not in report.lower()
