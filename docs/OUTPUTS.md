@@ -661,6 +661,36 @@ fields. Leakage exclusions explicitly mark target, reference, model-output,
 future-window, downstream-value, outcome, and result columns as unavailable for
 future CxA+ model feature matrices.
 
+### CxA+ Modelling Feature Contract (No Training)
+
+Command:
+
+```bash
+make prepare-cxa-plus-feature-contract
+```
+
+This layer prepares the first governed CxA+ modelling contract from
+`feature_store/cxa_plus/cxa_plus_action_targets.parquet` without training,
+scoring, validating, or promoting any CxA+ model. The primary target is
+`shot_within_next_5_actions`, and `match_id` is the first split/group column.
+
+Generated files:
+
+```text
+outputs/modeling/cxa_plus/diagnostic_v1/contracts/feature_contract.json
+outputs/modeling/cxa_plus/diagnostic_v1/diagnostics/resolved_features.json
+outputs/modeling/cxa_plus/diagnostic_v1/diagnostics/excluded_columns.csv
+outputs/modeling/cxa_plus/diagnostic_v1/diagnostics/feature_group_summary.csv
+outputs/modeling/cxa_plus/diagnostic_v1/reports/feature_contract_report.md
+```
+
+The contract explicitly separates eligible numeric/binary/categorical features,
+identifier columns, target columns, reference-only columns, leakage-excluded
+columns, model-output columns, and columns requiring review. Leakage guards
+exclude current/future target fields (including `shot_created`,
+`created_shot_id`, and downstream value targets) plus prediction/output-style
+columns so the first CxA+ training PR can only use safe pre-action features.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
