@@ -40,6 +40,11 @@ IDENTIFIER_COLUMNS = {
     "team_id",
     "player_id",
 }
+REFERENCE_TARGET_COLUMNS = {
+    "shot_created",
+    "created_shot_id",
+    "created_shot_cxg",
+}
 FORBIDDEN_TOKENS = (
     "within_next",
     "downstream",
@@ -125,6 +130,8 @@ def assert_feature_leakage_guard(features: list[str]) -> None:
     for feature in features:
         lower = feature.lower()
         if feature == TARGET_COLUMN:
+            forbidden.append(feature)
+        elif feature in REFERENCE_TARGET_COLUMNS:
             forbidden.append(feature)
         elif feature in IDENTIFIER_COLUMNS:
             forbidden.append(feature)

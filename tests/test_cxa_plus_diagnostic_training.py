@@ -35,6 +35,7 @@ def _matrix() -> pd.DataFrame:
                     "enters_final_third": int(position >= 4),
                     "action_type": "Pass" if position % 2 == 0 else "Carry",
                     "start_zone": "middle" if position < 4 else "final",
+                    "shot_created": positive,
                     "created_shot_cxg": 0.99,
                     "future_leak": positive,
                     "model_score": 0.8,
@@ -93,6 +94,8 @@ def test_selected_features_are_loaded_only_from_summary():
     "feature",
     [
         TARGET_COLUMN,
+        "shot_created",
+        "created_shot_id",
         "created_shot_cxg",
         "shot_within_next_3_actions",
         "discounted_downstream_value",
@@ -192,6 +195,15 @@ def test_training_uses_summary_allowlist_not_extra_dataframe_columns(tmp_path: P
 
 def test_training_fails_when_summary_allowlist_contains_forbidden_column(tmp_path: Path):
     matrix_path, summary_path = _write_inputs(tmp_path, features=["length", "created_shot_cxg"])
+
+    with pytest.raises(ValueError, match="leakage guard failed"):
+        run_training(
+            matrix_path=matrix_path, summary_path=summary_path, output_dir=tmp_path / "out"
+        )
+
+
+def test_training_fails_when_summary_allowlist_contains_shot_created(tmp_path: Path):
+    matrix_path, summary_path = _write_inputs(tmp_path, features=["length", "shot_created"])
 
     with pytest.raises(ValueError, match="leakage guard failed"):
         run_training(
