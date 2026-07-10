@@ -168,8 +168,9 @@ def _safe_feature_columns(
     *,
     contract_forbidden: set[str],
     target_columns: set[str],
-) -> list[str]:
+) -> tuple[list[str], list[str]]:
     safe_columns: list[str] = []
+    dropped_all_null_columns: list[str] = []
     for column in merged.columns:
         if column in AUDIT_COLUMNS:
             continue
@@ -183,8 +184,11 @@ def _safe_feature_columns(
             continue
         if _is_leakage_like(column):
             continue
+        if not merged[column].notna().any():
+            dropped_all_null_columns.append(column)
+            continue
         safe_columns.append(column)
-    return sorted(dict.fromkeys(safe_columns))
+    return sorted(dict.fromkeys(safe_columns)), sorted(dict.fromkeys(dropped_all_null_columns))
 
 
 def _json_safe(value: Any) -> Any:
@@ -207,6 +211,7 @@ def _quality_checks(
     matrix: pd.DataFrame,
     safe_features: list[str],
     dropped_leakage_like_columns: list[str],
+    dropped_all_null_candidate_columns: list[str],
 ) -> pd.DataFrame:
     rows = [
         {
@@ -244,6 +249,13 @@ def _quality_checks(
             "severity": "info",
             "notes": "Columns excluded by leakage/reference name guards.",
         },
+        {
+            "check_name": "dropped_all_null_candidate_column_count",
+            "value": len(dropped_all_null_candidate_columns),
+            "status": "passed",
+            "severity": "info",
+            "notes": "Safe-looking candidate columns excluded because every value is null.",
+        },
     ]
     failed_checks = [row["check_name"] for row in rows if row["status"] == "failed"]
     rows.append(
@@ -267,6 +279,7 @@ def _build_summary(
     matrix: pd.DataFrame,
     safe_features: list[str],
     dropped_leakage_like_columns: list[str],
+    dropped_all_null_candidate_columns: list[str],
     quality: pd.DataFrame,
     outputs: dict[str, Path],
 ) -> dict[str, Any]:
@@ -287,6 +300,7 @@ def _build_summary(
         "eligible_model_features": safe_features,
         "eligible_feature_count": len(safe_features),
         "dropped_leakage_like_columns": dropped_leakage_like_columns,
+        "dropped_all_null_candidate_columns": dropped_all_null_candidate_columns,
         "quality_status": "failed" if failed_checks else "passed",
         "failed_checks": failed_checks,
         "build_timestamp": datetime.now(timezone.utc).isoformat(),
@@ -314,6 +328,14 @@ def _build_report(summary: dict[str, Any], quality: pd.DataFrame) -> str:
     feature_list = "\n".join(f"- `{column}`" for column in feature_preview) or "- _None_"
     if len(summary["eligible_model_features"]) > len(feature_preview):
         feature_list += "\n- _... additional features omitted for brevity_"
+    dropped_all_null_preview = summary["dropped_all_null_candidate_columns"][:40]
+    dropped_all_null_list = (
+        "\n".join(f"- `{column}`" for column in dropped_all_null_preview)
+        if dropped_all_null_preview
+        else "- _None_"
+    )
+    if len(summary["dropped_all_null_candidate_columns"]) > len(dropped_all_null_preview):
+        dropped_all_null_list += "\n- _... additional columns omitted for brevity_"
 
     return f"""# CxA+ Diagnostic Feature Matrix Report
 
@@ -350,6 +372,12 @@ prediction/model-output style fields from eligible model features.
 ## Eligible feature preview
 
 {feature_list}
+
+## Dropped all-null candidate columns
+
+The builder excludes otherwise safe-looking columns when every value is null.
+
+{dropped_all_null_list}
 
 ## Quality checks
 
@@ -389,7 +417,7 @@ def build_cxa_plus_feature_matrix(
 
     contract_forbidden = _forbidden_feature_columns(contract)
     target_columns = set(target_join_projection.columns)
-    safe_features = _safe_feature_columns(
+    safe_features, dropped_all_null_candidate_columns = _safe_feature_columns(
         merged,
         contract_forbidden=contract_forbidden,
         target_columns=target_columns,
@@ -425,6 +453,7 @@ def build_cxa_plus_feature_matrix(
         matrix=matrix,
         safe_features=safe_features,
         dropped_leakage_like_columns=dropped_leakage_like_columns,
+        dropped_all_null_candidate_columns=dropped_all_null_candidate_columns,
     )
     summary = _build_summary(
         action_features_path=action_features_path,
@@ -434,6 +463,7 @@ def build_cxa_plus_feature_matrix(
         matrix=matrix,
         safe_features=safe_features,
         dropped_leakage_like_columns=dropped_leakage_like_columns,
+        dropped_all_null_candidate_columns=dropped_all_null_candidate_columns,
         quality=quality,
         outputs=output_paths,
     )

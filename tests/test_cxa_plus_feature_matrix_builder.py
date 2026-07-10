@@ -61,6 +61,8 @@ def _action_features_frame() -> pd.DataFrame:
                 "created_shot_cxg": 0.0,
                 "created_shot_distance": 0.0,
                 "predicted_shot_created_probability": 0.1,
+                "all_null_numeric_placeholder": None,
+                "all_null_categorical_placeholder": None,
             },
             {
                 "action_id": "a2",
@@ -107,6 +109,8 @@ def _action_features_frame() -> pd.DataFrame:
                 "created_shot_cxg": 0.3,
                 "created_shot_angle": 0.8,
                 "model_score": 0.2,
+                "all_null_numeric_placeholder": None,
+                "all_null_categorical_placeholder": None,
             },
         ]
     )
@@ -263,6 +267,38 @@ def test_richer_safe_features_are_retained_when_present(tmp_path: Path) -> None:
     }
     assert expected.issubset(set(matrix.columns))
     assert expected.issubset(set(summary["eligible_model_features"]))
+    assert "all_null_numeric_placeholder" not in summary["eligible_model_features"]
+    assert "all_null_categorical_placeholder" not in summary["eligible_model_features"]
+
+
+def test_all_null_safe_looking_columns_are_excluded_and_recorded(tmp_path: Path) -> None:
+    action_path, target_path, contract_path = _write_inputs(tmp_path)
+    output_dir = tmp_path / "outputs" / "modeling" / "cxa_plus" / "diagnostic_v1"
+
+    outputs = build_cxa_plus_feature_matrix(
+        action_features_path=action_path,
+        targets_path=target_path,
+        contract_path=contract_path,
+        output_dir=output_dir,
+    )
+
+    matrix = pd.read_parquet(outputs["feature_matrix"])
+    summary = json.loads(outputs["feature_matrix_summary"].read_text(encoding="utf-8"))
+    quality = pd.read_csv(outputs["feature_matrix_quality"])
+    report = outputs["feature_matrix_report"].read_text(encoding="utf-8").lower()
+
+    assert "all_null_numeric_placeholder" not in matrix.columns
+    assert "all_null_categorical_placeholder" not in matrix.columns
+    assert "all_null_numeric_placeholder" in summary["dropped_all_null_candidate_columns"]
+    assert "all_null_categorical_placeholder" in summary["dropped_all_null_candidate_columns"]
+    dropped_count = int(
+        quality.loc[
+            quality["check_name"] == "dropped_all_null_candidate_column_count", "value"
+        ].iloc[0]
+    )
+    assert dropped_count >= 2
+    assert "all_null_numeric_placeholder" in report
+    assert "all_null_categorical_placeholder" in report
 
 
 def test_leakage_columns_and_created_shot_prefix_are_not_eligible(tmp_path: Path) -> None:
