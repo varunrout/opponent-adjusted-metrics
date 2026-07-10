@@ -720,6 +720,38 @@ fields from eligible model features, including `shot_created`,
 `created_shot_id`, `created_shot_cxg`, every `created_shot_*` field, CxA+
 future/downstream target/value labels, and prediction/model score columns.
 
+### CxA+ Diagnostic Training
+
+Command:
+
+```bash
+make run-cxa-plus-diagnostic-training
+```
+
+This layer trains the first conservative diagnostic CxA+ baseline model from the
+governed feature matrix. It uses only `eligible_model_features` from
+`feature_matrix_summary.json`, splits train/test groups by `match_id`, and
+writes diagnostic modelling outputs only. It does not validate for promotion,
+write promoted result outputs, or modify dashboard behavior.
+
+Generated files:
+
+```text
+outputs/modeling/cxa_plus/diagnostic_v1/models/cxa_plus_diagnostic_model.joblib
+outputs/modeling/cxa_plus/diagnostic_v1/results/diagnostic_metrics.json
+outputs/modeling/cxa_plus/diagnostic_v1/results/calibration_bins.csv
+outputs/modeling/cxa_plus/diagnostic_v1/results/feature_coefficients.csv
+outputs/modeling/cxa_plus/diagnostic_v1/results/prediction_sample.csv
+outputs/modeling/cxa_plus/diagnostic_v1/reports/diagnostic_training_report.md
+```
+
+The trainer fails if the allowlisted model features include the target,
+identifiers, `created_shot_*` reference fields, future/downstream/window labels,
+prediction/probability/model-output fields, outcome/result fields, or score
+fields. Metrics include log loss, Brier score, ROC AUC, average precision,
+positive rate, positive-rate baseline metrics, lift over baseline, and
+calibration bins.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis

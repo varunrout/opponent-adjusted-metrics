@@ -4,7 +4,7 @@
 	normalize-events build-possessions ingestion-report data-smoke \
 	build-features build-profiles \
 	build-cxa-action-features cxa-action-features-smoke \
-	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train validate-cxa-diagnostic cxa-diagnostic-validate generate-cxa-diagnostic-results cxa-diagnostic-results analyze-cxa-feature-impact cxa-feature-impact build-cxa-portfolio-summary cxa-portfolio-summary analyze-cxa-plus-design build-cxa-plus-targets prepare-cxa-plus-feature-contract build-cxa-plus-feature-matrix \
+	run-cxa-pipeline run-cxa-end-to-end cxa-run cxa-smoke analysis-cxa audit-cxa-current-state prepare-cxa-diagnostic-contract run-cxa-diagnostic-training cxa-diagnostic-train validate-cxa-diagnostic cxa-diagnostic-validate generate-cxa-diagnostic-results cxa-diagnostic-results analyze-cxa-feature-impact cxa-feature-impact build-cxa-portfolio-summary cxa-portfolio-summary analyze-cxa-plus-design build-cxa-plus-targets prepare-cxa-plus-feature-contract build-cxa-plus-feature-matrix run-cxa-plus-diagnostic-training \
 	run-cxg-pipeline run-cxg-end-to-end run-cxg-diagnostic-training cxg-diagnostic-train validate-cxg-diagnostic cxg-diagnostic-validate generate-cxg-diagnostic-results cxg-diagnostic-results analyze-cxg-feature-impact build-cxg-portfolio-summary check-cxg-outputs cxg-validate cxg-run cxg-smoke \
 	run-cxg-analysis analysis-cxg analysis-v1 run-cxt-pipeline cxt-baseline cxt-run \
 	fetch-data api dashboard streamlit-dashboard clean-rebuild reproduce reproduce-v1 test lint format format-check clean
@@ -138,6 +138,9 @@ prepare-cxa-plus-feature-contract:  ## Prepare first governed CxA+ modelling fea
 
 build-cxa-plus-feature-matrix:  ## Build CxA+ diagnostic feature matrix from governed targets + CxA features
 	poetry run python scripts/build_cxa_plus_feature_matrix.py
+
+run-cxa-plus-diagnostic-training:  ## Train first diagnostic CxA+ model from governed feature matrix
+	poetry run python scripts/run_cxa_plus_diagnostic_training.py
 
 # CxG
 run-cxg-pipeline:  ## Run CxG pipeline
