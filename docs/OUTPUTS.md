@@ -691,6 +691,35 @@ exclude current/future target fields (including `shot_created`,
 `created_shot_id`, and downstream value targets) plus prediction/output-style
 columns so the first CxA+ training PR can only use safe pre-action features.
 
+### CxA+ Diagnostic Feature Matrix (No Training)
+
+Command:
+
+```bash
+make build-cxa-plus-feature-matrix
+```
+
+This layer joins governed CxA+ targets with the original CxA action feature
+store to build a richer model-ready diagnostic matrix. It does not train,
+score, validate, promote, or alter dashboard behavior.
+
+Generated files:
+
+```text
+outputs/modeling/cxa_plus/diagnostic_v1/datasets/feature_matrix.parquet
+outputs/modeling/cxa_plus/diagnostic_v1/datasets/feature_matrix_summary.json
+outputs/modeling/cxa_plus/diagnostic_v1/diagnostics/feature_matrix_quality.csv
+outputs/modeling/cxa_plus/diagnostic_v1/reports/feature_matrix_report.md
+```
+
+The join uses stable action-level identifiers (`action_id`, `event_id`,
+`match_id`, `possession`, `sequence_id`, `action_position`) and fails if
+duplicates or unmatched target rows are detected. The output retains safe
+pre-action CxA context features while excluding leakage/reference/model-output
+fields from eligible model features, including `shot_created`,
+`created_shot_id`, `created_shot_cxg`, every `created_shot_*` field, CxA+
+future/downstream target/value labels, and prediction/model score columns.
+
 ## CxT Outputs
 
 ### Pre-model Ball Progression / CxT Analysis
