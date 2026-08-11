@@ -31,11 +31,11 @@ The promoted diagnostic CxG model is the governed shot-quality layer for the por
 
 The fair CxG baseline excludes StatsBomb xG as a training feature. Against that fair baseline, the promoted diagnostic model improves log loss, Brier score, and ROC AUC; expected calibration error remains transparently monitored because the baseline is slightly better calibrated in the latest run.
 
-Portfolio entry points:
+Portfolio entry points (generated into the gitignored `outputs/` tree, so they are not tracked in this repo; regenerate them with the commands below):
 
-- [CxG portfolio summary](outputs/portfolio/cxg/cxg_portfolio_summary.md)
-- [CxG model scorecard](outputs/portfolio/cxg/cxg_model_scorecard.json)
-- [CxG portfolio charts](outputs/portfolio/cxg/charts/)
+- CxG portfolio summary: `outputs/portfolio/cxg/cxg_portfolio_summary.md`
+- CxG model scorecard: `outputs/portfolio/cxg/cxg_model_scorecard.json`
+- CxG portfolio charts: `outputs/portfolio/cxg/charts/`
 
 Regenerate the promoted CxG portfolio locally:
 
@@ -60,11 +60,11 @@ outputs for review.
 The CxA baseline comparison is reference-only/in-sample, so the dashboard labels
 this model as provisionally promoted. CxA+ and Advanced CxA remain later work.
 
-Portfolio entry points:
+Portfolio entry points (generated into the gitignored `outputs/` tree, so they are not tracked in this repo; regenerate them with the commands below):
 
-- [CxA portfolio summary](outputs/portfolio/cxa/portfolio_summary.md)
-- [CxA headline metrics](outputs/portfolio/cxa/headline_metrics.json)
-- [CxA portfolio charts](outputs/portfolio/cxa/charts/)
+- CxA portfolio summary: `outputs/portfolio/cxa/portfolio_summary.md`
+- CxA headline metrics: `outputs/portfolio/cxa/headline_metrics.json`
+- CxA portfolio charts: `outputs/portfolio/cxa/charts/`
 
 Regenerate the static CxA portfolio locally:
 
