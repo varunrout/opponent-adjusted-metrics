@@ -90,3 +90,14 @@ def test_e1_e6_membership_and_native_coordinate_renames():
         "previous_action_progress_sb",
     ):
         assert event_candidate_names().count(replacement) == 1
+
+
+def test_e7_e12_membership_preserves_deferred_e13_and_global_counts():
+    candidates = event_candidate_names_for_families(("E7", "E8", "E9", "E10", "E11", "E12"))
+
+    assert len(candidates) == 35
+    assert [len(family.candidates) for family in event_families()[6:12]] == [6, 5, 7, 6, 5, 6]
+    assert len(event_families()[12].candidates) == 6
+    assert len(event_candidate_names()) == 75
+    assert len(three_sixty_candidate_names()) == 75
+    assert len(contextual_candidate_names()) == 150

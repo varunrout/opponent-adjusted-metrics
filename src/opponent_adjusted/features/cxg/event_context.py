@@ -48,6 +48,10 @@ class EventRecord:
     card_name: str | None = None
     end_x: float | None = None
     end_y: float | None = None
+    duration: float | None = None
+    counterpress: bool | None = None
+    under_pressure: bool | None = None
+    action_outcome_name: str | None = None
 
 
 @dataclass(frozen=True)
