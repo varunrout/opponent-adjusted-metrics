@@ -43,22 +43,15 @@ poetry.lock
 # Environment variables
 .env
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
 # Downloaded/raw data
 /data/
 
 # Generated pipeline outputs
 outputs/
-feature_store/
 *.parquet
 *.csv
 
-# Keep curated fixtures and JSON configs trackable
-!tests/fixtures/**
+# Keep JSON configs trackable
 !configs/**/*.json
 
 # Logs
