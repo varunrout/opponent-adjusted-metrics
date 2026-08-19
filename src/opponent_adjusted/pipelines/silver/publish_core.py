@@ -194,6 +194,7 @@ def _join_checks(dataset_ref: str) -> dict[str, str]:
               ON x.event_id = e.event_id AND x.match_id = e.match_id
              AND x.data_version = e.data_version
              AND x.silver_schema_version = e.silver_schema_version
+             AND e.event_type_name = 'Starting XI'
             JOIN `{dataset_ref}.matches` m
               ON e.match_id = m.match_id
              AND e.data_version = m.data_version
@@ -261,12 +262,21 @@ def publish_oam_core(config: PublishConfig) -> PublishResult:
         table_counts[table_name] = after
 
     for entry in plan:
-        after = _count_rows_for_version(
-            bq,
-            f"{dataset_ref}.{entry.table_name}",
-            config.data_version,
-            config.silver_schema_version,
-        )
+        try:
+            after = _count_rows_for_version(
+                bq,
+                f"{dataset_ref}.{entry.table_name}",
+                config.data_version,
+                config.silver_schema_version,
+            )
+        except NotFound as exc:
+            if entry.expected_row_count == 0:
+                after = 0
+            else:
+                raise RuntimeError(
+                    f"Final completeness missing table for {entry.table_name}: "
+                    f"expected={entry.expected_row_count}"
+                ) from exc
         if after != entry.expected_row_count:
             raise RuntimeError(
                 f"Final completeness mismatch for {entry.table_name}: "

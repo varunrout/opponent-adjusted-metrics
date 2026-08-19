@@ -138,6 +138,7 @@ def test_join_checks_scope_all_participants_and_use_parameters():
         "x.silver_schema_version = e.silver_schema_version"
         in checks["starting_xi_players_join_events_matches"]
     )
+    assert "e.event_type_name = 'Starting XI'" in checks["starting_xi_players_join_events_matches"]
 
 
 def test_preflight_fails_immutable_mismatch_before_loads(monkeypatch):
@@ -234,6 +235,35 @@ def test_publish_final_completeness_recounts_every_contract_table(monkeypatch):
 
     assert recounted == ["events", "shots"]
     assert result.table_row_counts == {"events": 3, "shots": 2}
+
+
+@pytest.mark.parametrize(
+    ("expected_row_count", "raises"),
+    [(0, False), (3, True)],
+)
+def test_final_completeness_handles_missing_table_by_expected_count(
+    monkeypatch, expected_row_count, raises
+):
+    fake_bq = _FakeBigQueryClient(counts={})
+    fake_st = _FakeStorageClient({"tables": {"events": {"row_count": expected_row_count}}})
+    plan = [publish_core.PublicationPlanEntry("events", expected_row_count, 0, "skipped_empty", [])]
+
+    def missing_table(*_args):
+        raise publish_core.NotFound("missing")
+
+    monkeypatch.setattr(publish_core, "CONTRACTS", {"events": object()})
+    monkeypatch.setattr(publish_core.bigquery, "Client", lambda project: fake_bq)
+    monkeypatch.setattr(publish_core.storage, "Client", lambda project: fake_st)
+    monkeypatch.setattr(publish_core, "_build_publication_plan", lambda **_kwargs: plan)
+    monkeypatch.setattr(publish_core, "_count_rows_for_version", missing_table)
+    monkeypatch.setattr(publish_core, "_join_checks", lambda _dataset_ref: {})
+
+    if raises:
+        with pytest.raises(RuntimeError, match="Final completeness missing table for events"):
+            publish_core.publish_oam_core(_config())
+    else:
+        result = publish_core.publish_oam_core(_config())
+        assert result.table_row_counts == {"events": 0}
 
 
 def test_publisher_has_no_destructive_sql_or_overwrite_disposition():
