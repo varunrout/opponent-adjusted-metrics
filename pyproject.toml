@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "opponent-adjusted-metrics"
 version = "1.0.0"
-description = "End-to-end contextual, opponent-adjusted football metrics using StatsBomb Open Data"
-authors = ["Your Name <you@example.com>"]
+description = "Production GCP data foundation for opponent-adjusted football analytics using StatsBomb Open Data"
+authors = ["Varun Rout"]
 readme = "README.md"
 packages = [{include = "opponent_adjusted", from = "src"}]
 
