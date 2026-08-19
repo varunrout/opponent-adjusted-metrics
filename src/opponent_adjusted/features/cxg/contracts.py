@@ -11,7 +11,7 @@ from typing import Literal
 
 SourceType = Literal["event", "360"]
 
-CXG_CONTEXT_TAXONOMY_ID = "cxg_context_taxonomy_v2"
+CXG_CONTEXT_TAXONOMY_ID = "cxg_context_taxonomy_v3"
 
 
 @dataclass(frozen=True)
@@ -98,12 +98,12 @@ EVENT_FAMILIES: tuple[FeatureFamily, ...] = (
         "Progression & Directness Context",
         "event",
         (
-            "goalward_progress_m",
-            "recorded_event_path_length_m",
+            "goalward_progress_sb",
+            "recorded_event_path_length_sb",
             "possession_directness_proxy",
             "pace_to_goal",
             "progressive_actions_n",
-            "max_single_action_progress_m",
+            "max_single_action_progress_sb",
         ),
     ),
     FeatureFamily(
@@ -153,7 +153,7 @@ EVENT_FAMILIES: tuple[FeatureFamily, ...] = (
             "previous_action_type",
             "previous_action_time_gap_s",
             "previous_action_distance_to_shot",
-            "previous_action_progress_m",
+            "previous_action_progress_sb",
             "previous_action_under_pressure",
             "same_player_previous_action",
         ),
@@ -434,6 +434,17 @@ def three_sixty_families() -> tuple[FeatureFamily, ...]:
 def event_candidate_names() -> tuple[str, ...]:
     """Return all event-derived contextual candidates in taxonomy order."""
     return tuple(candidate for family in EVENT_FAMILIES for candidate in family.candidates)
+
+
+def event_candidate_names_for_families(family_ids: tuple[str, ...]) -> tuple[str, ...]:
+    """Return event candidates for governed family IDs in taxonomy order."""
+    selected = set(family_ids)
+    return tuple(
+        candidate
+        for family in EVENT_FAMILIES
+        if family.family_id in selected
+        for candidate in family.candidates
+    )
 
 
 def three_sixty_candidate_names() -> tuple[str, ...]:

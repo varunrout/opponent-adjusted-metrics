@@ -1,4 +1,4 @@
-"""Event-only CxG E1-E6 contextual feature sub-contract."""
+"""Event-only governed CxG E1-E6 contextual feature derivation."""
 
 from __future__ import annotations
 
@@ -7,25 +7,28 @@ import math
 import re
 from typing import Iterable
 
+from opponent_adjusted.features.cxg.contracts import event_candidate_names_for_families
 from opponent_adjusted.features.cxg.geometry import shot_geometry
 
 CXG_EVENT_CONTEXT_E1_E6_CONTRACT_ID = "cxg_event_context_e1_e6_v1"
-E1_E6_FEATURES = (
-    "score_difference_pre_shot",
-    "match_elapsed_s",
-    "possession_age_s",
-    "possession_team_events_pre_shot",
-    "possession_net_progression_sb",
-    "possession_progression_speed_sb_s",
-)
-
+E1_E6_FAMILY_IDS = ("E1", "E2", "E3", "E4", "E5", "E6")
+E1_E6_FEATURES = event_candidate_names_for_families(E1_E6_FAMILY_IDS)
 _TIMESTAMP_RE = re.compile(r"^\d{2}:\d{2}:\d{2}(?:\.(\d+))?$")
+_PLAY_PATTERN_MAP = {
+    "From Kick Off": "kick_off",
+    "From Goal Kick": "goal_kick",
+    "From Free Kick": "free_kick",
+    "From Corner": "corner",
+    "From Throw In": "throw_in",
+    "From Keeper": "keeper",
+    "From Counter": "counter",
+    "Regular Play": "live_other",
+}
+_RESTART_TYPES = {"kick_off", "goal_kick", "free_kick", "corner", "throw_in"}
 
 
 @dataclass(frozen=True)
 class EventRecord:
-    """Minimal governed Silver event facts for E1-E6 derivation."""
-
     event_id: str
     match_id: int
     event_index: int
@@ -40,199 +43,286 @@ class EventRecord:
     possession_team_id: int | None
     location_x: float | None
     location_y: float | None
+    player_id: int | None = None
+    play_pattern_name: str | None = None
+    card_name: str | None = None
+    end_x: float | None = None
+    end_y: float | None = None
 
 
 @dataclass(frozen=True)
 class EventContext:
-    """Derived E1-E6 values and explicit audit helpers for one shot."""
-
     event_id: str
     event_context_contract_id: str
-    score_difference_pre_shot: int | None
-    match_elapsed_s: float | None
-    possession_age_s: float | None
-    possession_team_events_pre_shot: int | None
-    possession_net_progression_sb: float | None
-    possession_progression_speed_sb_s: float | None
+    values: dict[str, object | None]
     possession_context_valid: bool
     possession_age_valid: bool
     possession_start_x_sb: float | None
     possession_start_y_sb: float | None
 
-
-@dataclass(frozen=True)
-class ScoreValidation:
-    """Audit-only comparison of reconstructed periods 1-4 score to match metadata."""
-
-    reconstructed_home_score: int
-    reconstructed_away_score: int
-    metadata_home_score: int | None
-    metadata_away_score: int | None
-
-    @property
-    def matches_metadata(self) -> bool | None:
-        if self.metadata_home_score is None or self.metadata_away_score is None:
-            return None
-        return (
-            self.reconstructed_home_score == self.metadata_home_score
-            and self.reconstructed_away_score == self.metadata_away_score
-        )
+    def value(self, name: str) -> object | None:
+        return self.values[name]
 
 
 @dataclass
 class _PossessionState:
     start_clock_s: float | None
-    start_x_sb: float | None
-    start_y_sb: float | None
-    has_location: bool
-    prior_team_events: int
+    start_x: float | None
+    start_y: float | None
+    start_type: str
+    prior: list[EventRecord]
 
 
 def event_clock_s(event: EventRecord) -> float | None:
-    """Return absolute governed match clock seconds, retaining timestamp precision."""
     if not isinstance(event.minute, int) or not isinstance(event.second, int):
         return None
     if event.minute < 0 or event.second < 0:
         return None
-
-    fractional_second = 0.0
+    fraction = 0.0
     if event.timestamp is not None:
         match = _TIMESTAMP_RE.fullmatch(event.timestamp)
         if match is None:
             return None
-        fraction = match.group(1)
-        if fraction:
-            fractional_second = float(f"0.{fraction}")
-    return event.minute * 60.0 + event.second + fractional_second
+        if match.group(1):
+            fraction = float(f"0.{match.group(1)}")
+    return event.minute * 60.0 + event.second + fraction
 
 
 def goal_beneficiary_team_id(event: EventRecord) -> int | None:
-    """Resolve one scoring beneficiary from governed StatsBomb event semantics."""
     if event.period == 5:
         return None
     if event.event_type_name == "Shot" and event.outcome_name == "Goal":
         return event.team_id
-    if event.event_type_name == "Own Goal For":
-        return event.team_id
-    return None
+    return event.team_id if event.event_type_name == "Own Goal For" else None
 
 
-def _is_possession_team_event(event: EventRecord) -> bool:
+def _valid_location(event: EventRecord) -> bool:
+    return shot_geometry(event.location_x, event.location_y).geometry_valid
+
+
+def _same_possession_team(event: EventRecord) -> bool:
     return (
         event.possession_id is not None
-        and event.team_id is not None
-        and event.possession_team_id is not None
         and event.team_id == event.possession_team_id
+        and event.team_id is not None
     )
+
+
+def _start_type(name: str | None) -> str:
+    return _PLAY_PATTERN_MAP.get(name, "unknown")
 
 
 def _ordered(events: Iterable[EventRecord]) -> list[EventRecord]:
     return sorted(events, key=lambda event: ((event.period or 0), event.event_index))
 
 
-def derive_event_contexts(events: Iterable[EventRecord]) -> dict[str, EventContext]:
-    """Derive E1-E6 for shots using only strictly preceding governed events."""
-    scores: dict[int, int] = {}
-    possession_states: dict[tuple[int, int, int], _PossessionState] = {}
-    contexts: dict[str, EventContext] = {}
-
-    for event in _ordered(events):
-        clock_s = event_clock_s(event)
-        is_shot = event.event_type_name == "Shot"
-        possession_context_valid = _is_possession_team_event(event)
-
-        if is_shot:
-            score_difference = None
-            if event.period != 5 and event.team_id is not None:
-                score_difference = scores.get(event.team_id, 0) - sum(
-                    goals for team_id, goals in scores.items() if team_id != event.team_id
-                )
-
-            start_x_sb = start_y_sb = None
-            possession_age_s = None
-            possession_team_events_pre_shot = None
-            possession_net_progression_sb = None
-            possession_progression_speed_sb_s = None
-            possession_age_valid = False
-            if possession_context_valid:
-                key = (event.match_id, event.possession_id, event.team_id)
-                state = possession_states.get(key)
-                shot_location = shot_geometry(event.location_x, event.location_y)
-                start_clock_s = state.start_clock_s if state is not None else clock_s
-                start_x_sb = state.start_x_sb if state is not None and state.has_location else None
-                start_y_sb = state.start_y_sb if state is not None and state.has_location else None
-                if start_x_sb is None and shot_location.geometry_valid:
-                    start_x_sb, start_y_sb = event.location_x, event.location_y
-                possession_team_events_pre_shot = state.prior_team_events if state else 0
-                if (
-                    clock_s is not None
-                    and start_clock_s is not None
-                    and math.isfinite(clock_s)
-                    and math.isfinite(start_clock_s)
-                ):
-                    age = clock_s - start_clock_s
-                    if age >= 0 and math.isfinite(age):
-                        possession_age_s = age
-                        possession_age_valid = True
-                if shot_location.geometry_valid and start_x_sb is not None:
-                    possession_net_progression_sb = event.location_x - start_x_sb
-                    if possession_age_s is not None and possession_age_s > 0:
-                        possession_progression_speed_sb_s = (
-                            possession_net_progression_sb / possession_age_s
-                        )
-
-            contexts[event.event_id] = EventContext(
-                event_id=event.event_id,
-                event_context_contract_id=CXG_EVENT_CONTEXT_E1_E6_CONTRACT_ID,
-                score_difference_pre_shot=score_difference,
-                match_elapsed_s=clock_s,
-                possession_age_s=possession_age_s,
-                possession_team_events_pre_shot=possession_team_events_pre_shot,
-                possession_net_progression_sb=possession_net_progression_sb,
-                possession_progression_speed_sb_s=possession_progression_speed_sb_s,
-                possession_context_valid=possession_context_valid,
-                possession_age_valid=possession_age_valid,
-                possession_start_x_sb=start_x_sb,
-                possession_start_y_sb=start_y_sb,
-            )
-
-        if _is_possession_team_event(event):
-            key = (event.match_id, event.possession_id, event.team_id)
-            state = possession_states.get(key)
-            if state is None:
-                state = _PossessionState(clock_s, None, None, False, 0)
-                possession_states[key] = state
-            location = shot_geometry(event.location_x, event.location_y)
-            if not state.has_location and location.geometry_valid:
-                state.start_x_sb = event.location_x
-                state.start_y_sb = event.location_y
-                state.has_location = True
-            state.prior_team_events += 1
-
-        beneficiary = goal_beneficiary_team_id(event)
-        if beneficiary is not None:
-            scores[beneficiary] = scores.get(beneficiary, 0) + 1
-
-    return contexts
+def _goal_distance(x: float, y: float) -> float:
+    return math.hypot(120.0 - x, 40.0 - y)
 
 
-def validate_final_score(
-    events: Iterable[EventRecord],
-    *,
-    home_team_id: int,
-    away_team_id: int,
-    home_score: int | None,
-    away_score: int | None,
-) -> ScoreValidation:
-    """Audit-only periods 1-4 score reconstruction against match metadata."""
-    scores: dict[int, int] = {}
-    for event in _ordered(events):
-        beneficiary = goal_beneficiary_team_id(event)
-        if beneficiary is not None:
-            scores[beneficiary] = scores.get(beneficiary, 0) + 1
-    return ScoreValidation(
-        reconstructed_home_score=scores.get(home_team_id, 0),
-        reconstructed_away_score=scores.get(away_team_id, 0),
-        metadata_home_score=home_score,
-        metadata_away_score=away_score,
+def _manpower_diff(dismissed: dict[int, set[object]], team_id: int | None) -> int | None:
+    if team_id is None:
+        return None
+    own = len(dismissed.get(team_id, set()))
+    other = sum(len(players) for other_id, players in dismissed.items() if other_id != team_id)
+    return -own + other
+
+
+def _possession_values(
+    event: EventRecord, state: _PossessionState | None, clock: float | None
+) -> tuple[dict[str, object | None], bool, bool, float | None, float | None]:
+    empty = {
+        name: None
+        for name in E1_E6_FEATURES
+        if name
+        not in {
+            "score_diff",
+            "game_state",
+            "match_minute",
+            "regulation_time_remaining",
+            "manpower_diff",
+            "late_game_trailing",
+            "late_game_leading",
+        }
+    }
+    if not _same_possession_team(event):
+        return empty, False, False, None, None
+    state = state or _PossessionState(clock, None, None, _start_type(event.play_pattern_name), [])
+    shot_valid = _valid_location(event)
+    start_x, start_y = state.start_x, state.start_y
+    if start_x is None and shot_valid:
+        start_x, start_y = event.location_x, event.location_y
+    age = None if clock is None or state.start_clock_s is None else clock - state.start_clock_s
+    age_valid = age is not None and math.isfinite(age) and age >= 0
+    if not age_valid:
+        age = None
+    start_distance = (
+        _goal_distance(start_x, start_y) if start_x is not None and start_y is not None else None
     )
+    shot_distance = _goal_distance(event.location_x, event.location_y) if shot_valid else None
+    progression = (
+        start_distance - shot_distance
+        if start_distance is not None and shot_distance is not None
+        else None
+    )
+    prior = state.prior
+    valid_chain = [(item.location_x, item.location_y) for item in prior if _valid_location(item)]
+    if shot_valid:
+        valid_chain.append((event.location_x, event.location_y))
+    path = None
+    if len(valid_chain) >= 2:
+        path = sum(
+            math.hypot(next_x - x, next_y - y)
+            for (x, y), (next_x, next_y) in zip(valid_chain, valid_chain[1:])
+        )
+    eligible_actions = [
+        item
+        for item in prior
+        if item.event_type_name in {"Pass", "Carry"}
+        and _valid_location(item)
+        and item.end_x is not None
+        and item.end_y is not None
+        and shot_geometry(item.end_x, item.end_y).geometry_valid
+    ]
+    action_progress = [
+        _goal_distance(item.location_x, item.location_y) - _goal_distance(item.end_x, item.end_y)
+        for item in eligible_actions
+    ]
+    action_count = len(prior)
+    start_kind = state.start_type
+    live = start_kind in {"keeper", "counter", "live_other"}
+    restart = start_kind in _RESTART_TYPES
+    values = {
+        "possession_start_x": start_x,
+        "possession_start_y": start_y,
+        "possession_start_goal_distance": start_distance,
+        "possession_start_zone": (
+            None
+            if start_x is None
+            else (
+                "defensive_third"
+                if start_x < 40
+                else "middle_third" if start_x < 80 else "final_third"
+            )
+        ),
+        "possession_start_type": start_kind,
+        "restart_vs_live_regain": "restart" if restart else "live_regain" if live else None,
+        "high_regain": (
+            start_x >= 80 if live and start_x is not None else False if restart else None
+        ),
+        "deep_regain": (
+            start_x <= 40 if live and start_x is not None else False if restart else None
+        ),
+        "possession_age_s": age,
+        "shot_within_5s_regain": age <= 5 if live and age is not None else None,
+        "shot_within_10s_regain": age <= 10 if live and age is not None else None,
+        "shot_within_15s_regain": age <= 15 if live and age is not None else None,
+        "possession_action_count": action_count,
+        "possession_pass_count": sum(item.event_type_name == "Pass" for item in prior),
+        "possession_carry_count": sum(item.event_type_name == "Carry" for item in prior),
+        "possession_dribble_count": sum(item.event_type_name == "Dribble" for item in prior),
+        "unique_attackers_involved": len(
+            {item.player_id for item in prior if item.player_id is not None}
+        ),
+        "recorded_receipt_count": sum(item.event_type_name == "Ball Receipt*" for item in prior),
+        "avg_action_interval_s": age / action_count if age is not None and action_count else None,
+        "last_action_interval_s": (
+            clock - event_clock_s(prior[-1])
+            if prior
+            and clock is not None
+            and event_clock_s(prior[-1]) is not None
+            and clock >= event_clock_s(prior[-1])
+            else None
+        ),
+        "actions_per_second": action_count / age if age is not None and age > 0 else None,
+        "goalward_progress_sb": progression,
+        "recorded_event_path_length_sb": path,
+        "possession_directness_proxy": (
+            progression / path
+            if progression is not None and path is not None and path > 0
+            else None
+        ),
+        "pace_to_goal": (
+            progression / age if progression is not None and age is not None and age > 0 else None
+        ),
+        "progressive_actions_n": sum(
+            progress / _goal_distance(item.location_x, item.location_y) >= 0.10
+            for item, progress in zip(eligible_actions, action_progress)
+            if _goal_distance(item.location_x, item.location_y) > 0
+        ),
+        "max_single_action_progress_sb": max(action_progress) if action_progress else None,
+    }
+    return values, True, age_valid, start_x, start_y
+
+
+def derive_event_contexts(events: Iterable[EventRecord]) -> dict[str, EventContext]:
+    scores: dict[int, int] = {}
+    dismissed: dict[int, set[object]] = {}
+    possessions: dict[tuple[int, int, int], _PossessionState] = {}
+    contexts: dict[str, EventContext] = {}
+    for event in _ordered(events):
+        clock = event_clock_s(event)
+        if event.event_type_name == "Shot":
+            score = (
+                None
+                if event.period == 5 or event.team_id is None
+                else scores.get(event.team_id, 0)
+                - sum(value for team, value in scores.items() if team != event.team_id)
+            )
+            state = (
+                possessions.get((event.match_id, event.possession_id, event.team_id))
+                if _same_possession_team(event)
+                else None
+            )
+            values, valid, age_valid, start_x, start_y = _possession_values(event, state, clock)
+            values.update(
+                {
+                    "score_diff": score,
+                    "game_state": (
+                        None
+                        if score is None
+                        else "trailing" if score < 0 else "drawing" if score == 0 else "leading"
+                    ),
+                    "match_minute": None if clock is None else clock / 60.0,
+                    "regulation_time_remaining": (
+                        None if event.period == 5 or clock is None else max(0.0, 5400.0 - clock)
+                    ),
+                    "manpower_diff": (
+                        None if event.period == 5 else _manpower_diff(dismissed, event.team_id)
+                    ),
+                    "late_game_trailing": (
+                        None
+                        if event.period == 5 or clock is None or score is None
+                        else clock >= 4500 and score < 0
+                    ),
+                    "late_game_leading": (
+                        None
+                        if event.period == 5 or clock is None or score is None
+                        else clock >= 4500 and score > 0
+                    ),
+                }
+            )
+            contexts[event.event_id] = EventContext(
+                event.event_id,
+                CXG_EVENT_CONTEXT_E1_E6_CONTRACT_ID,
+                values,
+                valid,
+                age_valid,
+                start_x,
+                start_y,
+            )
+        if _same_possession_team(event):
+            key = (event.match_id, event.possession_id, event.team_id)
+            state = possessions.setdefault(
+                key, _PossessionState(clock, None, None, _start_type(event.play_pattern_name), [])
+            )
+            if state.start_x is None and _valid_location(event):
+                state.start_x, state.start_y = event.location_x, event.location_y
+            state.prior.append(event)
+        if event.card_name in {"Red Card", "Second Yellow"} and event.team_id is not None:
+            identity = event.player_id if event.player_id is not None else event.event_id
+            dismissed.setdefault(event.team_id, set()).add(identity)
+        beneficiary = goal_beneficiary_team_id(event)
+        if beneficiary is not None:
+            scores[beneficiary] = scores.get(beneficiary, 0) + 1
+    return contexts

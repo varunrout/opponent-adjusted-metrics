@@ -5,6 +5,7 @@ from opponent_adjusted.features.cxg.contracts import (
     cxg_event_contextual_allowlist,
     contextual_candidate_names,
     event_candidate_names,
+    event_candidate_names_for_families,
     event_families,
     three_sixty_candidate_names,
     three_sixty_families,
@@ -12,7 +13,7 @@ from opponent_adjusted.features.cxg.contracts import (
 
 
 def test_taxonomy_identity_and_family_counts():
-    assert CXG_CONTEXT_TAXONOMY_ID == "cxg_context_taxonomy_v2"
+    assert CXG_CONTEXT_TAXONOMY_ID == "cxg_context_taxonomy_v3"
     assert len(event_families()) == 13
     assert len(three_sixty_families()) == 15
     assert len(event_families() + three_sixty_families()) == 28
@@ -68,3 +69,24 @@ def test_event_only_cxg_allowlist_excludes_all_360_candidates():
 
     assert allowlist == event_candidate_names()
     assert set(allowlist).isdisjoint(three_sixty_candidate_names())
+
+
+def test_e1_e6_membership_and_native_coordinate_renames():
+    candidates = event_candidate_names_for_families(("E1", "E2", "E3", "E4", "E5", "E6"))
+
+    assert len(candidates) == 34
+    assert [len(family.candidates) for family in event_families()[:6]] == [7, 8, 4, 6, 3, 6]
+    for legacy in (
+        "goalward_progress_m",
+        "recorded_event_path_length_m",
+        "max_single_action_progress_m",
+        "previous_action_progress_m",
+    ):
+        assert legacy not in event_candidate_names()
+    for replacement in (
+        "goalward_progress_sb",
+        "recorded_event_path_length_sb",
+        "max_single_action_progress_sb",
+        "previous_action_progress_sb",
+    ):
+        assert event_candidate_names().count(replacement) == 1
