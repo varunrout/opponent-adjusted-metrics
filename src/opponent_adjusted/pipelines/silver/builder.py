@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import logging
 import os
 import tempfile
 import uuid
@@ -25,9 +26,8 @@ from opponent_adjusted.pipelines.silver.contracts import (
     table_arrow_schema,
     write_contract_json,
 )
-from opponent_adjusted.utils.logging import get_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 TARGET_DATA_VERSION = "b0bc9f22dd77c206ddedc1d742893b3bbe64baec"
 PARTITIONED_TABLES = {
@@ -271,9 +271,6 @@ def build_statsbomb_silver(config: SilverBuildConfig) -> SilverBuildResult:
             f"Silver output already published and immutable at gs://{config.bucket_name}/{output_prefix}/"
         )
 
-    contract_path = write_contract_json()
-    logger.info("Silver contract written at %s", contract_path)
-
     cfg = load_subset_config(config.competitions_config_path)
     competitions_filter = {
         (int(c["competition_id"]), int(c["season_id"])) for c in cfg.get("competitions", [])
@@ -284,6 +281,8 @@ def build_statsbomb_silver(config: SilverBuildConfig) -> SilverBuildResult:
         raise RuntimeError("Bronze competitions payload is not a list")
 
     local_root = Path(tempfile.mkdtemp(prefix=f"statsbomb_silver_{run_id}_"))
+    contract_path = write_contract_json(local_root / "contract.json")
+    logger.info("Silver contract written at %s", contract_path)
     writers: dict[tuple[str, int | None, int | None], _BufferedWriter] = {}
     row_counts: dict[str, int] = defaultdict(int)
 

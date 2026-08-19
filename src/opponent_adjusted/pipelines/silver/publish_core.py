@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 
 from google.api_core.exceptions import NotFound
@@ -13,9 +14,8 @@ from opponent_adjusted.pipelines.silver.contracts import (
     CONTRACTS,
     table_bq_schema,
 )
-from opponent_adjusted.utils.logging import get_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)

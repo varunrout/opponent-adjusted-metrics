@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from opponent_adjusted.config import settings  # noqa: E402
 from opponent_adjusted.ingestion.contracts import load_subset_config  # noqa: E402
 from opponent_adjusted.ingestion.statsbomb_source import (  # noqa: E402
     StatsBombSource,
@@ -21,12 +21,12 @@ from opponent_adjusted.ingestion.statsbomb_source import (  # noqa: E402
 from opponent_adjusted.ingestion.subset_fetch import run_subset_fetch  # noqa: E402
 from opponent_adjusted.storage.gcs import GCSRawStatsBombStore  # noqa: E402
 from opponent_adjusted.storage.local import LocalRawStatsBombStore  # noqa: E402
-from opponent_adjusted.utils.logging import get_logger  # noqa: E402
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 RAW_BASE_URL = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "statsbomb_subset.json"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "statsbomb"
 
 # Compatibility seam for existing tests and callers that monkeypatch this name.
 _fetch_with_retries = fetch_json_with_retries
@@ -98,7 +98,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=settings.statsbomb_data_path,
+        default=DEFAULT_OUTPUT_DIR,
         help="StatsBomb output directory",
     )
     parser.add_argument(

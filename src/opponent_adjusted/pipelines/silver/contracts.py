@@ -10,7 +10,6 @@ from typing import Any
 import pyarrow as pa
 
 SILVER_SCHEMA_VERSION = "statsbomb_silver_v1_1"
-CONTRACT_PATH = Path("configs/data_contracts/statsbomb_silver_v1_1.json")
 
 
 @dataclass(frozen=True)
@@ -452,8 +451,8 @@ def table_bq_schema(table_name: str) -> list[Any]:
     return fields
 
 
-def write_contract_json(path: Path | None = None) -> Path:
-    target = path or CONTRACT_PATH
+def write_contract_json(path: Path) -> Path:
+    target = path
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "silver_schema_version": SILVER_SCHEMA_VERSION,

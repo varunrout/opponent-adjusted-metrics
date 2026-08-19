@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import time
 from collections.abc import Callable
@@ -10,9 +11,7 @@ from typing import cast
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from opponent_adjusted.utils.logging import get_logger
-
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 RAW_BASE_URL = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
 JsonPayload = list | dict
