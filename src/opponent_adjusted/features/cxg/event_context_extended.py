@@ -62,15 +62,52 @@ def _end_observation(event: EventRecord) -> tuple[float, float, float | None] | 
     return event.end_x, event.end_y, end_clock
 
 
+def _e7_end_observation(
+    event: EventRecord,
+    possession_events: list[EventRecord],
+    shot: EventRecord,
+) -> tuple[float, float, float | None] | None:
+    """Return an E7 endpoint with a chronology-safe derived clock."""
+    endpoint = _end_observation(event)
+    if endpoint is None:
+        return None
+    start_clock = event_clock_s(event)
+    effective_clock = endpoint[2]
+    if start_clock is None:
+        return endpoint
+
+    later_events = [
+        candidate
+        for candidate in possession_events
+        if (candidate.period or 0, candidate.event_index) > (event.period or 0, event.event_index)
+        and (candidate.period or 0, candidate.event_index) <= (shot.period or 0, shot.event_index)
+    ]
+    next_event = min(
+        later_events,
+        key=lambda candidate: (candidate.period or 0, candidate.event_index),
+        default=None,
+    )
+    for bound in (
+        event_clock_s(next_event) if next_event is not None else None,
+        event_clock_s(shot),
+    ):
+        if bound is not None and bound >= start_clock:
+            effective_clock = min(effective_clock, bound)
+    return endpoint[0], endpoint[1], effective_clock
+
+
 def _observations(
-    events: list[EventRecord], shot: EventRecord
+    events: list[EventRecord],
+    shot: EventRecord,
+    possession_events: list[EventRecord] | None = None,
 ) -> list[tuple[float, float, float | None]]:
     observations: list[tuple[float, float, float | None]] = []
+    possession_events = possession_events or events
     for event in [*events, shot]:
         if _valid_location(event):
             observations.append((event.location_x, event.location_y, event_clock_s(event)))
         if event is not shot:
-            end = _end_observation(event)
+            end = _e7_end_observation(event, possession_events, shot)
             if end is not None:
                 observations.append(end)
     return observations
@@ -123,9 +160,12 @@ def _previous_same_possession(events: list[EventRecord], shot: EventRecord) -> E
 
 
 def _territory_values(
-    prior: list[EventRecord], shot: EventRecord, shot_clock: float | None
+    prior: list[EventRecord],
+    shot: EventRecord,
+    shot_clock: float | None,
+    possession_events: list[EventRecord] | None = None,
 ) -> tuple[dict[str, object | None], float | None, float | None]:
-    observations = _observations(prior, shot)
+    observations = _observations(prior, shot, possession_events)
     final_clock = _entry_clock(observations, lambda x, _y: x >= 80.0)
     first_box = _entry_clock(observations, lambda x, y: x >= 102.0 and 18.0 <= y <= 62.0)
     last_box = _entry_clock(observations, lambda x, y: x >= 102.0 and 18.0 <= y <= 62.0, last=True)
@@ -219,7 +259,15 @@ def _derive_match(events: list[EventRecord]) -> dict[str, ExtendedEventContext]:
                 and event.team_id == shot.team_id
             ]
             shot_clock = event_clock_s(shot)
-            territory, first_box_clock, _final_clock = _territory_values(prior, shot, shot_clock)
+            possession_events = [
+                event
+                for event in ordered
+                if event.possession_id == shot.possession_id
+                and (event.period or 0, event.event_index) <= (shot.period or 0, shot.event_index)
+            ]
+            territory, first_box_clock, _final_clock = _territory_values(
+                prior, shot, shot_clock, possession_events
+            )
             values.update(territory)
             live = e1e6.value("restart_vs_live_regain") == "live_regain"
             restart = e1e6.value("restart_vs_live_regain") == "restart"

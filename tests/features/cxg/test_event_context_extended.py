@@ -1,6 +1,9 @@
+import math
+
 from opponent_adjusted.features.cxg.event_context import EventRecord
 from opponent_adjusted.features.cxg.event_context_extended import (
     E7_E12_FEATURES,
+    _e7_end_observation,
     derive_extended_event_contexts,
 )
 
@@ -287,3 +290,67 @@ def test_e12_unknown_team_events_are_neither_team_nor_opposition():
     assert v["opp_shots_last_5m"] == 0
     assert v["opp_attacking_actions_last_5m"] == 0
     assert v["territorial_dominance_last_5m"] is None
+
+
+def test_e7_endpoint_clock_caps_submillisecond_overrun_at_next_event():
+    pass_event = event("pass", 1, second=10, duration=1.000463, end_x=100, end_y=40)
+    next_event = event("next", 2, second=11, location_x=90)
+    current_shot = shot(index=3, second=12)
+
+    endpoint = _e7_end_observation(pass_event, [pass_event, next_event, current_shot], current_shot)
+
+    assert endpoint[2] == 11.0
+    assert endpoint[:2] == (100, 40)
+
+
+def test_e7_endpoint_clock_caps_larger_overlap_at_next_event():
+    pass_event = event("pass", 1, second=20, duration=1.356, end_x=100, end_y=40)
+    next_event = event("next", 2, second=21, location_x=90)
+    current_shot = shot(index=3, second=22)
+
+    assert (
+        _e7_end_observation(pass_event, [pass_event, next_event, current_shot], current_shot)[2]
+        == 21.0
+    )
+
+
+def test_e7_endpoint_clock_caps_carry_after_shot():
+    carry = event("carry", 1, second=20, duration=3.0, event_type_name="Carry", end_x=100, end_y=40)
+    current_shot = shot(index=2, second=21)
+
+    assert _e7_end_observation(carry, [carry, current_shot], current_shot)[2] == 21.0
+
+
+def test_e7_endpoint_clock_keeps_normal_and_missing_or_invalid_duration_behavior():
+    current_shot = shot(index=3, second=30)
+    normal = event("normal", 1, second=20, duration=1.0, end_x=100, end_y=40)
+    next_event = event("next", 2, second=25, location_x=90)
+    missing = event("missing", 1, second=20, duration=None, end_x=100, end_y=40)
+    negative = event("negative", 1, second=20, duration=-1.0, end_x=100, end_y=40)
+
+    assert _e7_end_observation(normal, [normal, next_event, current_shot], current_shot)[2] == 21.0
+    assert _e7_end_observation(missing, [missing, current_shot], current_shot)[2] == 20.0
+    assert _e7_end_observation(negative, [negative, current_shot], current_shot)[2] == 20.0
+
+
+def test_e7_endpoint_clock_repairs_box_entry_order_without_changing_endpoint():
+    rows = [
+        event("pass", 1, second=10, duration=1.000463, location_x=90, end_x=105, end_y=40),
+        event("outside", 2, second=11, location_x=90),
+        event("inside", 3, second=12, location_x=105),
+        shot(index=4, second=13, location_x=110),
+    ]
+    v = values(rows)
+
+    assert v["last_box_entry_to_shot_s"] <= v["first_box_entry_to_shot_s"]
+
+
+def test_e10_endpoint_geometry_remains_unchanged_by_e7_clock_cap():
+    rows = [
+        event("pass", 1, second=10, duration=1.000463, location_x=90, end_x=105, end_y=40),
+        shot(index=2, second=12, location_x=110),
+    ]
+    v = values(rows)
+
+    assert v["previous_action_distance_to_shot"] == 5.0
+    assert v["previous_action_progress_sb"] == math.hypot(30, 0) - math.hypot(15, 0)
