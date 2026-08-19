@@ -256,9 +256,20 @@ def _possession_values(
 
 
 def derive_event_contexts(events: Iterable[EventRecord]) -> dict[str, EventContext]:
+    """Derive E1-E6 contexts independently for every governed match."""
+    matches: dict[int, list[EventRecord]] = {}
+    for event in events:
+        matches.setdefault(event.match_id, []).append(event)
+    contexts: dict[str, EventContext] = {}
+    for match_events in matches.values():
+        contexts.update(_derive_match_event_contexts(match_events))
+    return contexts
+
+
+def _derive_match_event_contexts(events: Iterable[EventRecord]) -> dict[str, EventContext]:
     scores: dict[int, int] = {}
     dismissed: dict[int, set[object]] = {}
-    possessions: dict[tuple[int, int, int], _PossessionState] = {}
+    possessions: dict[tuple[int, int], _PossessionState] = {}
     contexts: dict[str, EventContext] = {}
     for event in _ordered(events):
         clock = event_clock_s(event)
@@ -270,7 +281,7 @@ def derive_event_contexts(events: Iterable[EventRecord]) -> dict[str, EventConte
                 - sum(value for team, value in scores.items() if team != event.team_id)
             )
             state = (
-                possessions.get((event.match_id, event.possession_id, event.team_id))
+                possessions.get((event.possession_id, event.team_id))
                 if _same_possession_team(event)
                 else None
             )
@@ -312,7 +323,7 @@ def derive_event_contexts(events: Iterable[EventRecord]) -> dict[str, EventConte
                 start_y,
             )
         if _same_possession_team(event):
-            key = (event.match_id, event.possession_id, event.team_id)
+            key = (event.possession_id, event.team_id)
             state = possessions.setdefault(
                 key, _PossessionState(clock, None, None, _start_type(event.play_pattern_name), [])
             )
