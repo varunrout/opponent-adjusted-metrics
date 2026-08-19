@@ -1105,11 +1105,14 @@ def build_statsbomb_silver(config: SilverBuildConfig) -> SilverBuildResult:
     upload_status = []
     files_to_upload = [p for p in sorted(local_root.rglob("*")) if p.is_file()]
 
-    # Upload completion marker last so downstream readers can treat _SUCCESS as terminal.
-    non_success_files = [p for p in files_to_upload if p.name != "_SUCCESS"]
+    parquet_files = [p for p in files_to_upload if p.suffix == ".parquet"]
+    manifest_files = [p for p in files_to_upload if p.name == "manifest.json"]
     success_files = [p for p in files_to_upload if p.name == "_SUCCESS"]
 
-    for local_file in [*non_success_files, *success_files]:
+    # Enforce publication atomicity: data first, manifest next, completion marker last.
+    ordered_uploads = [*parquet_files, *manifest_files, *success_files]
+
+    for local_file in ordered_uploads:
         rel = local_file.relative_to(local_root).as_posix()
         status = _upload_create_only(bucket, f"{output_prefix}/{rel}", local_file)
         upload_status.append((rel, status))

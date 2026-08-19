@@ -9,8 +9,8 @@ from typing import Any
 
 import pyarrow as pa
 
-SILVER_SCHEMA_VERSION = "statsbomb_silver_v1"
-CONTRACT_PATH = Path("configs/data_contracts/statsbomb_silver_v1.json")
+SILVER_SCHEMA_VERSION = "statsbomb_silver_v1_1"
+CONTRACT_PATH = Path("configs/data_contracts/statsbomb_silver_v1_1.json")
 
 
 @dataclass(frozen=True)

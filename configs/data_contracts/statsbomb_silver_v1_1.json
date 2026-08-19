@@ -1,0 +1,1855 @@
+{
+  "silver_schema_version": "statsbomb_silver_v1_1",
+  "tables": [
+    {
+      "table": "competitions",
+      "grain_key": [
+        "competition_id",
+        "season_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "competition_gender",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "country_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "season_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "match_updated",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "match_available",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "match_updated_360",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "match_available_360",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "matches",
+      "grain_key": [
+        "match_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_date",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "kick_off",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "home_team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "home_team_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "away_team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "away_team_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "home_score",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "away_score",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "competition_stage",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "stadium",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "referee",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "match_status",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "match_status_360",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "last_updated",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "last_updated_360",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "teams",
+      "grain_key": [
+        "team_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "players",
+      "grain_key": [
+        "player_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "player_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "events",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "event_index",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "period",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "minute",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "second",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "timestamp",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "duration",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "event_type_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "event_type_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "possession_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "possession_team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "possession_team_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "team_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "position_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "position_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "play_pattern_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "play_pattern_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "under_pressure",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "counterpress",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "off_camera",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "out",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "location_x",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "location_y",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "related_event_ids",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": true
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "shots",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "location_x",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "location_y",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_x",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_y",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_z",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "statsbomb_xg",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "body_part_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "body_part_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "technique_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "technique_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "shot_type_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "shot_type_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "first_time",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "key_pass_id",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "aerial_won",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "follows_dribble",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "open_goal",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "one_on_one",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "deflected",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "saved_off_target",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "saved_to_post",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "passes",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "recipient_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "recipient_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "length",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "angle",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "height_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "height_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_x",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_y",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "pass_type_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "pass_type_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "technique_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "technique_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "body_part_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "body_part_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "assisted_shot_id",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "shot_assist",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "goal_assist",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "cross",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "cut_back",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "switch",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "through_ball",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "inswinging",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outswinging",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "straight",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "deflected",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "miscommunication",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "no_touch",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "aerial_won",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "carries",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_x",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_y",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "dribbles",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "nutmeg",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "overrun",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "no_touch",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "pressures",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "period",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "minute",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "second",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "timestamp",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "duration",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "ball_receipts",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "disciplinary_events",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "event_type",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "card_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "card_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "period",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "minute",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "second",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "timestamp",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "event_index",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "substitutions",
+      "grain_key": [
+        "event_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "replacement_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "replacement_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "outcome_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "period",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "minute",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "second",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "timestamp",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "event_index",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "possessions",
+      "grain_key": [
+        "match_id",
+        "possession_id",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "possession_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "possession_team_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "possession_team_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_event_id",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_event_id",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_event_index",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_event_index",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_period",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_period",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_timestamp",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_timestamp",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_minute",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_second",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_minute",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_second",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "event_count",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_event_type",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_event_type",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "start_play_pattern",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "end_play_pattern",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "three_sixty_frames",
+      "grain_key": [
+        "match_id",
+        "event_uuid",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "event_uuid",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "visible_area",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": true
+        },
+        {
+          "name": "frame_player_count",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "three_sixty_players",
+      "grain_key": [
+        "match_id",
+        "event_uuid",
+        "frame_player_ordinal",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "event_uuid",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "frame_player_ordinal",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "teammate",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "actor",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "keeper",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "x",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "y",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    },
+    {
+      "table": "shot_freeze_frame_players",
+      "grain_key": [
+        "shot_event_id",
+        "freeze_frame_player_ordinal",
+        "data_version",
+        "silver_schema_version"
+      ],
+      "columns": [
+        {
+          "name": "shot_event_id",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "match_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "competition_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "season_id",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "freeze_frame_player_ordinal",
+          "arrow_type": "int64",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "player_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "player_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "position_id",
+          "arrow_type": "int64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "position_name",
+          "arrow_type": "string",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "teammate",
+          "arrow_type": "bool",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "x",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "y",
+          "arrow_type": "float64",
+          "nullable": true,
+          "repeated": false
+        },
+        {
+          "name": "data_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        },
+        {
+          "name": "silver_schema_version",
+          "arrow_type": "string",
+          "nullable": false,
+          "repeated": false
+        }
+      ]
+    }
+  ]
+}
