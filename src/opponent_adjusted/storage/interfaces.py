@@ -13,6 +13,9 @@ class RawStatsBombStore(Protocol):
     def has_events(self, match_id: int) -> bool:
         """Return True when the raw events payload already exists for this match."""
 
+    def has_three_sixty(self, match_id: int) -> bool:
+        """Return True when the raw StatsBomb 360 payload already exists for this match."""
+
     def write_competitions(self, payload: JsonPayload, *, force: bool = False) -> bool:
         """Persist the filtered competitions payload; return whether written."""
 
@@ -28,3 +31,12 @@ class RawStatsBombStore(Protocol):
 
     def write_events(self, match_id: int, payload: JsonPayload, *, force: bool = False) -> bool:
         """Persist a match events payload; return whether written."""
+
+    def write_three_sixty(
+        self,
+        match_id: int,
+        payload: JsonPayload,
+        *,
+        force: bool = False,
+    ) -> bool:
+        """Persist a match three-sixty payload; return whether written."""

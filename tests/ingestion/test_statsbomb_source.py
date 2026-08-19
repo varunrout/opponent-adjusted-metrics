@@ -6,7 +6,9 @@ from opponent_adjusted.ingestion import statsbomb_source
 from opponent_adjusted.ingestion.statsbomb_source import (
     StatsBombSource,
     _load_json_url,
+    build_raw_base_url_for_ref,
     fetch_json_with_retries,
+    is_valid_source_ref,
 )
 
 
@@ -34,6 +36,19 @@ def test_source_uses_decode_boundary_for_competitions(monkeypatch):
     source = StatsBombSource(base_url="https://example.test/data")
     assert source.get_competitions() == [{"competition_id": 99}]
     assert seen == ["https://example.test/data/competitions.json"]
+
+
+def test_source_builds_three_sixty_url(monkeypatch):
+    seen = []
+
+    def fake_loader(url: str):
+        seen.append(url)
+        return [{"event_uuid": "abc"}]
+
+    monkeypatch.setattr(statsbomb_source, "_load_json_url", fake_loader)
+    source = StatsBombSource(base_url="https://example.test/data")
+    assert source.get_three_sixty(12345) == [{"event_uuid": "abc"}]
+    assert seen == ["https://example.test/data/three-sixty/12345.json"]
 
 
 def test_source_retries_transient_failures(monkeypatch):
@@ -73,3 +88,16 @@ def test_source_returns_none_after_terminal_failure(monkeypatch):
         )
         is None
     )
+
+
+def test_source_ref_url_is_pinned_and_validated():
+    source_ref = "b0bc9f22dd77c206ddedc1d742893b3bbe64baec"
+    assert is_valid_source_ref(source_ref) is True
+    assert (
+        build_raw_base_url_for_ref(source_ref)
+        == f"https://raw.githubusercontent.com/statsbomb/open-data/{source_ref}/data"
+    )
+
+
+def test_source_ref_validation_rejects_invalid_sha():
+    assert is_valid_source_ref("master") is False

@@ -43,29 +43,16 @@ poetry.lock
 # Environment variables
 .env
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
 # Downloaded/raw data
 /data/
-!data/statsbomb/
-!data/statsbomb/**
 
-# Generated feature stores and outputs
+# Generated pipeline outputs
 outputs/
-feature_store/
 *.parquet
 *.csv
-*.joblib
-*.pkl
-*.pickle
 
-# Keep curated fixtures and JSON configs trackable
-!tests/fixtures/**
+# Keep JSON configs trackable
 !configs/**/*.json
-!data/statsbomb/**/*.json
 
 # Logs
 *.log
@@ -79,9 +66,6 @@ htmlcov/
 .nox/
 .mypy_cache/
 .ruff_cache/
-
-# Jupyter
-.ipynb_checkpoints/
 
 # Temporary files
 tmp/
