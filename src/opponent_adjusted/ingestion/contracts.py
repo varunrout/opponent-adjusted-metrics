@@ -29,6 +29,11 @@ class FetchSummary(TypedDict):
     matches_skipped_existing: int
     events_written: int
     events_skipped_existing: int
+    three_sixty_candidates: int
+    three_sixty_available_matches: int
+    three_sixty_unavailable_matches: int
+    three_sixty_written: int
+    three_sixty_skipped_existing: int
     missing: list[dict[str, Any]]
 
 

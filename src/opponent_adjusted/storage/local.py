@@ -17,6 +17,9 @@ class LocalRawStatsBombStore:
     def has_events(self, match_id: int) -> bool:
         return (self.root / "events" / f"{match_id}.json").exists()
 
+    def has_three_sixty(self, match_id: int) -> bool:
+        return (self.root / "three-sixty" / f"{match_id}.json").exists()
+
     def _write(self, path: Path, payload: JsonPayload, *, force: bool) -> bool:
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists() and not force:
@@ -40,3 +43,12 @@ class LocalRawStatsBombStore:
 
     def write_events(self, match_id: int, payload: JsonPayload, *, force: bool = False) -> bool:
         return self._write(self.root / "events" / f"{match_id}.json", payload, force=force)
+
+    def write_three_sixty(
+        self,
+        match_id: int,
+        payload: JsonPayload,
+        *,
+        force: bool = False,
+    ) -> bool:
+        return self._write(self.root / "three-sixty" / f"{match_id}.json", payload, force=force)

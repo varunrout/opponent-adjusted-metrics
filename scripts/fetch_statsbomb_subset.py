@@ -32,7 +32,14 @@ DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "statsbomb_subset.json"
 _fetch_with_retries = fetch_json_with_retries
 
 
-def fetch_subset(config_path: Path, output_dir: Path, *, include_events: bool, force: bool) -> dict:
+def fetch_subset(
+    config_path: Path,
+    output_dir: Path,
+    *,
+    include_events: bool,
+    include_three_sixty: bool = False,
+    force: bool = False,
+) -> dict:
     """Fetch and locally store the configured subset."""
     config = load_subset_config(config_path)
     source = StatsBombSource(base_url=RAW_BASE_URL, fetch_json=_fetch_with_retries)
@@ -42,6 +49,7 @@ def fetch_subset(config_path: Path, output_dir: Path, *, include_events: bool, f
         source=source,
         store=store,
         include_events=include_events,
+        include_three_sixty=include_three_sixty,
         force=force,
         config_label=str(config_path),
         output_label=str(output_dir),
@@ -52,7 +60,8 @@ def fetch_subset_to_gcs(
     config_path: Path,
     *,
     include_events: bool,
-    force: bool,
+    include_three_sixty: bool = False,
+    force: bool = False,
     gcs_bucket: str,
     data_version: str,
     source_ref: str,
@@ -76,6 +85,7 @@ def fetch_subset_to_gcs(
         source=source,
         store=store,
         include_events=include_events,
+        include_three_sixty=include_three_sixty,
         force=force,
         config_label=str(config_path),
         output_label=f"gs://{gcs_bucket}/raw/statsbomb/{data_version}",
@@ -97,6 +107,12 @@ def parse_args() -> argparse.Namespace:
         dest="with_events",
         action="store_true",
         help="Download match event files as well as competitions and matches",
+    )
+    parser.add_argument(
+        "--with-360",
+        dest="with_three_sixty",
+        action="store_true",
+        help="Download separate StatsBomb 360 files for supported competitions",
     )
     parser.add_argument("--force", action="store_true", help="Overwrite existing files")
     parser.add_argument("--gcs-bucket", type=str, default=None, help="Target GCS bucket")
@@ -124,6 +140,7 @@ def main() -> None:
         summary = fetch_subset_to_gcs(
             config_path=args.config,
             include_events=args.with_events,
+            include_three_sixty=args.with_three_sixty,
             force=args.force,
             gcs_bucket=args.gcs_bucket,
             data_version=args.data_version,
@@ -134,6 +151,7 @@ def main() -> None:
             config_path=args.config,
             output_dir=args.output_dir,
             include_events=args.with_events,
+            include_three_sixty=args.with_three_sixty,
             force=args.force,
         )
 

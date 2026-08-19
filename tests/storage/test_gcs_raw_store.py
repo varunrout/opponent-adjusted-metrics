@@ -56,11 +56,13 @@ def test_gcs_store_writes_versioned_competitions_matches_events_keys():
     assert store.write_competitions([{"competition_id": 1}]) is True
     assert store.write_matches(43, 3, [{"match_id": 1000001}]) is True
     assert store.write_events(1000001, [{"id": "event-1"}]) is True
+    assert store.write_three_sixty(1000001, [{"event_uuid": "event-1"}]) is True
 
     bucket = client.bucket("bucket")
     assert f"raw/statsbomb/{'a' * 40}/competitions.json" in bucket.objects
     assert f"raw/statsbomb/{'a' * 40}/matches/43/3.json" in bucket.objects
     assert f"raw/statsbomb/{'a' * 40}/events/1000001.json" in bucket.objects
+    assert f"raw/statsbomb/{'a' * 40}/three-sixty/1000001.json" in bucket.objects
 
 
 def test_gcs_store_has_events_and_json_content_type_and_serialization():
@@ -68,8 +70,11 @@ def test_gcs_store_has_events_and_json_content_type_and_serialization():
     store = GCSRawStatsBombStore("bucket", "b" * 40, client=client)
 
     assert store.has_events(77) is False
+    assert store.has_three_sixty(77) is False
     assert store.write_events(77, [{"id": "e-77"}]) is True
+    assert store.write_three_sixty(77, [{"event_uuid": "e-77"}]) is True
     assert store.has_events(77) is True
+    assert store.has_three_sixty(77) is True
 
     obj = client.bucket("bucket").objects[f"raw/statsbomb/{'b' * 40}/events/77.json"]
     assert obj["content_type"] == "application/json"
@@ -82,6 +87,8 @@ def test_gcs_store_create_only_semantics_no_overwrite_when_existing():
 
     assert store.write_events(88, [{"id": "first"}]) is True
     assert store.write_events(88, [{"id": "second"}]) is False
+    assert store.write_three_sixty(88, [{"event_uuid": "first"}]) is True
+    assert store.write_three_sixty(88, [{"event_uuid": "second"}]) is False
 
     obj = client.bucket("bucket").objects[f"raw/statsbomb/{'c' * 40}/events/88.json"]
     assert json.loads(obj["data"].decode("utf-8")) == [{"id": "first"}]
@@ -93,6 +100,9 @@ def test_gcs_store_force_overwrite_not_supported_for_immutable_landing():
 
     with pytest.raises(ValueError, match="force overwrite is not supported"):
         store.write_competitions([{"competition_id": 1}], force=True)
+
+    with pytest.raises(ValueError, match="force overwrite is not supported"):
+        store.write_three_sixty(1, [{"event_uuid": "a"}], force=True)
 
 
 def test_gcs_store_data_versions_map_to_distinct_prefixes():

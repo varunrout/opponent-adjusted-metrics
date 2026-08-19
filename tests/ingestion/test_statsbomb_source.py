@@ -38,6 +38,19 @@ def test_source_uses_decode_boundary_for_competitions(monkeypatch):
     assert seen == ["https://example.test/data/competitions.json"]
 
 
+def test_source_builds_three_sixty_url(monkeypatch):
+    seen = []
+
+    def fake_loader(url: str):
+        seen.append(url)
+        return [{"event_uuid": "abc"}]
+
+    monkeypatch.setattr(statsbomb_source, "_load_json_url", fake_loader)
+    source = StatsBombSource(base_url="https://example.test/data")
+    assert source.get_three_sixty(12345) == [{"event_uuid": "abc"}]
+    assert seen == ["https://example.test/data/three-sixty/12345.json"]
+
+
 def test_source_retries_transient_failures(monkeypatch):
     attempts = 0
     sleeps = []

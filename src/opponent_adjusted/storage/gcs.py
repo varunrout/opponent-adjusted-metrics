@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 from google.api_core.exceptions import PreconditionFailed
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[import-untyped]
 
 from opponent_adjusted.storage.interfaces import JsonPayload
 
@@ -42,8 +42,15 @@ class GCSRawStatsBombStore:
     def _events_object_name(self, match_id: int) -> str:
         return f"{self.prefix}/events/{match_id}.json"
 
+    def _three_sixty_object_name(self, match_id: int) -> str:
+        return f"{self.prefix}/three-sixty/{match_id}.json"
+
     def has_events(self, match_id: int) -> bool:
         blob = self.bucket.blob(self._events_object_name(match_id))
+        return bool(blob.exists(client=self.client))
+
+    def has_three_sixty(self, match_id: int) -> bool:
+        blob = self.bucket.blob(self._three_sixty_object_name(match_id))
         return bool(blob.exists(client=self.client))
 
     def write_competitions(self, payload: JsonPayload, *, force: bool = False) -> bool:
@@ -70,3 +77,14 @@ class GCSRawStatsBombStore:
         if force:
             raise ValueError("force overwrite is not supported for immutable GCS raw landing")
         return self._upload_create_only(self._events_object_name(match_id), payload)
+
+    def write_three_sixty(
+        self,
+        match_id: int,
+        payload: JsonPayload,
+        *,
+        force: bool = False,
+    ) -> bool:
+        if force:
+            raise ValueError("force overwrite is not supported for immutable GCS raw landing")
+        return self._upload_create_only(self._three_sixty_object_name(match_id), payload)
