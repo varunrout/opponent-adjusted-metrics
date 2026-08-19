@@ -1,0 +1,1 @@
+"""Governed Gold feature contracts."""
