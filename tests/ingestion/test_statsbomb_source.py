@@ -6,7 +6,9 @@ from opponent_adjusted.ingestion import statsbomb_source
 from opponent_adjusted.ingestion.statsbomb_source import (
     StatsBombSource,
     _load_json_url,
+    build_raw_base_url_for_ref,
     fetch_json_with_retries,
+    is_valid_source_ref,
 )
 
 
@@ -73,3 +75,16 @@ def test_source_returns_none_after_terminal_failure(monkeypatch):
         )
         is None
     )
+
+
+def test_source_ref_url_is_pinned_and_validated():
+    source_ref = "b0bc9f22dd77c206ddedc1d742893b3bbe64baec"
+    assert is_valid_source_ref(source_ref) is True
+    assert (
+        build_raw_base_url_for_ref(source_ref)
+        == f"https://raw.githubusercontent.com/statsbomb/open-data/{source_ref}/data"
+    )
+
+
+def test_source_ref_validation_rejects_invalid_sha():
+    assert is_valid_source_ref("master") is False

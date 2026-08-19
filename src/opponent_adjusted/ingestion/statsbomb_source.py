@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections.abc import Callable
 from urllib.error import HTTPError, URLError
@@ -15,6 +16,17 @@ logger = get_logger(__name__)
 RAW_BASE_URL = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
 JsonPayload = list | dict
 FetchBytes = Callable[[str], bytes]
+
+
+def is_valid_source_ref(source_ref: str) -> bool:
+    return bool(re.fullmatch(r"[0-9a-f]{40}", source_ref))
+
+
+def build_raw_base_url_for_ref(source_ref: str) -> str:
+    """Build a pinned raw.githubusercontent URL for an exact source commit."""
+    if not is_valid_source_ref(source_ref):
+        raise ValueError(f"Invalid source ref (expected 40-char hex SHA): {source_ref}")
+    return f"https://raw.githubusercontent.com/statsbomb/open-data/{source_ref}/data"
 
 
 def _fetch(url: str) -> bytes:
