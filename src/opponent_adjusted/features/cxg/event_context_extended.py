@@ -120,11 +120,18 @@ def _territory_values(
     final_clock = _entry_clock(observations, lambda x, _y: x >= 80.0)
     first_box = _entry_clock(observations, lambda x, y: x >= 102.0 and 18.0 <= y <= 62.0)
     last_box = _entry_clock(observations, lambda x, y: x >= 102.0 and 18.0 <= y <= 62.0, last=True)
-    box_states = [x >= 102.0 and 18.0 <= y <= 62.0 for x, y, _clock in observations]
-    reentry = any(
-        box_states[index - 2 : index + 1] == [True, False, True]
-        for index in range(2, len(box_states))
-    )
+    seen_inside = False
+    seen_exit_after_inside = False
+    reentry = False
+    for x, y, _clock in observations:
+        inside = x >= 102.0 and 18.0 <= y <= 62.0
+        if inside and seen_exit_after_inside:
+            reentry = True
+            break
+        if inside:
+            seen_inside = True
+        elif seen_inside:
+            seen_exit_after_inside = True
     return (
         {
             "final_third_entry_to_shot_s": _elapsed(shot_clock, final_clock),
@@ -156,7 +163,9 @@ def _momentum(
         and 0 <= shot_clock - event_clock_s(event) <= WINDOW_S
     ]
     team = [event for event in window if event.team_id == shot.team_id]
-    opposition = [event for event in window if event.team_id != shot.team_id]
+    opposition = [
+        event for event in window if event.team_id is not None and event.team_id != shot.team_id
+    ]
     known_possessions = [event for event in window if event.possession_team_id is not None]
     attacking_team = [event for event in team if event.event_type_name in _ATTACKING_TYPES]
     attacking_opp = [event for event in opposition if event.event_type_name in _ATTACKING_TYPES]
@@ -248,15 +257,20 @@ def _derive_match(events: list[EventRecord]) -> dict[str, ExtendedEventContext]:
                 values["regain_to_box_entry_s"] = (
                     _elapsed(first_box_clock, start_clock) if first_box_clock is not None else None
                 )
-                values["counterpress_regain_proxy"] = any(
-                    event.team_id == shot.team_id
-                    and event.counterpress is True
-                    and event.possession_team_id != shot.team_id
-                    and start_clock is not None
-                    and event_clock_s(event) is not None
-                    and 0 <= start_clock - event_clock_s(event) <= 5
-                    for event in ordered[:index]
-                )
+                possession_start = prior[0] if prior else shot
+                possession_start_clock = event_clock_s(possession_start)
+                if possession_start_clock is None:
+                    values["counterpress_regain_proxy"] = None
+                else:
+                    values["counterpress_regain_proxy"] = any(
+                        event.event_index < possession_start.event_index
+                        and event.team_id == shot.team_id
+                        and event.counterpress is True
+                        and event.possession_team_id != shot.team_id
+                        and event_clock_s(event) is not None
+                        and 0 <= possession_start_clock - event_clock_s(event) <= 5
+                        for event in ordered
+                    )
             if restart:
                 values["set_piece_category"] = e1e6.value("possession_start_type")
                 values["seconds_since_restart"] = age

@@ -204,3 +204,63 @@ def test_extended_context_is_match_isolated_and_has_no_360_dependency():
     assert "three_sixty" not in source
     assert "google.cloud" not in source
     assert "statsbomb_xg" not in source
+
+
+def test_box_reentry_is_state_based_and_skips_invalid_observations():
+    rows = [
+        event("inside-a", 1, location_x=105),
+        event("inside-b", 2, location_x=106),
+        event("missing", 3, location_x=None, location_y=None),
+        event("outside-a", 4, location_x=90),
+        event("outside-b", 5, location_x=80),
+        shot(index=6, location_x=110),
+    ]
+    assert values(rows)["box_exit_reentry"] is True
+    assert (
+        values(
+            [
+                event("inside", 1, location_x=105),
+                event("outside", 2, location_x=90),
+                shot(index=3, location_x=90),
+            ]
+        )["box_exit_reentry"]
+        is False
+    )
+
+
+def test_counterpress_requires_strict_pre_start_order_and_evaluable_clock():
+    before = values(
+        [
+            event("cp", 1, second=0, counterpress=True, possession_team_id=2),
+            event("start", 2, second=3, play_pattern_name="From Counter"),
+            shot(index=3, second=5),
+        ]
+    )
+    after_same_clock = values(
+        [
+            event("start", 1, second=3, play_pattern_name="From Counter"),
+            event("cp", 2, second=3, counterpress=True, possession_team_id=2),
+            shot(index=3, second=5),
+        ]
+    )
+    unevaluable = values(
+        [
+            event("start", 1, timestamp="invalid", play_pattern_name="From Counter"),
+            shot(index=2, second=5),
+        ]
+    )
+    assert before["counterpress_regain_proxy"] is True
+    assert after_same_clock["counterpress_regain_proxy"] is False
+    assert unevaluable["counterpress_regain_proxy"] is None
+
+
+def test_e12_unknown_team_events_are_neither_team_nor_opposition():
+    rows = [
+        event("unknown-shot", 1, team_id=None, event_type_name="Shot", location_x=120),
+        event("unknown-pass", 2, team_id=None, location_x=120),
+        shot(index=3, second=10, location_x=110),
+    ]
+    v = values(rows)
+    assert v["opp_shots_last_5m"] == 0
+    assert v["opp_attacking_actions_last_5m"] == 0
+    assert v["territorial_dominance_last_5m"] is None
