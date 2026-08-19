@@ -135,6 +135,29 @@ def test_e9_pressure_history_and_source_backed_success():
     assert v["successful_under_pressure_actions_n"] == 2
 
 
+def test_e9_excludes_unknown_team_pressure_from_all_history_surfaces():
+    rows = [
+        event("known", 1, second=1, event_type_name="Pressure", team_id=2),
+        event("unknown", 2, second=9, event_type_name="Pressure", team_id=None),
+        event("same-team", 3, second=10, event_type_name="Pressure", team_id=1),
+        event(
+            "other-possession",
+            4,
+            second=10,
+            event_type_name="Pressure",
+            team_id=2,
+            possession_id=2,
+            possession_team_id=2,
+        ),
+        shot(index=5, second=11),
+    ]
+    v = values(rows)
+    assert v["pressures_faced_possession"] == 1
+    assert v["pressures_last_5s"] == 0
+    assert v["pressures_last_10s"] == 1
+    assert v["time_since_last_pressure_s"] == 10
+
+
 def test_e10_previous_event_including_opponent_and_end_anchor():
     rows = [
         event("pass", 1, second=1, end_x=100, end_y=40, under_pressure=None, player_id=2),

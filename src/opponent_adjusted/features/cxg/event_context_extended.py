@@ -108,6 +108,15 @@ def _success(event: EventRecord) -> bool:
     return False
 
 
+def _is_opponent_pressure(event: EventRecord, shot: EventRecord) -> bool:
+    return (
+        event.event_type_name == "Pressure"
+        and event.team_id is not None
+        and event.team_id != shot.team_id
+        and event.possession_id == shot.possession_id
+    )
+
+
 def _previous_same_possession(events: list[EventRecord], shot: EventRecord) -> EventRecord | None:
     candidates = [event for event in events if event.possession_id == shot.possession_id]
     return candidates[-1] if candidates else None
@@ -236,9 +245,7 @@ def _derive_match(events: list[EventRecord]) -> dict[str, ExtendedEventContext]:
                         else None
                     ),
                     "pressures_faced_possession": sum(
-                        event.event_type_name == "Pressure" and event.team_id != shot.team_id
-                        for event in ordered[:index]
-                        if event.possession_id == shot.possession_id
+                        _is_opponent_pressure(event, shot) for event in ordered[:index]
                     ),
                     "under_pressure_actions_n": sum(
                         event.under_pressure is True for event in prior
@@ -291,13 +298,7 @@ def _derive_match(events: list[EventRecord]) -> dict[str, ExtendedEventContext]:
                 )
             elif live:
                 values["set_piece_category"] = "none"
-            pressures = [
-                event
-                for event in ordered[:index]
-                if event.possession_id == shot.possession_id
-                and event.event_type_name == "Pressure"
-                and event.team_id != shot.team_id
-            ]
+            pressures = [event for event in ordered[:index] if _is_opponent_pressure(event, shot)]
             if shot_clock is not None:
                 gaps = [
                     shot_clock - event_clock_s(event)
