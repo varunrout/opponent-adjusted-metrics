@@ -1,0 +1,70 @@
+from opponent_adjusted.features.cxg.contracts import (
+    CXG_CONTEXT_TAXONOMY_ID,
+    EVENT_FAMILY_CANDIDATE_COUNTS,
+    THREE_SIXTY_FAMILY_CANDIDATE_COUNTS,
+    cxg_event_contextual_allowlist,
+    contextual_candidate_names,
+    event_candidate_names,
+    event_families,
+    three_sixty_candidate_names,
+    three_sixty_families,
+)
+
+
+def test_taxonomy_identity_and_family_counts():
+    assert CXG_CONTEXT_TAXONOMY_ID == "cxg_context_taxonomy_v2"
+    assert len(event_families()) == 13
+    assert len(three_sixty_families()) == 15
+    assert len(event_families() + three_sixty_families()) == 28
+
+
+def test_candidate_counts_and_declared_family_counts():
+    event = event_families()
+    three_sixty = three_sixty_families()
+
+    assert len(event_candidate_names()) == 75
+    assert len(three_sixty_candidate_names()) == 75
+    assert len(contextual_candidate_names()) == 150
+    assert {
+        family.family_id: family.candidate_count for family in event
+    } == EVENT_FAMILY_CANDIDATE_COUNTS
+    assert {
+        family.family_id: family.candidate_count for family in three_sixty
+    } == THREE_SIXTY_FAMILY_CANDIDATE_COUNTS
+
+
+def test_candidate_universes_are_unique_and_disjoint():
+    event_candidates = event_candidate_names()
+    three_sixty_candidates = three_sixty_candidate_names()
+
+    assert len(set(event_candidates)) == len(event_candidates)
+    assert len(set(three_sixty_candidates)) == len(three_sixty_candidates)
+    assert set(event_candidates).isdisjoint(three_sixty_candidates)
+
+
+def test_family_ids_are_ordered():
+    assert [family.family_id for family in event_families()] == [f"E{i}" for i in range(1, 14)]
+    assert [family.family_id for family in three_sixty_families()] == [
+        f"F{i}" for i in range(1, 16)
+    ]
+
+
+def test_governed_methodology_flags_are_explicit():
+    family_flags = {
+        family.family_id: family.methodology_flags
+        for family in event_families() + three_sixty_families()
+    }
+
+    assert "later_stage_not_first_pass_screening" in family_flags["F15"]
+    assert "requires_explicit_actor_receiver_shooter_linkage" in family_flags["F10"]
+    assert (
+        "requires_explicit_sequence_depth_eligibility_and_coverage_metadata" in family_flags["F14"]
+    )
+    assert "derivation_parameters_not_yet_locked" in family_flags["E13"]
+
+
+def test_event_only_cxg_allowlist_excludes_all_360_candidates():
+    allowlist = cxg_event_contextual_allowlist()
+
+    assert allowlist == event_candidate_names()
+    assert set(allowlist).isdisjoint(three_sixty_candidate_names())
