@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 TARGET_DATA_VERSION = "b0bc9f22dd77c206ddedc1d742893b3bbe64baec"
 PARTITIONED_TABLES = {
     "events",
+    "starting_xi_players",
     "shots",
     "passes",
     "carries",
@@ -132,6 +133,75 @@ def _bool_or_none(obj: dict[str, Any], key: str) -> bool | None:
     if key in obj:
         return bool(obj.get(key))
     return None
+
+
+def _starting_xi_player_rows(
+    event: dict[str, Any],
+    *,
+    event_id: str,
+    match_id: int,
+    competition_id: int,
+    season_id: int,
+    event_index: int,
+    team_id: int | None,
+    team_name: str | None,
+    data_version: str,
+    silver_schema_version: str,
+) -> list[dict[str, Any]]:
+    tactics = event.get("tactics")
+    if not isinstance(tactics, dict):
+        raise ValueError("Starting XI event has no tactics object")
+
+    lineup = tactics.get("lineup")
+    if not isinstance(lineup, list):
+        raise ValueError("Starting XI event has no lineup list")
+
+    formation = tactics.get("formation")
+    rows: list[dict[str, Any]] = []
+    for lineup_ordinal, member in enumerate(lineup):
+        if not isinstance(member, dict):
+            raise ValueError(f"Starting XI lineup member {lineup_ordinal} is not an object")
+        player = member.get("player")
+        if not isinstance(player, dict) or player.get("id") is None:
+            raise ValueError(f"Starting XI lineup member {lineup_ordinal} has no player id")
+
+        position = member.get("position")
+        if position is not None and not isinstance(position, dict):
+            raise ValueError(f"Starting XI lineup member {lineup_ordinal} has invalid position")
+
+        rows.append(
+            {
+                "event_id": event_id,
+                "match_id": match_id,
+                "competition_id": competition_id,
+                "season_id": season_id,
+                "event_index": event_index,
+                "team_id": team_id,
+                "team_name": team_name,
+                "formation": int(formation) if formation is not None else None,
+                "lineup_ordinal": lineup_ordinal,
+                "player_id": int(player["id"]),
+                "player_name": str(player["name"]) if player.get("name") is not None else None,
+                "position_id": (
+                    int(position["id"])
+                    if isinstance(position, dict) and position.get("id") is not None
+                    else None
+                ),
+                "position_name": (
+                    str(position["name"])
+                    if isinstance(position, dict) and position.get("name") is not None
+                    else None
+                ),
+                "jersey_number": (
+                    int(member["jersey_number"])
+                    if member.get("jersey_number") is not None
+                    else None
+                ),
+                "data_version": data_version,
+                "silver_schema_version": silver_schema_version,
+            }
+        )
+    return rows
 
 
 def _table_path(root: Path, table: str, competition_id: int | None, season_id: int | None) -> Path:
@@ -513,6 +583,26 @@ def build_statsbomb_silver(config: SilverBuildConfig) -> SilverBuildResult:
                     "silver_schema_version": config.silver_schema_version,
                 }
                 write_row("events", event_row, competition_id, season_id)
+
+                if event_type_name == "Starting XI":
+                    try:
+                        lineup_rows = _starting_xi_player_rows(
+                            event,
+                            event_id=event_id,
+                            match_id=match_id,
+                            competition_id=competition_id,
+                            season_id=season_id,
+                            event_index=idx,
+                            team_id=team_id,
+                            team_name=team_name,
+                            data_version=config.data_version,
+                            silver_schema_version=config.silver_schema_version,
+                        )
+                    except (TypeError, ValueError) as exc:
+                        qa_errors.append(f"malformed Starting XI event_id={event_id}: {exc}")
+                    else:
+                        for lineup_row in lineup_rows:
+                            write_row("starting_xi_players", lineup_row, competition_id, season_id)
 
                 possession_id = event_row["possession_id"]
                 if possession_id is not None:

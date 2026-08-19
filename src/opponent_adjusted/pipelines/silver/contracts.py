@@ -9,7 +9,7 @@ from typing import Any
 
 import pyarrow as pa
 
-SILVER_SCHEMA_VERSION = "statsbomb_silver_v1_1"
+SILVER_SCHEMA_VERSION = "statsbomb_silver_v1_2"
 
 
 @dataclass(frozen=True)
@@ -92,6 +92,27 @@ CONTRACTS: dict[str, TableContract] = {
         columns=[
             _col("player_id", "int64", nullable=False),
             _col("player_name", "string"),
+            *LINEAGE,
+        ],
+    ),
+    "starting_xi_players": TableContract(
+        name="starting_xi_players",
+        key=["event_id", "lineup_ordinal", "data_version", "silver_schema_version"],
+        columns=[
+            _col("event_id", "string", nullable=False),
+            _col("match_id", "int64", nullable=False),
+            _col("competition_id", "int64", nullable=False),
+            _col("season_id", "int64", nullable=False),
+            _col("event_index", "int64", nullable=False),
+            _col("team_id", "int64"),
+            _col("team_name", "string"),
+            _col("formation", "int64"),
+            _col("lineup_ordinal", "int64", nullable=False),
+            _col("player_id", "int64", nullable=False),
+            _col("player_name", "string"),
+            _col("position_id", "int64"),
+            _col("position_name", "string"),
+            _col("jersey_number", "int64"),
             *LINEAGE,
         ],
     ),

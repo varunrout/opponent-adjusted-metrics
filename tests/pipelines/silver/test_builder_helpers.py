@@ -74,3 +74,74 @@ def test_upload_create_only_fails_on_conflicting_existing(tmp_path):
 
     with pytest.raises(RuntimeError, match="Existing object differs"):
         builder._upload_create_only(bucket, "obj", changed)
+
+
+def test_starting_xi_rows_preserve_lineup_facts_and_lineage():
+    event = {
+        "tactics": {
+            "formation": 4231,
+            "lineup": [
+                {
+                    "player": {"id": 1, "name": "Goalkeeper"},
+                    "position": {"id": 1, "name": "Goalkeeper"},
+                    "jersey_number": 1,
+                },
+                {
+                    "player": {"id": 2, "name": "Defender"},
+                    "position": {"id": 3, "name": "Right Center Back"},
+                    "jersey_number": 5,
+                },
+            ],
+        }
+    }
+
+    rows = builder._starting_xi_player_rows(
+        event,
+        event_id="starting-xi-event",
+        match_id=100,
+        competition_id=43,
+        season_id=106,
+        event_index=4,
+        team_id=10,
+        team_name="Example FC",
+        data_version="raw-version",
+        silver_schema_version="statsbomb_silver_v1_2",
+    )
+
+    assert len(rows) == 2
+    assert [row["lineup_ordinal"] for row in rows] == [0, 1]
+    assert rows[1] == {
+        "event_id": "starting-xi-event",
+        "match_id": 100,
+        "competition_id": 43,
+        "season_id": 106,
+        "event_index": 4,
+        "team_id": 10,
+        "team_name": "Example FC",
+        "formation": 4231,
+        "lineup_ordinal": 1,
+        "player_id": 2,
+        "player_name": "Defender",
+        "position_id": 3,
+        "position_name": "Right Center Back",
+        "jersey_number": 5,
+        "data_version": "raw-version",
+        "silver_schema_version": "statsbomb_silver_v1_2",
+    }
+
+
+@pytest.mark.parametrize("event", [{}, {"tactics": {}}, {"tactics": {"lineup": [{}]}}])
+def test_malformed_starting_xi_does_not_fabricate_rows(event):
+    with pytest.raises(ValueError):
+        builder._starting_xi_player_rows(
+            event,
+            event_id="starting-xi-event",
+            match_id=100,
+            competition_id=43,
+            season_id=106,
+            event_index=4,
+            team_id=10,
+            team_name="Example FC",
+            data_version="raw-version",
+            silver_schema_version="statsbomb_silver_v1_2",
+        )
