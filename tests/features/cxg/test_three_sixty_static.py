@@ -39,16 +39,35 @@ def test_one_defender_within_radius_bands():
     assert values["nearest_defender_distance"] is not None
 
 
-def test_ball_referenced_features_do_not_require_visible_area():
-    # visible_area is empty for 100% of the currently published corpus (see module
-    # docstring METHODOLOGY_BUG note in three_sixty_static.py); the frame's own ball/actor
-    # point is presumed observable regardless of visible_area population.
+def test_ball_referenced_features_null_when_visible_area_absent():
+    # visible_area provenance was root-caused to a BigQuery publish ADAPTER_BUG (fixed in
+    # publish_core.py), not a genuine source limitation; the honest eligibility gate requires
+    # the ball point to be demonstrably inside visible_area, so an empty/absent polygon must
+    # still yield null rather than a fabricated zero.
     empty_area = ()
     players = (player(0, teammate=False, keeper=False, x=101.0, y=40.0),)
     frame = Frame("e1", 1, empty_area, players)
     values = derive_static_360_context(frame, players, 100.0, 40.0)
+    assert values["nearest_defender_distance"] is None
+    assert values["defenders_within_3m"] is None
+
+
+def test_ball_referenced_features_computed_when_ball_inside_visible_area():
+    small_area_containing_ball = (90.0, 30.0, 110.0, 30.0, 110.0, 50.0, 90.0, 50.0)
+    players = (player(0, teammate=False, keeper=False, x=101.0, y=40.0),)
+    frame = Frame("e1", 1, small_area_containing_ball, players)
+    values = derive_static_360_context(frame, players, 100.0, 40.0)
     assert values["nearest_defender_distance"] is not None
     assert values["defenders_within_3m"] == 1
+
+
+def test_ball_referenced_features_null_when_ball_outside_visible_area():
+    small_area_far_from_ball = (0.0, 0.0, 10.0, 0.0, 10.0, 10.0, 0.0, 10.0)
+    players = (player(0, teammate=False, keeper=False, x=101.0, y=40.0),)
+    frame = Frame("e1", 1, small_area_far_from_ball, players)
+    values = derive_static_360_context(frame, players, 100.0, 40.0)
+    assert values["nearest_defender_distance"] is None
+    assert values["defenders_within_3m"] is None
 
 
 def test_no_keeper_visible_is_null_not_synthetic():
