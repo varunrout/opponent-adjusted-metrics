@@ -15,10 +15,13 @@ router = APIRouter(prefix="/v1/matches", tags=["matches"])
 def list_matches(
     competition_id: int | None = None,
     season_id: int | None = None,
+    team_id: int | None = None,
     store: ServingStore = Depends(get_store),
     role: Role = Depends(get_role),
 ) -> list[MatchResponse]:
-    records = store.list_matches(competition_id=competition_id, season_id=season_id)
+    records = store.list_matches(
+        competition_id=competition_id, season_id=season_id, team_id=team_id
+    )
     return [MatchResponse.model_validate(record) for record in records]
 
 

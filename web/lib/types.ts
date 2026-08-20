@@ -58,6 +58,14 @@ export type PlayerSeasonResponse = {
   total_xg: number;
 };
 
+export type TeamSeasonResponse = {
+  team_id: number;
+  team_name: string | null;
+  shots: number;
+  goals: number;
+  total_xg: number;
+};
+
 export type ShotResponse = {
   event_id: string;
   match_id: number;

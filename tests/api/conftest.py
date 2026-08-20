@@ -12,6 +12,7 @@ from opponent_adjusted.api.interfaces import (
     MatchRecord,
     PlayerSeasonRecord,
     ShotRecord,
+    TeamSeasonRecord,
 )
 from opponent_adjusted.api.main import app
 
@@ -39,12 +40,15 @@ class FakeServingStore:
         *,
         competition_id: int | None = None,
         season_id: int | None = None,
+        team_id: int | None = None,
     ) -> list[MatchRecord]:
         matches = self._matches
         if competition_id is not None:
             matches = [m for m in matches if m.competition_id == competition_id]
         if season_id is not None:
             matches = [m for m in matches if m.season_id == season_id]
+        if team_id is not None:
+            matches = [m for m in matches if m.home_team_id == team_id or m.away_team_id == team_id]
         return list(matches)
 
     def get_match(self, match_id: int) -> MatchRecord | None:
@@ -133,6 +137,56 @@ class FakeServingStore:
     ) -> list[ShotRecord]:
         shots = self._filtered_shots(competition_id=competition_id, season_id=season_id)
         return [s for s in shots if s.player_id == player_id]
+
+    def list_team_seasons(
+        self,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[TeamSeasonRecord]:
+        matches_by_id = {m.match_id: m for m in self._matches}
+        shots = self._filtered_shots(competition_id=competition_id, season_id=season_id)
+
+        aggregates: dict[int, dict] = {}
+        for shot in shots:
+            if shot.team_id is None:
+                continue
+            agg = aggregates.setdefault(
+                shot.team_id,
+                {
+                    "team_name": self._team_name(matches_by_id[shot.match_id], shot.team_id),
+                    "shots": 0,
+                    "goals": 0,
+                    "total_xg": 0.0,
+                },
+            )
+            agg["shots"] += 1
+            if shot.is_goal:
+                agg["goals"] += 1
+            agg["total_xg"] += shot.statsbomb_xg or 0.0
+
+        records = [
+            TeamSeasonRecord(
+                team_id=team_id,
+                team_name=values["team_name"],
+                shots=values["shots"],
+                goals=values["goals"],
+                total_xg=values["total_xg"],
+            )
+            for team_id, values in aggregates.items()
+        ]
+        records.sort(key=lambda r: r.total_xg, reverse=True)
+        return records
+
+    def list_team_shots(
+        self,
+        team_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        shots = self._filtered_shots(competition_id=competition_id, season_id=season_id)
+        return [s for s in shots if s.team_id == team_id]
 
 
 FAKE_COMPETITIONS = [

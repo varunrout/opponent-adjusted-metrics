@@ -93,6 +93,17 @@ class PlayerSeasonRecord:
     total_xg: float
 
 
+@dataclass(frozen=True)
+class TeamSeasonRecord:
+    """One team's shot aggregates row from the serving store."""
+
+    team_id: int
+    team_name: str | None
+    shots: int
+    goals: int
+    total_xg: float
+
+
 class ServingStore(Protocol):
     """Minimal read-only contract required by the dashboard API."""
 
@@ -104,8 +115,9 @@ class ServingStore(Protocol):
         *,
         competition_id: int | None = None,
         season_id: int | None = None,
+        team_id: int | None = None,
     ) -> list[MatchRecord]:
-        """Return matches, optionally filtered by competition_id and/or season_id."""
+        """Return matches, optionally filtered by competition_id, season_id, and/or team_id (home or away)."""
 
     def get_match(self, match_id: int) -> MatchRecord | None:
         """Return the match row for match_id, or None if no such match exists."""
@@ -132,3 +144,20 @@ class ServingStore(Protocol):
         season_id: int | None = None,
     ) -> list[ShotRecord]:
         """Return a player's shots joined to events for player_name/minute/period, optionally filtered by competition_id/season_id."""
+
+    def list_team_seasons(
+        self,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[TeamSeasonRecord]:
+        """Return per-team shot aggregates (shots/goals/total_xg), optionally filtered, sorted by total_xg descending."""
+
+    def list_team_shots(
+        self,
+        team_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        """Return a team's shots joined to events for player_name/minute/period, optionally filtered by competition_id/season_id."""

@@ -4,6 +4,7 @@ import type {
   MatchResponse,
   PlayerSeasonResponse,
   ShotResponse,
+  TeamSeasonResponse,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -32,6 +33,7 @@ export function getCompetitions(): Promise<CompetitionResponse[]> {
 export function getMatches(filters: {
   competition_id?: number | null;
   season_id?: number | null;
+  team_id?: number | null;
 }): Promise<MatchResponse[]> {
   const params = new URLSearchParams();
   if (filters.competition_id != null) {
@@ -39,6 +41,9 @@ export function getMatches(filters: {
   }
   if (filters.season_id != null) {
     params.set("season_id", String(filters.season_id));
+  }
+  if (filters.team_id != null) {
+    params.set("team_id", String(filters.team_id));
   }
   const qs = params.toString();
   return apiFetch<MatchResponse[]>(`/v1/matches${qs ? `?${qs}` : ""}`);
@@ -80,6 +85,36 @@ export function getPlayerShots(
   }
   const qs = params.toString();
   return apiFetch<ShotResponse[]>(`/v1/players/${playerId}/shots${qs ? `?${qs}` : ""}`);
+}
+
+export function getTeams(filters: {
+  competition_id?: number | null;
+  season_id?: number | null;
+}): Promise<TeamSeasonResponse[]> {
+  const params = new URLSearchParams();
+  if (filters.competition_id != null) {
+    params.set("competition_id", String(filters.competition_id));
+  }
+  if (filters.season_id != null) {
+    params.set("season_id", String(filters.season_id));
+  }
+  const qs = params.toString();
+  return apiFetch<TeamSeasonResponse[]>(`/v1/teams${qs ? `?${qs}` : ""}`);
+}
+
+export function getTeamShots(
+  teamId: number | string,
+  filters: { competition_id?: number | null; season_id?: number | null }
+): Promise<ShotResponse[]> {
+  const params = new URLSearchParams();
+  if (filters.competition_id != null) {
+    params.set("competition_id", String(filters.competition_id));
+  }
+  if (filters.season_id != null) {
+    params.set("season_id", String(filters.season_id));
+  }
+  const qs = params.toString();
+  return apiFetch<ShotResponse[]>(`/v1/teams/${teamId}/shots${qs ? `?${qs}` : ""}`);
 }
 
 export { ApiError };

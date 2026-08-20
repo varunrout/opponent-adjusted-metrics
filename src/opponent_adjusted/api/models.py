@@ -100,3 +100,15 @@ class PlayerSeasonResponse(BaseModel):
     shots: int
     goals: int
     total_xg: float
+
+
+class TeamSeasonResponse(BaseModel):
+    """API response shape for a team's shot aggregates."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    team_id: int
+    team_name: str | None
+    shots: int
+    goals: int
+    total_xg: float
