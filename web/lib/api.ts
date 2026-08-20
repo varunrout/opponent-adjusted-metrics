@@ -2,6 +2,7 @@ import type {
   CompetitionResponse,
   MatchDetailResponse,
   MatchResponse,
+  MeResponse,
   PlayerSeasonResponse,
   ShotResponse,
   TeamSeasonResponse,
@@ -18,8 +19,8 @@ class ApiError extends Error {
   }
 }
 
-async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`);
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, init);
   if (!res.ok) {
     throw new ApiError(res.status, `Request to ${path} failed with status ${res.status}`);
   }
@@ -115,6 +116,11 @@ export function getTeamShots(
   }
   const qs = params.toString();
   return apiFetch<ShotResponse[]>(`/v1/teams/${teamId}/shots${qs ? `?${qs}` : ""}`);
+}
+
+export function getMe(idToken?: string | null): Promise<MeResponse> {
+  const headers: HeadersInit | undefined = idToken ? { Authorization: `Bearer ${idToken}` } : undefined;
+  return apiFetch<MeResponse>("/v1/me", headers ? { headers } : undefined);
 }
 
 export { ApiError };

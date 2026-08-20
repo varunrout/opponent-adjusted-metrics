@@ -66,6 +66,12 @@ export type TeamSeasonResponse = {
   total_xg: number;
 };
 
+export type MeResponse = {
+  role: "guest" | "viewer" | "admin";
+  uid: string | null;
+  email: string | null;
+};
+
 export type ShotResponse = {
   event_id: string;
   match_id: number;

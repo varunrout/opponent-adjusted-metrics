@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
+from opponent_adjusted.api.dependencies import Role
+
 
 class CompetitionResponse(BaseModel):
     """API response shape for a competition-season."""
@@ -112,3 +114,11 @@ class TeamSeasonResponse(BaseModel):
     shots: int
     goals: int
     total_xg: float
+
+
+class MeResponse(BaseModel):
+    """API response shape for the current caller's auth context."""
+
+    role: Role
+    uid: str | None = None
+    email: str | None = None

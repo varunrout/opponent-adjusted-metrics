@@ -8,6 +8,22 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
 }));
 
+// RoleProvider now derives its role from Firebase auth state. Mock
+// firebase/auth's onAuthStateChanged to never fire (simulating an
+// indefinitely-pending auth check) so the provider's `defaultRole` prop
+// stays authoritative for these nav-gating tests, which only exercise the
+// manual "view as" override — not the real auth-derived flow. Pair with a
+// non-null `auth` stub from @/lib/firebase so RoleProvider takes the
+// "subscribe and wait" branch rather than its "auth is null -> guest"
+// immediate fallback.
+vi.mock("firebase/auth", () => ({
+  onAuthStateChanged: () => () => {},
+}));
+vi.mock("@/lib/firebase", () => ({
+  auth: {},
+  firebaseIsConfigured: false,
+}));
+
 import { RoleProvider } from "@/components/shell/RoleProvider";
 import { PrimaryNav } from "@/components/shell/PrimaryNav";
 import { RoleSwitch } from "@/components/shell/RoleSwitch";

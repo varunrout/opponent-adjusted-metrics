@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${montserrat.variable} ${inconsolata.variable}`}>
       <body className="font-ui">
-        <RoleProvider defaultRole="admin">
+        <RoleProvider defaultRole="guest">
           <MatchFilterProvider>
             <RoleGate />
             <TopBar />
