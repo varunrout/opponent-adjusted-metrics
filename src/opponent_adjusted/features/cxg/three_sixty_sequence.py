@@ -123,7 +123,6 @@ def _derive_shot(
     index: int,
     frames: dict[str, Frame],
     shot_static: dict[str, object | None],
-    shot_defenders: tuple,
 ) -> dict[str, object | None]:
     values: dict[str, object | None] = {name: None for name in F6_F14_FEATURES}
     shot_clock = event_clock_s(shot)
@@ -239,35 +238,58 @@ def _derive_shot(
             max_space, max_elapsed = max(space_states, key=lambda item: (item[0], -item[1]))
             values["time_since_shooter_max_linkable_space"] = max_elapsed
 
-    # F11: defensive bypass / line-break proxies, current-shot defender snapshot only --------
-    if shot_defenders and prior:
+    # F11: defensive bypass / line-break proxies -------------------------------------------
+    # Each action's proxy uses the defender snapshot from ITS OWN eligible linked frame (via
+    # `states`), never the shot's own (later) frame -- using a later state as if it were the
+    # defensive layer an earlier action faced would be a future-state leakage. An action with
+    # no eligible linked frame is simply excluded (null / not counted), per an explicit
+    # sparse-but-honest contract; it is never backfilled from the shot's snapshot.
+    state_by_event_id = {s.event.event_id: s for s in states}
+
+    def _defenders_for(event: EventRecord) -> tuple | None:
+        state = state_by_event_id.get(event.event_id)
+        return state.defenders if state is not None and state.defenders else None
+
+    if prior:
         last_action = prior[-1]
-        if _valid_location(last_action):
+        last_action_defenders = _defenders_for(last_action)
+        if last_action_defenders and _valid_location(last_action):
             x_lo, x_hi = sorted((last_action.location_x, shot.location_x))
             y_lo, y_hi = sorted((last_action.location_y, shot.location_y))
             values["defensive_layer_bypass_proxy_last_action"] = _band_count(
-                shot_defenders, x_lo, x_hi, y_lo, y_hi
+                last_action_defenders, x_lo, x_hi, y_lo, y_hi
             )
-            deepest_x = min(d.x for d in shot_defenders)
-            deepest = next(d for d in shot_defenders if d.x == deepest_x)
+            deepest_x = min(d.x for d in last_action_defenders)
+            deepest = next(d for d in last_action_defenders if d.x == deepest_x)
             values["line_break_proxy_last_action"] = (
                 x_lo <= deepest.x <= x_hi
                 and y_lo - LINE_BREAK_BAND_NATIVE <= deepest.y <= y_hi + LINE_BREAK_BAND_NATIVE
             )
 
-        last_n = [e for e in prior[-LAST_N_ACTIONS_FOR_BYPASS:] if _valid_location(e)]
-        if last_n:
-            xs = [e.location_x for e in last_n] + [shot.location_x]
-            ys = [e.location_y for e in last_n] + [shot.location_y]
+        last_n_actions = prior[-LAST_N_ACTIONS_FOR_BYPASS:]
+        last_n_defenders = None
+        for candidate in reversed(last_n_actions):
+            last_n_defenders = _defenders_for(candidate)
+            if last_n_defenders:
+                break
+        last_n_valid = [e for e in last_n_actions if _valid_location(e)]
+        if last_n_defenders and last_n_valid:
+            xs = [e.location_x for e in last_n_valid] + [shot.location_x]
+            ys = [e.location_y for e in last_n_valid] + [shot.location_y]
             values["defensive_layer_bypass_proxy_last_3_actions"] = _band_count(
-                shot_defenders, min(xs), max(xs), min(ys), max(ys)
+                last_n_defenders, min(xs), max(xs), min(ys), max(ys)
             )
 
         chain = [e for e in [*prior, shot] if _valid_location(e)]
-        deepest_x = min(d.x for d in shot_defenders)
-        deepest = next(d for d in shot_defenders if d.x == deepest_x)
         count = 0
+        eligible_transitions = 0
         for a, b in zip(chain, chain[1:]):
+            a_defenders = _defenders_for(a)
+            if not a_defenders:
+                continue
+            eligible_transitions += 1
+            deepest_x = min(d.x for d in a_defenders)
+            deepest = next(d for d in a_defenders if d.x == deepest_x)
             x_lo, x_hi = sorted((a.location_x, b.location_x))
             y_lo, y_hi = sorted((a.location_y, b.location_y))
             if (
@@ -275,9 +297,7 @@ def _derive_shot(
                 and y_lo - LINE_BREAK_BAND_NATIVE <= deepest.y <= y_hi + LINE_BREAK_BAND_NATIVE
             ):
                 count += 1
-        values["line_break_proxy_possession_count"] = count
-    elif shot_defenders:
-        values["line_break_proxy_possession_count"] = 0
+        values["line_break_proxy_possession_count"] = count if eligible_transitions > 0 else None
 
     # F12: rest-defence / transition structure ------------------------------------------------
     values.update(_rest_defence(shot, prior, e1e6_restart_kind, frames))
@@ -418,14 +438,12 @@ def _derive_match(
             continue
         shot_frame = frames.get(shot.event_id)
         shot_static: dict[str, object | None] = {}
-        shot_defenders: tuple = ()
         if shot_frame is not None and shot.team_id is not None and _valid_location(shot):
             oriented = orient_players(shot_frame.players, shot.team_id, shot.team_id)
             if oriented is not None:
                 shot_static = derive_static_360_context(
                     shot_frame, oriented, shot.location_x, shot.location_y
                 )
-                shot_defenders = geo.outfield_defenders(oriented)
         contexts[shot.event_id] = _derive_shot(
             shot,
             e1e6.value("restart_vs_live_regain"),
@@ -433,7 +451,6 @@ def _derive_match(
             index,
             frames,
             shot_static,
-            shot_defenders,
         )
     return contexts
 

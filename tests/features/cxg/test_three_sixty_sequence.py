@@ -142,7 +142,9 @@ def test_f10_null_when_no_shooter_linkage():
     assert v["shooter_space_previous_linked_event"] is None
 
 
-def test_f11_uses_current_shot_defender_snapshot_without_requiring_prior_frames():
+def test_f11_null_when_last_action_has_no_linked_frame_of_its_own():
+    # Only the shot has a frame; the shot's own (later) snapshot must NOT be used as a stand-in
+    # for the defensive layer the earlier action actually faced.
     shot_players = (player(0, teammate=False, keeper=False, x=90.0, y=40.0),)
     rows = [
         event("a", 1, second=1, location_x=60, location_y=40),
@@ -150,17 +152,44 @@ def test_f11_uses_current_shot_defender_snapshot_without_requiring_prior_frames(
     ]
     frames = {"shot": frame_for("shot", shot_players)}
     v = values(rows, frames)
+    assert v["defensive_layer_bypass_proxy_last_action"] is None
+    assert v["line_break_proxy_last_action"] is None
+    assert v["line_break_proxy_possession_count"] is None
+
+
+def test_f11_uses_last_action_own_linked_frame_not_shot_frame():
+    action_players = (player(0, teammate=False, keeper=False, x=90.0, y=40.0),)
+    shot_players = (player(0, teammate=False, keeper=False, x=200.0, y=200.0),)  # decoy, unused
+    rows = [
+        event("a", 1, second=1, location_x=60, location_y=40),
+        shot(index=2, second=6, location_x=110, location_y=40),
+    ]
+    frames = {"a": frame_for("a", action_players), "shot": frame_for("shot", shot_players)}
+    v = values(rows, frames)
     assert v["defensive_layer_bypass_proxy_last_action"] == 1
     assert v["line_break_proxy_last_action"] is True
 
 
-def test_f11_zero_prior_actions_returns_zero_possession_count_not_null():
+def test_f11_zero_prior_actions_returns_null_possession_count():
     shot_players = (player(0, teammate=False, keeper=False, x=90.0, y=40.0),)
     rows = [shot(index=0, second=0, location_x=110, location_y=40)]
     frames = {"shot": frame_for("shot", shot_players)}
     v = values(rows, frames)
-    assert v["line_break_proxy_possession_count"] == 0
+    assert v["line_break_proxy_possession_count"] is None
     assert v["defensive_layer_bypass_proxy_last_action"] is None
+
+
+def test_f11_excludes_actions_without_their_own_frame_from_possession_count():
+    # "a" has no frame (excluded), "b" does -> exactly one eligible transition (b -> shot).
+    b_players = (player(0, teammate=False, keeper=False, x=95.0, y=40.0),)
+    rows = [
+        event("a", 1, second=1, location_x=50, location_y=40),
+        event("b", 2, second=3, location_x=90, location_y=40),
+        shot(index=3, second=6, location_x=110, location_y=40),
+    ]
+    frames = {"b": frame_for("b", b_players)}
+    v = values(rows, frames)
+    assert v["line_break_proxy_possession_count"] == 1
 
 
 def test_f12_regain_features_null_for_restart_possession():
