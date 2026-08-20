@@ -46,6 +46,41 @@ class MatchRecord:
     last_updated_360: str | None
 
 
+@dataclass(frozen=True)
+class LineupPlayerRecord:
+    """One starting XI player row for a match, from the serving store."""
+
+    match_id: int
+    team_id: int | None
+    team_name: str | None
+    formation: int | None
+    player_id: int
+    player_name: str | None
+    position_name: str | None
+    jersey_number: int | None
+
+
+@dataclass(frozen=True)
+class ShotRecord:
+    """One shot row for a match, from the serving store."""
+
+    event_id: str
+    match_id: int
+    team_id: int | None
+    player_id: int | None
+    player_name: str | None
+    minute: int | None
+    period: int | None
+    location_x: float | None
+    location_y: float | None
+    end_x: float | None
+    end_y: float | None
+    statsbomb_xg: float | None
+    outcome_name: str | None
+    body_part_name: str | None
+    is_goal: bool
+
+
 class ServingStore(Protocol):
     """Minimal read-only contract required by the dashboard API."""
 
@@ -59,3 +94,12 @@ class ServingStore(Protocol):
         season_id: int | None = None,
     ) -> list[MatchRecord]:
         """Return matches, optionally filtered by competition_id and/or season_id."""
+
+    def get_match(self, match_id: int) -> MatchRecord | None:
+        """Return the match row for match_id, or None if no such match exists."""
+
+    def list_lineups(self, match_id: int) -> list[LineupPlayerRecord]:
+        """Return starting XI rows for both teams in match_id, via starting_xi_players_join_events_matches."""
+
+    def list_shots(self, match_id: int) -> list[ShotRecord]:
+        """Return shots for match_id, joined to events for player_name/minute/period, via shots_join_events_matches."""

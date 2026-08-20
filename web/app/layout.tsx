@@ -5,6 +5,7 @@ import { RoleProvider } from "@/components/shell/RoleProvider";
 import { RoleGate } from "@/components/shell/RoleGate";
 import { TopBar } from "@/components/shell/TopBar";
 import { Sidebar } from "@/components/shell/Sidebar";
+import { MatchFilterProvider } from "@/components/shell/MatchFilterProvider";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -30,12 +31,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${montserrat.variable} ${inconsolata.variable}`}>
       <body className="font-ui">
         <RoleProvider defaultRole="admin">
-          <RoleGate />
-          <TopBar />
-          <div className="flex" style={{ minHeight: "calc(100vh - 56px)" }}>
-            <Sidebar />
-            <main className="flex-1 px-7 py-6 overflow-hidden">{children}</main>
-          </div>
+          <MatchFilterProvider>
+            <RoleGate />
+            <TopBar />
+            <div className="flex" style={{ minHeight: "calc(100vh - 56px)" }}>
+              <Sidebar />
+              <main className="flex-1 px-7 py-6 overflow-hidden">{children}</main>
+            </div>
+          </MatchFilterProvider>
         </RoleProvider>
       </body>
     </html>
