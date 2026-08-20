@@ -118,7 +118,6 @@ def _band_count(defenders: tuple, x_lo: float, x_hi: float, y_lo: float, y_hi: f
 
 def _derive_shot(
     shot: EventRecord,
-    e1e6_age: float | None,
     e1e6_restart_kind: str | None,
     ordered: list[EventRecord],
     index: int,
@@ -429,7 +428,6 @@ def _derive_match(
                 shot_defenders = geo.outfield_defenders(oriented)
         contexts[shot.event_id] = _derive_shot(
             shot,
-            e1e6.value("possession_age_s"),
             e1e6.value("restart_vs_live_regain"),
             ordered,
             index,
