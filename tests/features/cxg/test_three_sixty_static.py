@@ -39,13 +39,16 @@ def test_one_defender_within_radius_bands():
     assert values["nearest_defender_distance"] is not None
 
 
-def test_partial_visible_area_nulls_local_pressure_when_ball_not_observable():
-    small_area = (0.0, 0.0, 10.0, 0.0, 10.0, 10.0, 0.0, 10.0)
+def test_ball_referenced_features_do_not_require_visible_area():
+    # visible_area is empty for 100% of the currently published corpus (see module
+    # docstring METHODOLOGY_BUG note in three_sixty_static.py); the frame's own ball/actor
+    # point is presumed observable regardless of visible_area population.
+    empty_area = ()
     players = (player(0, teammate=False, keeper=False, x=101.0, y=40.0),)
-    frame = Frame("e1", 1, small_area, players)
+    frame = Frame("e1", 1, empty_area, players)
     values = derive_static_360_context(frame, players, 100.0, 40.0)
-    assert values["nearest_defender_distance"] is None
-    assert values["defenders_within_3m"] is None
+    assert values["nearest_defender_distance"] is not None
+    assert values["defenders_within_3m"] == 1
 
 
 def test_no_keeper_visible_is_null_not_synthetic():
