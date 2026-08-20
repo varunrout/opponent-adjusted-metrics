@@ -88,49 +88,70 @@ def test_regressive_possession_yields_regressive_bucket():
     assert v["phase_directness_bucket"] == "regressive"
 
 
-def test_phase_control_score_is_fraction_not_length_biased():
+def test_single_successful_first_action_does_not_imply_settled():
     rows = [
         event("a", 1, second=1, event_type_name="Carry", end_x=61, end_y=40),
-        event("b", 2, second=2, event_type_name="Carry", end_x=62, end_y=40),
-        event("c", 3, second=3, event_type_name="Carry", end_x=63, end_y=40),
-        event("d", 4, second=4, event_type_name="Carry", end_x=64, end_y=40),
-        shot(index=5, second=5),
+        shot(index=2, second=2),
     ]
     v = values(rows)
-    assert v["phase_control_score"] == 1.0
-    assert v["phase_control_state"] == "high_control"
-
-    rows_longer = (
-        rows[:-1]
-        + [
-            event(f"e{i}", 5 + i, second=5 + i, event_type_name="Carry", end_x=64 + i, end_y=40)
-            for i in range(20)
-        ]
-        + [shot(index=30, second=30)]
-    )
-    v_longer = values(rows_longer)
-    assert v_longer["phase_control_score"] == 1.0  # length alone does not change the score
+    assert v["phase_control_state"] != "settled"
+    assert v["time_to_control"] is None  # never reaches the minimum action-count bar
 
 
-def test_phase_control_null_distinct_from_low_control():
+def test_mature_multi_action_possession_reaches_settled_after_transition_window():
+    rows = [
+        event("a", 1, second=0, event_type_name="Carry", end_x=61, end_y=40),
+        event("b", 2, second=5, event_type_name="Carry", end_x=65, end_y=40),
+        event("c", 3, second=10, event_type_name="Carry", end_x=70, end_y=40),
+        event("d", 4, second=16, event_type_name="Carry", end_x=75, end_y=40),
+        shot(index=5, second=20),
+    ]
+    v = values(rows)
+    assert v["phase_control_state"] == "settled"
+    # settledness is only recognised once the live-regain transition window (15s) has passed,
+    # i.e. at action "d" (age 16s), not earlier even though "c" already met the other criteria.
+    assert v["time_to_control"] == 16.0
+
+
+def test_rapid_transition_possession_stays_transition_despite_early_success():
+    rows = [
+        event("a", 1, second=0, event_type_name="Carry", end_x=61, end_y=40),
+        event("b", 2, second=3, event_type_name="Carry", end_x=65, end_y=40),
+        event("c", 3, second=6, event_type_name="Carry", end_x=70, end_y=40),
+        shot(index=4, second=8),
+    ]
+    v = values(rows)
+    assert v["phase_control_state"] == "transition"
+    assert v["time_to_control"] is None
+
+
+def test_phase_control_score_is_bounded_and_null_distinct_from_transition():
     rows_null = [shot(index=0, second=0)]
     assert values(rows_null)["phase_control_state"] is None
+    assert values(rows_null)["phase_control_score"] is None
 
     rows_low = [
         event("a", 1, second=1, event_type_name="Miscontrol"),
         shot(index=2, second=2),
     ]
-    assert values(rows_low)["phase_control_state"] == "low_control"
+    v = values(rows_low)
+    assert v["phase_control_state"] != "settled"
+    assert 0.0 <= v["phase_control_score"] <= 1.0
 
 
-def test_time_to_control_is_causal_and_uses_first_successful_action():
+def test_time_to_control_replays_causally_not_backfilled_from_shot_time():
+    # A possession that only becomes settled at action "d"; time_to_control must equal that
+    # action's own elapsed time, not the (larger) elapsed time of a later still-successful action.
     rows = [
-        event("a", 1, second=2, event_type_name="Miscontrol"),
-        event("b", 2, second=5, event_type_name="Carry", end_x=61, end_y=40),
-        shot(index=3, second=8),
+        event("a", 1, second=0, event_type_name="Carry", end_x=61, end_y=40),
+        event("b", 2, second=5, event_type_name="Carry", end_x=65, end_y=40),
+        event("c", 3, second=10, event_type_name="Carry", end_x=70, end_y=40),
+        event("d", 4, second=16, event_type_name="Carry", end_x=75, end_y=40),
+        event("e", 5, second=25, event_type_name="Carry", end_x=80, end_y=40),
+        shot(index=6, second=30),
     ]
     v = values(rows)
-    assert v["time_to_control"] == 3.0
+    assert v["time_to_control"] == 16.0
 
 
 def test_e13_does_not_use_future_or_target_fields():
