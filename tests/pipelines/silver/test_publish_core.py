@@ -39,7 +39,7 @@ class _FakeBigQueryClient:
         return _FakeQueryJob([{"c": 1}])
 
     def load_table_from_uri(self, uris, table_ref, location, job_config):
-        self.load_calls.append((uris, table_ref, location, job_config.write_disposition))
+        self.load_calls.append((uris, table_ref, location, job_config))
         table = table_ref.rsplit(".", 1)[1]
         self.counts[table] = 3
         return _FakeLoadJob()
@@ -96,6 +96,38 @@ def test_publish_skips_existing_and_loads_missing(monkeypatch):
     assert result.load_actions["events"] == "skipped_existing"
     assert result.load_actions["shots"] == "loaded"
     assert any("shots" in call[1] for call in fake_bq.load_calls)
+
+
+def test_load_job_enables_parquet_list_inference_for_repeated_columns(monkeypatch):
+    """Regression test for the ADAPTER_BUG: without list inference, BigQuery's Parquet loader
+    silently produces empty arrays for REPEATED columns (found on visible_area/related_event_ids)
+    even with an explicit REPEATED schema supplied."""
+    manifest = {"tables": {"three_sixty_frames": {"row_count": 3}}}
+
+    fake_bq = _FakeBigQueryClient(counts={"three_sixty_frames": 0})
+    fake_st = _FakeStorageClient(manifest)
+
+    monkeypatch.setattr(publish_core, "CONTRACTS", {"three_sixty_frames": object()})
+    monkeypatch.setattr(publish_core, "table_bq_schema", lambda _t: [])
+    monkeypatch.setattr(publish_core.bigquery, "Client", lambda project: fake_bq)
+    monkeypatch.setattr(publish_core.storage, "Client", lambda project: fake_st)
+
+    publish_core.publish_oam_core(
+        publish_core.PublishConfig(
+            project_id="oam-varun-260819",
+            dataset="oam_core",
+            location="europe-west2",
+            bucket_name="oam-varun-260819-data",
+            output_prefix="staged/statsbomb/x/statsbomb_silver_v1_2",
+            data_version="x",
+            silver_schema_version="statsbomb_silver_v1_2",
+        )
+    )
+
+    assert len(fake_bq.load_calls) == 1
+    job_config = fake_bq.load_calls[0][3]
+    assert job_config.parquet_options is not None
+    assert job_config.parquet_options.enable_list_inference is True
 
 
 def _config() -> publish_core.PublishConfig:

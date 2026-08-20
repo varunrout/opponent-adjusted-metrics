@@ -45,6 +45,13 @@ class PublicationPlanEntry:
     uris: list[str]
 
 
+def _repeated_column_parquet_options() -> bigquery.ParquetOptions:
+    """Required for correct REPEATED-column loads; see ADAPTER_BUG note at the call site."""
+    options = bigquery.ParquetOptions()
+    options.enable_list_inference = True
+    return options
+
+
 def _version_query_config(data_version: str, silver_schema_version: str) -> bigquery.QueryJobConfig:
     return bigquery.QueryJobConfig(
         query_parameters=[
@@ -237,6 +244,12 @@ def publish_oam_core(config: PublishConfig) -> PublishResult:
             write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
             create_disposition=bigquery.CreateDisposition.CREATE_IF_NEEDED,
             schema=table_bq_schema(table_name),
+            # ADAPTER_BUG fix (found 2026-08-20): without list inference, BigQuery's Parquet
+            # loader maps a REPEATED column onto the raw 3-level LIST group structure and
+            # silently loads empty arrays for every row instead of unwrapping it, even when an
+            # explicit REPEATED schema is supplied. Reproduced and confirmed on
+            # three_sixty_frames.visible_area and events.related_event_ids.
+            parquet_options=_repeated_column_parquet_options(),
         )
         load_job = bq.load_table_from_uri(
             entry.uris,
