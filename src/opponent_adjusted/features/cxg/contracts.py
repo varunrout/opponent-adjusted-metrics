@@ -195,7 +195,7 @@ EVENT_FAMILIES: tuple[FeatureFamily, ...] = (
             "phase_control_state",
             "time_to_control",
         ),
-        ("derivation_parameters_not_yet_locked",),
+        ("derivation_parameters_locked_e13_v1",),
     ),
 )
 
@@ -450,6 +450,17 @@ def event_candidate_names_for_families(family_ids: tuple[str, ...]) -> tuple[str
 def three_sixty_candidate_names() -> tuple[str, ...]:
     """Return all 360-derived contextual candidates in taxonomy order."""
     return tuple(candidate for family in THREE_SIXTY_FAMILIES for candidate in family.candidates)
+
+
+def three_sixty_candidate_names_for_families(family_ids: tuple[str, ...]) -> tuple[str, ...]:
+    """Return 360 candidates for governed family IDs in taxonomy order."""
+    selected = set(family_ids)
+    return tuple(
+        candidate
+        for family in THREE_SIXTY_FAMILIES
+        if family.family_id in selected
+        for candidate in family.candidates
+    )
 
 
 def contextual_candidate_names() -> tuple[str, ...]:

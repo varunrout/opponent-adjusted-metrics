@@ -61,7 +61,7 @@ def test_governed_methodology_flags_are_explicit():
     assert (
         "requires_explicit_sequence_depth_eligibility_and_coverage_metadata" in family_flags["F14"]
     )
-    assert "derivation_parameters_not_yet_locked" in family_flags["E13"]
+    assert "derivation_parameters_locked_e13_v1" in family_flags["E13"]
 
 
 def test_event_only_cxg_allowlist_excludes_all_360_candidates():

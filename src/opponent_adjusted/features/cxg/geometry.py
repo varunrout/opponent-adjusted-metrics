@@ -13,6 +13,12 @@ GOAL_X = 120.0
 GOAL_CENTRE_Y = 40.0
 GOAL_POST_LOW_Y = 36.0
 GOAL_POST_HIGH_Y = 44.0
+# Native penalty-box boundary shared by new CxG+ (F-family) code. Matches the inline literals
+# already used by the frozen E7-E12 box predicate; declared here only for NEW code to reuse
+# without duplicating the raw constants inconsistently. The frozen E7-E12 module is unchanged.
+BOX_X_MIN = 102.0
+BOX_Y_MIN = 18.0
+BOX_Y_MAX = 62.0
 
 
 @dataclass(frozen=True)
