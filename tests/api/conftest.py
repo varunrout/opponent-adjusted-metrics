@@ -101,6 +101,7 @@ class FakeServingStore:
                 shot.player_id,
                 {
                     "player_name": shot.player_name,
+                    "team_id": shot.team_id,
                     "team_name": self._team_name(matches_by_id[shot.match_id], shot.team_id),
                     "shots": 0,
                     "goals": 0,
@@ -118,6 +119,7 @@ class FakeServingStore:
             PlayerSeasonRecord(
                 player_id=player_id,
                 player_name=values["player_name"],
+                team_id=values["team_id"],
                 team_name=values["team_name"],
                 shots=values["shots"],
                 goals=values["goals"],

@@ -303,6 +303,7 @@ class BigQueryServingStore:
             SELECT
                 s.player_id AS player_id,
                 ANY_VALUE(e.player_name) AS player_name,
+                ANY_VALUE(s.team_id) AS team_id,
                 ANY_VALUE(e.team_name) AS team_name,
                 COUNT(*) AS shots,
                 COUNTIF(s.outcome_name = 'Goal') AS goals,
@@ -322,6 +323,7 @@ class BigQueryServingStore:
             PlayerSeasonRecord(
                 player_id=row["player_id"],
                 player_name=row["player_name"],
+                team_id=row["team_id"],
                 team_name=row["team_name"],
                 shots=row["shots"],
                 goals=row["goals"],

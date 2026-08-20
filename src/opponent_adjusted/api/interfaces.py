@@ -87,6 +87,7 @@ class PlayerSeasonRecord:
 
     player_id: int
     player_name: str | None
+    team_id: int | None
     team_name: str | None
     shots: int
     goals: int
