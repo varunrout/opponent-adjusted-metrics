@@ -16,7 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/players", label: "Players", roles: ["guest", "viewer", "admin"] },
   { href: "/teams", label: "Teams", roles: ["guest", "viewer", "admin"] },
   { href: "/analysis", label: "Analysis", roles: ["admin"] },
-  { href: "/models", label: "Models", roles: ["admin"], secondary: true },
+  { href: "/models", label: "Models", roles: ["guest", "viewer", "admin"], secondary: true },
   { href: "/stories", label: "Stories", roles: ["guest", "viewer", "admin"], secondary: true },
   { href: "/about", label: "About", roles: ["guest", "viewer", "admin"], secondary: true },
 ];

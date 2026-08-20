@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { PageHead } from "@/components/ui/PageHead";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ClickableRow } from "@/components/ui/ClickableRow";
+import { TeamLink } from "@/components/ui/EntityLink";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import { getPlayers } from "@/lib/api";
 import type { PlayerSeasonResponse } from "@/lib/types";
@@ -63,21 +64,25 @@ export default function PlayersPage() {
       {!loading && !error && players.length > 0 && (
         <div className="bg-card border border-border rounded overflow-hidden">
           {players.map((player, i) => (
-            <Link
+            <ClickableRow
               key={player.player_id}
               href={`/players/${player.player_id}`}
-              className="flex items-center justify-between gap-3 px-4 py-[10px] border-b border-border last:border-b-0 text-[12.5px] hover:bg-card-hi"
+              className="flex items-center justify-between gap-3 px-4 py-[10px] border-b border-border last:border-b-0 text-[12.5px] hover:bg-card-hi cursor-pointer"
             >
               <span className="w-6 text-muted font-data">{i + 1}</span>
               <div className="flex-1 min-w-0">
                 <span className="text-text">{player.player_name ?? "Unknown"}</span>
                 <span className="text-muted mx-1.5">·</span>
-                <span className="text-muted">{player.team_name ?? "Unknown team"}</span>
+                <TeamLink
+                  teamId={player.team_id}
+                  name={player.team_name ?? "Unknown team"}
+                  className="text-muted"
+                />
               </div>
               <div className="font-data text-text2 w-16 text-right">{player.shots}</div>
               <div className="font-data text-text2 w-16 text-right">{player.goals}</div>
               <div className="font-data text-text2 w-20 text-right">{player.total_xg.toFixed(2)}</div>
-            </Link>
+            </ClickableRow>
           ))}
         </div>
       )}

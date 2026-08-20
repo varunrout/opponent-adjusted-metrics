@@ -38,7 +38,7 @@ function renderShellNav() {
 }
 
 describe("role-based nav gating", () => {
-  it("shows admin-only links (Models, Analysis) when defaulted to admin", () => {
+  it("shows admin-only links (Analysis) and public Models when defaulted to admin", () => {
     renderShellNav();
 
     expect(screen.getByRole("link", { name: "Models" })).toBeInTheDocument();
@@ -46,13 +46,16 @@ describe("role-based nav gating", () => {
     expect(screen.getByRole("link", { name: "Overview" })).toBeInTheDocument();
   });
 
-  it("hides Models and Analysis after switching role to guest via the select", () => {
+  it("hides Analysis but keeps Models visible after switching role to guest via the select", () => {
     renderShellNav();
 
     const select = screen.getByLabelText("View as role");
     fireEvent.change(select, { target: { value: "guest" } });
 
-    expect(screen.queryByRole("link", { name: "Models" })).not.toBeInTheDocument();
+    // Models is guest-visible by design (docs/dashboard_content_ideation.md:
+    // it's a public registry layer, not an admin tool) — only Analysis is
+    // actually admin-gated.
+    expect(screen.getByRole("link", { name: "Models" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Analysis" })).not.toBeInTheDocument();
     // Guest-visible links remain
     expect(screen.getByRole("link", { name: "Overview" })).toBeInTheDocument();

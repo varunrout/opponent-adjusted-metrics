@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PitchMap } from "@/components/ui/PitchMap";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
 import { getMatch, getMatchShots, ApiError } from "@/lib/api";
 import type { MatchDetailResponse, ShotResponse, LineupPlayerResponse } from "@/lib/types";
 
@@ -87,9 +88,12 @@ export default function MatchDetailPage() {
   return (
     <section>
       <div className="mb-[18px]">
-        <h1 className="text-lg font-semibold m-0">
-          {match.home_team_name ?? "TBD"} {match.home_score ?? "-"} — {match.away_score ?? "-"}{" "}
-          {match.away_team_name ?? "TBD"}
+        <h1 className="text-lg font-semibold m-0 flex items-baseline gap-1.5 flex-wrap">
+          <TeamLink teamId={homeTeamId} name={match.home_team_name ?? "TBD"} className="text-text" />
+          <span>
+            {match.home_score ?? "-"} — {match.away_score ?? "-"}
+          </span>
+          <TeamLink teamId={awayTeamId} name={match.away_team_name ?? "TBD"} className="text-text" />
         </h1>
         <div className="text-[12.5px] text-muted mt-1">
           {[match.match_date, match.stadium, match.competition_stage].filter(Boolean).join(" · ")}
@@ -131,7 +135,11 @@ function LineupList({ players }: { players: LineupPlayerResponse[] }) {
           className="flex items-center gap-2.5 py-[6px] border-b border-border last:border-b-0 text-[12.5px]"
         >
           <span className="w-6 font-data text-muted">{p.jersey_number ?? ""}</span>
-          <span className="flex-1 text-text">{p.player_name ?? "Unknown"}</span>
+          <PlayerLink
+            playerId={p.player_id}
+            name={p.player_name ?? "Unknown"}
+            className="flex-1 text-text"
+          />
           <span className="text-muted">{p.position_name ?? ""}</span>
         </div>
       ))}

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ClickableRow } from "@/components/ui/ClickableRow";
+import { TeamLink } from "@/components/ui/EntityLink";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import { getTeamShots, getMatches } from "@/lib/api";
 import { summarizeShots } from "@/lib/shot-summary";
@@ -104,21 +105,21 @@ export default function TeamDetailPage() {
         ) : (
           <div>
             {sortedMatches.map((match) => (
-              <Link
+              <ClickableRow
                 key={match.match_id}
                 href={`/matches/${match.match_id}`}
-                className="flex items-center justify-between gap-3 py-[10px] border-b border-border last:border-b-0 text-[12.5px] hover:bg-card-hi"
+                className="flex items-center justify-between gap-3 py-[10px] border-b border-border last:border-b-0 text-[12.5px] hover:bg-card-hi cursor-pointer"
               >
                 <div className="flex-1 min-w-0">
-                  <span className="text-text">{match.home_team_name ?? "TBD"}</span>
+                  <TeamLink teamId={match.home_team_id} name={match.home_team_name ?? "TBD"} className="text-text" />
                   <span className="text-muted mx-1.5">vs</span>
-                  <span className="text-text">{match.away_team_name ?? "TBD"}</span>
+                  <TeamLink teamId={match.away_team_id} name={match.away_team_name ?? "TBD"} className="text-text" />
                 </div>
                 <div className="font-data text-text2 w-16 text-center">
                   {match.home_score ?? "-"} : {match.away_score ?? "-"}
                 </div>
                 <div className="text-muted w-24 text-right">{match.match_date ?? ""}</div>
-              </Link>
+              </ClickableRow>
             ))}
           </div>
         )}

@@ -52,6 +52,7 @@ export type MatchDetailResponse = MatchResponse & {
 export type PlayerSeasonResponse = {
   player_id: number;
   player_name: string | null;
+  team_id: number | null;
   team_name: string | null;
   shots: number;
   goals: number;
