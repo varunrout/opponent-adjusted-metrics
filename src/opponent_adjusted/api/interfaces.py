@@ -81,6 +81,18 @@ class ShotRecord:
     is_goal: bool
 
 
+@dataclass(frozen=True)
+class PlayerSeasonRecord:
+    """One player's shot aggregates row from the serving store."""
+
+    player_id: int
+    player_name: str | None
+    team_name: str | None
+    shots: int
+    goals: int
+    total_xg: float
+
+
 class ServingStore(Protocol):
     """Minimal read-only contract required by the dashboard API."""
 
@@ -103,3 +115,20 @@ class ServingStore(Protocol):
 
     def list_shots(self, match_id: int) -> list[ShotRecord]:
         """Return shots for match_id, joined to events for player_name/minute/period, via shots_join_events_matches."""
+
+    def list_player_seasons(
+        self,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[PlayerSeasonRecord]:
+        """Return per-player shot aggregates (shots/goals/total_xg), optionally filtered, sorted by total_xg descending."""
+
+    def list_player_shots(
+        self,
+        player_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        """Return a player's shots joined to events for player_name/minute/period, optionally filtered by competition_id/season_id."""

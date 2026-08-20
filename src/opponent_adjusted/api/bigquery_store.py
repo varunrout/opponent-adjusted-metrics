@@ -8,6 +8,7 @@ from opponent_adjusted.api.interfaces import (
     CompetitionRecord,
     LineupPlayerRecord,
     MatchRecord,
+    PlayerSeasonRecord,
     ShotRecord,
 )
 
@@ -251,6 +252,126 @@ class BigQueryServingStore:
         job_config = bigquery.QueryJobConfig(
             query_parameters=[bigquery.ScalarQueryParameter("match_id", "INT64", match_id)]
         )
+        rows = client.query(query, job_config=job_config).result()
+        return [
+            ShotRecord(
+                event_id=row["event_id"],
+                match_id=row["match_id"],
+                team_id=row["team_id"],
+                player_id=row["player_id"],
+                player_name=row["player_name"],
+                minute=row["minute"],
+                period=row["period"],
+                location_x=row["location_x"],
+                location_y=row["location_y"],
+                end_x=row["end_x"],
+                end_y=row["end_y"],
+                statsbomb_xg=row["statsbomb_xg"],
+                outcome_name=row["outcome_name"],
+                body_part_name=row["body_part_name"],
+                is_goal=row["outcome_name"] == "Goal",
+            )
+            for row in rows
+        ]
+
+    def list_player_seasons(
+        self,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[PlayerSeasonRecord]:
+        client = _client()
+        conditions: list[str] = []
+        parameters: list[bigquery.ScalarQueryParameter] = []
+
+        if competition_id is not None:
+            conditions.append("s.competition_id = @competition_id")
+            parameters.append(
+                bigquery.ScalarQueryParameter("competition_id", "INT64", competition_id)
+            )
+        if season_id is not None:
+            conditions.append("s.season_id = @season_id")
+            parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
+
+        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        query = f"""
+            SELECT
+                s.player_id AS player_id,
+                ANY_VALUE(e.player_name) AS player_name,
+                ANY_VALUE(e.team_name) AS team_name,
+                COUNT(*) AS shots,
+                COUNTIF(s.outcome_name = 'Goal') AS goals,
+                SUM(s.statsbomb_xg) AS total_xg
+            FROM `{PROJECT}.{DATASET}.shots` s
+            JOIN `{PROJECT}.{DATASET}.events` e
+              ON s.event_id = e.event_id
+             AND s.data_version = e.data_version
+             AND s.silver_schema_version = e.silver_schema_version
+            {where_clause}
+            GROUP BY s.player_id
+            ORDER BY total_xg DESC
+        """
+        job_config = bigquery.QueryJobConfig(query_parameters=parameters)
+        rows = client.query(query, job_config=job_config).result()
+        return [
+            PlayerSeasonRecord(
+                player_id=row["player_id"],
+                player_name=row["player_name"],
+                team_name=row["team_name"],
+                shots=row["shots"],
+                goals=row["goals"],
+                total_xg=row["total_xg"],
+            )
+            for row in rows
+        ]
+
+    def list_player_shots(
+        self,
+        player_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        client = _client()
+        conditions: list[str] = ["s.player_id = @player_id"]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("player_id", "INT64", player_id)
+        ]
+
+        if competition_id is not None:
+            conditions.append("s.competition_id = @competition_id")
+            parameters.append(
+                bigquery.ScalarQueryParameter("competition_id", "INT64", competition_id)
+            )
+        if season_id is not None:
+            conditions.append("s.season_id = @season_id")
+            parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
+
+        where_clause = f"WHERE {' AND '.join(conditions)}"
+        query = f"""
+            SELECT
+                s.event_id AS event_id,
+                s.match_id AS match_id,
+                s.team_id AS team_id,
+                s.player_id AS player_id,
+                e.player_name AS player_name,
+                e.minute AS minute,
+                e.period AS period,
+                s.location_x AS location_x,
+                s.location_y AS location_y,
+                s.end_x AS end_x,
+                s.end_y AS end_y,
+                s.statsbomb_xg AS statsbomb_xg,
+                s.outcome_name AS outcome_name,
+                s.body_part_name AS body_part_name
+            FROM `{PROJECT}.{DATASET}.shots` s
+            JOIN `{PROJECT}.{DATASET}.events` e
+              ON s.event_id = e.event_id
+             AND s.data_version = e.data_version
+             AND s.silver_schema_version = e.silver_schema_version
+            {where_clause}
+        """
+        job_config = bigquery.QueryJobConfig(query_parameters=parameters)
         rows = client.query(query, job_config=job_config).result()
         return [
             ShotRecord(

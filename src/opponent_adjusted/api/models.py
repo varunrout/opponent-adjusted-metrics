@@ -87,3 +87,16 @@ class ShotResponse(BaseModel):
     outcome_name: str | None
     body_part_name: str | None
     is_goal: bool
+
+
+class PlayerSeasonResponse(BaseModel):
+    """API response shape for a player's shot aggregates."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    player_id: int
+    player_name: str | None
+    team_name: str | None
+    shots: int
+    goals: int
+    total_xg: float

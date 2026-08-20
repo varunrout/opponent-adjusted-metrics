@@ -10,6 +10,7 @@ from opponent_adjusted.api.interfaces import (
     CompetitionRecord,
     LineupPlayerRecord,
     MatchRecord,
+    PlayerSeasonRecord,
     ShotRecord,
 )
 from opponent_adjusted.api.main import app
@@ -57,6 +58,81 @@ class FakeServingStore:
 
     def list_shots(self, match_id: int) -> list[ShotRecord]:
         return [row for row in self._shots if row.match_id == match_id]
+
+    def _team_name(self, match: MatchRecord, team_id: int | None) -> str | None:
+        if team_id == match.home_team_id:
+            return match.home_team_name
+        if team_id == match.away_team_id:
+            return match.away_team_name
+        return None
+
+    def _filtered_shots(
+        self,
+        *,
+        competition_id: int | None,
+        season_id: int | None,
+    ) -> list[ShotRecord]:
+        matches_by_id = {m.match_id: m for m in self._matches}
+        shots = self._shots
+        if competition_id is not None:
+            shots = [s for s in shots if matches_by_id[s.match_id].competition_id == competition_id]
+        if season_id is not None:
+            shots = [s for s in shots if matches_by_id[s.match_id].season_id == season_id]
+        return shots
+
+    def list_player_seasons(
+        self,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[PlayerSeasonRecord]:
+        matches_by_id = {m.match_id: m for m in self._matches}
+        shots = self._filtered_shots(competition_id=competition_id, season_id=season_id)
+
+        aggregates: dict[int, dict] = {}
+        for shot in shots:
+            if shot.player_id is None:
+                continue
+            agg = aggregates.setdefault(
+                shot.player_id,
+                {
+                    "player_name": shot.player_name,
+                    "team_name": self._team_name(matches_by_id[shot.match_id], shot.team_id),
+                    "shots": 0,
+                    "goals": 0,
+                    "total_xg": 0.0,
+                },
+            )
+            if shot.player_name is not None:
+                agg["player_name"] = shot.player_name
+            agg["shots"] += 1
+            if shot.is_goal:
+                agg["goals"] += 1
+            agg["total_xg"] += shot.statsbomb_xg or 0.0
+
+        records = [
+            PlayerSeasonRecord(
+                player_id=player_id,
+                player_name=values["player_name"],
+                team_name=values["team_name"],
+                shots=values["shots"],
+                goals=values["goals"],
+                total_xg=values["total_xg"],
+            )
+            for player_id, values in aggregates.items()
+        ]
+        records.sort(key=lambda r: r.total_xg, reverse=True)
+        return records
+
+    def list_player_shots(
+        self,
+        player_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        shots = self._filtered_shots(competition_id=competition_id, season_id=season_id)
+        return [s for s in shots if s.player_id == player_id]
 
 
 FAKE_COMPETITIONS = [
@@ -246,6 +322,57 @@ FAKE_SHOTS = [
         outcome_name="Off T",
         body_part_name="Head",
         is_goal=False,
+    ),
+    ShotRecord(
+        event_id="shot-4",
+        match_id=7,
+        team_id=771,
+        player_id=3010,
+        player_name="Kylian Mbappé",
+        minute=61,
+        period=2,
+        location_x=108.0,
+        location_y=44.0,
+        end_x=119.0,
+        end_y=40.0,
+        statsbomb_xg=0.08,
+        outcome_name="Saved",
+        body_part_name="Right Foot",
+        is_goal=False,
+    ),
+    ShotRecord(
+        event_id="shot-5",
+        match_id=8,
+        team_id=217,
+        player_id=4001,
+        player_name="Lionel Messi",
+        minute=15,
+        period=1,
+        location_x=112.0,
+        location_y=39.0,
+        end_x=120.0,
+        end_y=40.0,
+        statsbomb_xg=0.50,
+        outcome_name="Goal",
+        body_part_name="Left Foot",
+        is_goal=True,
+    ),
+    ShotRecord(
+        event_id="shot-6",
+        match_id=9,
+        team_id=901,
+        player_id=5001,
+        player_name="Jenni Hermoso",
+        minute=29,
+        period=1,
+        location_x=109.0,
+        location_y=41.0,
+        end_x=119.0,
+        end_y=39.0,
+        statsbomb_xg=0.45,
+        outcome_name="Goal",
+        body_part_name="Right Foot",
+        is_goal=True,
     ),
 ]
 

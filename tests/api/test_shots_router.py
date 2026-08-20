@@ -41,7 +41,7 @@ def test_list_shots_returns_expected_shots(client):
 
 
 def test_list_shots_returns_empty_for_match_with_no_shots(client):
-    response = client.get("/v1/matches/8/shots")
+    response = client.get("/v1/matches/999/shots")
 
     assert response.status_code == 200
     assert response.json() == []
