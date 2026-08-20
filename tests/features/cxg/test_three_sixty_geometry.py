@@ -60,6 +60,14 @@ def test_gk_geometry_helpers():
     assert math.isclose(geo.gk_distance_to_goal_centre(gk), math.hypot(5.0, 4.0))
 
 
+def test_gk_distance_helpers_stay_in_native_units_not_metre_scaled():
+    # gk_distance_to_point/goal_centre are NOT metre-labelled candidates; they must stay in
+    # native units (plain hypot), never passed through the approximate-metre bridge.
+    gk = player(0, x=100.0, y=40.0)
+    native_distance = geo.gk_distance_to_point(gk, 0.0, 40.0)
+    assert math.isclose(native_distance, 100.0)  # native units, not ~87.5 (105/120 scaled)
+
+
 def test_estimated_goalface_occlusion_bounded_and_zero_with_no_blockers():
     assert geo.estimated_goalface_occlusion(100.0, 40.0, ()) == 0.0
     occlusion = geo.estimated_goalface_occlusion(100.0, 40.0, (player(0, x=115.0, y=40.0),))

@@ -1,8 +1,11 @@
 import math
 
 from opponent_adjusted.features.cxg.three_sixty_frame import (
+    DISTANCE_UNIT_CONTRACT,
     Frame,
     FramePlayer,
+    NATIVE_TO_METRE_X,
+    NATIVE_TO_METRE_Y,
     defending_keeper,
     find_actor,
     metre_distance,
@@ -79,6 +82,14 @@ def test_find_actor_requires_unique_valid_actor():
 def test_metre_distance_uses_governed_bridge():
     distance = metre_distance(0.0, 0.0, 120.0, 0.0)
     assert math.isclose(distance, 105.0)
+
+
+def test_distance_unit_contract_is_explicit_approximate_metres_not_measured():
+    assert DISTANCE_UNIT_CONTRACT == (
+        "approximate_metres_assumed_105x68_standard_pitch_not_measured_stadium_distance"
+    )
+    assert math.isclose(NATIVE_TO_METRE_X, 105.0 / 120.0)
+    assert math.isclose(NATIVE_TO_METRE_Y, 68.0 / 80.0)
 
 
 def test_point_observable_requires_visible_area_and_containment():

@@ -8,6 +8,12 @@ convention already used across this repository for shot geometry).
 
 Every player-set argument below is expected to already be filtered to
 `coordinate_valid` players by the caller; helpers here do not re-validate.
+
+Distance units: only `nearest_defender_distance_m`/`count_within_radius_m` (and the
+F5 proxies that call them) use the approximate-metres bridge documented in
+`three_sixty_frame.DISTANCE_UNIT_CONTRACT`. `gk_distance_to_point`/
+`gk_distance_to_goal_centre` are deliberately NATIVE-unit distances (plain
+`math.hypot`, no metre conversion) and are not metre-labelled candidates.
 """
 
 from __future__ import annotations

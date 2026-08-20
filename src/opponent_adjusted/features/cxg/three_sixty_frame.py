@@ -12,19 +12,22 @@ necessarily the shot-taking team. `orient_players` below re-expresses
 `teammate` from the shot team's perspective so every downstream F-family
 helper can assume `teammate is True` means "same team as the shot".
 
-Distance-unit contract note (CONTRACT_ISSUE, resolved and versioned here):
-the governed taxonomy names `defenders_within_3m` / `_5m` / `_8m` require a
-physical-distance interpretation, but StatsBomb's native 120x80 coordinate
-frame has no first-party metre definition, and this repository has no prior
-approved native-to-metre conversion (verified by repository search on
-2026-08-20; see closure report). We do NOT invent a universal 105x68m pitch
-reprojection. Instead we adopt, as one explicit and versioned parameter of
-`cxg_360_context_v1`, the widely published public approximation of a
-standard pitch (105m x 68m) used by common open StatsBomb tooling (e.g.
-mplsoccer/kloppy), applied ONLY to compute the *_within_Nm radius-band and
-metre-labelled candidates below. No other CxG/CxG+ geometry is converted;
-box boundaries, goal geometry, and all "_sb"-style native distances stay in
-native StatsBomb units.
+Distance-unit contract (OPTION A, locked 2026-08-20 scientific closure
+correction): the governed taxonomy names `defenders_within_3m` / `_5m` / `_8m`
+require a physical-distance interpretation, but StatsBomb's native 120x80
+coordinate frame has no first-party metre definition and is not measured per
+stadium. These candidates are therefore explicitly defined as APPROXIMATE
+METRES under an ASSUMED STANDARD PITCH of 105m x 68m (`NATIVE_TO_METRE_X/Y`
+below), matching common open StatsBomb tooling conventions (e.g.
+mplsoccer/kloppy). This is NOT a measured true distance for the specific
+stadium/pitch of any given match; it is a fixed, versioned, documented
+approximation applied ONLY to the *_within_Nm radius-band and other
+metre-labelled candidates (`nearest_defender_distance`, `actor_space`,
+`gk_distance_to_shooter`/`gk_distance_to_goal_centre` stay in NATIVE units,
+undocumented as metres -- see three_sixty_geometry.py). No other CxG/CxG+
+geometry is converted; box boundaries, goal geometry, and all "_sb"-style
+native distances stay in native StatsBomb units. No universal 105x68
+reprojection of the pitch itself is performed anywhere in this codebase.
 """
 
 from __future__ import annotations
@@ -41,7 +44,10 @@ from opponent_adjusted.features.cxg.geometry import (
 
 CXG_360_CONTEXT_CONTRACT_ID = "cxg_360_context_v1"
 
-# See module docstring "Distance-unit contract note" for provenance/justification.
+# Distance-unit contract metadata (machine-readable; see module docstring above).
+DISTANCE_UNIT_CONTRACT = (
+    "approximate_metres_assumed_105x68_standard_pitch_not_measured_stadium_distance"
+)
 NATIVE_TO_METRE_X = 105.0 / 120.0
 NATIVE_TO_METRE_Y = 68.0 / 80.0
 
@@ -90,7 +96,8 @@ class Frame:
 
 
 def metre_distance(x1: float, y1: float, x2: float, y2: float) -> float:
-    """Approximate physical distance via the governed native-to-metre bridge (module docstring)."""
+    """Approximate metres under an assumed 105x68 standard pitch (DISTANCE_UNIT_CONTRACT);
+    NOT a measured true distance for the specific match's actual stadium/pitch dimensions."""
     return math.hypot((x2 - x1) * NATIVE_TO_METRE_X, (y2 - y1) * NATIVE_TO_METRE_Y)
 
 
