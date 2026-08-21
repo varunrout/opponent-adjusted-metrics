@@ -1,0 +1,98 @@
+# OAM ETL + analysis pipeline orchestration.
+#
+# Chains oam-ingest -> oam-transform -> oam-analyse, triggered on completion (polls each
+# Cloud Run Job execution's status via the Cloud Run Admin API rather than firing blind).
+# Terminates cleanly after oam-analyse succeeds. No 4th "model" step exists here or is
+# referenced anywhere -- modeling is a manual, human-reviewed decision outside this chain.
+#
+# Manual invocation only (no Cloud Scheduler trigger wired up):
+#   gcloud workflows run oam-pipeline --location=europe-west2
+#
+# On any step failure, `raise` surfaces the failing job's name, execution name, and
+# logUri so the failure is loud and traceable, and the workflow does not proceed to the
+# next step.
+
+main:
+  params: [args]
+  steps:
+    - init:
+        assign:
+          - project_id: ${sys.get_env("PIPELINE_PROJECT_ID")}
+          - location: "europe-west2"
+    - run_ingest:
+        call: run_job_to_completion
+        args:
+          project_id: ${project_id}
+          location: ${location}
+          job_name: "oam-ingest"
+        result: ingest_result
+    - run_transform:
+        call: run_job_to_completion
+        args:
+          project_id: ${project_id}
+          location: ${location}
+          job_name: "oam-transform"
+        result: transform_result
+    - run_analyse:
+        call: run_job_to_completion
+        args:
+          project_id: ${project_id}
+          location: ${location}
+          job_name: "oam-analyse"
+        result: analyse_result
+    - done:
+        return:
+          status: "complete"
+          ingest: ${ingest_result}
+          transform: ${transform_result}
+          analyse: ${analyse_result}
+
+# Starts the named Cloud Run Job, polls its execution until it reaches a terminal state,
+# and raises loudly (job name + execution name + logUri) on any non-success outcome
+# instead of silently continuing to the caller's next step.
+run_job_to_completion:
+  params: [project_id, location, job_name]
+  steps:
+    - start_execution:
+        call: googleapis.run.v2.projects.locations.jobs.run
+        args:
+          name: ${"projects/" + project_id + "/locations/" + location + "/jobs/" + job_name}
+        result: run_response
+    - extract_execution_name:
+        assign:
+          - execution_name: ${run_response.metadata.name}
+    - poll_loop:
+        call: poll_until_terminal
+        args:
+          execution_name: ${execution_name}
+        result: final_execution
+    - evaluate_result:
+        switch:
+          - condition: ${final_execution.succeededCount >= 1 and default(map.get(final_execution, "failedCount"), 0) == 0}
+            next: return_success
+        next: fail_loud
+    - return_success:
+        return: ${final_execution}
+    - fail_loud:
+        raise:
+          message: ${"Cloud Run Job " + job_name + " did not succeed. execution=" + execution_name + " logUri=" + default(map.get(final_execution, "logUri"), "n/a") + " failedCount=" + string(default(map.get(final_execution, "failedCount"), 0))}
+
+poll_until_terminal:
+  params: [execution_name]
+  steps:
+    - get_status:
+        call: googleapis.run.v2.projects.locations.jobs.executions.get
+        args:
+          name: ${execution_name}
+        result: execution
+    - check_terminal:
+        switch:
+          - condition: ${"completionTime" in execution}
+            next: return_execution
+    - wait_and_retry:
+        call: sys.sleep
+        args:
+          seconds: 15
+        next: get_status
+    - return_execution:
+        return: ${execution}

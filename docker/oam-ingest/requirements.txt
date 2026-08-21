@@ -1,0 +1,1 @@
+google-cloud-storage>=2.18.2,<3
