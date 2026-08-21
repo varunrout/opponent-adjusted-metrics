@@ -1,0 +1,1402 @@
+[
+  {
+    "shot_event_id": "00056d5a-c989-4783-a836-598c4e82ee04",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.9686683742527475,
+    "max_nn_distance": 2.531921206126894
+  },
+  {
+    "shot_event_id": "000d3c08-46f5-4569-824d-b7719f626d1b",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.7382373969752146,
+    "max_nn_distance": 1.707403098491668
+  },
+  {
+    "shot_event_id": "002f3baf-e461-4f46-a2c4-81cfb0d22900",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.6455248021590864,
+    "max_nn_distance": 1.5779205030879573
+  },
+  {
+    "shot_event_id": "0036d10c-0d57-49d3-a49c-991714567524",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.9741881186015566,
+    "max_nn_distance": 1.945049242273144
+  },
+  {
+    "shot_event_id": "0043f796-5a9d-4aea-b6c9-1b182b26d8b2",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 1.2342769188149816,
+    "max_nn_distance": 3.3007261271123554
+  },
+  {
+    "shot_event_id": "004d0870-9cf5-4833-86e5-51074d964726",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.7795653070794404,
+    "max_nn_distance": 1.4383590100118055
+  },
+  {
+    "shot_event_id": "0064246f-99f6-40d0-a8de-90e36c2a6acb",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.9907041698268558,
+    "max_nn_distance": 1.9215972297697166
+  },
+  {
+    "shot_event_id": "0087b586-e914-4284-a0db-db888fbc9732",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.920027389482258,
+    "max_nn_distance": 2.748248781739961
+  },
+  {
+    "shot_event_id": "009b46bf-c755-4d6a-858b-5548f5d7376b",
+    "freeze_count": 11,
+    "sixty_count": 11,
+    "mean_nn_distance": 1.3570250370970902,
+    "max_nn_distance": 2.4041655312950296
+  },
+  {
+    "shot_event_id": "00b2c1b1-fa28-41ea-8130-8d69766ed445",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 0.5618015989857285,
+    "max_nn_distance": 1.3171707033196107
+  },
+  {
+    "shot_event_id": "00b789c7-1a36-4662-a2f1-b472ccdf2ede",
+    "freeze_count": 10,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.9442382043348942,
+    "max_nn_distance": 2.2796326198595143
+  },
+  {
+    "shot_event_id": "00be925a-26d1-4191-841d-bb319ca74efd",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.4647630886367312,
+    "max_nn_distance": 1.7838042203288274
+  },
+  {
+    "shot_event_id": "00c38da0-7113-4e86-a31c-f5743e960905",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 2.369517486335096,
+    "max_nn_distance": 6.143280333463467
+  },
+  {
+    "shot_event_id": "00c52fb8-3a8f-4dbb-95b7-3661f4d8b5e4",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 2.1759789753876855,
+    "max_nn_distance": 5.9859346056220115
+  },
+  {
+    "shot_event_id": "00d351fa-eede-4d68-85c6-9531eb4050bc",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.811045630828847,
+    "max_nn_distance": 1.67104013550889
+  },
+  {
+    "shot_event_id": "00d83f31-e271-4a10-86c7-77ee8c2e20f5",
+    "freeze_count": 13,
+    "sixty_count": 13,
+    "mean_nn_distance": 0.7920950966987087,
+    "max_nn_distance": 3.2502754423644817
+  },
+  {
+    "shot_event_id": "00ea5b92-508e-4939-8c56-4fffe22e53b6",
+    "freeze_count": 7,
+    "sixty_count": 8,
+    "mean_nn_distance": 0.8163830201610296,
+    "max_nn_distance": 1.2934341794769775
+  },
+  {
+    "shot_event_id": "00eb4001-cfd4-4f22-afb6-97c51d5de77a",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 1.1061670977003075,
+    "max_nn_distance": 2.3964334180093223
+  },
+  {
+    "shot_event_id": "01080aff-5051-419a-9a54-f6d4611986be",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.611179767608899,
+    "max_nn_distance": 1.3462528351302925
+  },
+  {
+    "shot_event_id": "013beebb-a635-4d18-8b1b-2458251c61cd",
+    "freeze_count": 19,
+    "sixty_count": 19,
+    "mean_nn_distance": 2.4674703363764263,
+    "max_nn_distance": 27.367966888327206
+  },
+  {
+    "shot_event_id": "014a8d56-b0f2-4275-8101-200519696fee",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 0.7358418647950815,
+    "max_nn_distance": 2.1623712248487656
+  },
+  {
+    "shot_event_id": "0154f93f-d129-449d-9b07-f8f09efb3eaf",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 3.4816409759313456,
+    "max_nn_distance": 16.120276488210347
+  },
+  {
+    "shot_event_id": "015c52d6-b1c1-45c2-b450-75238519b983",
+    "freeze_count": 12,
+    "sixty_count": 14,
+    "mean_nn_distance": 1.3417261533799214,
+    "max_nn_distance": 2.4769830603687466
+  },
+  {
+    "shot_event_id": "018ae12c-956d-42f9-828b-63ec2dc7eabf",
+    "freeze_count": 11,
+    "sixty_count": 9,
+    "mean_nn_distance": 8.446426406171001,
+    "max_nn_distance": 24.76210630900264
+  },
+  {
+    "shot_event_id": "0192a864-172f-462c-b37a-9fd3e077abf3",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.41415276459237327,
+    "max_nn_distance": 0.8155824547413669
+  },
+  {
+    "shot_event_id": "01957648-4082-47e8-a258-648fd84a4514",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.44036549839318245,
+    "max_nn_distance": 1.0696007694530842
+  },
+  {
+    "shot_event_id": "01ae7e3c-91d2-4989-9fd8-641f2d55cfe2",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 1.2702673368694537,
+    "max_nn_distance": 1.9517274851591568
+  },
+  {
+    "shot_event_id": "01b44b1e-7303-4739-823d-5bf506e17421",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 1.1116756657312223,
+    "max_nn_distance": 3.6061516329678547
+  },
+  {
+    "shot_event_id": "01bf09c6-4c72-4f5b-8a73-dbbb8d04a621",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.46835146640860703,
+    "max_nn_distance": 1.581138009791929
+  },
+  {
+    "shot_event_id": "01cc1c87-ecd7-4aca-a2bc-daf51aacc090",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.34081194554970773,
+    "max_nn_distance": 0.9329601718033697
+  },
+  {
+    "shot_event_id": "01dd0ad4-ad3f-44ec-9da5-3180e4ceeff5",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.1326628298809356,
+    "max_nn_distance": 1.9618724784366313
+  },
+  {
+    "shot_event_id": "01e6b09a-3f9a-444c-adef-db7e2b19b1ab",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.9860986964657408,
+    "max_nn_distance": 2.245058202258105
+  },
+  {
+    "shot_event_id": "01f99bf8-6ea3-4cdd-88cf-d2d4d2d0c8f4",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.4216777163400693,
+    "max_nn_distance": 1.051774036968743
+  },
+  {
+    "shot_event_id": "020f2031-faa6-4fd7-934d-ed7e0d3781dc",
+    "freeze_count": 17,
+    "sixty_count": 17,
+    "mean_nn_distance": 3.9568614261430715,
+    "max_nn_distance": 11.941305686830193
+  },
+  {
+    "shot_event_id": "02351ac9-8032-4e32-a23a-3700c1017f02",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 3.129956531857552,
+    "max_nn_distance": 15.57344027364693
+  },
+  {
+    "shot_event_id": "023e13c1-0fce-4feb-8cfd-a61c9457390c",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.9278191238131245,
+    "max_nn_distance": 3.0628882454301296
+  },
+  {
+    "shot_event_id": "0252f102-b78d-4312-8f85-f22687c01ad6",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.7750305781571033,
+    "max_nn_distance": 1.5059196440496228
+  },
+  {
+    "shot_event_id": "026c0f2c-4a2f-489f-a26b-9bd76966366b",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 1.0487926248405326,
+    "max_nn_distance": 2.167240654895428
+  },
+  {
+    "shot_event_id": "026db51c-ac61-4e2a-8f8e-f185cd7edfb4",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 1.011375367883173,
+    "max_nn_distance": 1.6929952951744007
+  },
+  {
+    "shot_event_id": "026eea90-9a3c-4061-8e2e-b512ffdd1005",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 1.822009911789642,
+    "max_nn_distance": 10.75174188740066
+  },
+  {
+    "shot_event_id": "02842003-6628-42d5-9e1e-36c26fd6f90d",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.6143016803193059,
+    "max_nn_distance": 3.642520281714103
+  },
+  {
+    "shot_event_id": "02853cbe-5271-4c86-9082-a1334c8940dc",
+    "freeze_count": 10,
+    "sixty_count": 10,
+    "mean_nn_distance": 1.8916588768240672,
+    "max_nn_distance": 6.57343416896309
+  },
+  {
+    "shot_event_id": "02866454-5edb-4c28-88c2-61ccdc0d2343",
+    "freeze_count": 9,
+    "sixty_count": 10,
+    "mean_nn_distance": 2.742176864863652,
+    "max_nn_distance": 6.118800422555141
+  },
+  {
+    "shot_event_id": "0289f900-d7b6-4cc1-bcb5-2df70539b0c2",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 1.8001133563591531,
+    "max_nn_distance": 3.550622612014086
+  },
+  {
+    "shot_event_id": "02a2cc33-9b48-4c04-bbc1-30461ff66c64",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.396838331304847,
+    "max_nn_distance": 1.0831757898669818
+  },
+  {
+    "shot_event_id": "02b6c0c1-4de5-4317-80ec-fefc1f80042b",
+    "freeze_count": 9,
+    "sixty_count": 10,
+    "mean_nn_distance": 0.5418190960992608,
+    "max_nn_distance": 0.9977240388992075
+  },
+  {
+    "shot_event_id": "02c29470-d751-4a39-b438-d7f2d1de3f23",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.7841401284853288,
+    "max_nn_distance": 1.796234909812648
+  },
+  {
+    "shot_event_id": "02c29f2b-9eaa-4039-a3fd-7b7616000d61",
+    "freeze_count": 11,
+    "sixty_count": 11,
+    "mean_nn_distance": 2.479510404582739,
+    "max_nn_distance": 14.14213735006592
+  },
+  {
+    "shot_event_id": "02da99cd-6001-4547-8a0a-de973b029ce7",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.9378981055254023,
+    "max_nn_distance": 2.755300004714541
+  },
+  {
+    "shot_event_id": "02f98a7f-e136-46fc-90b2-069b22b9b1db",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 4.011213256972351,
+    "max_nn_distance": 8.194737822134462
+  },
+  {
+    "shot_event_id": "02fb6237-52e6-4fd6-866a-d5b80773a571",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 0.9206915014804743,
+    "max_nn_distance": 2.550379665641076
+  },
+  {
+    "shot_event_id": "02fda162-12f7-451e-add7-bd866887904a",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 1.1930423612425214,
+    "max_nn_distance": 2.3781199112778326
+  },
+  {
+    "shot_event_id": "03304fd9-8dde-4b57-863b-8b36658fc8b1",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.3550445378305673,
+    "max_nn_distance": 8.040437527125498
+  },
+  {
+    "shot_event_id": "0337c5e5-aaeb-4704-a6c6-35590a5cb9a0",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.782384968347028,
+    "max_nn_distance": 1.8230720767641497
+  },
+  {
+    "shot_event_id": "03393099-8769-4c00-a967-28016d84004c",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 1.7750675072102398,
+    "max_nn_distance": 4.496225760454669
+  },
+  {
+    "shot_event_id": "03403735-082a-48d2-bff0-6e9dbd6dc923",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 1.165270403923061,
+    "max_nn_distance": 2.64466512243872
+  },
+  {
+    "shot_event_id": "03407139-17ee-4388-8f34-b96cb31838a8",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.8447879881860397,
+    "max_nn_distance": 2.877412592806594
+  },
+  {
+    "shot_event_id": "036c1c7d-51a6-4090-a8a6-31e2c53a7bc6",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.9325193522379173,
+    "max_nn_distance": 2.041669889344578
+  },
+  {
+    "shot_event_id": "036c4244-c680-468e-8dde-40df63332c7b",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 1.0733618862438667,
+    "max_nn_distance": 4.12091898155557
+  },
+  {
+    "shot_event_id": "0370b1be-7658-4d94-bd2e-34c6227d3755",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.9671919031996027,
+    "max_nn_distance": 2.2151050541874153
+  },
+  {
+    "shot_event_id": "03834cc6-2e6c-4263-b14a-0ce278587324",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.703517053779739,
+    "max_nn_distance": 1.9569158371649111
+  },
+  {
+    "shot_event_id": "0394f1b4-0df2-4cd8-ac2b-4de8734c793d",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 0.5408631182729068,
+    "max_nn_distance": 3.381741825854668
+  },
+  {
+    "shot_event_id": "03ad5797-0787-4b37-9f9e-9c91d1d19bf0",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.3172631902756991,
+    "max_nn_distance": 0.6154783649210961
+  },
+  {
+    "shot_event_id": "03b56af9-4e92-40a4-9f4d-a38ac184cda3",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.6610764147306407,
+    "max_nn_distance": 3.092577516810211
+  },
+  {
+    "shot_event_id": "03c49999-8755-4565-93e0-67c6ca85093f",
+    "freeze_count": 18,
+    "sixty_count": 18,
+    "mean_nn_distance": 4.739988200422644,
+    "max_nn_distance": 30.22912260331507
+  },
+  {
+    "shot_event_id": "03cf6865-a940-4add-bcc2-816bc42817bd",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 0.9628918662338615,
+    "max_nn_distance": 4.6010819493528174
+  },
+  {
+    "shot_event_id": "03d817d1-1c99-445b-ab23-bb914562a24f",
+    "freeze_count": 16,
+    "sixty_count": 16,
+    "mean_nn_distance": 4.011071981302086,
+    "max_nn_distance": 17.399986396595008
+  },
+  {
+    "shot_event_id": "03e9d911-4f31-498d-bedd-312059f82d1d",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.4879835314907949,
+    "max_nn_distance": 1.6375247524662864
+  },
+  {
+    "shot_event_id": "03fb2918-e1e7-4ec8-89ff-7bc5531e853d",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 1.4762845618738942,
+    "max_nn_distance": 2.109666285833961
+  },
+  {
+    "shot_event_id": "0400f5b8-8ca5-4313-a276-4dfa703c4214",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.9750406008729925,
+    "max_nn_distance": 1.8915806135683484
+  },
+  {
+    "shot_event_id": "0404af62-dfa7-48d2-9366-ee5df1fe4f63",
+    "freeze_count": 9,
+    "sixty_count": 10,
+    "mean_nn_distance": 2.124698196791049,
+    "max_nn_distance": 6.170005238682446
+  },
+  {
+    "shot_event_id": "043808d2-71c2-4c20-a0f7-155ccdfaca86",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 1.2571263936131956,
+    "max_nn_distance": 3.4160819192328202
+  },
+  {
+    "shot_event_id": "044443da-d620-4348-95cb-956e26ef58fa",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 2.635043011412485,
+    "max_nn_distance": 6.6684784168859474
+  },
+  {
+    "shot_event_id": "0453837c-6713-4b31-9aa3-2737ce9492bd",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 0.8693208440731575,
+    "max_nn_distance": 1.4712979994365574
+  },
+  {
+    "shot_event_id": "046008c5-c6f8-47b9-960d-3f434171d7c4",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.5615727095406491,
+    "max_nn_distance": 1.8320720187919948
+  },
+  {
+    "shot_event_id": "046a2f70-66db-48d2-86d2-dc3c6fe24784",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.7111843518061214,
+    "max_nn_distance": 3.4609632437109883
+  },
+  {
+    "shot_event_id": "047cb31c-f334-4798-8b5c-46474e0537e4",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 2.67234125452029,
+    "max_nn_distance": 5.3345209498538635
+  },
+  {
+    "shot_event_id": "0491c47e-916f-4501-8833-db9188ca2525",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 1.1227316857235723,
+    "max_nn_distance": 2.9108588991370454
+  },
+  {
+    "shot_event_id": "04959693-8bcc-4b30-84df-f926adc8e114",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 1.46385635282491,
+    "max_nn_distance": 4.214079869932197
+  },
+  {
+    "shot_event_id": "04b3da1e-5e65-4060-8945-664a3fe004ee",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.5661143213888278,
+    "max_nn_distance": 1.1100572288458288
+  },
+  {
+    "shot_event_id": "04c3699d-b091-496e-9c89-d3f3de0070af",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 1.1109169301946396,
+    "max_nn_distance": 2.5148431737557226
+  },
+  {
+    "shot_event_id": "04de946e-90ab-4b01-a80f-e604d5d7cce1",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 1.8988860759730495,
+    "max_nn_distance": 4.046492816539516
+  },
+  {
+    "shot_event_id": "04e19fff-574c-4699-8145-e8c41937f4de",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.131842868982673,
+    "max_nn_distance": 1.8557870136344885
+  },
+  {
+    "shot_event_id": "04f7f7c2-04f8-46c8-a8d2-686ca5efb9a0",
+    "freeze_count": 13,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.4299597111004319,
+    "max_nn_distance": 7.381734482307536
+  },
+  {
+    "shot_event_id": "0502086f-c98a-47b2-83c0-dfb26991cbb4",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.34911024728461804,
+    "max_nn_distance": 1.0640843320661395
+  },
+  {
+    "shot_event_id": "050bc03b-1503-41bf-b5bf-22cece9acd3e",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 1.0764197780480775,
+    "max_nn_distance": 2.04461360733082
+  },
+  {
+    "shot_event_id": "054c763f-fdf6-41da-b0ea-976d35e88865",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.5326285828784568,
+    "max_nn_distance": 1.6133958799521957
+  },
+  {
+    "shot_event_id": "05563844-1748-4be9-9ad9-8e4bf4f8da11",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.7050003034558495,
+    "max_nn_distance": 1.2777509315327635
+  },
+  {
+    "shot_event_id": "0557d8c8-4ebb-47da-8947-47bb8ae69315",
+    "freeze_count": 16,
+    "sixty_count": 16,
+    "mean_nn_distance": 3.2574684176843847,
+    "max_nn_distance": 12.621358773182271
+  },
+  {
+    "shot_event_id": "055a53fb-b5e1-4c23-b2dd-42f1399d5e3a",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 0.7355414173282394,
+    "max_nn_distance": 1.5190424011780843
+  },
+  {
+    "shot_event_id": "055ade0a-b117-4879-b811-b22259c29c7b",
+    "freeze_count": 20,
+    "sixty_count": 21,
+    "mean_nn_distance": 0.8509251663563846,
+    "max_nn_distance": 2.961770842702343
+  },
+  {
+    "shot_event_id": "055f769b-711d-4ec6-9335-8df6d21258d9",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 1.7329791039076126,
+    "max_nn_distance": 4.663946701769983
+  },
+  {
+    "shot_event_id": "0562fc11-c951-4599-9d1f-36763b0b87e3",
+    "freeze_count": 20,
+    "sixty_count": 14,
+    "mean_nn_distance": 5.511016750638757,
+    "max_nn_distance": 18.714079449047375
+  },
+  {
+    "shot_event_id": "05654730-3a04-41cb-87dc-e0e140b1aa9f",
+    "freeze_count": 15,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.5735020151352389,
+    "max_nn_distance": 2.256103172703155
+  },
+  {
+    "shot_event_id": "056871cf-3d1c-4830-9e19-60adb5916039",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.7232970901728599,
+    "max_nn_distance": 1.9980024842064068
+  },
+  {
+    "shot_event_id": "057527cb-1c07-4280-9859-e094d1721524",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.6446672977512762,
+    "max_nn_distance": 1.1116875240271908
+  },
+  {
+    "shot_event_id": "058dda51-38f2-4518-9d6f-c4a1a3ae7ea0",
+    "freeze_count": 16,
+    "sixty_count": 16,
+    "mean_nn_distance": 4.439313025297925,
+    "max_nn_distance": 19.3196784821605
+  },
+  {
+    "shot_event_id": "05907c05-0a6c-4aa7-a62a-1f1a70bebba7",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 0.5837490956422969,
+    "max_nn_distance": 1.589212436062452
+  },
+  {
+    "shot_event_id": "0592b60f-7f9f-446d-ae00-42abec2f64f1",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.6269274497746604,
+    "max_nn_distance": 0.7749170514984037
+  },
+  {
+    "shot_event_id": "05978612-000f-49ca-b888-f6b9a4154fea",
+    "freeze_count": 18,
+    "sixty_count": 18,
+    "mean_nn_distance": 2.5146292235721845,
+    "max_nn_distance": 13.53698659611972
+  },
+  {
+    "shot_event_id": "05b0a515-ca52-4e8b-8342-d9beadc16cec",
+    "freeze_count": 12,
+    "sixty_count": 12,
+    "mean_nn_distance": 2.924035748804405,
+    "max_nn_distance": 14.804571054047576
+  },
+  {
+    "shot_event_id": "05b85723-782e-406a-8111-015340f46439",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 0.3376414697974657,
+    "max_nn_distance": 1.211141213794285
+  },
+  {
+    "shot_event_id": "05d130c6-ac85-4e59-9cb8-8c1e56012fa7",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.8027396638998987,
+    "max_nn_distance": 1.612533879432397
+  },
+  {
+    "shot_event_id": "05d48495-9f9f-4b3e-b23a-1e3c2079e8b7",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.8022110728557902,
+    "max_nn_distance": 1.4079927417359313
+  },
+  {
+    "shot_event_id": "060deabd-8fca-4998-b49c-bf4dee752a0e",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.6992205656636612,
+    "max_nn_distance": 1.1331554699929245
+  },
+  {
+    "shot_event_id": "06272a06-2b03-4df3-bd75-2b5ef7ddf779",
+    "freeze_count": 4,
+    "sixty_count": 5,
+    "mean_nn_distance": 0.7865600299670562,
+    "max_nn_distance": 1.080234669485744
+  },
+  {
+    "shot_event_id": "06370dcd-c41c-43eb-bfc8-e000655bbf39",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 1.1430813892261855,
+    "max_nn_distance": 3.9989151659584716
+  },
+  {
+    "shot_event_id": "064646c3-058a-4ab5-8567-9b8de7668c82",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.48443411087672544,
+    "max_nn_distance": 0.9810177909082828
+  },
+  {
+    "shot_event_id": "06519b55-64c9-45e0-aa15-f9bbcd78f4cf",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.3806401655774658,
+    "max_nn_distance": 1.9937257442062997
+  },
+  {
+    "shot_event_id": "0673dd7a-e50d-4593-a09f-0183dd2b1fe3",
+    "freeze_count": 17,
+    "sixty_count": 17,
+    "mean_nn_distance": 2.4460602013575015,
+    "max_nn_distance": 27.684833147766803
+  },
+  {
+    "shot_event_id": "0681832a-639b-459c-bb8d-4424dbb3f097",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.3708227870350695,
+    "max_nn_distance": 1.008760926567199
+  },
+  {
+    "shot_event_id": "06924724-9654-4c47-a906-2e4c55b1155f",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.39797731109725,
+    "max_nn_distance": 3.6536431036021213
+  },
+  {
+    "shot_event_id": "0695e08e-8eaa-4fa4-9afd-a9de3ff3bcb5",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 0.45728522163467933,
+    "max_nn_distance": 3.169985328876182
+  },
+  {
+    "shot_event_id": "069f499e-de36-43f0-bb91-0b0e19bccdd0",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 4.015758686604696,
+    "max_nn_distance": 8.05429948575514
+  },
+  {
+    "shot_event_id": "06bc4127-2875-46a1-9b6a-9f9699829795",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.7394958167524405,
+    "max_nn_distance": 1.84188081191446
+  },
+  {
+    "shot_event_id": "06d0cbe4-ea5d-46ed-ab03-14ace6ce6775",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.9490346318883625,
+    "max_nn_distance": 3.479738396416945
+  },
+  {
+    "shot_event_id": "06f800a8-83c4-4024-a82e-c6fc0b33af5e",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 1.009848433282808,
+    "max_nn_distance": 2.693056949700443
+  },
+  {
+    "shot_event_id": "0720ee4d-e7eb-490d-8282-59ae8d515a4d",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.6948464864999299,
+    "max_nn_distance": 1.298889631327566
+  },
+  {
+    "shot_event_id": "074abff4-ff69-4e9a-b186-7da560be7aa8",
+    "freeze_count": 9,
+    "sixty_count": 10,
+    "mean_nn_distance": 0.7012604964762434,
+    "max_nn_distance": 1.8668080462969756
+  },
+  {
+    "shot_event_id": "07506e1b-9120-4af9-9e19-7e430ae289d3",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 2.047138838872836,
+    "max_nn_distance": 4.860039927628869
+  },
+  {
+    "shot_event_id": "0751ad88-9cbe-4424-8322-cbad542842b4",
+    "freeze_count": 6,
+    "sixty_count": 7,
+    "mean_nn_distance": 1.2631838688864594,
+    "max_nn_distance": 2.999151564357221
+  },
+  {
+    "shot_event_id": "07611981-ab41-4294-b278-a4a321c9253c",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 0.32576577479412505,
+    "max_nn_distance": 0.8949995420552476
+  },
+  {
+    "shot_event_id": "0766e986-a1be-4f02-b176-8ae4b7ed309e",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.7833651534693555,
+    "max_nn_distance": 1.899225474889802
+  },
+  {
+    "shot_event_id": "076bfa17-336a-42b8-a6ac-731a4de8dee6",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.7560403250916178,
+    "max_nn_distance": 1.3339476907197327
+  },
+  {
+    "shot_event_id": "076c2b59-b25f-445c-9e72-170a367a41ab",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.546282490347588,
+    "max_nn_distance": 0.8714585668919856
+  },
+  {
+    "shot_event_id": "07740f62-0c31-4916-9604-65577221699c",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 3.1450519722581785,
+    "max_nn_distance": 4.978768986485582
+  },
+  {
+    "shot_event_id": "079477be-b722-4555-813c-b7d725cb1182",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.8186096099010872,
+    "max_nn_distance": 1.5854893365722853
+  },
+  {
+    "shot_event_id": "0798c8a1-b35c-49ee-80bd-088a8db5ac2c",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 2.1441531013350144,
+    "max_nn_distance": 6.0296141204975795
+  },
+  {
+    "shot_event_id": "07b6d108-70d1-40d9-962e-885c6becc963",
+    "freeze_count": 15,
+    "sixty_count": 15,
+    "mean_nn_distance": 3.3109741030454343,
+    "max_nn_distance": 14.191191088321288
+  },
+  {
+    "shot_event_id": "07c658a2-5845-4b8b-b6e7-60206fdcac0d",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.8992506486274692,
+    "max_nn_distance": 2.2327612103820775
+  },
+  {
+    "shot_event_id": "07cd31ce-cc61-4734-bb7f-c292bf1e9388",
+    "freeze_count": 19,
+    "sixty_count": 19,
+    "mean_nn_distance": 1.8550040441280407,
+    "max_nn_distance": 16.4149306857238
+  },
+  {
+    "shot_event_id": "0824ef81-5b88-4a83-884f-edfc74abecfc",
+    "freeze_count": 12,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.538631497236723,
+    "max_nn_distance": 0.9903054710446791
+  },
+  {
+    "shot_event_id": "083a5f40-3868-4a15-b0b3-328893917461",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 3.7751454787438115,
+    "max_nn_distance": 13.266470140773297
+  },
+  {
+    "shot_event_id": "085c9b03-1324-4a89-9bfd-8a93f24bb907",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.4160123320643639,
+    "max_nn_distance": 0.9848041246374002
+  },
+  {
+    "shot_event_id": "08678f16-67ff-4ff5-905e-d9cc75db1d2d",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.5404270883831982,
+    "max_nn_distance": 1.0579437362026196
+  },
+  {
+    "shot_event_id": "087430be-d99a-4344-b82c-58aeae623cf1",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 1.2614239059829355,
+    "max_nn_distance": 1.8763381672072235
+  },
+  {
+    "shot_event_id": "08a980c7-83fe-4427-aad8-3a80993dd408",
+    "freeze_count": 9,
+    "sixty_count": 10,
+    "mean_nn_distance": 1.4803857175011135,
+    "max_nn_distance": 6.010824129341178
+  },
+  {
+    "shot_event_id": "08d7a287-78df-46eb-9556-31a7c1833bd5",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 0.7292635408225357,
+    "max_nn_distance": 1.4182357807364314
+  },
+  {
+    "shot_event_id": "08e21b88-b7ad-4488-9eea-beb578a7d19c",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.427412837386358,
+    "max_nn_distance": 3.78031583629204
+  },
+  {
+    "shot_event_id": "08f2f203-cdc9-4146-99b6-818c5c32bf70",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 0.7313209359132732,
+    "max_nn_distance": 1.6822489582485405
+  },
+  {
+    "shot_event_id": "090d7f7a-0508-4a00-afb9-a923de947df7",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.4770502856093415,
+    "max_nn_distance": 1.752837822857403
+  },
+  {
+    "shot_event_id": "092b9d73-6f23-477b-8896-81d04cff79a6",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.172653011930651,
+    "max_nn_distance": 3.6131264164721024
+  },
+  {
+    "shot_event_id": "09352e53-f95a-4cee-9ba9-5f475962945c",
+    "freeze_count": 10,
+    "sixty_count": 10,
+    "mean_nn_distance": 4.1438254456810455,
+    "max_nn_distance": 17.04119142972809
+  },
+  {
+    "shot_event_id": "09359efb-7396-4772-a8a9-eabd289193ae",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.5338833060798173,
+    "max_nn_distance": 2.0874591307213763
+  },
+  {
+    "shot_event_id": "095adc8d-612d-445a-9a9a-33100ece166c",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 0.8422064826192266,
+    "max_nn_distance": 2.637953329238747
+  },
+  {
+    "shot_event_id": "095bfd2a-f7a0-4830-9412-0c6d09ddfa41",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.8956519128797179,
+    "max_nn_distance": 2.2307858099587667
+  },
+  {
+    "shot_event_id": "09a3d7a3-983e-4c01-a8c1-2b1db7169647",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 1.3709282179921458,
+    "max_nn_distance": 2.1853678332827986
+  },
+  {
+    "shot_event_id": "09a5233d-90cc-4802-8ace-1c200d45a23f",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 0.9358179373075766,
+    "max_nn_distance": 3.0082777095879267
+  },
+  {
+    "shot_event_id": "09a5535e-0102-4346-8397-d4d739bd6e7d",
+    "freeze_count": 7,
+    "sixty_count": 8,
+    "mean_nn_distance": 0.8448104312091411,
+    "max_nn_distance": 1.0626078335804885
+  },
+  {
+    "shot_event_id": "09afb1ec-fa67-4d0b-8020-cfc1c003d034",
+    "freeze_count": 9,
+    "sixty_count": 9,
+    "mean_nn_distance": 3.3074788711763627,
+    "max_nn_distance": 9.824967921546934
+  },
+  {
+    "shot_event_id": "09cf2f4d-465d-44ff-a955-924b055d2172",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.5487076685999088,
+    "max_nn_distance": 1.2227563735783673
+  },
+  {
+    "shot_event_id": "0a18495e-b996-4961-93c7-8ad76954fbcc",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 2.5659529526121516,
+    "max_nn_distance": 5.400926552861505
+  },
+  {
+    "shot_event_id": "0a19dc9b-1180-487d-a3a0-fb761b011473",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 2.210946427076935,
+    "max_nn_distance": 7.863841300534997
+  },
+  {
+    "shot_event_id": "0a1af37a-496c-43bd-87f2-88dc60597f8f",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.8324908759813233,
+    "max_nn_distance": 1.6890214449557897
+  },
+  {
+    "shot_event_id": "0a230694-cd73-424a-bf0e-ad2b6518792a",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.7534396640930788,
+    "max_nn_distance": 1.6275102266343795
+  },
+  {
+    "shot_event_id": "0a45dc04-546c-413c-b3cf-8dfef3d7428c",
+    "freeze_count": 14,
+    "sixty_count": 14,
+    "mean_nn_distance": 2.584282817060433,
+    "max_nn_distance": 10.284863468010139
+  },
+  {
+    "shot_event_id": "0a4a1e56-5881-463d-a37e-b97aa49cdc29",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 2.8223036843232316,
+    "max_nn_distance": 5.19102561033955
+  },
+  {
+    "shot_event_id": "0a4e9308-3329-4898-b7cc-3c5c7c7ba29b",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.47304877297409575,
+    "max_nn_distance": 0.9319361772490492
+  },
+  {
+    "shot_event_id": "0a75531e-7bb4-41a8-8ff0-dc74043d3db4",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.8430063827097487,
+    "max_nn_distance": 2.022374539818671
+  },
+  {
+    "shot_event_id": "0a75a101-5aa9-40ee-98a9-f25efa6b7757",
+    "freeze_count": 8,
+    "sixty_count": 9,
+    "mean_nn_distance": 0.6326890988800318,
+    "max_nn_distance": 0.8669232882787605
+  },
+  {
+    "shot_event_id": "0a773bae-2312-4bbc-9659-26fe8c29720c",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 1.1603319032094292,
+    "max_nn_distance": 4.604342393011396
+  },
+  {
+    "shot_event_id": "0a7ad118-6c7e-48d9-9567-e3ccf2572d8f",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.862971559291878,
+    "max_nn_distance": 2.5751157263457674
+  },
+  {
+    "shot_event_id": "0ab29219-41e4-49c4-8dbb-19606b7131a0",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.4479769744414913,
+    "max_nn_distance": 1.1522781325052098
+  },
+  {
+    "shot_event_id": "0ac4b920-e24a-478f-902c-d3793cf26db0",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.244888915748089,
+    "max_nn_distance": 3.8078997191442308
+  },
+  {
+    "shot_event_id": "0ada085b-8d72-4c54-8b6c-db3349ad0c84",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.8558361481967547,
+    "max_nn_distance": 2.2006165199865424
+  },
+  {
+    "shot_event_id": "0ada1c14-4a75-4b1b-98b2-bd91c1f22dbd",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.6133552243335645,
+    "max_nn_distance": 3.908077491573807
+  },
+  {
+    "shot_event_id": "0aded50a-5e7b-4b88-9a61-af5971674b2f",
+    "freeze_count": 7,
+    "sixty_count": 8,
+    "mean_nn_distance": 1.5203911656162674,
+    "max_nn_distance": 2.4377423913214407
+  },
+  {
+    "shot_event_id": "0ae4e2c7-07a3-4dc5-986c-ef18f62e62ce",
+    "freeze_count": 13,
+    "sixty_count": 14,
+    "mean_nn_distance": 0.8474223059824914,
+    "max_nn_distance": 2.6442952674965903
+  },
+  {
+    "shot_event_id": "0ae5df4b-dcbe-4030-aed2-8dd9f621495f",
+    "freeze_count": 20,
+    "sixty_count": 21,
+    "mean_nn_distance": 1.0129570687615024,
+    "max_nn_distance": 3.2607970830230077
+  },
+  {
+    "shot_event_id": "0ae88f68-f153-4cfc-8fdc-68ae1c5c17b8",
+    "freeze_count": 6,
+    "sixty_count": 7,
+    "mean_nn_distance": 0.502386107420193,
+    "max_nn_distance": 1.5132454013265841
+  },
+  {
+    "shot_event_id": "0aef1341-58cf-4569-b0a6-cd6d7468aa5c",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 0.5042849517783237,
+    "max_nn_distance": 1.4009945529455667
+  },
+  {
+    "shot_event_id": "0af9cf89-515c-42d8-b7de-393c1a60a44b",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 0.47726925877601406,
+    "max_nn_distance": 1.293013701311697
+  },
+  {
+    "shot_event_id": "0afb5038-e228-4f66-ba36-e7a42f502a5a",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 1.6406022700664886,
+    "max_nn_distance": 2.396080549003644
+  },
+  {
+    "shot_event_id": "0afe3a3c-7071-46c9-9bc1-f7aed247dac8",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.6373730274617467,
+    "max_nn_distance": 2.388661045584221
+  },
+  {
+    "shot_event_id": "0b0970d0-4cfa-4f0c-aff3-210cb296226a",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 1.556278534081414,
+    "max_nn_distance": 10.36509637545902
+  },
+  {
+    "shot_event_id": "0b09c39b-d564-43a5-a141-63d5f365fd49",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 2.6828581192587704,
+    "max_nn_distance": 5.9203037627364274
+  },
+  {
+    "shot_event_id": "0b1f67d9-7e3e-4889-9d49-711875468100",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.581978982409724,
+    "max_nn_distance": 1.5189019373532062
+  },
+  {
+    "shot_event_id": "0b3fa5e2-37cf-4053-89db-adf2b68a6839",
+    "freeze_count": 16,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.6658599752048009,
+    "max_nn_distance": 2.1209640766389204
+  },
+  {
+    "shot_event_id": "0b6069ca-0918-46e8-a488-4352f631492c",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 3.8463501023103652,
+    "max_nn_distance": 16.366572012602187
+  },
+  {
+    "shot_event_id": "0bb6e24e-6f18-49af-ac19-ff2d55ac0fc7",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 2.4975347307060676,
+    "max_nn_distance": 6.462939740328214
+  },
+  {
+    "shot_event_id": "0be72d00-5b4a-4a6b-ab8e-5a011a28d93f",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 1.7399952468499573,
+    "max_nn_distance": 3.0663793865531916
+  },
+  {
+    "shot_event_id": "0beabfd1-d0cf-4392-a39b-6890fa0faffe",
+    "freeze_count": 15,
+    "sixty_count": 17,
+    "mean_nn_distance": 0.6742311804829623,
+    "max_nn_distance": 1.863258421956287
+  },
+  {
+    "shot_event_id": "0bead2c9-9411-4909-adbf-c45835ffd75b",
+    "freeze_count": 12,
+    "sixty_count": 13,
+    "mean_nn_distance": 3.3926040921641323,
+    "max_nn_distance": 4.845347296174339
+  },
+  {
+    "shot_event_id": "0bf41137-f17e-47e5-acba-e64017d21bd3",
+    "freeze_count": 14,
+    "sixty_count": 13,
+    "mean_nn_distance": 3.7418386274306155,
+    "max_nn_distance": 22.02647783595354
+  },
+  {
+    "shot_event_id": "0bf67c28-df5f-452d-a363-31e825fa88e2",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.4368750502790498,
+    "max_nn_distance": 1.3834656548725208
+  },
+  {
+    "shot_event_id": "0bfad9ab-e400-4ac8-a951-285e0b376362",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 0.580086001681962,
+    "max_nn_distance": 1.277440189591281
+  },
+  {
+    "shot_event_id": "0c13aa93-26f8-4d1f-9af6-c507bc23d1ac",
+    "freeze_count": 10,
+    "sixty_count": 11,
+    "mean_nn_distance": 1.318084505138812,
+    "max_nn_distance": 2.4452623309972465
+  },
+  {
+    "shot_event_id": "0c16abd3-e136-40dd-8dd5-37d9587c4f41",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 0.8159711188882941,
+    "max_nn_distance": 1.4271992297184615
+  },
+  {
+    "shot_event_id": "0c5e286f-7e99-4a97-81b1-e54fb4827e91",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.7895477391601522,
+    "max_nn_distance": 1.9506290026424593
+  },
+  {
+    "shot_event_id": "0c769fb4-29c5-40a3-9727-14c52f352640",
+    "freeze_count": 15,
+    "sixty_count": 16,
+    "mean_nn_distance": 2.9134450216556274,
+    "max_nn_distance": 10.27142227200424
+  },
+  {
+    "shot_event_id": "0c853598-4598-4008-821b-3530593e492b",
+    "freeze_count": 19,
+    "sixty_count": 20,
+    "mean_nn_distance": 2.3517511151892103,
+    "max_nn_distance": 4.788817742511421
+  },
+  {
+    "shot_event_id": "0c9c3ca0-d9f0-41d9-a2b6-6c4b2b6d9be5",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 5.527217680643669,
+    "max_nn_distance": 15.860312017448926
+  },
+  {
+    "shot_event_id": "0cae89b6-2fe0-4454-b6e2-7d3becdb5fb4",
+    "freeze_count": 14,
+    "sixty_count": 15,
+    "mean_nn_distance": 0.8178290576861297,
+    "max_nn_distance": 2.563407978577571
+  },
+  {
+    "shot_event_id": "0caf66a3-df72-42bf-9e6d-68df508bf10b",
+    "freeze_count": 13,
+    "sixty_count": 13,
+    "mean_nn_distance": 3.1884980463650874,
+    "max_nn_distance": 15.119077339103766
+  },
+  {
+    "shot_event_id": "0cb19a3a-974b-401b-bb53-c42fd0164cdd",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 0.630917624300273,
+    "max_nn_distance": 1.1045230056274138
+  },
+  {
+    "shot_event_id": "0cca8b6c-e7eb-4dd9-99a7-8a557686cb90",
+    "freeze_count": 11,
+    "sixty_count": 12,
+    "mean_nn_distance": 2.464109336349856,
+    "max_nn_distance": 4.552239210820296
+  },
+  {
+    "shot_event_id": "0ce6ea73-e365-4cbc-b76c-8e0899115dea",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.0944352954186318,
+    "max_nn_distance": 2.189045745860972
+  },
+  {
+    "shot_event_id": "0cf68e03-fa4e-4986-a2f9-79bf0d60618e",
+    "freeze_count": 17,
+    "sixty_count": 16,
+    "mean_nn_distance": 3.915988881892476,
+    "max_nn_distance": 8.679953791086627
+  },
+  {
+    "shot_event_id": "0cfe0a06-b98d-41fb-bef1-59897be64d13",
+    "freeze_count": 18,
+    "sixty_count": 19,
+    "mean_nn_distance": 0.9874157476212054,
+    "max_nn_distance": 3.4159451967928147
+  },
+  {
+    "shot_event_id": "0d0e726d-0291-4940-9c92-6e6f5aa246c7",
+    "freeze_count": 17,
+    "sixty_count": 18,
+    "mean_nn_distance": 1.1260375066158803,
+    "max_nn_distance": 3.0422652530157905
+  }
+]

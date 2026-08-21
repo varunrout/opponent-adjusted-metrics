@@ -1,0 +1,8 @@
+{
+  "total_shots_excl_shootout": 15595,
+  "with_freeze_frame": 15445,
+  "excluded_no_freeze_frame": 150,
+  "with_resolvable_defender": 15445,
+  "excluded_freeze_frame_no_defender": 0,
+  "excluded_shootout_shots": 142
+}
