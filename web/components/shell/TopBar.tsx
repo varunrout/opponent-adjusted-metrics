@@ -34,12 +34,17 @@ export function TopBar() {
         {role === "guest" && !user ? (
           <Link
             href="/login"
-            className="w-7 h-7 rounded-full bg-violet flex items-center justify-center text-[11px] font-semibold"
-            style={{ color: "#1c1030" }}
+            className="flex items-center gap-2 text-[12px] text-text2 hover:text-text hover:underline"
             aria-label="Sign in"
             title="Sign in"
           >
-            VR
+            <span>Sign in</span>
+            <span
+              className="w-7 h-7 rounded-full bg-violet flex items-center justify-center text-[11px] font-semibold"
+              style={{ color: "#1c1030" }}
+            >
+              VR
+            </span>
           </Link>
         ) : (
           <button
