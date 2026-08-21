@@ -58,6 +58,9 @@ outputs/
 *.log
 logs/
 
+# Regenerable rendered chart artifacts (canonical copy lives in GCS + cxg_chart_registry_v1)
+audit_outputs/cxg_analysis/cxg-analysis-*/
+
 # Testing
 .pytest_cache/
 .coverage
