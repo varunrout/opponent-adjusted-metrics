@@ -1,0 +1,67 @@
+[
+  {
+    "k": 4,
+    "silhouette_train": 0.15060144048325255,
+    "cluster_sizes_train": [
+      599,
+      836,
+      892,
+      386
+    ],
+    "min_cluster_fraction_train": 0.14227792112053078
+  },
+  {
+    "k": 5,
+    "silhouette_train": 0.1479839380175354,
+    "cluster_sizes_train": [
+      563,
+      295,
+      496,
+      639,
+      720
+    ],
+    "min_cluster_fraction_train": 0.10873571691854036
+  },
+  {
+    "k": 6,
+    "silhouette_train": 0.14836447891926327,
+    "cluster_sizes_train": [
+      831,
+      572,
+      575,
+      196,
+      281,
+      258
+    ],
+    "min_cluster_fraction_train": 0.07224474751197936
+  },
+  {
+    "k": 7,
+    "silhouette_train": 0.14064036488535414,
+    "cluster_sizes_train": [
+      714,
+      547,
+      276,
+      543,
+      216,
+      196,
+      221
+    ],
+    "min_cluster_fraction_train": 0.07224474751197936
+  },
+  {
+    "k": 8,
+    "silhouette_train": 0.13416493208898694,
+    "cluster_sizes_train": [
+      205,
+      255,
+      523,
+      449,
+      426,
+      484,
+      199,
+      172
+    ],
+    "min_cluster_fraction_train": 0.0633984518982676
+  }
+]

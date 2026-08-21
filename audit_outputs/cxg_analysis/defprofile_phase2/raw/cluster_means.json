@@ -1,0 +1,166 @@
+[
+  {
+    "cluster": 0,
+    "n": 847,
+    "fraction_of_cohort": 0.21388888888888888,
+    "goal_rate": 0.06139315230224321,
+    "split_counts": {
+      "train": 599,
+      "validation": 129,
+      "test": 119
+    },
+    "feature_means": {
+      "nearest_defender_distance": 1.747512593662671,
+      "defenders_within_3m": 1.4321133412042504,
+      "defenders_within_5m": 2.576151121605667,
+      "local_defensive_density": 0.0213858582770323,
+      "defenders_between_ball_and_goal": 1.3376623376623376,
+      "defensive_line_depth": 94.85894707375599,
+      "defensive_centroid_y": 39.74396139666996,
+      "defensive_width": 24.186270413283115,
+      "defensive_length": 15.361278475990368,
+      "estimated_goalface_occlusion": 0.785445958999678,
+      "shot_corridor_occlusion": 0.8299010723255563,
+      "visible_goal_angle_proxy": 0.08640851137547484,
+      "goal_mouth_defender_count": 3.0684769775678866
+    },
+    "feature_medians": {
+      "nearest_defender_distance": 1.5915474636849982,
+      "defenders_within_3m": 1.0,
+      "defenders_within_5m": 2.0,
+      "local_defensive_density": 0.01989436788648694,
+      "defenders_between_ball_and_goal": 1.0,
+      "defensive_line_depth": 95.67277168813132,
+      "defensive_centroid_y": 39.66516347565595,
+      "defensive_width": 23.92106790199741,
+      "defensive_length": 14.515936674717096,
+      "estimated_goalface_occlusion": 0.8181818181818182,
+      "shot_corridor_occlusion": 0.9394375343516068,
+      "visible_goal_angle_proxy": 0.02417335842595808,
+      "goal_mouth_defender_count": 3.0
+    }
+  },
+  {
+    "cluster": 1,
+    "n": 1203,
+    "fraction_of_cohort": 0.3037878787878788,
+    "goal_rate": 0.14713216957605985,
+    "split_counts": {
+      "train": 836,
+      "validation": 189,
+      "test": 178
+    },
+    "feature_means": {
+      "nearest_defender_distance": 1.5294633346252184,
+      "defenders_within_3m": 1.6772046589018303,
+      "defenders_within_5m": 2.89018302828619,
+      "local_defensive_density": 0.022434954800443465,
+      "defenders_between_ball_and_goal": 0.12146422628951747,
+      "defensive_line_depth": 99.77792186745668,
+      "defensive_centroid_y": 40.05064146944168,
+      "defensive_width": 21.587429330091705,
+      "defensive_length": 12.751981461624442,
+      "estimated_goalface_occlusion": 0.29534109816971715,
+      "shot_corridor_occlusion": 0.17041225253600786,
+      "visible_goal_angle_proxy": 0.5049112753068713,
+      "goal_mouth_defender_count": 2.011647254575707
+    },
+    "feature_medians": {
+      "nearest_defender_distance": 1.3860249509614027,
+      "defenders_within_3m": 2.0,
+      "defenders_within_5m": 3.0,
+      "local_defensive_density": 0.01989436788648694,
+      "defenders_between_ball_and_goal": 0.0,
+      "defensive_line_depth": 100.18850782771266,
+      "defensive_centroid_y": 40.05169756318291,
+      "defensive_width": 21.41404071314161,
+      "defensive_length": 12.569045631783695,
+      "estimated_goalface_occlusion": 0.18181818181818182,
+      "shot_corridor_occlusion": 0.15895449315646343,
+      "visible_goal_angle_proxy": 0.4228002298580326,
+      "goal_mouth_defender_count": 2.0
+    }
+  },
+  {
+    "cluster": 2,
+    "n": 1257,
+    "fraction_of_cohort": 0.31742424242424244,
+    "goal_rate": 0.07796340493237867,
+    "split_counts": {
+      "train": 892,
+      "validation": 170,
+      "test": 195
+    },
+    "feature_means": {
+      "nearest_defender_distance": 2.5440512461600044,
+      "defenders_within_3m": 0.7713147410358566,
+      "defenders_within_5m": 1.5282868525896414,
+      "local_defensive_density": 0.013815092918783557,
+      "defenders_between_ball_and_goal": 0.2239043824701195,
+      "defensive_line_depth": 88.75068043177828,
+      "defensive_centroid_y": 40.07170459645658,
+      "defensive_width": 28.821168021812834,
+      "defensive_length": 19.637244929386075,
+      "estimated_goalface_occlusion": 0.304092720028975,
+      "shot_corridor_occlusion": 0.21252653669529503,
+      "visible_goal_angle_proxy": 0.2667141813507703,
+      "goal_mouth_defender_count": 1.9107569721115538
+    },
+    "feature_medians": {
+      "nearest_defender_distance": 2.3261099813642283,
+      "defenders_within_3m": 1.0,
+      "defenders_within_5m": 1.0,
+      "local_defensive_density": 0.014920775914865203,
+      "defenders_between_ball_and_goal": 0.0,
+      "defensive_line_depth": 89.73147001020108,
+      "defensive_centroid_y": 40.259174498365454,
+      "defensive_width": 28.64470237384264,
+      "defensive_length": 19.27361106658239,
+      "estimated_goalface_occlusion": 0.2727272727272727,
+      "shot_corridor_occlusion": 0.15757417971187232,
+      "visible_goal_angle_proxy": 0.2223418584288625,
+      "goal_mouth_defender_count": 2.0
+    }
+  },
+  {
+    "cluster": 3,
+    "n": 552,
+    "fraction_of_cohort": 0.1393939393939394,
+    "goal_rate": 0.11775362318840579,
+    "split_counts": {
+      "train": 386,
+      "validation": 89,
+      "test": 77
+    },
+    "feature_means": {
+      "nearest_defender_distance": 6.244288151012146,
+      "defenders_within_3m": 0.034420289855072464,
+      "defenders_within_5m": 0.47644927536231885,
+      "local_defensive_density": 0.007577519652416448,
+      "defenders_between_ball_and_goal": 1.6557971014492754,
+      "defensive_line_depth": 98.8014491639987,
+      "defensive_centroid_y": 39.99707506451356,
+      "defensive_width": 21.37200886351542,
+      "defensive_length": 10.543171031175717,
+      "estimated_goalface_occlusion": 0.5279973649538867,
+      "shot_corridor_occlusion": 0.5866521349843418,
+      "visible_goal_angle_proxy": 0.20449061411114744,
+      "goal_mouth_defender_count": 3.8278985507246377
+    },
+    "feature_medians": {
+      "nearest_defender_distance": 5.579497506557059,
+      "defenders_within_3m": 0.0,
+      "defenders_within_5m": 0.0,
+      "local_defensive_density": 0.004973591971621735,
+      "defenders_between_ball_and_goal": 1.0,
+      "defensive_line_depth": 99.2206563323586,
+      "defensive_centroid_y": 39.667366325821575,
+      "defensive_width": 21.607109357810707,
+      "defensive_length": 10.637470806735301,
+      "estimated_goalface_occlusion": 0.5454545454545454,
+      "shot_corridor_occlusion": 0.6066121809643577,
+      "visible_goal_angle_proxy": 0.17628975212612502,
+      "goal_mouth_defender_count": 4.0
+    }
+  }
+]
