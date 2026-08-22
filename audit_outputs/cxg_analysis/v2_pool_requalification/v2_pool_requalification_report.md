@@ -344,3 +344,106 @@ features (`defensive_profile_cluster x nearest_defender_zone_displacement`,
 CxG+ Tier 1 pairs. PCA collapse shifted from 9-of-17 to 8-of-16 components for 80%
 variance — a real, modest, reported-as-measured change. No new redundant (≥0.85) pairs
 found anywhere in the enlarged pool, including both flagged overlap-risk pairs.
+
+---
+
+## Addendum: fixing 2 NULL `interaction_p_fdr` Tier 1 rows
+
+Two CxG+ Tier 1 rows (`defensive_profile_cluster x nearest_defender_role` and
+`nearest_defender_role x second_nearest_defender_role`) had `fit_status='fit_failed'` and
+therefore `interaction_p_fdr IS NULL` — a real coverage gap in the round above, not a null
+finding. Fixed as its own small, scoped follow-up
+(`scripts/fix_cxg_v2_categorical_interaction_nulls.py`).
+
+### Root cause (confirmed via live cross-tab, not assumed)
+
+Both are categorical x categorical pairs. Pulled the real train-split cross-tab cell counts
+(`defensive_profile_cluster` x `nearest_defender_role`, and `nearest_defender_role` x
+`second_nearest_defender_role`, joining `cxg_defensive_360_features` to `is_goal`) and found
+genuine sparse/structurally-empty cells:
+
+- **`nearest_defender_role` x `second_nearest_defender_role` has a literal zero-count `GK` x
+  `GK` cell** (n=0 in the train split). This isn't incidental sparsity — a team has exactly
+  one goalkeeper, so the nearest and second-nearest defenders in a freeze frame can never
+  both be the GK. A structurally impossible combination, guaranteed to recur in every split.
+  A zero-count cell makes the corresponding interaction-dummy column in the design matrix
+  all-zero, which is rank-deficient (singular) for MLE.
+- Several other cells are small with all-zero or all-nonzero outcomes, e.g.
+  `defensive_profile_cluster=cluster_0` x `nearest_defender_role=GK` (n=4, 0 goals) and
+  `nearest_defender_role=Fullback_WingBack` x `second_nearest_defender_role=Fullback_WingBack`
+  (n=16, 0 goals) — small enough to drive complete/quasi-complete separation even without a
+  literal zero cell.
+- Reproduced directly by calling the existing `fit_interaction` on the real data before
+  writing any fix: both pairs fail with `overflow encountered in exp` /
+  `divide by zero in log` from statsmodels' unregularized MLE — exactly the signature of
+  separation-driven divergence, confirming the diagnosis rather than assuming it.
+
+### Fix applied
+
+Added `fit_categorical_interaction_saturated` (and a matching
+`validates_categorical_fallback_on_split`) to
+`src/opponent_adjusted/analysis/bivariate/testing.py`, used **only as a fallback** when the
+standard interaction-model fit fails for a categorical x categorical pair — it does not
+replace the standard method for pairs that already fit successfully. It compares the
+additive model (same as the standard method's own `m_add`, which fits fine on both pairs —
+far fewer parameters, no guaranteed-all-zero column) against the **saturated cell-means
+model**, whose log-likelihood has a closed form (each cell's MLE is just its own empirical
+goal rate) and therefore never requires solving a system that could be singular — sidestepping
+the exact failure mode above rather than working around it with an arbitrary threshold or
+regularization hack. This is the standard deviance / goodness-of-fit test for an interaction
+in a contingency-table setting, and per the task's own framing is at least as statistically
+appropriate for two categoricals as the logistic-interaction-term LR test used for
+continuous/mixed pairs.
+
+**Checked for other silently-affected pairs before fixing, not just the 2 named ones.** All 6
+categorical x categorical pairs in the enlarged pool were queried directly:
+
+| Pair | fit_status before fix |
+|---|---|
+| `defensive_profile_cluster` x `nearest_defender_role` | `fit_failed` |
+| `nearest_defender_role` x `second_nearest_defender_role` | `fit_failed` |
+| `defensive_profile_cluster` x `nearest_defender_style_archetype` | `ok` (already had a valid p-value) |
+| `defensive_profile_cluster` x `second_nearest_defender_role` | `ok` |
+| `nearest_defender_role` x `nearest_defender_style_archetype` | `ok` |
+| `nearest_defender_style_archetype` x `second_nearest_defender_role` | `ok` |
+
+Only the 2 named pairs were affected — the fix script asserts this exact broken-pair set
+before proceeding and would stop loudly if it ever found a mismatch. The other 4 were **not
+touched or reprocessed** with the new method, per the task's explicit constraint not to
+touch any Tier 1 result that already has a valid p-value.
+
+### Statistical discipline preserved
+
+The 2 new raw p-values were inserted into the full 190-pair CxG+ Tier 1 raw-p-value vector
+(the other 188 already had a `p_fdr` from the original round) and Benjamini-Hochberg
+recomputed over that full vector, so the 2 new pairs' `p_fdr` reflects the correct
+190-test correction stringency — but **only these 2 rows were written back** via a scoped
+`UPDATE ... WHERE track='cxg_plus' AND tier=1 AND feature_a=... AND feature_b=...`; the other
+188 rows' stored `p_fdr` values are untouched, exactly as instructed, even though a
+from-scratch full recomputation would in principle re-rank a handful of them by a negligible
+amount (an explicit, accepted, documented tradeoff — not silently absorbed).
+
+### Final results — genuine outcomes, not forced
+
+| Pair | p_raw | p_fdr | fit_status | Validated |
+|---|---|---|---|---|
+| `defensive_profile_cluster` x `nearest_defender_role` | 0.2394 | 0.5169 | `ok_saturated_fallback` | n/a (didn't clear FDR<0.10) |
+| `nearest_defender_role` x `second_nearest_defender_role` | 0.1019 | 0.3520 | `ok_saturated_fallback` | n/a (didn't clear FDR<0.10) |
+
+**Both are genuine null results** — no real evidence of an interaction beyond additive
+effects for either pair. Reported as measured; not forced into significance.
+
+Verified: `cxg_bivariate_interaction_v1` now has **zero** `NULL interaction_p_fdr` rows for
+`track='cxg_plus' AND tier=1` (190/190 populated). The 16 remaining NULLs elsewhere
+(`cxg_plus`, tier 2: 15 rows; tier 3: 1 row) are pre-existing by design — FDR correction was
+never applied to Tiers 2/3 in the original bivariate methodology (only Tier 1's 163/190-test
+family gets BH-FDR), unrelated to this fix and out of this task's scope.
+
+### Test suite
+
+`python -m pytest -q` -> **283 passed** (278 prior + 5 new
+`tests/analysis/bivariate/test_testing.py` tests: reproducing the real failure mode on
+synthetic data with a structural zero cell, confirming the fallback succeeds where the
+standard method fails, detecting a real synthetic interaction, correctly returning a null
+result for synthetic non-interacting data, and the validation-split helper's accept/reject
+behavior). No regressions.
