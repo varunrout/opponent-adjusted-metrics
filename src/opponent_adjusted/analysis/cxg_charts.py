@@ -204,6 +204,10 @@ class CxGChartRenderer:
             return self._bivariate_significance_grid(chart)
         if chart.chart_type == "bivariate_stratified_bar":
             return self._bivariate_stratified_bar(chart)
+        if chart.chart_type == "baseline_calibration":
+            return self._baseline_calibration(chart)
+        if chart.chart_type == "baseline_divergence_bar":
+            return self._baseline_divergence_bar(chart)
         return self._family_summary(chart)
 
     def _layout(self, fig: go.Figure, title: str) -> go.Figure:
@@ -467,6 +471,58 @@ class CxGChartRenderer:
             labels={"stratum_a": feature_a, "goal_rate": "Goal rate", "stratum_b": feature_b},
         )
         return self._layout(fig, f"{track}: Tier {tier} Stratified Goal Rate ({feature_a} x {feature_b})")
+
+    def _baseline_calibration(self, chart: ChartRow) -> go.Figure:
+        """Dumb-baseline vs v1 calibration, test split, one grid per track (feature_family
+        encoded as `<track>_baseline`, same synthetic-name pattern as the correlation-screen/
+        PCA/bivariate charts). Decile assignment via NTILE(10) -- the SQL equivalent of the
+        rank-based binning `modeling.calibration_table` uses, so it stays well-defined even for
+        the dumb baseline's tied constant predictions."""
+        track = self._correlation_screen_track(chart)
+        rows = []
+        for model_col, label in (("dumb_baseline_prob", "dumb_baseline"), ("v1_predicted_prob", "v1")):
+            df = self._query_df(f"""
+            WITH ranked AS (
+              SELECT `{model_col}` AS p, CAST(is_goal AS INT64) AS y,
+                     NTILE(10) OVER (ORDER BY `{model_col}`, event_id) AS decile
+              FROM `{self.project_id}.oam_ml.cxg_baseline_v1_predictions`
+              WHERE track = '{track}' AND split = 'test'
+            )
+            SELECT decile, AVG(p) AS mean_predicted, AVG(y) AS actual_rate, COUNT(*) AS n
+            FROM ranked GROUP BY decile ORDER BY decile
+            """)
+            df["model"] = label
+            rows.append(df)
+        df_all = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+        if df_all.empty:
+            return self._layout(go.Figure(), f"{track}: Calibration (test)")
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", line={"dash": "dot", "color": "#9ca3af"}, name="Perfect calibration", hoverinfo="skip"))
+        for label, color in (("dumb_baseline", "#f59e0b"), ("v1", "#2563eb")):
+            d = df_all[df_all.model == label]
+            fig.add_trace(go.Scatter(x=d["mean_predicted"], y=d["actual_rate"], mode="lines+markers", name=label, marker={"color": color, "size": 9}, line={"color": color}))
+        fig.update_xaxes(title="Mean predicted probability (decile)")
+        fig.update_yaxes(title="Actual goal rate")
+        return self._layout(fig, f"{track}: Calibration, dumb baseline vs v1 (test split)")
+
+    def _baseline_divergence_stratum_type(self, chart: ChartRow) -> str:
+        if "odi_tercile" in chart.chart_name:
+            return "odi_tercile_nearest_defender_odi"
+        return "defensive_profile_cluster"
+
+    def _baseline_divergence_bar(self, chart: ChartRow) -> go.Figure:
+        stratum_type = self._baseline_divergence_stratum_type(chart)
+        df = self._query_df(f"""
+        SELECT stratum_value, mean_divergence, mean_v1_prob, mean_statsbomb_xg, n
+        FROM `{self.project_id}.oam_ml.cxg_baseline_v1_divergence`
+        WHERE stratum_type = '{stratum_type}'
+        ORDER BY stratum_value
+        """)
+        if df.empty:
+            return self._layout(go.Figure(), f"cxg_plus: Divergence by {stratum_type}")
+        fig = px.bar(df, x="stratum_value", y="mean_divergence", hover_data=["n", "mean_v1_prob", "mean_statsbomb_xg"], labels={"stratum_value": stratum_type, "mean_divergence": "mean(v1_predicted_prob - statsbomb_xg)"})
+        fig.add_hline(y=0, line_dash="dot", line_color="#9ca3af")
+        return self._layout(fig, f"CxG+: v1 vs StatsBomb xG Divergence by {stratum_type} (test split)")
 
     def _family_summary(self, chart: ChartRow) -> go.Figure:
         sql = f"SELECT * FROM `{self.project_id}.{self.analysis_dataset}.cxg_family_summary_v1`"
