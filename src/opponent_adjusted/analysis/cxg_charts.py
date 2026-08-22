@@ -208,6 +208,12 @@ class CxGChartRenderer:
             return self._baseline_calibration(chart)
         if chart.chart_type == "baseline_divergence_bar":
             return self._baseline_divergence_bar(chart)
+        if chart.chart_type == "archetype_goal_rate_bar":
+            return self._archetype_goal_rate_bar(chart)
+        if chart.chart_type == "archetype_role_heatmap":
+            return self._archetype_role_heatmap(chart)
+        if chart.chart_type == "role_displacement_bar":
+            return self._role_displacement_bar(chart)
         return self._family_summary(chart)
 
     def _layout(self, fig: go.Figure, title: str) -> go.Figure:
@@ -428,10 +434,23 @@ class CxGChartRenderer:
         fig.update_yaxes(title="Variance ratio", range=[0, 1.05])
         return self._layout(fig, f"{track}: PCA Scree (train)")
 
+    # Phase A/B candidates -- any confirmed Tier 1 pair touching one of these is "new this
+    # round" (only exists in the pool because of Phase A/B); a confirmed pair touching none
+    # of them is "reconfirmed" (also held in the pre-Phase-A/B pool). Derived from the pool
+    # membership, not a hardcoded pair list -- stays correct if the confirmed set changes.
+    _PHASE_AB_FEATURES = frozenset({
+        "nearest_defender_role", "second_nearest_defender_role",
+        "nearest_defender_zone_displacement", "nearest_defender_gap",
+        "nearest_defender_style_archetype",
+    })
+
     def _bivariate_significance_grid(self, chart: ChartRow) -> go.Figure:
         """Tier 1 exhaustive pairwise grid: FDR-adjusted p-value per pair, one grid per track
         (feature_family encoded as `<track>_bivariate`, same synthetic-name pattern as the
-        correlation-screen/PCA charts above)."""
+        correlation-screen/PCA charts above). Confirmed pairs (FDR<0.10 AND validated on the
+        held-out split) are annotated: a gold star for a pair newly confirmed because of a
+        Phase A/B feature, a white check for a pair also confirmed before the enlarged pool
+        (reconfirmed) -- so the grid distinguishes "new this round" from "still holds"."""
         track = self._correlation_screen_track(chart)
         df = self._query_df(f"""
         SELECT feature_a, feature_b, interaction_p_fdr
@@ -440,11 +459,24 @@ class CxGChartRenderer:
         """)
         if df.empty:
             return self._layout(go.Figure(), f"{track}: Tier 1 Interaction Significance Grid")
+        confirmed = self._query_df(f"""
+        SELECT feature_a, feature_b
+        FROM `{self.project_id}.{self.analysis_dataset}.cxg_bivariate_interaction_v1`
+        WHERE track = '{track}' AND tier = 1 AND validated_on_val_split = TRUE
+        """)
         df = df.rename(columns={"interaction_p_fdr": "r_train"})
         matrix = self._symmetric_corr_matrix(df).clip(0, 1)
         neg_log10 = matrix.apply(lambda col: -np.log10(col.clip(lower=1e-300)))
         fig = px.imshow(neg_log10, color_continuous_scale="Viridis", aspect="auto", labels={"color": "-log10(FDR p)"})
-        return self._layout(fig, f"{track}: Tier 1 Interaction Significance Grid (higher = more significant)")
+        for _, row in confirmed.iterrows():
+            a, b = row["feature_a"], row["feature_b"]
+            if a not in matrix.index or b not in matrix.columns:
+                continue
+            is_new = a in self._PHASE_AB_FEATURES or b in self._PHASE_AB_FEATURES
+            symbol, color = ("★ NEW", "#facc15") if is_new else ("✓ reconfirmed", "#f8fafc")
+            for x, y in ((b, a), (a, b)):
+                fig.add_annotation(x=x, y=y, text=symbol, showarrow=False, font={"color": color, "size": 10, "family": "Arial Black"})
+        return self._layout(fig, f"{track}: Tier 1 Interaction Significance Grid (higher = more significant; ★ = newly confirmed, ✓ = reconfirmed)")
 
     @staticmethod
     def _bivariate_tier_from_chart_name(chart_name: str) -> int:
@@ -524,6 +556,68 @@ class CxGChartRenderer:
         fig.add_hline(y=0, line_dash="dot", line_color="#9ca3af")
         return self._layout(fig, f"CxG+: v1 vs StatsBomb xG Divergence by {stratum_type} (test split)")
 
+    _ROLE_ORDER = ("GK", "CB", "Fullback_WingBack", "Midfield", "Attack")
+
+    def _archetype_goal_rate_bar(self, chart: ChartRow) -> go.Figure:
+        """Goal rate by nearest_defender_style_archetype level, CxG+ only, train split (same
+        population/discipline as every other univariate goal-rate check in this pipeline).
+        `cxg_univariate_target_v1` only carries one aggregate row per feature (matching
+        defensive_profile_cluster's own precedent), not a per-level breakdown -- checked
+        before assuming it was reusable, and it isn't for this chart, so this queries the
+        already-materialized feature + split tables directly instead (a single batched
+        GROUP BY, not a loop). The muddy 4th cluster (`unresolved_5050_annotation_density`)
+        and the null/below-threshold case are both included, not hidden."""
+        df = self._query_df(f"""
+        SELECT COALESCE(d.nearest_defender_style_archetype, 'null (no defender / below threshold)') AS archetype,
+               COUNT(*) AS n, AVG(IF(m.is_goal, 1.0, 0.0)) AS goal_rate
+        FROM `{self.project_id}.{self.analysis_dataset}.cxg_plus_360_model_matrix_v1` m
+        JOIN `{self.project_id}.oam_features.cxg_defensive_360_features` d ON m.event_id = d.event_id
+        WHERE m.split = 'train'
+        GROUP BY archetype
+        ORDER BY goal_rate DESC
+        """)
+        if df.empty:
+            return self._layout(go.Figure(), "CxG+: Goal Rate by Defender Style Archetype")
+        fig = px.bar(df, x="archetype", y="goal_rate", hover_data=["n"], labels={"archetype": "nearest_defender_style_archetype", "goal_rate": "Goal rate (train split)"})
+        return self._layout(fig, "CxG+: Goal Rate by Defender Style Archetype (train split)")
+
+    def _archetype_role_heatmap(self, chart: ChartRow) -> go.Figure:
+        """Cross-tab of nearest_defender_style_archetype x nearest_defender_role, cell = %
+        share within each archetype row. Neither cxg_defender_style_cluster_profile_v1 nor
+        any other materialized table already has this cross-tab (checked before writing this
+        query) -- computed here as a single batched GROUP BY over the already-materialized
+        cxg_defensive_360_features, not a re-derivation of anything from raw events."""
+        df = self._query_df(f"""
+        SELECT COALESCE(nearest_defender_style_archetype, 'null') AS archetype,
+               COALESCE(nearest_defender_role, 'null') AS role, COUNT(*) AS n
+        FROM `{self.project_id}.oam_features.cxg_defensive_360_features`
+        GROUP BY archetype, role
+        """)
+        if df.empty:
+            return self._layout(go.Figure(), "CxG+: Defender Style Archetype x Role")
+        pivot = df.pivot(index="archetype", columns="role", values="n").fillna(0)
+        pct = pivot.div(pivot.sum(axis=1), axis=0) * 100
+        fig = px.imshow(pct, color_continuous_scale="Blues", aspect="auto", text_auto=".0f", labels={"color": "% of archetype's shots"})
+        return self._layout(fig, "CxG+: Defender Style Archetype x Nearest Defender Role (row %)")
+
+    def _role_displacement_bar(self, chart: ChartRow) -> go.Figure:
+        """Mean nearest_defender_zone_displacement by nearest_defender_role, ordered
+        GK -> CB -> Fullback_WingBack -> Midfield -> Attack (Phase A's own coordinate-fix
+        verification order) -- single batched GROUP BY, not a per-role loop."""
+        df = self._query_df(f"""
+        SELECT nearest_defender_role AS role, COUNT(*) AS n,
+               AVG(nearest_defender_zone_displacement) AS mean_displacement
+        FROM `{self.project_id}.oam_features.cxg_defensive_360_features`
+        WHERE nearest_defender_role IS NOT NULL AND nearest_defender_zone_displacement IS NOT NULL
+        GROUP BY role
+        """)
+        if df.empty:
+            return self._layout(go.Figure(), "CxG+: Zone Displacement by Nearest Defender Role")
+        df["role"] = pd.Categorical(df["role"], categories=self._ROLE_ORDER, ordered=True)
+        df = df.sort_values("role")
+        fig = px.bar(df, x="role", y="mean_displacement", hover_data=["n"], labels={"role": "nearest_defender_role", "mean_displacement": "Mean zone displacement (m)"})
+        return self._layout(fig, "CxG+: Mean Zone Displacement by Nearest Defender Role")
+
     def _family_summary(self, chart: ChartRow) -> go.Figure:
         sql = f"SELECT * FROM `{self.project_id}.{self.analysis_dataset}.cxg_family_summary_v1`"
         df = self._query_df(sql)
@@ -542,6 +636,9 @@ class CxGChartRenderer:
             return
         if chart.chart_type == "bivariate_significance_grid":
             self._write_bivariate_significance_grid_png(chart, path)
+            return
+        if chart.chart_type == "archetype_role_heatmap":
+            self._write_archetype_role_heatmap_png(chart, path)
             return
         if "summary_box" in chart.chart_name:
             self._write_summary_png(chart, path)
@@ -691,6 +788,34 @@ class CxGChartRenderer:
             ax.set_yticklabels([str(v)[:28] for v in matrix.index], fontsize=7)
             plt_fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="-log10(FDR p)")
         ax.set_title(f"{track}: Tier 1 Interaction Significance Grid", fontsize=14, pad=14)
+        plt_fig.tight_layout()
+        plt_fig.savefig(path, format="png")
+        plt.close(plt_fig)
+
+    def _write_archetype_role_heatmap_png(self, chart: ChartRow, path: Path) -> None:
+        df = self._query_df(f"""
+        SELECT COALESCE(nearest_defender_style_archetype, 'null') AS archetype,
+               COALESCE(nearest_defender_role, 'null') AS role, COUNT(*) AS n
+        FROM `{self.project_id}.oam_features.cxg_defensive_360_features`
+        GROUP BY archetype, role
+        """)
+        plt_fig, ax = plt.subplots(figsize=(10.0, 7.0), dpi=150)
+        if df.empty:
+            ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
+            ax.set_axis_off()
+        else:
+            pivot = df.pivot(index="archetype", columns="role", values="n").fillna(0)
+            pct = pivot.div(pivot.sum(axis=1), axis=0) * 100
+            im = ax.imshow(pct, cmap="Blues", aspect="auto")
+            ax.set_xticks(range(len(pct.columns)))
+            ax.set_xticklabels(pct.columns, rotation=45, ha="right", fontsize=8)
+            ax.set_yticks(range(len(pct.index)))
+            ax.set_yticklabels(pct.index, fontsize=8)
+            for i in range(pct.shape[0]):
+                for j in range(pct.shape[1]):
+                    ax.text(j, i, f"{pct.iat[i, j]:.0f}", ha="center", va="center", fontsize=7, color="black")
+            plt_fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="% of archetype's shots")
+        ax.set_title("CxG+: Defender Style Archetype x Nearest Defender Role (row %)", fontsize=13, pad=14)
         plt_fig.tight_layout()
         plt_fig.savefig(path, format="png")
         plt.close(plt_fig)
