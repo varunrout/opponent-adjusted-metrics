@@ -1,0 +1,251 @@
+{
+  "run_id": "cxg-phase-c-requal-20260822T224248Z",
+  "step0": {
+    "event_wide_n": 15737,
+    "event_wide_null_tilt": 16,
+    "event_wide_null_cm": 906,
+    "event_wide_null_cm_pct": 0.057571328715765396,
+    "plus_n": 3960,
+    "plus_null_tilt": 3,
+    "plus_null_cm": 273,
+    "plus_null_cm_pct": 0.06893939393939394,
+    "rate_windows_all_zero_null": true,
+    "discrepancies_vs_phase_c_report": {}
+  },
+  "track_summaries": {
+    "cxg_event": {
+      "dropped_new": [
+        "defensive_action_rate_15m",
+        "defensive_action_rate_45m",
+        "defensive_action_rate_60m"
+      ],
+      "dropped_existing": [],
+      "new_survivors": [
+        "defensive_action_rate_30m",
+        "territorial_dominance_last_15m",
+        "cross_match_defensive_rate"
+      ],
+      "final_pool": [
+        "shot_x_sb",
+        "last_action_interval_s",
+        "last_box_entry_to_shot_s",
+        "regain_height_speed_interaction",
+        "first_box_entry_to_shot_s",
+        "defensive_action_rate_30m",
+        "territorial_dominance_last_15m",
+        "cross_match_defensive_rate"
+      ],
+      "pca_summary": {
+        "n_components": 8,
+        "n_80": 6,
+        "scree": [
+          0.21155470860388476,
+          0.1817695545503486,
+          0.14579427405895745,
+          0.12230119776359319,
+          0.11972265105483601,
+          0.08464693499437123,
+          0.0738730863059541,
+          0.060337592668054586
+        ],
+        "top_loadings_pc1": [
+          {
+            "track": "cxg_event",
+            "component_number": 1,
+            "feature_name": "last_box_entry_to_shot_s",
+            "loading": 0.5925397119136283,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_event",
+            "component_number": 1,
+            "feature_name": "first_box_entry_to_shot_s",
+            "loading": 0.5494684715487943,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_event",
+            "component_number": 1,
+            "feature_name": "shot_x_sb",
+            "loading": -0.3251126507464379,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_event",
+            "component_number": 1,
+            "feature_name": "territorial_dominance_last_15m",
+            "loading": 0.29124126803092854,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_event",
+            "component_number": 1,
+            "feature_name": "defensive_action_rate_30m",
+            "loading": 0.24633912384518894,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          }
+        ]
+      },
+      "confirmed_new_pairs": [
+        {
+          "a": "defensive_action_rate_30m",
+          "b": "territorial_dominance_last_15m",
+          "p_fdr": 0.0073157111473323815
+        }
+      ],
+      "n_new_pairs_tested": 18
+    },
+    "cxg_plus": {
+      "dropped_new": [
+        "defensive_action_rate_15m",
+        "defensive_action_rate_45m",
+        "defensive_action_rate_60m"
+      ],
+      "dropped_existing": [],
+      "new_survivors": [
+        "defensive_action_rate_30m",
+        "territorial_dominance_last_15m",
+        "cross_match_defensive_rate"
+      ],
+      "final_pool": [
+        "last_action_interval_s",
+        "defenders_between_ball_and_goal",
+        "defensive_reset_index",
+        "nearest_defender_distance_delta",
+        "pre_shot_receiver_space",
+        "gk_distance_to_shooter",
+        "defensive_line_depth",
+        "defensive_width",
+        "estimated_goalface_occlusion",
+        "goal_mouth_defender_count",
+        "max_goal_exposure",
+        "min_defensive_compactness_sequence",
+        "shot_corridor_occlusion",
+        "visible_goal_angle_proxy",
+        "nearest_defender_zone_displacement",
+        "nearest_defender_gap",
+        "defensive_action_rate_30m",
+        "territorial_dominance_last_15m",
+        "cross_match_defensive_rate",
+        "defensive_profile_cluster",
+        "nearest_defender_role",
+        "second_nearest_defender_role",
+        "nearest_defender_style_archetype"
+      ],
+      "pca_summary": {
+        "n_components": 19,
+        "n_80": 10,
+        "scree": [
+          0.2147659106499743,
+          0.1524082402707978,
+          0.08797336024312143,
+          0.0773357888738173,
+          0.06371920404966455,
+          0.05557521556702076,
+          0.04841257703617927,
+          0.04678770980114618,
+          0.042759771034606146,
+          0.03310449374715048,
+          0.030563717956749017,
+          0.025625735148865913,
+          0.02510261564351157,
+          0.021680982738801615,
+          0.01956457145502713,
+          0.01904698101066214,
+          0.0160855019085297,
+          0.01370010419558362,
+          0.005787518668790915
+        ],
+        "top_loadings_pc1": [
+          {
+            "track": "cxg_plus",
+            "component_number": 1,
+            "feature_name": "shot_corridor_occlusion",
+            "loading": 0.39417406552043427,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_plus",
+            "component_number": 1,
+            "feature_name": "defenders_between_ball_and_goal",
+            "loading": 0.3919040539790788,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_plus",
+            "component_number": 1,
+            "feature_name": "estimated_goalface_occlusion",
+            "loading": 0.35199274624382443,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_plus",
+            "component_number": 1,
+            "feature_name": "defensive_reset_index",
+            "loading": -0.34151958789898795,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          },
+          {
+            "track": "cxg_plus",
+            "component_number": 1,
+            "feature_name": "gk_distance_to_shooter",
+            "loading": 0.34086618903375554,
+            "materialized_at": "2026-08-22T22:42:48.423872+00:00"
+          }
+        ]
+      },
+      "confirmed_new_pairs": [],
+      "n_new_pairs_tested": 63
+    }
+  },
+  "sanity_pair_cxg_event": {
+    "feature_a": "territorial_dominance_last_15m",
+    "feature_b": "territorial_dominance_last_5m",
+    "r_train": 0.7624012491124069,
+    "n_train": 10881
+  },
+  "sanity_pair_cxg_plus": {
+    "feature_a": "territorial_dominance_last_15m",
+    "feature_b": "territorial_dominance_last_5m",
+    "r_train": 0.7889665639080009,
+    "n_train": 2779
+  },
+  "prior_confirmed_cxg_plus_check": [
+    {
+      "pair": "defensive_profile_clusterxvisible_goal_angle_proxy",
+      "status": "STILL_CONFIRMED",
+      "p_fdr": 1.666398803661022e-10,
+      "validated": true
+    },
+    {
+      "pair": "defensive_profile_clusterxgk_distance_to_shooter",
+      "status": "STILL_CONFIRMED",
+      "p_fdr": 0.012251020344457398,
+      "validated": true
+    },
+    {
+      "pair": "pre_shot_receiver_spacexvisible_goal_angle_proxy",
+      "status": "STILL_CONFIRMED",
+      "p_fdr": 0.02404749474732805,
+      "validated": true
+    },
+    {
+      "pair": "defensive_line_depthxpre_shot_receiver_space",
+      "status": "STILL_CONFIRMED",
+      "p_fdr": 0.03842422399079342,
+      "validated": true
+    },
+    {
+      "pair": "defensive_profile_clusterxnearest_defender_zone_displacement",
+      "status": "STILL_CONFIRMED",
+      "p_fdr": 0.02404749474732805,
+      "validated": true
+    },
+    {
+      "pair": "nearest_defender_gapxvisible_goal_angle_proxy",
+      "status": "STILL_CONFIRMED",
+      "p_fdr": 0.02404749474732805,
+      "validated": true
+    }
+  ]
+}
