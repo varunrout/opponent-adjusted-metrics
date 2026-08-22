@@ -505,12 +505,16 @@ class CxGChartRenderer:
         return self._layout(fig, f"{track}: Tier {tier} Stratified Goal Rate ({feature_a} x {feature_b})")
 
     def _baseline_calibration(self, chart: ChartRow) -> go.Figure:
-        """Dumb-baseline vs v1 calibration, test split, one grid per track (feature_family
-        encoded as `<track>_baseline`, same synthetic-name pattern as the correlation-screen/
-        PCA/bivariate charts). Decile assignment via NTILE(10) -- the SQL equivalent of the
-        rank-based binning `modeling.calibration_table` uses, so it stays well-defined even for
-        the dumb baseline's tied constant predictions."""
+        """Dumb-baseline vs v1 (vs v2, when the chart's family is `<track>_v2`) calibration,
+        test split, one grid per track (feature_family encoded as `<track>_baseline` /
+        `<track>_v2`, same synthetic-name pattern as the correlation-screen/PCA/bivariate
+        charts). Decile assignment via NTILE(10) -- the SQL equivalent of the rank-based
+        binning `modeling.calibration_table` uses, so it stays well-defined even for the
+        dumb baseline's tied constant predictions. For a v2 chart, v1 is overlaid alongside
+        v2 (both already at hand via separate tables) so the calibration comparison the v2
+        report needs is visible directly in the chart, not just the metrics table."""
         track = self._correlation_screen_track(chart)
+        is_v2 = chart.feature_family.endswith("_v2")
         rows = []
         for model_col, label in (("dumb_baseline_prob", "dumb_baseline"), ("v1_predicted_prob", "v1")):
             df = self._query_df(f"""
@@ -525,36 +529,60 @@ class CxGChartRenderer:
             """)
             df["model"] = label
             rows.append(df)
+        if is_v2:
+            df_v2 = self._query_df(f"""
+            WITH ranked AS (
+              SELECT v2_predicted_prob AS p, CAST(is_goal AS INT64) AS y,
+                     NTILE(10) OVER (ORDER BY v2_predicted_prob, event_id) AS decile
+              FROM `{self.project_id}.oam_ml.cxg_plus_v2_predictions`
+              WHERE track = '{track}' AND split = 'test'
+            )
+            SELECT decile, AVG(p) AS mean_predicted, AVG(y) AS actual_rate, COUNT(*) AS n
+            FROM ranked GROUP BY decile ORDER BY decile
+            """)
+            df_v2["model"] = "v2"
+            rows.append(df_v2)
         df_all = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
         if df_all.empty:
             return self._layout(go.Figure(), f"{track}: Calibration (test)")
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", line={"dash": "dot", "color": "#9ca3af"}, name="Perfect calibration", hoverinfo="skip"))
-        for label, color in (("dumb_baseline", "#f59e0b"), ("v1", "#2563eb")):
+        palette = {"dumb_baseline": "#f59e0b", "v1": "#2563eb", "v2": "#16a34a"}
+        for label, color in palette.items():
             d = df_all[df_all.model == label]
+            if d.empty:
+                continue
             fig.add_trace(go.Scatter(x=d["mean_predicted"], y=d["actual_rate"], mode="lines+markers", name=label, marker={"color": color, "size": 9}, line={"color": color}))
         fig.update_xaxes(title="Mean predicted probability (decile)")
         fig.update_yaxes(title="Actual goal rate")
-        return self._layout(fig, f"{track}: Calibration, dumb baseline vs v1 (test split)")
+        title_models = "dumb baseline vs v1 vs v2" if is_v2 else "dumb baseline vs v1"
+        return self._layout(fig, f"{track}: Calibration, {title_models} (test split)")
 
     def _baseline_divergence_stratum_type(self, chart: ChartRow) -> str:
+        if "archetype" in chart.chart_name:
+            return "nearest_defender_style_archetype"
         if "odi_tercile" in chart.chart_name:
             return "odi_tercile_nearest_defender_odi"
         return "defensive_profile_cluster"
 
     def _baseline_divergence_bar(self, chart: ChartRow) -> go.Figure:
+        is_v2 = chart.feature_family.endswith("_v2")
         stratum_type = self._baseline_divergence_stratum_type(chart)
+        table = "cxg_plus_v2_divergence" if is_v2 else "cxg_baseline_v1_divergence"
+        prob_col = "mean_v2_prob" if is_v2 else "mean_v1_prob"
+        model_label = "v2_predicted_prob" if is_v2 else "v1_predicted_prob"
         df = self._query_df(f"""
-        SELECT stratum_value, mean_divergence, mean_v1_prob, mean_statsbomb_xg, n
-        FROM `{self.project_id}.oam_ml.cxg_baseline_v1_divergence`
+        SELECT stratum_value, mean_divergence, {prob_col}, mean_statsbomb_xg, n
+        FROM `{self.project_id}.oam_ml.{table}`
         WHERE stratum_type = '{stratum_type}'
         ORDER BY stratum_value
         """)
         if df.empty:
             return self._layout(go.Figure(), f"cxg_plus: Divergence by {stratum_type}")
-        fig = px.bar(df, x="stratum_value", y="mean_divergence", hover_data=["n", "mean_v1_prob", "mean_statsbomb_xg"], labels={"stratum_value": stratum_type, "mean_divergence": "mean(v1_predicted_prob - statsbomb_xg)"})
+        fig = px.bar(df, x="stratum_value", y="mean_divergence", hover_data=["n", prob_col, "mean_statsbomb_xg"], labels={"stratum_value": stratum_type, "mean_divergence": f"mean({model_label} - statsbomb_xg)"})
         fig.add_hline(y=0, line_dash="dot", line_color="#9ca3af")
-        return self._layout(fig, f"CxG+: v1 vs StatsBomb xG Divergence by {stratum_type} (test split)")
+        model_name = "v2" if is_v2 else "v1"
+        return self._layout(fig, f"CxG+: {model_name} vs StatsBomb xG Divergence by {stratum_type} (test split)")
 
     _ROLE_ORDER = ("GK", "CB", "Fullback_WingBack", "Midfield", "Attack")
 
