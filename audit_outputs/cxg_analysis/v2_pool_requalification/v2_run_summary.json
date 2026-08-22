@@ -1,0 +1,229 @@
+{
+  "run_id": "cxg-v2-requal-20260822T043408Z",
+  "n_fetched": 3960,
+  "dropped_redundant": [],
+  "final_numeric_pool": [
+    "last_action_interval_s",
+    "defenders_between_ball_and_goal",
+    "defensive_reset_index",
+    "nearest_defender_distance_delta",
+    "pre_shot_receiver_space",
+    "gk_distance_to_shooter",
+    "defensive_line_depth",
+    "defensive_width",
+    "estimated_goalface_occlusion",
+    "goal_mouth_defender_count",
+    "max_goal_exposure",
+    "min_defensive_compactness_sequence",
+    "shot_corridor_occlusion",
+    "visible_goal_angle_proxy",
+    "nearest_defender_zone_displacement",
+    "nearest_defender_gap"
+  ],
+  "final_categorical_pool": [
+    "defensive_profile_cluster",
+    "nearest_defender_role",
+    "second_nearest_defender_role",
+    "nearest_defender_style_archetype"
+  ],
+  "sanity_check_pairs": [
+    {
+      "feature_a": "nearest_defender_gap",
+      "feature_b": "defenders_within_5m",
+      "r_train": -0.4495989420609723,
+      "n_train": 2680
+    },
+    {
+      "feature_a": "nearest_defender_gap",
+      "feature_b": "defenders_within_8m",
+      "r_train": -0.37624344022384204,
+      "n_train": 2680
+    },
+    {
+      "feature_a": "nearest_defender_zone_displacement",
+      "feature_b": "defensive_line_depth",
+      "r_train": 0.3023454401240001,
+      "n_train": 2682
+    }
+  ],
+  "pca_summary": {
+    "n_components": 16,
+    "n_80": 8,
+    "scree": [
+      0.2549962643137901,
+      0.18081906487330202,
+      0.10335344706293297,
+      0.07563407468875562,
+      0.06471681939896888,
+      0.0555874132021922,
+      0.050741178171365996,
+      0.03844246718689441,
+      0.03166071550811543,
+      0.029819097083489884,
+      0.02577041289447389,
+      0.023452234862810083,
+      0.02263425016392016,
+      0.01912420183555164,
+      0.016356646909407125,
+      0.00689171184402963
+    ],
+    "top_loadings_pc1": [
+      {
+        "track": "cxg_plus",
+        "component_number": 1,
+        "feature_name": "shot_corridor_occlusion",
+        "loading": 0.39429797179246073,
+        "materialized_at": "2026-08-22T04:34:08.555036+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "component_number": 1,
+        "feature_name": "defenders_between_ball_and_goal",
+        "loading": 0.3921047397813084,
+        "materialized_at": "2026-08-22T04:34:08.555036+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "component_number": 1,
+        "feature_name": "estimated_goalface_occlusion",
+        "loading": 0.35209143488637445,
+        "materialized_at": "2026-08-22T04:34:08.555036+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "component_number": 1,
+        "feature_name": "defensive_reset_index",
+        "loading": -0.34148851261126173,
+        "materialized_at": "2026-08-22T04:34:08.555036+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "component_number": 1,
+        "feature_name": "gk_distance_to_shooter",
+        "loading": 0.34069700580186296,
+        "materialized_at": "2026-08-22T04:34:08.555036+00:00"
+      }
+    ]
+  },
+  "tier1_pair_count": 190,
+  "prior_confirmed_check": [
+    {
+      "pair": "defensive_profile_clusterxvisible_goal_angle_proxy",
+      "status": "CONFIRMED",
+      "detail": {
+        "p_fdr": 1.666398803661022e-10,
+        "validated": true
+      }
+    },
+    {
+      "pair": "defensive_profile_clusterxgk_distance_to_shooter",
+      "status": "CONFIRMED",
+      "detail": {
+        "p_fdr": 0.012251020344457398,
+        "validated": true
+      }
+    },
+    {
+      "pair": "pre_shot_receiver_spacexvisible_goal_angle_proxy",
+      "status": "CONFIRMED",
+      "detail": {
+        "p_fdr": 0.02404749474732805,
+        "validated": true
+      }
+    },
+    {
+      "pair": "defensive_line_depthxpre_shot_receiver_space",
+      "status": "CONFIRMED",
+      "detail": {
+        "p_fdr": 0.03842422399079342,
+        "validated": true
+      }
+    }
+  ],
+  "categorical_stability_sample": [
+    {
+      "column_name": "nearest_defender_role",
+      "split": "test",
+      "level": "Attack",
+      "n": 67,
+      "goal_rate": 0.04477611940298507
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "test",
+      "level": "CB",
+      "n": 177,
+      "goal_rate": 0.10734463276836158
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "test",
+      "level": "Fullback_WingBack",
+      "n": 129,
+      "goal_rate": 0.07751937984496124
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "test",
+      "level": "GK",
+      "n": 19,
+      "goal_rate": 0.21052631578947367
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "test",
+      "level": "Midfield",
+      "n": 179,
+      "goal_rate": 0.0670391061452514
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "train",
+      "level": "Attack",
+      "n": 267,
+      "goal_rate": 0.056179775280898875
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "train",
+      "level": "CB",
+      "n": 964,
+      "goal_rate": 0.11825726141078838
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "train",
+      "level": "Fullback_WingBack",
+      "n": 530,
+      "goal_rate": 0.10377358490566038
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "train",
+      "level": "GK",
+      "n": 64,
+      "goal_rate": 0.296875
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "train",
+      "level": "Midfield",
+      "n": 895,
+      "goal_rate": 0.060335195530726256
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "validation",
+      "level": "Attack",
+      "n": 65,
+      "goal_rate": 0.03076923076923077
+    },
+    {
+      "column_name": "nearest_defender_role",
+      "split": "validation",
+      "level": "CB",
+      "n": 188,
+      "goal_rate": 0.11702127659574468
+    }
+  ]
+}
