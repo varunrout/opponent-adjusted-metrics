@@ -5,7 +5,18 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from opponent_adjusted.api.dependencies import get_store
+from opponent_adjusted.api.analysis_interfaces import (
+    BivariateCandidateRecord,
+    BivariateInteractionRecord,
+    BivariateStratifiedRecord,
+    FeatureCorrelationRecord,
+    FeatureInventoryRecord,
+    PcaComponentRecord,
+    PcaLoadingRecord,
+    RenderedChartRecord,
+    UnivariateTargetRecord,
+)
+from opponent_adjusted.api.dependencies import get_analysis_store, get_store
 from opponent_adjusted.api.interfaces import (
     CompetitionRecord,
     LineupPlayerRecord,
@@ -433,6 +444,308 @@ FAKE_SHOTS = [
 ]
 
 
+class FakeAnalysisStore:
+    """In-memory AnalysisStore fake for tests."""
+
+    def __init__(
+        self,
+        features: list[FeatureInventoryRecord],
+        correlations: list[FeatureCorrelationRecord],
+        univariate: list[UnivariateTargetRecord],
+        bivariate_candidates: list[BivariateCandidateRecord],
+        bivariate_interactions: list[BivariateInteractionRecord],
+        bivariate_stratified: list[BivariateStratifiedRecord],
+        pca_components: list[PcaComponentRecord],
+        pca_loadings: list[PcaLoadingRecord],
+        charts: list[RenderedChartRecord],
+    ) -> None:
+        self._features = features
+        self._correlations = correlations
+        self._univariate = univariate
+        self._bivariate_candidates = bivariate_candidates
+        self._bivariate_interactions = bivariate_interactions
+        self._bivariate_stratified = bivariate_stratified
+        self._pca_components = pca_components
+        self._pca_loadings = pca_loadings
+        self._charts = charts
+
+    def list_features(self, *, family: str | None = None) -> list[FeatureInventoryRecord]:
+        if family is None:
+            return list(self._features)
+        return [f for f in self._features if f.feature_family == family]
+
+    def list_correlations(self, *, family: str | None = None) -> list[FeatureCorrelationRecord]:
+        if family is None:
+            return list(self._correlations)
+        family_columns = {f.column_name for f in self._features if f.feature_family == family}
+        return [
+            c
+            for c in self._correlations
+            if c.feature_a in family_columns or c.feature_b in family_columns
+        ]
+
+    def list_univariate(self, *, family: str | None = None) -> list[UnivariateTargetRecord]:
+        if family is None:
+            return list(self._univariate)
+        return [u for u in self._univariate if u.feature_family == family]
+
+    def list_bivariate_candidates(self) -> list[BivariateCandidateRecord]:
+        return list(self._bivariate_candidates)
+
+    def list_bivariate_interactions(self) -> list[BivariateInteractionRecord]:
+        return list(self._bivariate_interactions)
+
+    def list_bivariate_stratified(self) -> list[BivariateStratifiedRecord]:
+        return list(self._bivariate_stratified)
+
+    def list_pca_components(self) -> list[PcaComponentRecord]:
+        return list(self._pca_components)
+
+    def list_pca_loadings(self) -> list[PcaLoadingRecord]:
+        return list(self._pca_loadings)
+
+    def get_latest_chart_run_id(self) -> str | None:
+        if not self._charts:
+            return None
+        return max(self._charts, key=lambda c: c.rendered_at or "").run_id
+
+    def list_charts(self, run_id: str) -> list[RenderedChartRecord]:
+        return [c for c in self._charts if c.run_id == run_id]
+
+
+FAKE_FEATURES = [
+    FeatureInventoryRecord(
+        feature_family="shot_geometry",
+        source_table="cxg_features_v1",
+        column_name="shot_distance",
+        data_type="FLOAT64",
+        column_role="feature",
+        is_numeric=True,
+        is_categorical=False,
+    ),
+    FeatureInventoryRecord(
+        feature_family="shot_geometry",
+        source_table="cxg_features_v1",
+        column_name="shot_angle",
+        data_type="FLOAT64",
+        column_role="feature",
+        is_numeric=True,
+        is_categorical=False,
+    ),
+    FeatureInventoryRecord(
+        feature_family="opponent_adjusted",
+        source_table="cxg_features_v1",
+        column_name="nearest_defender_odi",
+        data_type="FLOAT64",
+        column_role="feature",
+        is_numeric=True,
+        is_categorical=False,
+    ),
+    FeatureInventoryRecord(
+        feature_family="opponent_adjusted",
+        source_table="cxg_features_v1",
+        column_name="pressure_odi",
+        data_type="FLOAT64",
+        column_role="feature",
+        is_numeric=True,
+        is_categorical=False,
+    ),
+]
+
+FAKE_CORRELATIONS = [
+    FeatureCorrelationRecord(
+        track="main",
+        feature_a="shot_distance",
+        feature_b="shot_angle",
+        r_train=0.42,
+        n_train=1000,
+        is_redundant=False,
+        resolution="keep_both",
+        resolution_reason=None,
+    ),
+    FeatureCorrelationRecord(
+        track="main",
+        feature_a="nearest_defender_odi",
+        feature_b="pressure_odi",
+        r_train=0.91,
+        n_train=1000,
+        is_redundant=True,
+        resolution="drop_b",
+        resolution_reason="highly collinear",
+    ),
+    FeatureCorrelationRecord(
+        track="main",
+        feature_a="shot_distance",
+        feature_b="nearest_defender_odi",
+        r_train=0.15,
+        n_train=1000,
+        is_redundant=False,
+        resolution="keep_both",
+        resolution_reason=None,
+    ),
+    FeatureCorrelationRecord(
+        track="main",
+        feature_a="unrelated_column_a",
+        feature_b="unrelated_column_b",
+        r_train=0.05,
+        n_train=1000,
+        is_redundant=False,
+        resolution="keep_both",
+        resolution_reason=None,
+    ),
+]
+
+FAKE_UNIVARIATE = [
+    UnivariateTargetRecord(
+        feature_family="shot_geometry",
+        column_name="shot_distance",
+        data_type="FLOAT64",
+        row_count=1000,
+        non_null_count=1000,
+        goal_rate=0.1,
+        mean_when_available=15.2,
+        mean_for_goals=8.4,
+        mean_for_non_goals=16.1,
+        point_biserial_corr=-0.22,
+    ),
+    UnivariateTargetRecord(
+        feature_family="shot_geometry",
+        column_name="shot_angle",
+        data_type="FLOAT64",
+        row_count=1000,
+        non_null_count=980,
+        goal_rate=0.1,
+        mean_when_available=0.6,
+        mean_for_goals=0.8,
+        mean_for_non_goals=0.55,
+        point_biserial_corr=0.31,
+    ),
+    UnivariateTargetRecord(
+        feature_family="opponent_adjusted",
+        column_name="nearest_defender_odi",
+        data_type="FLOAT64",
+        row_count=1000,
+        non_null_count=950,
+        goal_rate=0.1,
+        mean_when_available=2.1,
+        mean_for_goals=3.0,
+        mean_for_non_goals=2.0,
+        point_biserial_corr=0.18,
+    ),
+]
+
+FAKE_BIVARIATE_CANDIDATES = [
+    BivariateCandidateRecord(
+        track="main",
+        feature_family="shot_geometry",
+        column_name="shot_distance",
+        data_type="FLOAT64",
+        qualification_reason="high univariate signal",
+    ),
+    BivariateCandidateRecord(
+        track="main",
+        feature_family="opponent_adjusted",
+        column_name="nearest_defender_odi",
+        data_type="FLOAT64",
+        qualification_reason="passed redundancy check",
+    ),
+]
+
+FAKE_BIVARIATE_INTERACTIONS = [
+    BivariateInteractionRecord(
+        track="main",
+        tier=1,
+        feature_a="shot_distance",
+        feature_b="nearest_defender_odi",
+        n_train=1000,
+        interaction_coef=0.12,
+        interaction_se=0.03,
+        interaction_p_raw=0.001,
+        interaction_p_fdr=0.01,
+        lr_stat=10.5,
+        main_effect_a_coef=-0.5,
+        main_effect_b_coef=0.3,
+        validated_on_val_split=True,
+        fit_status="converged",
+    ),
+]
+
+FAKE_BIVARIATE_STRATIFIED = [
+    BivariateStratifiedRecord(
+        track="main",
+        tier=1,
+        feature_a="shot_distance",
+        feature_b="nearest_defender_odi",
+        stratum_a="near",
+        stratum_b="pressured",
+        n=200,
+        goal_count=40,
+        goal_rate=0.2,
+    ),
+]
+
+FAKE_PCA_COMPONENTS = [
+    PcaComponentRecord(
+        track="main",
+        component_number=1,
+        explained_variance_ratio=0.35,
+        cumulative_variance_ratio=0.35,
+    ),
+    PcaComponentRecord(
+        track="main",
+        component_number=2,
+        explained_variance_ratio=0.2,
+        cumulative_variance_ratio=0.55,
+    ),
+]
+
+FAKE_PCA_LOADINGS = [
+    PcaLoadingRecord(
+        track="main",
+        component_number=1,
+        feature_name="shot_distance",
+        loading=0.8,
+    ),
+    PcaLoadingRecord(
+        track="main",
+        component_number=1,
+        feature_name="shot_angle",
+        loading=-0.4,
+    ),
+]
+
+FAKE_CHARTS = [
+    RenderedChartRecord(
+        run_id="cxg-analysis-20260810T010000Z",
+        chart_name="feature_correlation_heatmap",
+        html_uri="gs://bucket/old/heatmap.html",
+        png_uri="gs://bucket/old/heatmap.png",
+        rendered_at="2026-08-10T01:00:00Z",
+    ),
+    RenderedChartRecord(
+        run_id="cxg-analysis-20260810T010000Z",
+        chart_name="pca_scree_plot",
+        html_uri="gs://bucket/old/scree.html",
+        png_uri="gs://bucket/old/scree.png",
+        rendered_at="2026-08-10T01:00:00Z",
+    ),
+    RenderedChartRecord(
+        run_id="cxg-analysis-20260822T014705Z",
+        chart_name="feature_correlation_heatmap",
+        html_uri="gs://bucket/new/heatmap.html",
+        png_uri="gs://bucket/new/heatmap.png",
+        rendered_at="2026-08-22T01:47:05Z",
+    ),
+    RenderedChartRecord(
+        run_id="cxg-analysis-20260822T014705Z",
+        chart_name="pca_scree_plot",
+        html_uri="gs://bucket/new/scree.html",
+        png_uri="gs://bucket/new/scree.png",
+        rendered_at="2026-08-22T01:47:05Z",
+    ),
+]
+
+
 @pytest.fixture
 def client() -> TestClient:
     app.dependency_overrides[get_store] = lambda: FakeServingStore(
@@ -440,6 +753,17 @@ def client() -> TestClient:
         matches=FAKE_MATCHES,
         lineups=FAKE_LINEUPS,
         shots=FAKE_SHOTS,
+    )
+    app.dependency_overrides[get_analysis_store] = lambda: FakeAnalysisStore(
+        features=FAKE_FEATURES,
+        correlations=FAKE_CORRELATIONS,
+        univariate=FAKE_UNIVARIATE,
+        bivariate_candidates=FAKE_BIVARIATE_CANDIDATES,
+        bivariate_interactions=FAKE_BIVARIATE_INTERACTIONS,
+        bivariate_stratified=FAKE_BIVARIATE_STRATIFIED,
+        pca_components=FAKE_PCA_COMPONENTS,
+        pca_loadings=FAKE_PCA_LOADINGS,
+        charts=FAKE_CHARTS,
     )
     test_client = TestClient(app)
     yield test_client

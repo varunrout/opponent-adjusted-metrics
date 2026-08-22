@@ -90,3 +90,117 @@ export type ShotResponse = {
   body_part_name: string | null;
   is_goal: boolean;
 };
+
+// --- /v1/analysis/* (admin-gated) ---------------------------------------
+
+export type FeatureInventoryResponse = {
+  feature_family: string;
+  source_table: string | null;
+  column_name: string;
+  data_type: string | null;
+  column_role: string | null;
+  is_numeric: boolean | null;
+  is_categorical: boolean | null;
+};
+
+// Inter-feature (redundancy) correlation between pairs of features — NOT
+// correlation to the target. See UnivariateTargetResponse for target lift.
+export type FeatureCorrelationResponse = {
+  track: string;
+  feature_a: string;
+  feature_b: string;
+  r_train: number | null;
+  n_train: number;
+  is_redundant: boolean;
+  resolution: string;
+  resolution_reason: string | null;
+};
+
+// The actual target-lift table (mean_for_goals vs mean_for_non_goals).
+export type UnivariateTargetResponse = {
+  feature_family: string;
+  column_name: string;
+  data_type: string | null;
+  row_count: number | null;
+  non_null_count: number | null;
+  goal_rate: number | null;
+  mean_when_available: number | null;
+  mean_for_goals: number | null;
+  mean_for_non_goals: number | null;
+  point_biserial_corr: number | null;
+};
+
+export type BivariateCandidateResponse = {
+  track: string;
+  feature_family: string;
+  column_name: string;
+  data_type: string;
+  qualification_reason: string;
+};
+
+export type BivariateInteractionResponse = {
+  track: string;
+  tier: number;
+  feature_a: string;
+  feature_b: string;
+  n_train: number;
+  interaction_coef: number | null;
+  interaction_se: number | null;
+  interaction_p_raw: number | null;
+  interaction_p_fdr: number | null;
+  lr_stat: number | null;
+  main_effect_a_coef: number | null;
+  main_effect_b_coef: number | null;
+  validated_on_val_split: boolean | null;
+  fit_status: string;
+};
+
+export type BivariateStratifiedResponse = {
+  track: string;
+  tier: number;
+  feature_a: string;
+  feature_b: string;
+  stratum_a: string;
+  stratum_b: string;
+  n: number;
+  goal_count: number;
+  goal_rate: number | null;
+};
+
+export type BivariateResponse = {
+  candidates: BivariateCandidateResponse[];
+  interactions: BivariateInteractionResponse[];
+  stratified: BivariateStratifiedResponse[];
+};
+
+export type PcaComponentResponse = {
+  track: string;
+  component_number: number;
+  explained_variance_ratio: number;
+  cumulative_variance_ratio: number;
+};
+
+export type PcaLoadingResponse = {
+  track: string;
+  component_number: number;
+  feature_name: string;
+  loading: number;
+};
+
+export type PcaResponse = {
+  components: PcaComponentResponse[];
+  loadings: PcaLoadingResponse[];
+};
+
+export type RenderedChartResponse = {
+  run_id: string;
+  chart_name: string;
+  html_uri: string | null;
+  png_uri: string | null;
+  rendered_at: string | null;
+};
+
+export type ChartsResponse = {
+  run_id: string;
+  charts: RenderedChartResponse[];
+};

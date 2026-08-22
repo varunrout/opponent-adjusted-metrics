@@ -9,6 +9,8 @@ from typing import Callable, Literal, TypedDict
 
 from fastapi import Depends, Header, HTTPException
 
+from opponent_adjusted.api.analysis_interfaces import AnalysisStore
+from opponent_adjusted.api.bigquery_analysis_store import BigQueryAnalysisStore
 from opponent_adjusted.api.bigquery_store import BigQueryServingStore
 from opponent_adjusted.api.interfaces import ServingStore
 
@@ -125,3 +127,15 @@ def get_role(ctx: AuthContext = Depends(get_auth_context)) -> Role:
 def get_store() -> ServingStore:
     """FastAPI dependency provider for the serving store; overridable in tests."""
     return BigQueryServingStore()
+
+
+def require_admin(role: Role = Depends(get_role)) -> Role:
+    """Gate a route to admin only. Raises 403 for guest/viewer."""
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
+    return role
+
+
+def get_analysis_store() -> AnalysisStore:
+    """FastAPI dependency provider for the oam_analysis store; overridable in tests."""
+    return BigQueryAnalysisStore()

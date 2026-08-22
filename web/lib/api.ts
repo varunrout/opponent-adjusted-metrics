@@ -1,11 +1,17 @@
 import type {
+  BivariateResponse,
+  ChartsResponse,
   CompetitionResponse,
+  FeatureCorrelationResponse,
+  FeatureInventoryResponse,
   MatchDetailResponse,
   MatchResponse,
   MeResponse,
+  PcaResponse,
   PlayerSeasonResponse,
   ShotResponse,
   TeamSeasonResponse,
+  UnivariateTargetResponse,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -121,6 +127,53 @@ export function getTeamShots(
 export function getMe(idToken?: string | null): Promise<MeResponse> {
   const headers: HeadersInit | undefined = idToken ? { Authorization: `Bearer ${idToken}` } : undefined;
   return apiFetch<MeResponse>("/v1/me", headers ? { headers } : undefined);
+}
+
+// --- /v1/analysis/* (admin-gated: requires a Firebase ID token with role
+// "admin"; missing/non-admin tokens surface as a 403 ApiError) -----------
+
+function authHeaders(idToken?: string | null): RequestInit | undefined {
+  return idToken ? { headers: { Authorization: `Bearer ${idToken}` } } : undefined;
+}
+
+export function getAnalysisFeatures(
+  idToken: string | null | undefined,
+  family?: string
+): Promise<FeatureInventoryResponse[]> {
+  const qs = family ? `?family=${encodeURIComponent(family)}` : "";
+  return apiFetch<FeatureInventoryResponse[]>(`/v1/analysis/features${qs}`, authHeaders(idToken));
+}
+
+export function getAnalysisCorrelation(
+  idToken: string | null | undefined,
+  family?: string
+): Promise<FeatureCorrelationResponse[]> {
+  const qs = family ? `?family=${encodeURIComponent(family)}` : "";
+  return apiFetch<FeatureCorrelationResponse[]>(`/v1/analysis/correlation${qs}`, authHeaders(idToken));
+}
+
+export function getAnalysisUnivariate(
+  idToken: string | null | undefined,
+  family?: string
+): Promise<UnivariateTargetResponse[]> {
+  const qs = family ? `?family=${encodeURIComponent(family)}` : "";
+  return apiFetch<UnivariateTargetResponse[]>(`/v1/analysis/univariate${qs}`, authHeaders(idToken));
+}
+
+export function getAnalysisBivariate(idToken: string | null | undefined): Promise<BivariateResponse> {
+  return apiFetch<BivariateResponse>("/v1/analysis/bivariate", authHeaders(idToken));
+}
+
+export function getAnalysisPca(idToken: string | null | undefined): Promise<PcaResponse> {
+  return apiFetch<PcaResponse>("/v1/analysis/pca", authHeaders(idToken));
+}
+
+export function getAnalysisCharts(
+  idToken: string | null | undefined,
+  runId?: string
+): Promise<ChartsResponse> {
+  const qs = runId ? `?run_id=${encodeURIComponent(runId)}` : "";
+  return apiFetch<ChartsResponse>(`/v1/analysis/charts${qs}`, authHeaders(idToken));
 }
 
 export { ApiError };
