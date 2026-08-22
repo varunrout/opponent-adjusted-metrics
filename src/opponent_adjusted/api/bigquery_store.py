@@ -16,9 +16,24 @@ from opponent_adjusted.api.interfaces import (
 PROJECT = "oam-varun-260819"
 DATASET = "oam_core"
 
+_client_instance: bigquery.Client | None = None
+
 
 def _client() -> bigquery.Client:
-    return bigquery.Client(project=PROJECT)
+    """Return a shared, lazily-constructed BigQuery client (module-level singleton).
+
+    Mirrors the lazy-init pattern in dependencies.py's _init_firebase_admin.
+    Building a fresh bigquery.Client() on every call is wasteful once a
+    single request can fan out into several BigQuery-backed calls in quick
+    succession (e.g. the Analysis page firing six near-simultaneous
+    requests, each of which previously built its own client) —
+    bigquery_analysis_store.py imports this same function, so it benefits
+    automatically.
+    """
+    global _client_instance
+    if _client_instance is None:
+        _client_instance = bigquery.Client(project=PROJECT)
+    return _client_instance
 
 
 class BigQueryServingStore:
