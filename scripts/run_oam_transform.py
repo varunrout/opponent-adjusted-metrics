@@ -29,6 +29,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from google.cloud import storage
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 SCRIPTS = ROOT / "scripts"
@@ -73,11 +75,33 @@ def _silver_output_prefix(args: argparse.Namespace) -> str:
     return f"staged/statsbomb/{args.data_version}/statsbomb_silver_v1_2{DEFAULT_SCHEMA_SUFFIX}"
 
 
+def _silver_already_published(args: argparse.Namespace, output_prefix: str) -> bool:
+    """Same existence check `build_statsbomb_silver` runs internally (the `_SUCCESS` marker
+    at the deterministic, data_version-keyed output prefix) -- run here first so the common
+    no-new-data case (the Workflows chain always invokes this job with default args, with no
+    way to know in advance whether oam-ingest fetched anything new) is a clean skip instead of
+    a hard failure. This does NOT weaken the immutability guard itself: `build_statsbomb_silver`
+    is untouched and still raises loudly if it's ever invoked against a prefix that already has
+    a `_SUCCESS` marker -- this only decides whether to invoke it at all."""
+    client = storage.Client(project=args.project_id)
+    blob = client.bucket(args.bucket).blob(f"{output_prefix.rstrip('/')}/_SUCCESS")
+    return blob.exists(client=client)
+
+
 def main() -> None:
     args = parse_args()
     output_prefix = _silver_output_prefix(args)
 
-    if not args.skip_silver:
+    if args.skip_silver:
+        print("[oam-transform] skip-silver: assuming Silver prefix already published", flush=True)
+    elif _silver_already_published(args, output_prefix):
+        print(
+            f"[oam-transform] Silver output already published at "
+            f"gs://{args.bucket}/{output_prefix}/_SUCCESS -- no new data_version, skipping rebuild "
+            "(this is the common Workflows-chain case, not an error)",
+            flush=True,
+        )
+    else:
         _run(
             [
                 sys.executable,
@@ -91,8 +115,6 @@ def main() -> None:
             ],
             "build_statsbomb_silver",
         )
-    else:
-        print("[oam-transform] skip-silver: assuming Silver prefix already published", flush=True)
 
     if not args.skip_core:
         _run(

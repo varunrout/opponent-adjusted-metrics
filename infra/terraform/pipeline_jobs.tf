@@ -19,11 +19,23 @@ locals {
   # binding, breaking that module's oam_core reads; v4 fixes a SyntaxError in
   # materialize_cxg_feature_family_tables.py (backslash inside an f-string expression --
   # invalid on Python 3.11, the container's runtime) that deterministically crashed the
-  # feature-family-materialization step every run.
+  # feature-family-materialization step every run; v5 makes run_oam_transform.py check
+  # whether Silver is already published (GCS `_SUCCESS` marker) BEFORE attempting the
+  # build, so the Workflows chain's default no-args invocation no-op-skips Silver in the
+  # common case instead of hitting the (correct, unmodified) immutability guard's hard
+  # failure -- see build_statsbomb_silver's own RuntimeError, which still fires if this
+  # job is ever invoked directly against an already-published prefix.
+  # oam-analyse v3: rebuilt against current src/ -- v2 was baked before the correlation/PCA
+  # and bivariate chart types (feature_correlation_heatmap, pca_scree,
+  # bivariate_significance_grid, bivariate_stratified_bar) were added to cxg_charts.py, so
+  # its dispatcher fell through to a dead `_family_summary` fallback (queries
+  # oam_analysis.cxg_family_summary_v1, which was never materialized) for every one of those
+  # chart types -- found during real end-to-end Workflows-chain validation
+  # (oam-analyse-wwjjm). Pure image-staleness, no source change.
   pipeline_image_tags = {
     oam-ingest    = "v1"
-    oam-transform = "v4"
-    oam-analyse   = "v2"
+    oam-transform = "v5"
+    oam-analyse   = "v3"
   }
 }
 
