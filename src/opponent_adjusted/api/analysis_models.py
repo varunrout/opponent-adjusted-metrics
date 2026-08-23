@@ -160,6 +160,36 @@ class PcaResponse(BaseModel):
     loadings: list[PcaLoadingResponse]
 
 
+class CxgModelResultResponse(BaseModel):
+    """API response shape for one metrics row from an oam_ml model table."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    model_key: str
+    track: str
+    split: str
+    model: str
+    n: int
+    log_loss: float | None
+    brier_score: float | None
+    roc_auc: float | None
+    is_frozen: bool
+    is_current: bool
+
+
+class CxgCoefficientResponse(BaseModel):
+    """API response shape for one per-feature coefficient row from an oam_ml model table."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    model_key: str
+    track: str
+    feature: str
+    coefficient: float | None
+    std_error: float | None
+    p_value: float | None
+
+
 class ChartsResponse(BaseModel):
     """API response shape for the charts endpoint."""
 

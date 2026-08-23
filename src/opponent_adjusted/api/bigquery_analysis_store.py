@@ -8,6 +8,8 @@ from opponent_adjusted.api.analysis_interfaces import (
     BivariateCandidateRecord,
     BivariateInteractionRecord,
     BivariateStratifiedRecord,
+    CxgCoefficientRecord,
+    CxgModelResultRecord,
     FeatureCorrelationRecord,
     FeatureInventoryRecord,
     PcaComponentRecord,
@@ -18,6 +20,16 @@ from opponent_adjusted.api.analysis_interfaces import (
 from opponent_adjusted.api.bigquery_store import PROJECT, _client
 
 ANALYSIS_DATASET = "oam_analysis"
+
+ML_DATASET = "oam_ml"
+
+CXG_MODEL_TABLE_PREFIXES = {
+    "baseline_v1": "cxg_baseline_v1",
+    "event_v3": "cxg_event_v3",
+    "plus_v2": "cxg_plus_v2",
+    "plus_v3": "cxg_plus_v3",
+}
+CXG_CURRENT_MODEL_KEYS = {"event_v3", "plus_v3"}
 
 
 class BigQueryAnalysisStore:
@@ -286,6 +298,70 @@ class BigQueryAnalysisStore:
                 component_number=row["component_number"],
                 feature_name=row["feature_name"],
                 loading=row["loading"],
+            )
+            for row in rows
+        ]
+
+    def list_cxg_model_results(self) -> list[CxgModelResultRecord]:
+        client = _client()
+        union_branches = [
+            f"""
+            SELECT
+                '{model_key}' AS model_key,
+                track,
+                split,
+                model,
+                n,
+                log_loss,
+                brier_score,
+                roc_auc
+            FROM `{PROJECT}.{ML_DATASET}.{prefix}_metrics`
+            """
+            for model_key, prefix in CXG_MODEL_TABLE_PREFIXES.items()
+        ]
+        query = "\nUNION ALL\n".join(union_branches)
+        rows = client.query(query).result()
+        return [
+            CxgModelResultRecord(
+                model_key=row["model_key"],
+                track=row["track"],
+                split=row["split"],
+                model=row["model"],
+                n=row["n"],
+                log_loss=row["log_loss"],
+                brier_score=row["brier_score"],
+                roc_auc=row["roc_auc"],
+                is_frozen=True,
+                is_current=row["model_key"] in CXG_CURRENT_MODEL_KEYS,
+            )
+            for row in rows
+        ]
+
+    def list_cxg_coefficients(self, model_key: str) -> list[CxgCoefficientRecord]:
+        prefix = CXG_MODEL_TABLE_PREFIXES.get(model_key)
+        if prefix is None:
+            raise ValueError(f"Unknown model_key: {model_key!r}")
+
+        client = _client()
+        query = f"""
+            SELECT
+                track,
+                feature,
+                coefficient,
+                std_error,
+                p_value
+            FROM `{PROJECT}.{ML_DATASET}.{prefix}_coefficients`
+            ORDER BY feature
+        """
+        rows = client.query(query).result()
+        return [
+            CxgCoefficientRecord(
+                model_key=model_key,
+                track=row["track"],
+                feature=row["feature"],
+                coefficient=row["coefficient"],
+                std_error=row["std_error"],
+                p_value=row["p_value"],
             )
             for row in rows
         ]

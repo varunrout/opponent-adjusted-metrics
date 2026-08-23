@@ -126,6 +126,34 @@ class RenderedChartRecord:
     rendered_at: str | None
 
 
+@dataclass(frozen=True)
+class CxgModelResultRecord:
+    """One row from an oam_ml model's _metrics table."""
+
+    model_key: str
+    track: str
+    split: str
+    model: str
+    n: int
+    log_loss: float | None
+    brier_score: float | None
+    roc_auc: float | None
+    is_frozen: bool
+    is_current: bool
+
+
+@dataclass(frozen=True)
+class CxgCoefficientRecord:
+    """One per-feature coefficient row from an oam_ml model's _coefficients table."""
+
+    model_key: str
+    track: str
+    feature: str
+    coefficient: float | None
+    std_error: float | None
+    p_value: float | None
+
+
 class AnalysisStore(Protocol):
     """Read-only contract for the oam_analysis dashboard endpoints."""
 
@@ -158,3 +186,9 @@ class AnalysisStore(Protocol):
 
     def list_charts(self, run_id: str) -> list[RenderedChartRecord]:
         """Return rendered chart rows for a specific run_id."""
+
+    def list_cxg_model_results(self) -> list[CxgModelResultRecord]:
+        """Return metrics rows from all four frozen oam_ml model tables (baseline_v1, event_v3, plus_v2, plus_v3), unioned."""
+
+    def list_cxg_coefficients(self, model_key: str) -> list[CxgCoefficientRecord]:
+        """Return per-feature coefficient rows for one of the four frozen oam_ml model tables. Raises ValueError for an unrecognized model_key."""

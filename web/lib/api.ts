@@ -2,6 +2,8 @@ import type {
   BivariateResponse,
   ChartsResponse,
   CompetitionResponse,
+  CxgCoefficientResponse,
+  CxgModelResultResponse,
   FeatureCorrelationResponse,
   FeatureInventoryResponse,
   MatchDetailResponse,
@@ -174,6 +176,22 @@ export function getAnalysisCharts(
 ): Promise<ChartsResponse> {
   const qs = runId ? `?run_id=${encodeURIComponent(runId)}` : "";
   return apiFetch<ChartsResponse>(`/v1/analysis/charts${qs}`, authHeaders(idToken));
+}
+
+export function getCxgModelResults(
+  idToken: string | null | undefined
+): Promise<CxgModelResultResponse[]> {
+  return apiFetch<CxgModelResultResponse[]>("/v1/analysis/cxg-models", authHeaders(idToken));
+}
+
+export function getCxgModelCoefficients(
+  idToken: string | null | undefined,
+  modelKey: string
+): Promise<CxgCoefficientResponse[]> {
+  return apiFetch<CxgCoefficientResponse[]>(
+    `/v1/analysis/cxg-models/${encodeURIComponent(modelKey)}/coefficients`,
+    authHeaders(idToken)
+  );
 }
 
 export { ApiError };

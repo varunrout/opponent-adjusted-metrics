@@ -13,18 +13,22 @@ import {
   getAnalysisFeatures,
   getAnalysisPca,
   getAnalysisUnivariate,
+  getCxgModelCoefficients,
+  getCxgModelResults,
 } from "@/lib/api";
-import { deriveFamilies } from "@/lib/analysis-helpers";
+import { deriveCxgModelVersions, deriveFamilies, groupCxgResultsByTrack } from "@/lib/analysis-helpers";
 import type {
   BivariateResponse,
   ChartsResponse,
+  CxgCoefficientResponse,
+  CxgModelResultResponse,
   FeatureCorrelationResponse,
   FeatureInventoryResponse,
   PcaResponse,
   UnivariateTargetResponse,
 } from "@/lib/types";
 
-type Tab = "features" | "charts";
+type Tab = "features" | "charts" | "cxgModels";
 
 const fmtNum = (n: number | null | undefined, digits = 3) => (n == null ? "—" : n.toFixed(digits));
 const fmtPct = (n: number | null | undefined) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`);
@@ -55,9 +59,14 @@ export default function AnalysisPage() {
         <TabButton active={tab === "charts"} onClick={() => setTab("charts")}>
           Rendered charts
         </TabButton>
+        <TabButton active={tab === "cxgModels"} onClick={() => setTab("cxgModels")}>
+          Model results
+        </TabButton>
       </div>
 
-      {tab === "features" ? <FeatureBrowserPanel /> : <ChartGalleryPanel />}
+      {tab === "features" && <FeatureBrowserPanel />}
+      {tab === "charts" && <ChartGalleryPanel />}
+      {tab === "cxgModels" && <CxgModelResultsPanel />}
     </section>
   );
 }
@@ -594,6 +603,220 @@ function ChartGalleryPanel() {
           )}
         </Card>
       )}
+    </div>
+  );
+}
+
+// --- Panel C: CxG v3 model results ----------------------------------------
+// Per docs/dashboard_design_spec_v2.md §4a/§11: CxG v3 results vs the
+// StatsBomb baseline, sourced from oam_ml (not oam_serving, which stays
+// empty). This is the data-scientist-facing raw-numbers surface — caveats
+// are shown as plain visible text below, not tucked into a tooltip.
+
+function CxgModelResultsPanel() {
+  const { user } = useRole();
+
+  const [results, setResults] = useState<CxgModelResultResponse[]>([]);
+  const [resultsLoading, setResultsLoading] = useState(true);
+  const [resultsError, setResultsError] = useState<unknown>(null);
+
+  const [selectedModelKey, setSelectedModelKey] = useState<string>("");
+  const [coefficients, setCoefficients] = useState<CxgCoefficientResponse[]>([]);
+  const [coefficientsLoading, setCoefficientsLoading] = useState(false);
+  const [coefficientsError, setCoefficientsError] = useState<unknown>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    setResultsLoading(true);
+    setResultsError(null);
+    user
+      .getIdToken()
+      .then((idToken) => getCxgModelResults(idToken))
+      .then((data) => {
+        if (cancelled) return;
+        setResults(data);
+        const versions = deriveCxgModelVersions(data);
+        const defaultVersion = versions.find((v) => v.model_key === "event_v3") ?? versions[0];
+        if (defaultVersion) setSelectedModelKey((prev) => prev || defaultVersion.model_key);
+      })
+      .catch((err) => {
+        if (!cancelled) setResultsError(err);
+      })
+      .finally(() => {
+        if (!cancelled) setResultsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const trackGroups = useMemo(() => groupCxgResultsByTrack(results), [results]);
+  const versions = useMemo(() => deriveCxgModelVersions(results), [results]);
+
+  useEffect(() => {
+    if (!user || !selectedModelKey) return;
+    let cancelled = false;
+    setCoefficientsLoading(true);
+    setCoefficientsError(null);
+    user
+      .getIdToken()
+      .then((idToken) => getCxgModelCoefficients(idToken, selectedModelKey))
+      .then((data) => {
+        if (!cancelled) setCoefficients(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setCoefficientsError(err);
+      })
+      .finally(() => {
+        if (!cancelled) setCoefficientsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, selectedModelKey]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card title="Results vs StatsBomb baseline, per track">
+        {resultsLoading && <Skeleton style={{ height: 160 }} />}
+        {!resultsLoading && !!resultsError && <ErrorState error={resultsError} />}
+        {!resultsLoading && !resultsError && trackGroups.length === 0 && (
+          <p className="text-[12.5px] text-muted m-0">No model results found.</p>
+        )}
+        {!resultsLoading && !resultsError && trackGroups.length > 0 && (
+          <div className="flex flex-col gap-4">
+            {trackGroups.map((group) => (
+              <div key={group.track}>
+                <div className="text-[11px] text-muted mb-1.5">{group.track}</div>
+                <TableWrap>
+                  <thead>
+                    <tr>
+                      <Th>Split</Th>
+                      <Th>Model</Th>
+                      <Th align="right">n</Th>
+                      <Th align="right">log_loss</Th>
+                      <Th align="right">Brier</Th>
+                      <Th align="right">ROC AUC</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.rows.map((row, i) => (
+                      <tr key={`${row.split}-${row.model}-${i}`}>
+                        <Td>{row.split}</Td>
+                        <Td className={row.is_current && row.model !== "statsbomb_xg" ? "text-text font-semibold" : ""}>
+                          {row.model}
+                          {row.is_current && row.model !== "statsbomb_xg" ? " (current)" : ""}
+                        </Td>
+                        <Td align="right">{row.n}</Td>
+                        <Td align="right">{fmtNum(row.log_loss)}</Td>
+                        <Td align="right">{fmtNum(row.brier_score)}</Td>
+                        <Td align="right">{fmtNum(row.roc_auc)}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </TableWrap>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card title="Version history">
+        {resultsLoading && <Skeleton style={{ height: 60 }} />}
+        {!resultsLoading && !resultsError && versions.length === 0 && (
+          <p className="text-[12.5px] text-muted m-0">No model versions found.</p>
+        )}
+        {!resultsLoading && !resultsError && versions.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {versions.map((v) => (
+              <button
+                key={v.model_key}
+                type="button"
+                onClick={() => setSelectedModelKey(v.model_key)}
+                className={[
+                  "px-2.5 py-[6px] rounded-lg text-[12px] border",
+                  selectedModelKey === v.model_key
+                    ? "border-teal text-text bg-teal/[0.08]"
+                    : "border-border text-text2 hover:bg-card-hi",
+                ].join(" ")}
+              >
+                {v.model_key} · {v.track} · {v.is_frozen ? "frozen" : "unfrozen"}
+                {v.is_current ? " · current" : ""}
+              </button>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card title={selectedModelKey ? `Coefficients — ${selectedModelKey}` : "Coefficients"}>
+        {!selectedModelKey && (
+          <p className="text-[12.5px] text-muted m-0">Select a model version above to view its coefficients.</p>
+        )}
+        {selectedModelKey && coefficientsLoading && <Skeleton style={{ height: 120 }} />}
+        {selectedModelKey && !coefficientsLoading && !!coefficientsError && <ErrorState error={coefficientsError} />}
+        {selectedModelKey && !coefficientsLoading && !coefficientsError && (
+          <>
+            <p className="text-[11px] text-muted mb-2">
+              {coefficients.length} coefficient row{coefficients.length === 1 ? "" : "s"} for {selectedModelKey}{" "}
+              (includes the intercept, one-hot dummy columns, and interaction terms — see caveats below for why
+              this is higher than the underlying "feature count").
+            </p>
+            {coefficients.length === 0 ? (
+              <p className="text-[12.5px] text-muted m-0">No coefficients found for this model.</p>
+            ) : (
+              <TableWrap>
+                <thead>
+                  <tr>
+                    <Th>Feature</Th>
+                    <Th align="right">Coefficient</Th>
+                    <Th align="right">Std. error</Th>
+                    <Th align="right">p-value</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {coefficients.map((c) => (
+                    <tr key={c.feature}>
+                      <Td className="font-data" title={c.feature}>
+                        {c.feature}
+                      </Td>
+                      <Td align="right">{fmtNum(c.coefficient)}</Td>
+                      <Td align="right">{fmtNum(c.std_error)}</Td>
+                      <Td align="right">{fmtNum(c.p_value)}</Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableWrap>
+            )}
+          </>
+        )}
+      </Card>
+
+      <Card title="Known caveats">
+        <div className="flex flex-col gap-3 text-[12.5px] text-text2">
+          <p className="m-0">
+            <span className="text-text font-semibold">Feature-pool asymmetry.</span> Event-wide uses 8 base
+            features; CxG+ uses 24. The two tracks aren&apos;t a like-for-like comparison of &quot;does adding
+            360 data help&quot; — some of the metric gap between tracks reflects feature count, not just data
+            richness.
+          </p>
+          <p className="m-0">
+            <span className="text-text font-semibold">
+              <code className="font-data">zone_displacement</code>&apos;s unexplained bimodality.
+            </span>{" "}
+            This CxG+ feature shows a bimodal distribution with no documented cause yet — an open question, not
+            resolved, and not something to present as a clean, well-understood feature.
+          </p>
+          <p className="m-0 text-muted">
+            Raw coefficient-row counts (11 / 28 / 54 / 58 across the four model versions) are higher than
+            &quot;feature count&quot; because they include one-hot-encoded categorical dummy columns, a
+            missingness-indicator column, an intercept (<code className="font-data">const</code>), and
+            interaction terms (feature names containing <code className="font-data">:</code>).
+          </p>
+        </div>
+      </Card>
     </div>
   );
 }

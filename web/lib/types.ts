@@ -209,3 +209,27 @@ export type ChartsResponse = {
   run_id: string;
   charts: RenderedChartResponse[];
 };
+
+// --- /v1/analysis/cxg-models* (admin-gated) -------------------------------
+
+export type CxgModelResultResponse = {
+  model_key: string; // "baseline_v1" | "event_v3" | "plus_v2" | "plus_v3"
+  track: string; // "cxg_event" | "cxg_plus"
+  split: string; // "test" | "validation"
+  model: string; // "v1" | "v2" | "v3" | "statsbomb_xg" | "dumb_baseline" (varies by model_key)
+  n: number;
+  log_loss: number | null;
+  brier_score: number | null;
+  roc_auc: number | null;
+  is_frozen: boolean; // always true for all four model_keys
+  is_current: boolean; // true only for event_v3/plus_v3, false for baseline_v1/plus_v2
+};
+
+export type CxgCoefficientResponse = {
+  model_key: string;
+  track: string;
+  feature: string;
+  coefficient: number | null;
+  std_error: number | null;
+  p_value: number | null;
+};

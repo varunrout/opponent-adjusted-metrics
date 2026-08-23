@@ -13,6 +13,8 @@ from opponent_adjusted.api.analysis_models import (
     BivariateResponse,
     BivariateStratifiedResponse,
     ChartsResponse,
+    CxgCoefficientResponse,
+    CxgModelResultResponse,
     FeatureCorrelationResponse,
     FeatureInventoryResponse,
     PcaComponentResponse,
@@ -128,3 +130,24 @@ def list_charts(
         charts.append(chart)
 
     return ChartsResponse(run_id=resolved_run_id, charts=charts)
+
+
+@router.get("/cxg-models", response_model=list[CxgModelResultResponse])
+def list_cxg_models(
+    store: AnalysisStore = Depends(get_analysis_store),
+    role: Role = Depends(require_admin),
+) -> list[CxgModelResultResponse]:
+    return [CxgModelResultResponse.model_validate(r) for r in store.list_cxg_model_results()]
+
+
+@router.get("/cxg-models/{model_key}/coefficients", response_model=list[CxgCoefficientResponse])
+def list_cxg_model_coefficients(
+    model_key: str,
+    store: AnalysisStore = Depends(get_analysis_store),
+    role: Role = Depends(require_admin),
+) -> list[CxgCoefficientResponse]:
+    try:
+        records = store.list_cxg_coefficients(model_key)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return [CxgCoefficientResponse.model_validate(r) for r in records]

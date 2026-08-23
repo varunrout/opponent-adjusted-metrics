@@ -15,6 +15,7 @@ ROUTES = [
     "/v1/analysis/bivariate",
     "/v1/analysis/pca",
     "/v1/analysis/charts",
+    "/v1/analysis/cxg-models",
 ]
 
 
@@ -176,3 +177,68 @@ def test_charts_returns_200_and_null_signed_urls_when_signing_raises(client, mon
         assert chart["signed_png_url"] is None
         # The raw URIs are still present — signing failure doesn't hide them.
         assert chart["html_uri"]
+
+
+def test_cxg_models_returns_all_frozen_model_rows(client):
+    _as_role("admin")
+    response = client.get("/v1/analysis/cxg-models")
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 6
+    model_keys = {row["model_key"] for row in body}
+    assert model_keys == {"event_v3", "plus_v3", "baseline_v1", "plus_v2"}
+    assert all(row["is_frozen"] for row in body)
+    current_keys = {row["model_key"] for row in body if row["is_current"]}
+    assert current_keys == {"event_v3", "plus_v3"}
+    superseded_keys = {row["model_key"] for row in body if not row["is_current"]}
+    assert superseded_keys == {"baseline_v1", "plus_v2"}
+
+
+def test_cxg_models_track_values_match_real_schema(client):
+    """track is cxg_event/cxg_plus, not event_wide — see the phase report for why this matters."""
+    _as_role("admin")
+    response = client.get("/v1/analysis/cxg-models")
+    body = response.json()
+    tracks = {row["track"] for row in body}
+    assert tracks == {"cxg_event", "cxg_plus"}
+
+
+def test_cxg_models_includes_statsbomb_comparator_rows(client):
+    _as_role("admin")
+    response = client.get("/v1/analysis/cxg-models")
+    body = response.json()
+    event_v3_rows = [row for row in body if row["model_key"] == "event_v3"]
+    models_present = {row["model"] for row in event_v3_rows}
+    assert models_present == {"v3", "statsbomb_xg"}
+
+
+@pytest.mark.parametrize("role", ["guest", "viewer"])
+def test_cxg_model_coefficients_gets_403_for_non_admin(client, role):
+    _as_role(role)
+    response = client.get("/v1/analysis/cxg-models/event_v3/coefficients")
+    assert response.status_code == 403
+
+
+def test_cxg_model_coefficients_returns_expected_rows(client):
+    _as_role("admin")
+    response = client.get("/v1/analysis/cxg-models/event_v3/coefficients")
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 2
+    assert {row["feature"] for row in body} == {"const", "shot_x_sb"}
+    assert all(row["model_key"] == "event_v3" for row in body)
+
+
+def test_cxg_model_coefficients_for_different_model_key_returns_different_rows(client):
+    _as_role("admin")
+    response = client.get("/v1/analysis/cxg-models/plus_v3/coefficients")
+    assert response.status_code == 200
+    body = response.json()
+    assert {row["feature"] for row in body} == {"const", "nearest_defender_zone_displacement"}
+    assert all(row["model_key"] == "plus_v3" for row in body)
+
+
+def test_cxg_model_coefficients_unknown_model_key_returns_404(client):
+    _as_role("admin")
+    response = client.get("/v1/analysis/cxg-models/not-a-real-model/coefficients")
+    assert response.status_code == 404

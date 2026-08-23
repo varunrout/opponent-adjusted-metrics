@@ -9,6 +9,8 @@ from opponent_adjusted.api.analysis_interfaces import (
     BivariateCandidateRecord,
     BivariateInteractionRecord,
     BivariateStratifiedRecord,
+    CxgCoefficientRecord,
+    CxgModelResultRecord,
     FeatureCorrelationRecord,
     FeatureInventoryRecord,
     PcaComponentRecord,
@@ -458,6 +460,8 @@ class FakeAnalysisStore:
         pca_components: list[PcaComponentRecord],
         pca_loadings: list[PcaLoadingRecord],
         charts: list[RenderedChartRecord],
+        cxg_model_results: list[CxgModelResultRecord] | None = None,
+        cxg_coefficients: list[CxgCoefficientRecord] | None = None,
     ) -> None:
         self._features = features
         self._correlations = correlations
@@ -468,6 +472,8 @@ class FakeAnalysisStore:
         self._pca_components = pca_components
         self._pca_loadings = pca_loadings
         self._charts = charts
+        self._cxg_model_results = cxg_model_results or []
+        self._cxg_coefficients = cxg_coefficients or []
 
     def list_features(self, *, family: str | None = None) -> list[FeatureInventoryRecord]:
         if family is None:
@@ -511,6 +517,17 @@ class FakeAnalysisStore:
 
     def list_charts(self, run_id: str) -> list[RenderedChartRecord]:
         return [c for c in self._charts if c.run_id == run_id]
+
+    def list_cxg_model_results(self) -> list[CxgModelResultRecord]:
+        return list(self._cxg_model_results)
+
+    def list_cxg_coefficients(self, model_key: str) -> list[CxgCoefficientRecord]:
+        known_keys = {r.model_key for r in self._cxg_model_results} | {
+            c.model_key for c in self._cxg_coefficients
+        }
+        if model_key not in known_keys:
+            raise ValueError(f"Unknown model_key: {model_key!r}")
+        return [c for c in self._cxg_coefficients if c.model_key == model_key]
 
 
 FAKE_FEATURES = [
@@ -745,6 +762,120 @@ FAKE_CHARTS = [
     ),
 ]
 
+# Mirrors the real oam_ml shape (verified against live BigQuery): each
+# model_key's _metrics table can hold multiple `model` values (the CxG
+# version itself plus statsbomb_xg/dumb_baseline comparators) at the same
+# track/split. is_current is True only for event_v3/plus_v3.
+FAKE_CXG_MODEL_RESULTS = [
+    CxgModelResultRecord(
+        model_key="event_v3",
+        track="cxg_event",
+        split="test",
+        model="v3",
+        n=2427,
+        log_loss=0.3003,
+        brier_score=0.0852,
+        roc_auc=0.7148,
+        is_frozen=True,
+        is_current=True,
+    ),
+    CxgModelResultRecord(
+        model_key="event_v3",
+        track="cxg_event",
+        split="test",
+        model="statsbomb_xg",
+        n=2427,
+        log_loss=0.2597,
+        brier_score=0.0718,
+        roc_auc=0.7972,
+        is_frozen=True,
+        is_current=True,
+    ),
+    CxgModelResultRecord(
+        model_key="plus_v3",
+        track="cxg_plus",
+        split="test",
+        model="v3",
+        n=590,
+        log_loss=0.2555,
+        brier_score=0.0713,
+        roc_auc=0.8313,
+        is_frozen=True,
+        is_current=True,
+    ),
+    CxgModelResultRecord(
+        model_key="plus_v3",
+        track="cxg_plus",
+        split="test",
+        model="statsbomb_xg",
+        n=590,
+        log_loss=0.2430,
+        brier_score=0.0665,
+        roc_auc=0.8476,
+        is_frozen=True,
+        is_current=True,
+    ),
+    CxgModelResultRecord(
+        model_key="baseline_v1",
+        track="cxg_event",
+        split="test",
+        model="v1",
+        n=2427,
+        log_loss=0.3058,
+        brier_score=0.0872,
+        roc_auc=0.6939,
+        is_frozen=True,
+        is_current=False,
+    ),
+    CxgModelResultRecord(
+        model_key="plus_v2",
+        track="cxg_plus",
+        split="test",
+        model="v2",
+        n=590,
+        log_loss=0.2566,
+        brier_score=0.0716,
+        roc_auc=0.8302,
+        is_frozen=True,
+        is_current=False,
+    ),
+]
+
+FAKE_CXG_COEFFICIENTS = [
+    CxgCoefficientRecord(
+        model_key="event_v3",
+        track="cxg_event",
+        feature="const",
+        coefficient=-2.4634,
+        std_error=None,
+        p_value=None,
+    ),
+    CxgCoefficientRecord(
+        model_key="event_v3",
+        track="cxg_event",
+        feature="shot_x_sb",
+        coefficient=0.7701,
+        std_error=None,
+        p_value=None,
+    ),
+    CxgCoefficientRecord(
+        model_key="plus_v3",
+        track="cxg_plus",
+        feature="const",
+        coefficient=-2.1,
+        std_error=None,
+        p_value=None,
+    ),
+    CxgCoefficientRecord(
+        model_key="plus_v3",
+        track="cxg_plus",
+        feature="nearest_defender_zone_displacement",
+        coefficient=0.15,
+        std_error=0.05,
+        p_value=0.01,
+    ),
+]
+
 
 @pytest.fixture
 def client() -> TestClient:
@@ -764,6 +895,8 @@ def client() -> TestClient:
         pca_components=FAKE_PCA_COMPONENTS,
         pca_loadings=FAKE_PCA_LOADINGS,
         charts=FAKE_CHARTS,
+        cxg_model_results=FAKE_CXG_MODEL_RESULTS,
+        cxg_coefficients=FAKE_CXG_COEFFICIENTS,
     )
     test_client = TestClient(app)
     yield test_client
