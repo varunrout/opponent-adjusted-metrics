@@ -16,10 +16,12 @@ export function PitchMap({
   shots = [],
   homeTeamId = null,
   cxgByEventId,
+  cxgPlusByEventId,
 }: {
   shots?: ShotResponse[];
   homeTeamId?: number | null;
   cxgByEventId?: Record<string, number>;
+  cxgPlusByEventId?: Record<string, number>;
 }) {
   return (
     <svg viewBox="0 0 120 80" className="w-full h-auto block rounded-md">
@@ -39,7 +41,12 @@ export function PitchMap({
           const color = shot.team_id === homeTeamId ? HOME_COLOR : AWAY_COLOR;
           const radius = radiusForXg(shot.statsbomb_xg);
           const cxg = cxgByEventId?.[shot.event_id];
+          const cxgPlus = cxgPlusByEventId?.[shot.event_id];
           const hasCxg = typeof cxg === "number";
+          const hasCxgPlus = typeof cxgPlus === "number";
+          const cxgParts: string[] = [];
+          if (hasCxg) cxgParts.push(`CxG ${cxg!.toFixed(2)} (8 features)`);
+          if (hasCxgPlus) cxgParts.push(`CxG+ ${cxgPlus!.toFixed(2)} (24 features)`);
           return (
             <circle
               key={shot.event_id}
@@ -50,13 +57,13 @@ export function PitchMap({
               fill={color}
               fillOpacity={shot.is_goal ? 0.9 : 0.2}
               stroke={shot.is_goal ? "#0b0e12" : color}
-              strokeWidth={hasCxg ? "0.9" : "0.5"}
+              strokeWidth={cxgParts.length > 0 ? "0.9" : "0.5"}
             >
-              {hasCxg ? (
+              {cxgParts.length > 0 ? (
                 <title>
-                  {`xG ${(shot.statsbomb_xg ?? 0).toFixed(2)} · CxG ${cxg!.toFixed(
-                    2
-                  )} — Experimental · limited data & features (v3 test-set only, 8 features, not scored live)`}
+                  {`xG ${(shot.statsbomb_xg ?? 0).toFixed(2)} · ${cxgParts.join(
+                    " · "
+                  )} — Experimental · limited data & features (v3 test-set only, not scored live)`}
                 </title>
               ) : null}
             </circle>

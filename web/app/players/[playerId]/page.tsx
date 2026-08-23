@@ -19,6 +19,7 @@ export default function PlayerDetailPage() {
 
   const [shots, setShots] = useState<ShotResponse[]>([]);
   const [cxgByEventId, setCxgByEventId] = useState<Record<string, number>>({});
+  const [cxgPlusByEventId, setCxgPlusByEventId] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -27,21 +28,29 @@ export default function PlayerDetailPage() {
     setLoading(true);
     setError(false);
     setCxgByEventId({});
+    setCxgPlusByEventId({});
 
     getPlayerShots(playerId, { competition_id: competitionId, season_id: seasonId })
       .then((data) => {
         if (cancelled) return;
         setShots(data);
 
-        getCxgCoverage(
-          data.map((s) => s.event_id),
-          "cxg_event"
-        )
+        const eventIds = data.map((s) => s.event_id);
+
+        getCxgCoverage(eventIds, "cxg_event")
           .then((coverage) => {
             if (!cancelled) setCxgByEventId(coverage.values);
           })
           .catch(() => {
             if (!cancelled) setCxgByEventId({});
+          });
+
+        getCxgCoverage(eventIds, "cxg_plus")
+          .then((coverage) => {
+            if (!cancelled) setCxgPlusByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxgPlusByEventId({});
           });
       })
       .catch(() => {
@@ -98,10 +107,20 @@ export default function PlayerDetailPage() {
           <p className="text-[12.5px] text-muted m-0">No shots recorded for this player in the current filters.</p>
         ) : (
           <>
-            <PitchMap shots={shots} homeTeamId={teamId} cxgByEventId={cxgByEventId} />
+            <PitchMap
+              shots={shots}
+              homeTeamId={teamId}
+              cxgByEventId={cxgByEventId}
+              cxgPlusByEventId={cxgPlusByEventId}
+            />
             {(() => {
-              const caption = describeCxgCoverage(shots.length, Object.keys(cxgByEventId).length);
-              return caption ? <p className="text-[11.5px] text-muted mt-2 mb-0">{caption}</p> : null;
+              const captions = [
+                describeCxgCoverage(shots.length, Object.keys(cxgByEventId).length, "CxG"),
+                describeCxgCoverage(shots.length, Object.keys(cxgPlusByEventId).length, "CxG+"),
+              ].filter(Boolean);
+              return captions.length > 0 ? (
+                <p className="text-[11.5px] text-muted mt-2 mb-0">{captions.join(" · ")}</p>
+              ) : null;
             })()}
           </>
         )}

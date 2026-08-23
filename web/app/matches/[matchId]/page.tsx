@@ -18,6 +18,7 @@ export default function MatchDetailPage() {
   const [match, setMatch] = useState<MatchDetailResponse | null>(null);
   const [shots, setShots] = useState<ShotResponse[]>([]);
   const [cxgByEventId, setCxgByEventId] = useState<Record<string, number>>({});
+  const [cxgPlusByEventId, setCxgPlusByEventId] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState(false);
@@ -28,6 +29,7 @@ export default function MatchDetailPage() {
     setMissing(false);
     setError(false);
     setCxgByEventId({});
+    setCxgPlusByEventId({});
 
     Promise.all([getMatch(matchId), getMatchShots(matchId)])
       .then(([matchData, shotsData]) => {
@@ -35,15 +37,22 @@ export default function MatchDetailPage() {
         setMatch(matchData);
         setShots(shotsData);
 
-        getCxgCoverage(
-          shotsData.map((s) => s.event_id),
-          "cxg_event"
-        )
+        const eventIds = shotsData.map((s) => s.event_id);
+
+        getCxgCoverage(eventIds, "cxg_event")
           .then((coverage) => {
             if (!cancelled) setCxgByEventId(coverage.values);
           })
           .catch(() => {
             if (!cancelled) setCxgByEventId({});
+          });
+
+        getCxgCoverage(eventIds, "cxg_plus")
+          .then((coverage) => {
+            if (!cancelled) setCxgPlusByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxgPlusByEventId({});
           });
       })
       .catch((err) => {
@@ -121,10 +130,20 @@ export default function MatchDetailPage() {
 
       <div className="grid gap-4 items-start mb-4" style={{ gridTemplateColumns: "2fr 1fr" }}>
         <Card title="Shot map">
-          <PitchMap shots={shots} homeTeamId={homeTeamId} cxgByEventId={cxgByEventId} />
+          <PitchMap
+            shots={shots}
+            homeTeamId={homeTeamId}
+            cxgByEventId={cxgByEventId}
+            cxgPlusByEventId={cxgPlusByEventId}
+          />
           {(() => {
-            const caption = describeCxgCoverage(shots.length, Object.keys(cxgByEventId).length);
-            return caption ? <p className="text-[11.5px] text-muted mt-2 mb-0">{caption}</p> : null;
+            const captions = [
+              describeCxgCoverage(shots.length, Object.keys(cxgByEventId).length, "CxG"),
+              describeCxgCoverage(shots.length, Object.keys(cxgPlusByEventId).length, "CxG+"),
+            ].filter(Boolean);
+            return captions.length > 0 ? (
+              <p className="text-[11.5px] text-muted mt-2 mb-0">{captions.join(" · ")}</p>
+            ) : null;
           })()}
         </Card>
 

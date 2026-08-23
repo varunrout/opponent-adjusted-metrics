@@ -6,9 +6,13 @@ import type { CxgModelResultResponse, FeatureInventoryResponse } from "@/lib/typ
  * saying (no shots, or zero of them covered) rather than a confusing
  * "0 of 0"/"0 of 12" line.
  */
-export function describeCxgCoverage(totalShots: number, coveredCount: number): string | null {
+export function describeCxgCoverage(
+  totalShots: number,
+  coveredCount: number,
+  label: string = "CxG"
+): string | null {
   if (totalShots === 0 || coveredCount === 0) return null;
-  return `${coveredCount} of ${totalShots} shot${totalShots === 1 ? "" : "s"} have CxG coverage (experimental)`;
+  return `${coveredCount} of ${totalShots} shot${totalShots === 1 ? "" : "s"} have ${label} coverage (experimental)`;
 }
 
 /**
