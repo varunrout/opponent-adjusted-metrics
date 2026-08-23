@@ -33,6 +33,10 @@ export function ModelCard({ model }: { model: ModelInfo }) {
       ) : (
         !hasContent && <Skeleton style={{ height: 12, width: "65%", marginTop: 12 }} />
       )}
+
+      {model.comparisonNote && (
+        <p className="text-[11.5px] text-muted mt-1.5 mb-0">{model.comparisonNote}</p>
+      )}
     </div>
   );
 }

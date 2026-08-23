@@ -40,10 +40,13 @@ describe("public pages don't leak admin internals", () => {
   it("Models page renders only the public registry layer", () => {
     const { container } = render(<ModelsPage />);
     assertNoForbiddenContent(container);
-    // Sanity check the public layer actually renders as intended.
+    // Sanity check the public layer actually renders as intended. CxG/CxG+
+    // are "Evaluated" (real v3 test-set results, honestly compared to the
+    // StatsBomb baseline), not "Promoted" — no serving layer exists yet.
     expect(screen.getByText("CxG")).toBeInTheDocument();
-    expect(screen.getByText("Promoted")).toBeInTheDocument();
-    expect(screen.getByText("Brier score")).toBeInTheDocument();
+    expect(screen.getAllByText("Evaluated").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Test log_loss").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Trails the StatsBomb xG baseline/).length).toBeGreaterThan(0);
   });
 
   it("Stories page renders only public teasers, including the new dev-log category", () => {
