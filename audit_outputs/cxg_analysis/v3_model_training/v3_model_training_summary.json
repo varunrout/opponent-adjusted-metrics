@@ -1,0 +1,1164 @@
+{
+  "run_id": "cxg-v3-model-20260823T013807Z",
+  "cxg_event": {
+    "track": "cxg_event",
+    "selection_summary": {
+      "final_kind": "ridge",
+      "final_C": 100.0,
+      "log1p_cols": [
+        "defensive_action_rate_30m"
+      ],
+      "ridge_val_log_loss": 0.30538754001592805,
+      "plain_val_log_loss": 0.3053967423030713,
+      "plain_fit_error": null
+    },
+    "divergence_overall": {
+      "n": 2427,
+      "mean_divergence": 0.0012077338317094464,
+      "pearson_corr": 0.5424584861395965
+    },
+    "grid_results": [
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.31058454710225064,
+        "brier_score": 0.09034448162014574,
+        "roc_auc": 0.7267306596817386
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.30953498323409423,
+        "brier_score": 0.09014051973037417,
+        "roc_auc": 0.7273695250568324
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.30944684948108164,
+        "brier_score": 0.09012246967989199,
+        "roc_auc": 0.7273730743089163
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.30943832565142526,
+        "brier_score": 0.09012074361941386,
+        "roc_auc": 0.7273783981870421
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3094374763804168,
+        "brier_score": 0.0901205719374131,
+        "roc_auc": 0.7273837220651679
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": null,
+        "kind": "plain",
+        "n": 2420,
+        "log_loss": 0.3094432775115921,
+        "brier_score": 0.09012460436663905,
+        "roc_auc": 0.7273890459432936
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3105830813484075,
+        "brier_score": 0.09034338084336986,
+        "roc_auc": 0.7267448566900739
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.30953560209077813,
+        "brier_score": 0.09013985128675028,
+        "roc_auc": 0.7273482295443293
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3094477264837933,
+        "brier_score": 0.09012188317030252,
+        "roc_auc": 0.7273908205693356
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.30943841925216714,
+        "brier_score": 0.09011944067618573,
+        "roc_auc": 0.7273890459432937
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3094375724591551,
+        "brier_score": 0.09011926802580386,
+        "roc_auc": 0.7273748489349583
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": null,
+        "kind": "plain",
+        "n": 2420,
+        "log_loss": 0.30944436063216935,
+        "brier_score": 0.09012420397928939,
+        "roc_auc": 0.7273677504307905
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.30639580645592673,
+        "brier_score": 0.08865005785995175,
+        "roc_auc": 0.7299924223468011
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3054631415437049,
+        "brier_score": 0.088419911947708,
+        "roc_auc": 0.7304130087187378
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3053952043541839,
+        "brier_score": 0.08840486304137674,
+        "roc_auc": 0.730503514646876
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.305388233951873,
+        "brier_score": 0.08840306057136275,
+        "roc_auc": 0.7304910922645825
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.30538754001592805,
+        "brier_score": 0.0884028810620852,
+        "roc_auc": 0.7304910922645825
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": null,
+        "kind": "plain",
+        "n": 2420,
+        "log_loss": 0.3053967423030713,
+        "brier_score": 0.08840680077546968,
+        "roc_auc": 0.7305177116552115
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3063990469589947,
+        "brier_score": 0.08865053920249659,
+        "roc_auc": 0.7299462820697108
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3054678546388422,
+        "brier_score": 0.08842073829331736,
+        "roc_auc": 0.7303952624583184
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3053999816875977,
+        "brier_score": 0.08840565599091563,
+        "roc_auc": 0.7304981907687502
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3053930268884148,
+        "brier_score": 0.08840385531160777,
+        "roc_auc": 0.7305106131510437
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 2420,
+        "log_loss": 0.3053923346163652,
+        "brier_score": 0.08840367602601179,
+        "roc_auc": 0.7305106131510437
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": null,
+        "kind": "plain",
+        "n": 2420,
+        "log_loss": 0.3054016739420677,
+        "brier_score": 0.0884076662791281,
+        "roc_auc": 0.730480444508331
+      }
+    ]
+  },
+  "cxg_plus": {
+    "track": "cxg_plus",
+    "selection_summary": {
+      "final_kind": "ridge",
+      "final_C": 0.1,
+      "log1p_cols": [
+        "nearest_defender_gap",
+        "defensive_action_rate_30m"
+      ],
+      "ridge_val_log_loss": 0.2949119343821383,
+      "plain_val_log_loss": 0.3058848220045699,
+      "plain_fit_error": null
+    },
+    "divergence_overall": {
+      "n": 590,
+      "mean_divergence": -0.0023280023307376283,
+      "pearson_corr": 0.8794490863811786
+    },
+    "grid_results": [
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.29600862636034264,
+        "brier_score": 0.08616288812072408,
+        "roc_auc": 0.7832253645729288
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.29524679595612174,
+        "brier_score": 0.08755050227850333,
+        "roc_auc": 0.7937558859621586
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3014040440328463,
+        "brier_score": 0.08964040312097633,
+        "roc_auc": 0.7888188122485089
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3059898891986125,
+        "brier_score": 0.09059066889269526,
+        "roc_auc": 0.7815416226705859
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3061352093680209,
+        "brier_score": 0.09067499324260013,
+        "roc_auc": 0.7823121486258954
+      },
+      {
+        "log_rate30": false,
+        "log_cm": false,
+        "C": null,
+        "kind": "plain",
+        "n": 590,
+        "log_loss": 0.36032488090714065,
+        "brier_score": 0.09124191064863423,
+        "roc_auc": 0.7858508604206501
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.2960096503733716,
+        "brier_score": 0.08616657324191,
+        "roc_auc": 0.7833680545646527
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.295261661333847,
+        "brier_score": 0.08755135207420166,
+        "roc_auc": 0.7940412659456065
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3014083385628814,
+        "brier_score": 0.08966449469656326,
+        "roc_auc": 0.7889900402385777
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3056741851459386,
+        "brier_score": 0.09054353494339165,
+        "roc_auc": 0.7826831426043778
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.30603887363695714,
+        "brier_score": 0.09062918485651206,
+        "roc_auc": 0.7820267686424475
+      },
+      {
+        "log_rate30": false,
+        "log_cm": true,
+        "C": null,
+        "kind": "plain",
+        "n": 590,
+        "log_loss": 0.30623462214092,
+        "brier_score": 0.09074418715493249,
+        "roc_auc": 0.7823121486258954
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.29562291692305953,
+        "brier_score": 0.08592939194205575,
+        "roc_auc": 0.7821123826374817
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.2949119343821383,
+        "brier_score": 0.08741600753559549,
+        "roc_auc": 0.7929853600068492
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.30099011235884576,
+        "brier_score": 0.08952153106658106,
+        "roc_auc": 0.7883622042749922
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3053138390760045,
+        "brier_score": 0.09036259682042118,
+        "roc_auc": 0.7807710967152763
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3059773917216553,
+        "brier_score": 0.09053305705679669,
+        "roc_auc": 0.7804571787334836
+      },
+      {
+        "log_rate30": true,
+        "log_cm": false,
+        "C": null,
+        "kind": "plain",
+        "n": 590,
+        "log_loss": 0.3058848220045699,
+        "brier_score": 0.09057155428629704,
+        "roc_auc": 0.78097086270369
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 0.01,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.29562221324443516,
+        "brier_score": 0.08593244052405061,
+        "roc_auc": 0.7821409206358265
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 0.1,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.2949240756410316,
+        "brier_score": 0.08742230687696052,
+        "roc_auc": 0.7930424360035386
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 1.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.30096836944138994,
+        "brier_score": 0.08948936824898604,
+        "roc_auc": 0.7881624382865785
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 10.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3053166643535928,
+        "brier_score": 0.09036145145334104,
+        "roc_auc": 0.7807710967152763
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": 100.0,
+        "kind": "ridge",
+        "n": 590,
+        "log_loss": 0.3060088966324847,
+        "brier_score": 0.09056951348787443,
+        "roc_auc": 0.7804857167318284
+      },
+      {
+        "log_rate30": true,
+        "log_cm": true,
+        "C": null,
+        "kind": "plain",
+        "n": 590,
+        "log_loss": 0.3058824263311857,
+        "brier_score": 0.09057267202880202,
+        "roc_auc": 0.7811420906937587
+      }
+    ]
+  },
+  "cxg_event_metrics": [
+    {
+      "track": "cxg_event",
+      "split": "validation",
+      "model": "v3",
+      "n": 2420,
+      "log_loss": 0.30538754001592805,
+      "brier_score": 0.0884028810620852,
+      "roc_auc": 0.7304910922645825,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "split": "validation",
+      "model": "statsbomb_xg",
+      "n": 2420,
+      "log_loss": 0.2522593587150808,
+      "brier_score": 0.07181905603424052,
+      "roc_auc": 0.839467328247255,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "split": "test",
+      "model": "v3",
+      "n": 2427,
+      "log_loss": 0.30026427679597745,
+      "brier_score": 0.08521154179761731,
+      "roc_auc": 0.7148497929270903,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "split": "test",
+      "model": "statsbomb_xg",
+      "n": 2427,
+      "log_loss": 0.2597070320536875,
+      "brier_score": 0.07177257685969368,
+      "roc_auc": 0.7972213834930647,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    }
+  ],
+  "cxg_plus_metrics": [
+    {
+      "track": "cxg_plus",
+      "split": "validation",
+      "model": "v3",
+      "n": 590,
+      "log_loss": 0.2949119343821383,
+      "brier_score": 0.08741600753559549,
+      "roc_auc": 0.7929853600068492,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "split": "validation",
+      "model": "statsbomb_xg",
+      "n": 590,
+      "log_loss": 0.29501438519470335,
+      "brier_score": 0.08679207753328812,
+      "roc_auc": 0.7952398618760881,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "split": "test",
+      "model": "v3",
+      "n": 590,
+      "log_loss": 0.25546909505359283,
+      "brier_score": 0.07129109384653191,
+      "roc_auc": 0.8312967032967032,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "split": "test",
+      "model": "statsbomb_xg",
+      "n": 590,
+      "log_loss": 0.2429527397197946,
+      "brier_score": 0.06653782235731101,
+      "roc_auc": 0.8475604395604396,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    }
+  ],
+  "cxg_event_coefficients": [
+    {
+      "track": "cxg_event",
+      "feature": "const",
+      "coefficient": -2.4634006335097784,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "shot_x_sb",
+      "coefficient": 0.7700870733022736,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "first_box_entry_to_shot_s",
+      "coefficient": -0.024840822947558544,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "last_box_entry_to_shot_s",
+      "coefficient": -0.07128895383263167,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "last_action_interval_s",
+      "coefficient": -0.19818066911464685,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "regain_height_speed_interaction",
+      "coefficient": 0.12599721259335434,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "defensive_action_rate_30m",
+      "coefficient": -0.27032965596483466,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "territorial_dominance_last_15m",
+      "coefficient": 0.07568660012848667,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "cross_match_defensive_rate",
+      "coefficient": 0.017133968767510294,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "cross_match_defensive_rate_was_missing",
+      "coefficient": 0.027087918055779786,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_event",
+      "feature": "defensive_action_rate_30m:territorial_dominance_last_15m",
+      "coefficient": 0.05270212446345119,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    }
+  ],
+  "cxg_plus_coefficients": [
+    {
+      "track": "cxg_plus",
+      "feature": "const",
+      "coefficient": -2.366082658060957,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "last_action_interval_s",
+      "coefficient": -0.0911720285529541,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defenders_between_ball_and_goal",
+      "coefficient": -0.14744236931315735,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_reset_index",
+      "coefficient": 0.06550191764497892,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_distance_delta",
+      "coefficient": 0.03825622560395256,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "pre_shot_receiver_space",
+      "coefficient": 0.02176186503639413,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "gk_distance_to_shooter",
+      "coefficient": -0.3856346335431571,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_line_depth",
+      "coefficient": 0.082030041245523,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_width",
+      "coefficient": 0.009976416968864392,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "estimated_goalface_occlusion",
+      "coefficient": 0.01834787103119042,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "goal_mouth_defender_count",
+      "coefficient": 0.04095713327186671,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "max_goal_exposure",
+      "coefficient": 0.408357997521308,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "min_defensive_compactness_sequence",
+      "coefficient": -0.17470443594110177,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "shot_corridor_occlusion",
+      "coefficient": 0.343669666255586,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "visible_goal_angle_proxy",
+      "coefficient": 0.5485666200568915,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_zone_displacement",
+      "coefficient": -0.02569371178014143,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_gap",
+      "coefficient": 0.13627213407070535,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_action_rate_30m",
+      "coefficient": -0.1423840844669543,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "territorial_dominance_last_15m",
+      "coefficient": 0.06262458139660906,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "cross_match_defensive_rate",
+      "coefficient": -0.023855958899751246,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "cross_match_defensive_rate_was_missing",
+      "coefficient": 0.19208200784474738,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_1",
+      "coefficient": -0.07771436715637496,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_2",
+      "coefficient": -0.043456089206510194,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_3",
+      "coefficient": 0.33070205590332763,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_null_cluster",
+      "coefficient": 0.36301326992074784,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_role_CB",
+      "coefficient": -0.12672623029504565,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_role_Fullback_WingBack",
+      "coefficient": -0.16687855005720145,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_role_GK",
+      "coefficient": -0.19594009995568423,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_role_Midfield",
+      "coefficient": -0.08141458929060418,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_role_nan",
+      "coefficient": 0.7198737043693318,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_role_CB",
+      "coefficient": -0.13743457725138944,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_role_Fullback_WingBack",
+      "coefficient": -0.14206961625198372,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_role_GK",
+      "coefficient": 0.12332021861136241,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_role_Midfield",
+      "coefficient": -0.031102735956236006,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_role_nan",
+      "coefficient": 0.43170063522060553,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_style_archetype_duel_dominant_contester",
+      "coefficient": -0.3087002473037897,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_style_archetype_high_volume_presser",
+      "coefficient": -0.1400838977391109,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_style_archetype_nan",
+      "coefficient": 0.17872940164699308,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_style_archetype_unresolved_5050_annotation_density",
+      "coefficient": -0.17652535848220002,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_style_archetype_duel_dominant_contester",
+      "coefficient": -0.12220457811996825,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_style_archetype_high_volume_presser",
+      "coefficient": -0.13938654720908944,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_style_archetype_nan",
+      "coefficient": 0.3084665391540779,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "second_nearest_defender_style_archetype_unresolved_5050_annotation_density",
+      "coefficient": 0.11829235612341132,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_1:visible_goal_angle_proxy",
+      "coefficient": -0.04493125258969911,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_2:visible_goal_angle_proxy",
+      "coefficient": -0.10809398748828444,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_3:visible_goal_angle_proxy",
+      "coefficient": 0.31424795142253875,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_null_cluster:visible_goal_angle_proxy",
+      "coefficient": -0.0961283162442435,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_1:gk_distance_to_shooter",
+      "coefficient": -0.21619655554860479,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_2:gk_distance_to_shooter",
+      "coefficient": -0.22040937332944174,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_3:gk_distance_to_shooter",
+      "coefficient": -0.0474838813025388,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_null_cluster:gk_distance_to_shooter",
+      "coefficient": -0.1155248023679166,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "pre_shot_receiver_space:visible_goal_angle_proxy",
+      "coefficient": 0.11660303319661343,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "nearest_defender_gap:visible_goal_angle_proxy",
+      "coefficient": 0.07127310932701324,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_1:nearest_defender_zone_displacement",
+      "coefficient": 0.215541010401858,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_2:nearest_defender_zone_displacement",
+      "coefficient": -0.09720409476940173,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_cluster_3:nearest_defender_zone_displacement",
+      "coefficient": -0.21105847848474704,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_profile_cluster_null_cluster:nearest_defender_zone_displacement",
+      "coefficient": -0.21889081956628673,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature": "defensive_line_depth:pre_shot_receiver_space",
+      "coefficient": 0.18912354677800922,
+      "std_error": null,
+      "p_value": null,
+      "materialized_at": "2026-08-23T01:38:07.663173+00:00"
+    }
+  ]
+}
