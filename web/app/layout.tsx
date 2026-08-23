@@ -4,7 +4,7 @@ import "./globals.css";
 import { RoleProvider } from "@/components/shell/RoleProvider";
 import { RoleGate } from "@/components/shell/RoleGate";
 import { TopBar } from "@/components/shell/TopBar";
-import { Sidebar } from "@/components/shell/Sidebar";
+import { AppShell } from "@/components/shell/AppShell";
 import { MatchFilterProvider } from "@/components/shell/MatchFilterProvider";
 
 const montserrat = Montserrat({
@@ -34,10 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <MatchFilterProvider>
             <RoleGate />
             <TopBar />
-            <div className="flex" style={{ minHeight: "calc(100vh - 56px)" }}>
-              <Sidebar />
-              <main className="flex-1 px-7 py-6 overflow-hidden">{children}</main>
-            </div>
+            <AppShell>{children}</AppShell>
           </MatchFilterProvider>
         </RoleProvider>
       </body>
