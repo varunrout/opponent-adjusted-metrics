@@ -53,5 +53,15 @@ describe("public pages don't leak admin internals", () => {
     const { container } = render(<StoriesPage />);
     assertNoForbiddenContent(container);
     expect(screen.getByText("Dev log")).toBeInTheDocument();
+    // CxG v3's honest-comparison entry: headline plus its takeaway both
+    // render, and the qualitative disclosure text doesn't trip the
+    // forbidden-substring check above — it's intentionally public-facing
+    // honest content, not an admin internal.
+    expect(screen.getByText("CxG v3 — an honest comparison against StatsBomb xG")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "CxG v3 improved over every prior version but still trails the StatsBomb baseline — and that's a legitimate, disclosed result, not a hidden one."
+      )
+    ).toBeInTheDocument();
   });
 });
