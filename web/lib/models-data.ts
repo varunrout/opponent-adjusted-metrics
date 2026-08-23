@@ -49,7 +49,7 @@ export const MODELS: ModelInfo[] = [
       { label: "Test AUC", value: "0.7148" },
     ],
     featureFamilyCount: "8 features",
-    comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2597) — see Stories for the full, honest comparison.",
+    comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2597).",
   },
   {
     name: "CxG+",
@@ -62,7 +62,7 @@ export const MODELS: ModelInfo[] = [
       { label: "Test AUC", value: "0.8313" },
     ],
     featureFamilyCount: "24 features",
-    comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2430) — see Stories for the full, honest comparison.",
+    comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2430).",
   },
   {
     name: "CxA",

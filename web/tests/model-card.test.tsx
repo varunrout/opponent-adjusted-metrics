@@ -10,21 +10,26 @@ const EVALUATED_MODEL: ModelInfo = {
   tier: "Core",
   validationMetrics: [{ label: "Test log_loss", value: "0.3003" }],
   featureFamilyCount: "8 features",
-  comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2597) — see Stories for the full, honest comparison.",
+  comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2597).",
 };
 
 describe("ModelCard", () => {
   it("renders the comparisonNote when present", () => {
     render(<ModelCard model={EVALUATED_MODEL} />);
-    expect(
-      screen.getByText("Trails the StatsBomb xG baseline (log_loss 0.2597) — see Stories for the full, honest comparison.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Trails the StatsBomb xG baseline (log_loss 0.2597).")).toBeInTheDocument();
   });
 
   it("does not render a comparisonNote paragraph when absent", () => {
     const withoutNote: ModelInfo = { ...EVALUATED_MODEL, comparisonNote: undefined };
     render(<ModelCard model={withoutNote} />);
     expect(screen.queryByText(/Trails the StatsBomb/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /See Stories/ })).not.toBeInTheDocument();
+  });
+
+  it("links to the Stories tab (not a specific story) next to the comparisonNote", () => {
+    render(<ModelCard model={EVALUATED_MODEL} />);
+    const link = screen.getByRole("link", { name: /See Stories for the full comparison/ });
+    expect(link).toHaveAttribute("href", "/stories");
   });
 
   it("renders the evaluated status label distinctly from promoted/training/planned", () => {
