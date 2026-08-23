@@ -544,7 +544,7 @@ function ChartGalleryPanel() {
           {charts.charts.length === 0 ? (
             <p className="text-[12.5px] text-muted m-0">No rendered charts found for this run.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {charts.charts.map((chart) => (
                 <div key={chart.chart_name} className="border border-border rounded p-3 bg-card-hi">
                   <div className="text-[12.5px] text-text mb-2">{chart.chart_name}</div>
