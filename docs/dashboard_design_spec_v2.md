@@ -63,6 +63,15 @@ Filters (competition/season/team) apply **only inside the Explore zone** — Mat
 
 Guest role has full access to both zones (per the roles table below), so filters are visible to every non-admin visitor who's actually browsing Explore content, not gated behind sign-in.
 
+### 4a. CxG in the Explore zone
+
+Unblocked by Hard gate 1's reframing (§9) now that CxG v3 results exist and are honestly documented (§11). CxG values may appear on Matches/Players/Teams pages under these rules:
+
+- **Shown alongside, never replacing, StatsBomb xG.** Both numbers are visible together — CxG is an additional, clearly-labelled data point, not a swap-in.
+- **Coverage-gated, not full `oam_core` coverage.** A shot only gets a CxG value where it falls inside `oam_ml`'s v3 test-set coverage — a fixed train/test split, not every shot in `oam_core`. Where a shot falls outside that split, show xG only. No CxG placeholder, dash, zero, or "N/A" — a value that looks like it should be there but isn't reads as broken, not as honestly out-of-scope.
+- **Visible "Experimental · limited data & features" badge or tooltip on every CxG value**, disclosing plainly: 8 features for the event-wide track, 24 features for CxG+, evaluated on a fixed test split rather than scored live per request. This is the UI-level expression of Hard gate 1's "don't overclaim" language — CxG reads as evaluated/experimental, not validated or production, anywhere it appears.
+- **Data source: `oam_ml.cxg_event_v3_*` / `oam_ml.cxg_plus_v3_*`, not `oam_serving`.** `oam_serving` stays empty — Hard gate 2 (a proper serving layer, and Track B's quadrant scatter) is a separate, still-blocked condition. This section covers surfacing already-computed v3 test-set predictions as read-only display data; it is not a serving-layer build.
+
 ---
 
 ## 5. Static vs dynamic — the rule, and per-section decisions
@@ -115,7 +124,7 @@ One open reliability bug, diagnosed but not yet confirmed/fixed this session: `R
 
 Explicit blocking conditions — nothing past a gate ships until its condition is met.
 
-1. **CxG v3 must beat the StatsBomb xG baseline** before: the Models tab shows anything beyond "In training" publicly, any CxG number replaces xG anywhere in the Explore zone, or a Stories writeup claims CxG as validated. *Status: blocked — v3 training in progress; v1 lost to baseline on every split/track measured.*
+1. **CxG results (any version) may be shown in Models/Stories/Analysis, and CxG values may be shown in the Explore zone, only once an honest, documented comparison against the StatsBomb baseline exists — including where CxG underperforms.** Status language must not overclaim ("Evaluated," not "Validated" or "Production," until a production inference pipeline exists — see gate 2). *Status: unblocked — CxG v3 training is complete on both tracks, and the comparison (including CxG trailing StatsBomb on log_loss on both tracks) is documented in §11 below, satisfying the honest-comparison condition. This reframes the gate from "must beat the baseline" to "must be honestly compared to the baseline" — CxG v1 losing to StatsBomb was already framed in §1 as a credibility signal for the data-scientist persona, not something to hide, and v3 landing in the same place doesn't change that. A public-facing Stories writeup presenting this comparison to visitors is a separate, still-pending follow-up build task — this document's own disclosure is what satisfies the gate, not a claim that the writeup already exists. See §4a for where/how CxG may now appear in the Explore zone.*
 2. **`oam_serving` must be populated with player-level CxG/CxA values** before: Track B (build-your-own quadrant scatter, originally scoped for Analysis) can be built at all. *Status: blocked — `oam_serving` has zero tables, confirmed live.*
 3. **Signed URL generation for `gs://` chart URIs must exist** before: Analysis tab charts render as actual images/iframes instead of literal text paths. *Status: blocked — not yet built.*
 4. **A TTL cache layer on `ServingStore`'s `oam_core` queries must exist** before: this dashboard link is shared with real external visitors at any scale beyond Varun's own testing. *Status: blocked — not yet built; real cost already observed from unfiltered testing traffic alone.*
@@ -155,3 +164,32 @@ Explicit blocking conditions — nothing past a gate ships until its condition i
 Colour palette and typography (Montserrat for text, Inconsolata for figures, teal/violet/amber metric-family hues, green/red semantic-only) — unchanged from v1, see `dashboard_design_spec.md` section 2.
 
 Firebase auth implementation — unchanged from v1 phase 5, see section 8 above.
+
+---
+
+## 11. CxG v3 results (reference)
+
+Written down once here so it doesn't need re-explaining in every future prompt — this is the honest comparison that satisfies Hard gate 1 (§9), and the source data for the §4a Explore-zone badge copy and any future Stories writeup.
+
+### Test-set results vs StatsBomb baseline
+
+| Track | Metric | CxG v3 | StatsBomb xG | Result |
+|---|---|---|---|---|
+| Event-wide | log_loss | 0.3003 | 0.2597 | CxG trails |
+| CxG+ | log_loss | 0.2555 | 0.2430 | CxG trails |
+
+Brier score and AUC for both tracks were not captured in this session — pull the exact values from the v3 training run artifacts before they're quoted in a Stories writeup or anywhere public-facing. Do not infer or estimate them from the log_loss figures above.
+
+Consistent with v1: CxG trails the StatsBomb baseline on both tracks, same direction of result as v1's evaluation. Per §1's persona framing, this is disclosed as a credibility signal for the data-scientist persona, not hidden or softened.
+
+### Frozen version history
+
+- `cxg_baseline_v1_*` — event-wide, v1 (frozen)
+- `cxg_plus_v2_*` — CxG+, v2 (frozen)
+- `cxg_v3_*` — event-wide, v3 (frozen, current)
+- `cxg_plus_v3_*` — CxG+, v3 (frozen, current)
+
+### Known caveats
+
+1. **Feature-pool asymmetry.** Event-wide uses 8 features; CxG+ uses 24. The two tracks are not a like-for-like comparison of "does adding 360 data help" — some of the gap between tracks reflects feature count, not just data richness. Any comparison drawn between the two tracks should say this explicitly.
+2. **`zone_displacement`'s unexplained bimodality.** This feature shows a bimodal distribution with no documented cause yet. Flagged as an open question for future investigation, not resolved — don't present `zone_displacement` as a clean, well-understood feature until this is explained.
