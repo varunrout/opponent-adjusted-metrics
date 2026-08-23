@@ -544,24 +544,50 @@ function ChartGalleryPanel() {
           {charts.charts.length === 0 ? (
             <p className="text-[12.5px] text-muted m-0">No rendered charts found for this run.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {charts.charts.map((chart) => (
                 <div key={chart.chart_name} className="border border-border rounded p-3 bg-card-hi">
                   <div className="text-[12.5px] text-text mb-2">{chart.chart_name}</div>
-                  <div className="text-[11px] text-muted mb-1">
-                    HTML:{" "}
-                    <span className="font-data break-all text-text2">{chart.html_uri ?? "—"}</span>
-                  </div>
-                  <div className="text-[11px] text-muted mb-1">
-                    PNG:{" "}
-                    <span className="font-data break-all text-text2">{chart.png_uri ?? "—"}</span>
-                  </div>
+
+                  {chart.signed_html_url ? (
+                    <iframe
+                      src={chart.signed_html_url}
+                      title={chart.chart_name}
+                      style={{ width: "100%", height: 500, border: "none", background: "#fff" }}
+                      className="rounded mb-2"
+                    />
+                  ) : (
+                    <div className="text-[11px] text-muted mb-1">
+                      HTML:{" "}
+                      <span className="font-data break-all text-text2">{chart.html_uri ?? "—"}</span>
+                    </div>
+                  )}
+
+                  {chart.signed_png_url ? (
+                    <a
+                      href={chart.signed_png_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-teal hover:underline"
+                    >
+                      Open PNG
+                    </a>
+                  ) : (
+                    <div className="text-[11px] text-muted mb-1">
+                      PNG:{" "}
+                      <span className="font-data break-all text-text2">{chart.png_uri ?? "—"}</span>
+                    </div>
+                  )}
+
                   {chart.rendered_at && (
                     <div className="text-[10.5px] text-muted mt-2">Rendered at {chart.rendered_at}</div>
                   )}
-                  {/* NOTE: html_uri/png_uri are gs:// URIs, not publicly fetchable HTTP
-                      URLs — turning these into signed/public HTTPS links is a follow-up
-                      once signing infrastructure exists; for now they're shown as text. */}
+                  {/* Signed URLs (15 min expiry) come from the API when GCS URL
+                      signing is available in the current environment — see
+                      src/opponent_adjusted/api/gcs_signing.py for the exact IAM
+                      constraint. When signing isn't available, signed_html_url/
+                      signed_png_url are null and this falls back to the raw
+                      gs:// text, same as before. */}
                 </div>
               ))}
             </div>

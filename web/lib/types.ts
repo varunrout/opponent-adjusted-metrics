@@ -198,6 +198,11 @@ export type RenderedChartResponse = {
   html_uri: string | null;
   png_uri: string | null;
   rendered_at: string | null;
+  // Short-lived (15 min) signed HTTPS URLs, populated by the API only when
+  // signing succeeds. Null when signing is unavailable/fails for this
+  // chart — fall back to showing the raw html_uri/png_uri text in that case.
+  signed_html_url: string | null;
+  signed_png_url: string | null;
 };
 
 export type ChartsResponse = {

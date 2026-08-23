@@ -132,6 +132,13 @@ class RenderedChartResponse(BaseModel):
     html_uri: str | None
     png_uri: str | None
     rendered_at: str | None
+    # Short-lived (15 min) signed HTTPS URLs for html_uri/png_uri, populated
+    # by the router only when signing succeeds — kept alongside the raw
+    # gs:// URIs above (not replacing them) for reference/debugging. None
+    # when signing is unavailable or fails for this specific chart; the
+    # frontend falls back to showing the raw URI text in that case.
+    signed_html_url: str | None = None
+    signed_png_url: str | None = None
 
 
 class BivariateResponse(BaseModel):

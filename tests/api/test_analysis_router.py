@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+import opponent_adjusted.api.routers.analysis as analysis_router
 from opponent_adjusted.api.dependencies import get_role
 from opponent_adjusted.api.main import app
 
@@ -15,6 +16,20 @@ ROUTES = [
     "/v1/analysis/pca",
     "/v1/analysis/charts",
 ]
+
+
+def _fake_sign(uri: str | None) -> str | None:
+    return f"https://signed.example/{uri}" if uri else None
+
+
+@pytest.fixture(autouse=True)
+def _no_real_gcs_signing(monkeypatch):
+    """No real GCS/IAM calls in this test suite — deterministic fake by default.
+
+    Individual tests (e.g. the signing-raises test) can further override
+    this via their own monkeypatch.setattr call.
+    """
+    monkeypatch.setattr(analysis_router, "sign_gcs_uri", _fake_sign)
 
 
 @pytest.fixture(autouse=True)
@@ -125,6 +140,11 @@ def test_charts_with_no_run_id_returns_latest(client):
     assert body["run_id"] == "cxg-analysis-20260822T014705Z"
     assert len(body["charts"]) == 2
     assert all(c["html_uri"].startswith("gs://bucket/new/") for c in body["charts"])
+    # Router wires signed_html_url/signed_png_url from sign_gcs_uri's return
+    # value end to end — raw URIs stay present alongside the signed ones.
+    for chart in body["charts"]:
+        assert chart["signed_html_url"] == f"https://signed.example/{chart['html_uri']}"
+        assert chart["signed_png_url"] == f"https://signed.example/{chart['png_uri']}"
 
 
 def test_charts_with_explicit_older_run_id(client):
@@ -135,3 +155,24 @@ def test_charts_with_explicit_older_run_id(client):
     assert body["run_id"] == "cxg-analysis-20260810T010000Z"
     assert len(body["charts"]) == 2
     assert all(c["html_uri"].startswith("gs://bucket/old/") for c in body["charts"])
+
+
+def test_charts_returns_200_and_null_signed_urls_when_signing_raises(client, monkeypatch):
+    """Hard gate 3: one chart's signing failure must not 500 the whole endpoint."""
+
+    def _boom(_uri):
+        raise RuntimeError("signing exploded")
+
+    monkeypatch.setattr(analysis_router, "sign_gcs_uri", _boom)
+
+    _as_role("admin")
+    response = client.get("/v1/analysis/charts")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["charts"]) == 2
+    for chart in body["charts"]:
+        assert chart["signed_html_url"] is None
+        assert chart["signed_png_url"] is None
+        # The raw URIs are still present — signing failure doesn't hide them.
+        assert chart["html_uri"]

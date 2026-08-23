@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from opponent_adjusted.api.analysis_interfaces import AnalysisStore
@@ -20,6 +22,9 @@ from opponent_adjusted.api.analysis_models import (
     UnivariateTargetResponse,
 )
 from opponent_adjusted.api.dependencies import Role, get_analysis_store, require_admin
+from opponent_adjusted.api.gcs_signing import sign_gcs_uri
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/analysis", tags=["analysis"])
 
@@ -99,10 +104,27 @@ def list_charts(
     resolved_run_id = run_id or store.get_latest_chart_run_id()
     if resolved_run_id is None:
         raise HTTPException(status_code=404, detail="No rendered chart runs found")
-    return ChartsResponse(
-        run_id=resolved_run_id,
-        charts=[
-            RenderedChartResponse.model_validate(record)
-            for record in store.list_charts(resolved_run_id)
-        ],
-    )
+
+    charts = []
+    for record in store.list_charts(resolved_run_id):
+        chart = RenderedChartResponse.model_validate(record)
+        # sign_gcs_uri() is designed to never raise (it catches internally
+        # and returns None on any failure), but this route wraps each call
+        # in its own try/except anyway — belt and suspenders — so that if
+        # signing ever does raise for one chart, that chart just falls back
+        # to unsigned fields instead of taking the whole endpoint down.
+        try:
+            chart.signed_html_url = sign_gcs_uri(chart.html_uri)
+        except Exception:
+            logger.warning(
+                "Unexpected error signing html_uri for chart %s", chart.chart_name, exc_info=True
+            )
+        try:
+            chart.signed_png_url = sign_gcs_uri(chart.png_uri)
+        except Exception:
+            logger.warning(
+                "Unexpected error signing png_uri for chart %s", chart.chart_name, exc_info=True
+            )
+        charts.append(chart)
+
+    return ChartsResponse(run_id=resolved_run_id, charts=charts)
