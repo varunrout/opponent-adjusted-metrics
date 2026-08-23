@@ -2,16 +2,19 @@
 
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/shell/Sidebar";
+import { NAV_ITEMS } from "@/lib/nav-config";
 
 // Filters (competition/season/team) only apply in the Explore zone —
 // Matches, Players, Teams — per docs/dashboard_design_spec_v2.md section 4.
 // Understand-zone pages (Overview, Stories, Models, About) are curated,
 // authored content with nothing to filter, and Analysis is its own
 // admin-only workbench with its own family/run_id controls, so the
-// sidebar shouldn't render on any of those. This is a targeted fix for
-// that rendering leak only — the broader Understand/Explore nav-config.ts
-// restructure is a separate follow-up, not part of this change.
-const EXPLORE_PREFIXES = ["/matches", "/players", "/teams"];
+// sidebar shouldn't render on any of those. Derived from NAV_ITEMS'
+// `zone` field rather than a second hardcoded list, so nav-config.ts
+// stays the single source of truth for route classification.
+const EXPLORE_PREFIXES = NAV_ITEMS.filter((item) => item.zone === "explore").map(
+  (item) => item.href
+);
 
 function isExploreRoute(pathname: string): boolean {
   return EXPLORE_PREFIXES.some(
