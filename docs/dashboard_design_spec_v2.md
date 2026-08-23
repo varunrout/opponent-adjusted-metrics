@@ -176,9 +176,13 @@ Written down once here so it doesn't need re-explaining in every future prompt �
 | Track | Metric | CxG v3 | StatsBomb xG | Result |
 |---|---|---|---|---|
 | Event-wide | log_loss | 0.3003 | 0.2597 | CxG trails |
+| Event-wide | Brier | 0.0852 | not captured | not comparable yet |
+| Event-wide | AUC | 0.7148 | not captured | not comparable yet |
 | CxG+ | log_loss | 0.2555 | 0.2430 | CxG trails |
+| CxG+ | Brier | 0.0713 | not captured | not comparable yet |
+| CxG+ | AUC | 0.8313 | not captured | not comparable yet |
 
-Brier score and AUC for both tracks were not captured in this session — pull the exact values from the v3 training run artifacts before they're quoted in a Stories writeup or anywhere public-facing. Do not infer or estimate them from the log_loss figures above.
+CxG v3's own Brier and AUC are captured above; the StatsBomb-baseline Brier/AUC were not, for either track — pull those specific values from the v3 training run artifacts before a Brier/AUC comparison (not just log_loss) is quoted in a Stories writeup or anywhere public-facing. Do not infer or estimate the missing StatsBomb values from CxG's own figures or from the log_loss comparison above.
 
 Consistent with v1: CxG trails the StatsBomb baseline on both tracks, same direction of result as v1's evaluation. Per §1's persona framing, this is disclosed as a credibility signal for the data-scientist persona, not hidden or softened.
 
