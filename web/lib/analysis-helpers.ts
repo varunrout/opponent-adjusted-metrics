@@ -1,6 +1,17 @@
 import type { CxgModelResultResponse, FeatureInventoryResponse } from "@/lib/types";
 
 /**
+ * Builds the honest "N of M shots have CxG coverage" caption used on the
+ * Matches/Players shot-map cards. Returns null when there's nothing worth
+ * saying (no shots, or zero of them covered) rather than a confusing
+ * "0 of 0"/"0 of 12" line.
+ */
+export function describeCxgCoverage(totalShots: number, coveredCount: number): string | null {
+  if (totalShots === 0 || coveredCount === 0) return null;
+  return `${coveredCount} of ${totalShots} shot${totalShots === 1 ? "" : "s"} have CxG coverage (experimental)`;
+}
+
+/**
  * There's no dedicated "list feature families" endpoint — the family
  * selector on the Analysis page derives its options from an unfiltered
  * /v1/analysis/features response by taking the distinct feature_family

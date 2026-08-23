@@ -5,7 +5,16 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from opponent_adjusted.api.routers import analysis, competitions, matches, me, players, shots, teams
+from opponent_adjusted.api.routers import (
+    analysis,
+    competitions,
+    cxg_coverage,
+    matches,
+    me,
+    players,
+    shots,
+    teams,
+)
 
 app = FastAPI(title="OAM API")
 
@@ -19,6 +28,7 @@ app.add_middleware(
 
 app.include_router(analysis.router)
 app.include_router(competitions.router)
+app.include_router(cxg_coverage.router)
 app.include_router(matches.router)
 app.include_router(me.router)
 app.include_router(players.router)

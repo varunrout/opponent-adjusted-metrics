@@ -38,4 +38,24 @@ describe("PitchMap", () => {
 
     expect(screen.getAllByTestId("shot-marker")).toHaveLength(4);
   });
+
+  it("discloses CxG via a title only on covered shots", () => {
+    const { container } = render(
+      <PitchMap shots={shots} homeTeamId={10} cxgByEventId={{ "evt-1": 0.42 }} />
+    );
+
+    const markers = container.querySelectorAll('[data-testid="shot-marker"]');
+    expect(markers).toHaveLength(4);
+
+    const titles = Array.from(markers).map((marker) => marker.querySelector("title")?.textContent ?? null);
+
+    // evt-1 is the first shot in `shots` and is the only one present in
+    // cxgByEventId — it should carry the disclosure title.
+    expect(titles[0]).toContain("Experimental");
+    expect(titles[0]).toContain("CxG");
+
+    // The remaining shots (evt-2, evt-3, evt-4) have no coverage entry and
+    // must render with no title at all.
+    expect(titles.slice(1)).toEqual([null, null, null]);
+  });
 });

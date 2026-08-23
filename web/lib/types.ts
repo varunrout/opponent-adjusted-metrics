@@ -233,3 +233,10 @@ export type CxgCoefficientResponse = {
   std_error: number | null;
   p_value: number | null;
 };
+
+// --- /v1/cxg/coverage (guest-accessible) ---------------------------------
+
+export type CxgCoverageResponse = {
+  track: string;
+  values: Record<string, number>;
+};

@@ -15,9 +15,11 @@ function radiusForXg(xg: number | null): number {
 export function PitchMap({
   shots = [],
   homeTeamId = null,
+  cxgByEventId,
 }: {
   shots?: ShotResponse[];
   homeTeamId?: number | null;
+  cxgByEventId?: Record<string, number>;
 }) {
   return (
     <svg viewBox="0 0 120 80" className="w-full h-auto block rounded-md">
@@ -36,6 +38,8 @@ export function PitchMap({
         .map((shot) => {
           const color = shot.team_id === homeTeamId ? HOME_COLOR : AWAY_COLOR;
           const radius = radiusForXg(shot.statsbomb_xg);
+          const cxg = cxgByEventId?.[shot.event_id];
+          const hasCxg = typeof cxg === "number";
           return (
             <circle
               key={shot.event_id}
@@ -46,8 +50,16 @@ export function PitchMap({
               fill={color}
               fillOpacity={shot.is_goal ? 0.9 : 0.2}
               stroke={shot.is_goal ? "#0b0e12" : color}
-              strokeWidth="0.5"
-            />
+              strokeWidth={hasCxg ? "0.9" : "0.5"}
+            >
+              {hasCxg ? (
+                <title>
+                  {`xG ${(shot.statsbomb_xg ?? 0).toFixed(2)} · CxG ${cxg!.toFixed(
+                    2
+                  )} — Experimental · limited data & features (v3 test-set only, 8 features, not scored live)`}
+                </title>
+              ) : null}
+            </circle>
           );
         })}
     </svg>

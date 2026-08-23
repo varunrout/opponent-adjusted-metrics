@@ -3,6 +3,7 @@ import type {
   ChartsResponse,
   CompetitionResponse,
   CxgCoefficientResponse,
+  CxgCoverageResponse,
   CxgModelResultResponse,
   FeatureCorrelationResponse,
   FeatureInventoryResponse,
@@ -192,6 +193,13 @@ export function getCxgModelCoefficients(
     `/v1/analysis/cxg-models/${encodeURIComponent(modelKey)}/coefficients`,
     authHeaders(idToken)
   );
+}
+
+// --- /v1/cxg/coverage (guest-accessible Explore-zone endpoint; no auth) --
+
+export function getCxgCoverage(eventIds: string[], track: string): Promise<CxgCoverageResponse> {
+  const qs = `?track=${encodeURIComponent(track)}&event_ids=${encodeURIComponent(eventIds.join(","))}`;
+  return apiFetch<CxgCoverageResponse>(`/v1/cxg/coverage${qs}`);
 }
 
 export { ApiError };
