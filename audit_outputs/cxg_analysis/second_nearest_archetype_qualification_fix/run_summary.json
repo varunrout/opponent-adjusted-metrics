@@ -1,0 +1,123 @@
+{
+  "root_cause": {
+    "n_existing_rows": 20,
+    "p_fdr_sequence_is_monotonic_bh_consistent": true,
+    "min_p_fdr_existing": 0.3821502179743187,
+    "any_existing_row_below_0_10": false,
+    "other_4level_categorical_null_coef_rate": "23/23",
+    "conclusion": "no computational bug found -- null coef/se and null validated_on_val_split are expected given categorical multi-df interactions and no pair crossing p_fdr<0.10; duplicate p_fdr values are a standard BH monotonicity artifact (confirmed monotonic when sorted by p_raw). Rows are stale (pool grew 20->23 since Task #11), not buggy -- deleted and re-run for that reason."
+  },
+  "categorical_stability": [
+    {
+      "split": "test",
+      "level": "deep_block_clearer",
+      "n": 198,
+      "goal_rate": 0.11616161616161616
+    },
+    {
+      "split": "test",
+      "level": "duel_dominant_contester",
+      "n": 41,
+      "goal_rate": 0.0975609756097561
+    },
+    {
+      "split": "test",
+      "level": "high_volume_presser",
+      "n": 200,
+      "goal_rate": 0.03
+    },
+    {
+      "split": "test",
+      "level": "unresolved_5050_annotation_density",
+      "n": 72,
+      "goal_rate": 0.041666666666666664
+    },
+    {
+      "split": "train",
+      "level": "deep_block_clearer",
+      "n": 1029,
+      "goal_rate": 0.09718172983479106
+    },
+    {
+      "split": "train",
+      "level": "duel_dominant_contester",
+      "n": 141,
+      "goal_rate": 0.06382978723404255
+    },
+    {
+      "split": "train",
+      "level": "high_volume_presser",
+      "n": 874,
+      "goal_rate": 0.06178489702517163
+    },
+    {
+      "split": "train",
+      "level": "unresolved_5050_annotation_density",
+      "n": 358,
+      "goal_rate": 0.08379888268156424
+    },
+    {
+      "split": "validation",
+      "level": "deep_block_clearer",
+      "n": 215,
+      "goal_rate": 0.11627906976744186
+    },
+    {
+      "split": "validation",
+      "level": "duel_dominant_contester",
+      "n": 32,
+      "goal_rate": 0.15625
+    },
+    {
+      "split": "validation",
+      "level": "high_volume_presser",
+      "n": 217,
+      "goal_rate": 0.07834101382488479
+    },
+    {
+      "split": "validation",
+      "level": "unresolved_5050_annotation_density",
+      "n": 56,
+      "goal_rate": 0.08928571428571429
+    }
+  ],
+  "correlation_rows": [
+    {
+      "track": "cxg_plus",
+      "feature_a": "defensive_profile_cluster",
+      "feature_b": "second_nearest_defender_style_archetype",
+      "r_train": 0.10308081147884351,
+      "n_train": 2402,
+      "is_redundant": false,
+      "resolution": "kept_both_moderate",
+      "resolution_reason": "Cramer's V (categorical-categorical association, NOT Pearson r) = 0.1031 n=2402. Below the 0.85 redundancy threshold -- kept both.",
+      "materialized_at": "2026-08-23T01:05:37.752923+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature_a": "nearest_defender_role",
+      "feature_b": "second_nearest_defender_style_archetype",
+      "r_train": 0.08293769998662426,
+      "n_train": 2402,
+      "is_redundant": false,
+      "resolution": "kept_both_moderate",
+      "resolution_reason": "Cramer's V (categorical-categorical association, NOT Pearson r) = 0.0829 n=2402. Below the 0.85 redundancy threshold -- kept both.",
+      "materialized_at": "2026-08-23T01:05:37.752923+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "feature_a": "second_nearest_defender_role",
+      "feature_b": "second_nearest_defender_style_archetype",
+      "r_train": 0.47243840375091617,
+      "n_train": 2402,
+      "is_redundant": false,
+      "resolution": "kept_both_moderate",
+      "resolution_reason": "Cramer's V (categorical-categorical association, NOT Pearson r) = 0.4724 n=2402. Below the 0.85 redundancy threshold -- kept both.",
+      "materialized_at": "2026-08-23T01:05:37.752923+00:00"
+    }
+  ],
+  "redundant_against": [],
+  "added_to_pool": true,
+  "tier1_pairs_tested": 22,
+  "confirmed_pairs": []
+}
