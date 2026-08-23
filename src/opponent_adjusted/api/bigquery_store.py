@@ -20,6 +20,21 @@ from opponent_adjusted.api.interfaces import (
 PROJECT = "oam-varun-260819"
 DATASET = "oam_core"
 
+# oam_core's silver tables each carry multiple full lineage-versioned copies
+# of every row under one data_version — confirmed live: matches 1830 raw
+# rows / 610 distinct, competitions 15/5, shots+events+matches joined for
+# one match returned 147 raw rows for 49 distinct shots — all exactly 3x,
+# one copy per silver_schema_version (statsbomb_silver_v1, _v1_1, _v1_2).
+# None of the nine queries below filtered on this before, so every one of
+# them was returning/aggregating 3x-inflated results in production (shot
+# counts, goals, total_xg on Matches/Players/Teams all off by 3x) — this
+# wasn't a hypothetical, it was live on every guest-visible Explore-zone
+# page. Mirrors pipelines/silver/contracts.py's SILVER_SCHEMA_VERSION
+# constant (same value, not imported — the API layer stays decoupled from
+# the pipelines package deliberately, per this branch's own read-only
+# boundary against ingestion/features/modeling/pipelines).
+SILVER_SCHEMA_VERSION = "statsbomb_silver_v1_2"
+
 _client_instance: bigquery.Client | None = None
 
 # Per docs/dashboard_design_spec_v2.md §5 ("match/player/team aggregates
@@ -114,8 +129,16 @@ class BigQueryServingStore:
                 match_updated_360,
                 match_available_360
             FROM `{PROJECT}.{DATASET}.competitions`
+            WHERE silver_schema_version = @silver_schema_version
         """
-        rows = client.query(query).result()
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                )
+            ]
+        )
+        rows = client.query(query, job_config=job_config).result()
         return [
             CompetitionRecord(
                 competition_id=row["competition_id"],
@@ -141,8 +164,10 @@ class BigQueryServingStore:
         team_id: int | None = None,
     ) -> list[MatchRecord]:
         client = _client()
-        conditions: list[str] = []
-        parameters: list[bigquery.ScalarQueryParameter] = []
+        conditions: list[str] = ["silver_schema_version = @silver_schema_version"]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION)
+        ]
 
         if competition_id is not None:
             conditions.append("competition_id = @competition_id")
@@ -156,7 +181,7 @@ class BigQueryServingStore:
             conditions.append("(home_team_id = @team_id OR away_team_id = @team_id)")
             parameters.append(bigquery.ScalarQueryParameter("team_id", "INT64", team_id))
 
-        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        where_clause = f"WHERE {' AND '.join(conditions)}"
         query = f"""
             SELECT
                 match_id,
@@ -231,9 +256,15 @@ class BigQueryServingStore:
                 last_updated_360
             FROM `{PROJECT}.{DATASET}.matches`
             WHERE match_id = @match_id
+              AND silver_schema_version = @silver_schema_version
         """
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("match_id", "INT64", match_id)]
+            query_parameters=[
+                bigquery.ScalarQueryParameter("match_id", "INT64", match_id),
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                ),
+            ]
         )
         rows = list(client.query(query, job_config=job_config).result())
         if not rows:
@@ -284,9 +315,15 @@ class BigQueryServingStore:
              AND e.data_version = m.data_version
              AND e.silver_schema_version = m.silver_schema_version
             WHERE x.match_id = @match_id
+              AND x.silver_schema_version = @silver_schema_version
         """
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("match_id", "INT64", match_id)]
+            query_parameters=[
+                bigquery.ScalarQueryParameter("match_id", "INT64", match_id),
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                ),
+            ]
         )
         rows = client.query(query, job_config=job_config).result()
         return [
@@ -332,9 +369,15 @@ class BigQueryServingStore:
              AND e.data_version = m.data_version
              AND e.silver_schema_version = m.silver_schema_version
             WHERE s.match_id = @match_id
+              AND s.silver_schema_version = @silver_schema_version
         """
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("match_id", "INT64", match_id)]
+            query_parameters=[
+                bigquery.ScalarQueryParameter("match_id", "INT64", match_id),
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                ),
+            ]
         )
         rows = client.query(query, job_config=job_config).result()
         return [
@@ -366,8 +409,10 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[PlayerSeasonRecord]:
         client = _client()
-        conditions: list[str] = []
-        parameters: list[bigquery.ScalarQueryParameter] = []
+        conditions: list[str] = ["s.silver_schema_version = @silver_schema_version"]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION)
+        ]
 
         if competition_id is not None:
             conditions.append("s.competition_id = @competition_id")
@@ -378,7 +423,7 @@ class BigQueryServingStore:
             conditions.append("s.season_id = @season_id")
             parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
 
-        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        where_clause = f"WHERE {' AND '.join(conditions)}"
         query = f"""
             SELECT
                 s.player_id AS player_id,
@@ -421,9 +466,13 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[ShotRecord]:
         client = _client()
-        conditions: list[str] = ["s.player_id = @player_id"]
+        conditions: list[str] = [
+            "s.player_id = @player_id",
+            "s.silver_schema_version = @silver_schema_version",
+        ]
         parameters: list[bigquery.ScalarQueryParameter] = [
-            bigquery.ScalarQueryParameter("player_id", "INT64", player_id)
+            bigquery.ScalarQueryParameter("player_id", "INT64", player_id),
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION),
         ]
 
         if competition_id is not None:
@@ -490,8 +539,10 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[TeamSeasonRecord]:
         client = _client()
-        conditions: list[str] = []
-        parameters: list[bigquery.ScalarQueryParameter] = []
+        conditions: list[str] = ["s.silver_schema_version = @silver_schema_version"]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION)
+        ]
 
         if competition_id is not None:
             conditions.append("s.competition_id = @competition_id")
@@ -502,7 +553,7 @@ class BigQueryServingStore:
             conditions.append("s.season_id = @season_id")
             parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
 
-        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        where_clause = f"WHERE {' AND '.join(conditions)}"
         query = f"""
             SELECT
                 s.team_id AS team_id,
@@ -541,9 +592,13 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[ShotRecord]:
         client = _client()
-        conditions: list[str] = ["s.team_id = @team_id"]
+        conditions: list[str] = [
+            "s.team_id = @team_id",
+            "s.silver_schema_version = @silver_schema_version",
+        ]
         parameters: list[bigquery.ScalarQueryParameter] = [
-            bigquery.ScalarQueryParameter("team_id", "INT64", team_id)
+            bigquery.ScalarQueryParameter("team_id", "INT64", team_id),
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION),
         ]
 
         if competition_id is not None:
