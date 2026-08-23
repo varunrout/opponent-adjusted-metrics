@@ -74,8 +74,20 @@ def _count(client: bigquery.Client, sql: str) -> int:
     return int(rows[0][0]) if rows else 0
 
 
+def _delete_scoped(client: bigquery.Client, table: str, column_names: list[str], extra_where: str = "") -> None:
+    """Idempotency guard (added after a closeout-cleanup task found this script's original
+    plain-INSERT pattern had produced 4x duplicate rows for all 4 features across 5 tables --
+    the script had been re-run 4 times historically with no DELETE anywhere in the file).
+    Scoped to exactly this family's 4 feature names, so re-running this script can never
+    duplicate rows again, and never touches any other family's rows."""
+    cols_sql = ", ".join(f"'{n}'" for n in column_names)
+    _run(client, f"DELETE FROM {q(table)} WHERE feature_family = '{FAMILY}' AND column_name IN ({cols_sql}){extra_where}")
+
+
 def materialize_inventory(client: bigquery.Client) -> None:
     now = datetime.now(UTC).isoformat()
+    all_names = [f["name"] for f in NUMERIC_FEATURES] + [CATEGORICAL_FEATURE["name"]]
+    _delete_scoped(client, "cxg_feature_inventory_v1", all_names)
     selects = []
     for f in NUMERIC_FEATURES:
         selects.append(
@@ -93,6 +105,8 @@ def materialize_inventory(client: bigquery.Client) -> None:
 
 
 def materialize_null_profile(client: bigquery.Client) -> None:
+    all_names = [f["name"] for f in NUMERIC_FEATURES] + [CATEGORICAL_FEATURE["name"]]
+    _delete_scoped(client, "cxg_null_profile_v1", all_names)
     selects = []
     for f in NUMERIC_FEATURES:
         selects.append(f"""
@@ -120,6 +134,8 @@ def materialize_null_profile(client: bigquery.Client) -> None:
 
 
 def materialize_summary_stats(client: bigquery.Client) -> None:
+    all_names = [f["name"] for f in NUMERIC_FEATURES] + [CATEGORICAL_FEATURE["name"]]
+    _delete_scoped(client, "cxg_summary_stats_v1", all_names)
     selects = []
     for f in NUMERIC_FEATURES:
         col = f"`{f['column']}`"
@@ -161,6 +177,8 @@ def materialize_summary_stats(client: bigquery.Client) -> None:
 
 
 def materialize_distribution_bins(client: bigquery.Client) -> None:
+    all_names = [f["name"] for f in NUMERIC_FEATURES] + [CATEGORICAL_FEATURE["name"]]
+    _delete_scoped(client, "cxg_eda_distribution_bins_v1", all_names)
     selects = []
     for f in NUMERIC_FEATURES:
         col = f"`{f['column']}`"
@@ -199,6 +217,8 @@ def materialize_univariate_target_train_only(client: bigquery.Client) -> None:
     deliberate, documented population difference within the same table -- flagged here
     and in the closure report since the table itself carries no split column.
     """
+    all_names = [f["name"] for f in NUMERIC_FEATURES] + [CATEGORICAL_FEATURE["name"]]
+    _delete_scoped(client, "cxg_univariate_target_v1", all_names)
     selects = []
     for f in NUMERIC_FEATURES:
         selects.append(f"""
