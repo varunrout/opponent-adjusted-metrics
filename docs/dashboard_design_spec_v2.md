@@ -69,7 +69,7 @@ Unblocked by Hard gate 1's reframing (§9) now that CxG v3 results exist and are
 
 - **Shown alongside, never replacing, StatsBomb xG.** Both numbers are visible together — CxG is an additional, clearly-labelled data point, not a swap-in.
 - **Coverage-gated, not full `oam_core` coverage.** A shot only gets a CxG value where it falls inside `oam_ml`'s v3 test-set coverage — a fixed train/test split, not every shot in `oam_core`. Where a shot falls outside that split, show xG only. No CxG placeholder, dash, zero, or "N/A" — a value that looks like it should be there but isn't reads as broken, not as honestly out-of-scope.
-- **Visible "Experimental · limited data & features" badge or tooltip on every CxG value**, disclosing plainly: 8 features for the event-wide track, 24 features for CxG+, evaluated on a fixed test split rather than scored live per request. This is the UI-level expression of Hard gate 1's "don't overclaim" language — CxG reads as evaluated/experimental, not validated or production, anywhere it appears.
+- **Visible "Experimental · limited data & features" badge or tooltip on every CxG value**, disclosing plainly: 8 features for the event-wide track (BigQuery `track` column value: `cxg_event`, not `event_wide` — use the real value in any query or copy referencing it), 24 features for CxG+, evaluated on a fixed test split rather than scored live per request. This is the UI-level expression of Hard gate 1's "don't overclaim" language — CxG reads as evaluated/experimental, not validated or production, anywhere it appears.
 - **Data source: `oam_ml.cxg_event_v3_*` / `oam_ml.cxg_plus_v3_*`, not `oam_serving`.** `oam_serving` stays empty — Hard gate 2 (a proper serving layer, and Track B's quadrant scatter) is a separate, still-blocked condition. This section covers surfacing already-computed v3 test-set predictions as read-only display data; it is not a serving-layer build.
 
 ---
@@ -175,23 +175,25 @@ Written down once here so it doesn't need re-explaining in every future prompt �
 
 | Track | Metric | CxG v3 | StatsBomb xG | Result |
 |---|---|---|---|---|
-| Event-wide | log_loss | 0.3003 | 0.2597 | CxG trails |
-| Event-wide | Brier | 0.0852 | not captured | not comparable yet |
-| Event-wide | AUC | 0.7148 | not captured | not comparable yet |
+| Event-wide (`cxg_event`) | log_loss | 0.3003 | 0.2597 | CxG trails |
+| Event-wide (`cxg_event`) | Brier | 0.0852 | 0.0718 | CxG trails |
+| Event-wide (`cxg_event`) | AUC | 0.7148 | 0.7972 | CxG trails |
 | CxG+ | log_loss | 0.2555 | 0.2430 | CxG trails |
-| CxG+ | Brier | 0.0713 | not captured | not comparable yet |
-| CxG+ | AUC | 0.8313 | not captured | not comparable yet |
+| CxG+ | Brier | 0.0713 | 0.0665 | CxG trails |
+| CxG+ | AUC | 0.8313 | 0.8476 | CxG trails |
 
-CxG v3's own Brier and AUC are captured above; the StatsBomb-baseline Brier/AUC were not, for either track — pull those specific values from the v3 training run artifacts before a Brier/AUC comparison (not just log_loss) is quoted in a Stories writeup or anywhere public-facing. Do not infer or estimate the missing StatsBomb values from CxG's own figures or from the log_loss comparison above.
+All six metrics are now captured and compared, for both CxG and the StatsBomb baseline, on both tracks — confirmed against live `oam_ml` BigQuery data as part of building the Analysis tab's Model Results panel (`77adbe5`). No further "pull from training artifacts" caveat applies to this table. CxG trails StatsBomb on every one of these six metrics, not just log_loss.
 
 Consistent with v1: CxG trails the StatsBomb baseline on both tracks, same direction of result as v1's evaluation. Per §1's persona framing, this is disclosed as a credibility signal for the data-scientist persona, not hidden or softened.
 
 ### Frozen version history
 
-- `cxg_baseline_v1_*` — event-wide, v1 (frozen)
-- `cxg_plus_v2_*` — CxG+, v2 (frozen)
-- `cxg_v3_*` — event-wide, v3 (frozen, current)
-- `cxg_plus_v3_*` — CxG+, v3 (frozen, current)
+Table-name prefixes confirmed against `bigquery_analysis_store.py`'s `CXG_MODEL_TABLE_PREFIXES` (the earlier `cxg_v3_*` entry below was wrong — the real event-wide v3 prefix is `cxg_event_v3_*`):
+
+- `cxg_baseline_v1_*` — event-wide (`cxg_event`), v1 (frozen). Test-split log_loss 0.3058, Brier 0.0872, AUC 0.6939.
+- `cxg_plus_v2_*` — CxG+, v2 (frozen). Test-split log_loss 0.2566, Brier 0.0716, AUC 0.8302.
+- `cxg_event_v3_*` — event-wide (`cxg_event`), v3 (frozen, current). Test-split results in the table above.
+- `cxg_plus_v3_*` — CxG+, v3 (frozen, current). Test-split results in the table above.
 
 ### Known caveats
 
