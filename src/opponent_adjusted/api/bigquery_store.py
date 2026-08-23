@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import threading
+
+from cachetools import TTLCache, cached
+from cachetools.keys import hashkey
 from google.cloud import bigquery  # type: ignore[import-untyped]
 
 from opponent_adjusted.api.interfaces import (
@@ -17,6 +21,61 @@ PROJECT = "oam-varun-260819"
 DATASET = "oam_core"
 
 _client_instance: bigquery.Client | None = None
+
+# Per docs/dashboard_design_spec_v2.md §5 ("match/player/team aggregates
+# don't need to be query-fresh to the second") and Hard gate 4: the Explore
+# zone is guest-visible and genuinely dynamic, so repeat visits to the same
+# competition/season previously re-billed BigQuery on every request — the
+# real cost incident this session (34 unfiltered/repeat oam_core queries,
+# 6.1GB, ~£2.5) came from exactly this pattern.
+#
+# 300s (5 minutes): long enough that a visitor re-browsing the same filter
+# within a session, or two visitors hitting the same competition/season,
+# gets served from cache instead of re-billing BigQuery; short enough that
+# newly-published match/shot data shows up within one refresh cycle rather
+# than requiring a redeploy to bust a stale cache. oam_core's own data is
+# append-only-ish silver output that doesn't change second-to-second, so
+# there's no real staleness cost to this window.
+CACHE_TTL_SECONDS = 300
+# Bounds per-method memory use; not a hard requirement from the design doc,
+# just enough headroom for realistic distinct filter combinations (a handful
+# of competitions x seasons x teams) within one TTL window without unbounded
+# growth if this ever got hit by scripted/adversarial traffic.
+CACHE_MAXSIZE = 256
+
+# cachetools.TTLCache is not thread-safe on its own, and FastAPI serves
+# concurrent requests (a sync route handler runs in a threadpool) — a single
+# shared lock, passed to every `cached(..., lock=_cache_lock)` below, is
+# cachetools' own documented pattern for making `cached` safe under
+# concurrent access. The lock only guards the cache dict's own get/set, not
+# the BigQuery call itself (see cachetools' implementation) — a burst of
+# concurrent first-time requests for the same uncached key can still each
+# reach BigQuery once before the cache populates, which is an accepted,
+# standard tradeoff of this pattern, not a bug.
+_cache_lock = threading.Lock()
+
+_competitions_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_matches_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_match_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_lineups_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_player_seasons_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_player_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_team_seasons_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_team_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+
+
+def _ignore_self_key(self, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003
+    """Cache key that excludes `self`.
+
+    BigQueryServingStore is stateless and dependencies.get_store() builds a
+    fresh instance per request, so keying on instance identity (cachetools'
+    default) would mean every request misses — the cache would never hit
+    across requests at all. Every argument that changes the underlying
+    query (competition_id, season_id, team_id, match_id, player_id) still
+    flows into the key via *args/**kwargs.
+    """
+    return hashkey(*args, **kwargs)
 
 
 def _client() -> bigquery.Client:
@@ -39,6 +98,7 @@ def _client() -> bigquery.Client:
 class BigQueryServingStore:
     """Read-only ServingStore backed by the oam_core BigQuery dataset."""
 
+    @cached(cache=_competitions_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_competitions(self) -> list[CompetitionRecord]:
         client = _client()
         query = f"""
@@ -72,6 +132,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_matches_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_matches(
         self,
         *,
@@ -145,6 +206,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_match_cache, key=_ignore_self_key, lock=_cache_lock)
     def get_match(self, match_id: int) -> MatchRecord | None:
         client = _client()
         query = f"""
@@ -198,6 +260,7 @@ class BigQueryServingStore:
             last_updated_360=row["last_updated_360"],
         )
 
+    @cached(cache=_lineups_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_lineups(self, match_id: int) -> list[LineupPlayerRecord]:
         client = _client()
         query = f"""
@@ -240,6 +303,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_shots_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_shots(self, match_id: int) -> list[ShotRecord]:
         client = _client()
         query = f"""
@@ -294,6 +358,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_player_seasons_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_player_seasons(
         self,
         *,
@@ -347,6 +412,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_player_shots_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_player_shots(
         self,
         player_id: int,
@@ -416,6 +482,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_team_seasons_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_team_seasons(
         self,
         *,
@@ -465,6 +532,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_team_shots_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_team_shots(
         self,
         team_id: int,
