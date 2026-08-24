@@ -1,0 +1,45 @@
+# Build context is the repo root. This backend image only needs
+# pyproject.toml, poetry.lock, and src/ (see Dockerfile) -- everything else
+# below is either irrelevant to the running API, a secrets risk, or just
+# bloat that would slow the build/push.
+
+.git
+.gitignore
+
+# Frontend -- deployed separately to Firebase Hosting, never belongs in the
+# backend image.
+web/
+
+# Tests and dev tooling -- not needed at runtime, and test fixtures/mocks
+# have no business shipping in a production image.
+tests/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Local Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Anything credential-shaped must never end up in an image layer, even if it
+# doesn't exist in this repo today -- defensive, not because one of these
+# currently has content.
+secrets/
+*.env
+.env*
+*-key.json
+*-credentials.json
+
+# Docs, infra-as-code, pipeline outputs, scratch data -- none of it is read
+# by the FastAPI app at runtime.
+docs/
+infra/
+audit_outputs/
+data/
+configs/
+scripts/
+README.md

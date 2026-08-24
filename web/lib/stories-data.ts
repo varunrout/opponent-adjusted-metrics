@@ -1,6 +1,11 @@
 export type StoryInfo = {
   category: string;
   headline: string;
+  // Per docs/dashboard_design_spec_v2.md §10's component inventory
+  // ("Story card | Category tag, headline, takeaway, thumbnail"): a
+  // one-line summary of the finding. Optional so existing entries don't
+  // need a retrofitted takeaway invented for them.
+  takeaway?: string;
 };
 
 export const STORIES: StoryInfo[] = [
@@ -15,5 +20,15 @@ export const STORIES: StoryInfo[] = [
   {
     category: "Dev log",
     headline: "The _SUCCESS marker ordering bug — and the atomic repair that fixed it",
+  },
+  // CxG v3's honest comparison against the StatsBomb baseline, per
+  // docs/dashboard_design_spec_v2.md §4a/§11 (Hard gate 1's reframing —
+  // "must be honestly compared," not "must beat the baseline"). Numbers
+  // live on the Models cards and Analysis tab; this stays qualitative.
+  {
+    category: "Methodology",
+    headline: "CxG v3 — an honest comparison against StatsBomb xG",
+    takeaway:
+      "CxG v3 improved over every prior version but still trails the StatsBomb baseline — and that's a legitimate, disclosed result, not a hidden one.",
   },
 ];

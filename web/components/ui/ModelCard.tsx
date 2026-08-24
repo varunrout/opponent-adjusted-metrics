@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ModelInfo } from "@/lib/models-data";
 import { Badge } from "@/components/ui/Badge";
 import { TierChip } from "@/components/ui/TierChip";
@@ -32,6 +33,15 @@ export function ModelCard({ model }: { model: ModelInfo }) {
         <p className="text-[11.5px] text-muted mt-2 mb-0">{model.featureFamilyCount}</p>
       ) : (
         !hasContent && <Skeleton style={{ height: 12, width: "65%", marginTop: 12 }} />
+      )}
+
+      {model.comparisonNote && (
+        <p className="text-[11.5px] text-muted mt-1.5 mb-0">
+          {model.comparisonNote}{" "}
+          <Link href="/stories" className="text-teal hover:underline">
+            See Stories for the full comparison →
+          </Link>
+        </p>
       )}
     </div>
   );

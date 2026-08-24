@@ -7,8 +7,9 @@ import { MetricTile } from "@/components/ui/MetricTile";
 import { PitchMap } from "@/components/ui/PitchMap";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
-import { getPlayerShots } from "@/lib/api";
+import { getPlayerShots, getCxgCoverage } from "@/lib/api";
 import { summarizeShots } from "@/lib/shot-summary";
+import { describeCxgCoverage } from "@/lib/analysis-helpers";
 import type { ShotResponse } from "@/lib/types";
 
 export default function PlayerDetailPage() {
@@ -17,6 +18,8 @@ export default function PlayerDetailPage() {
   const { competitionId, seasonId } = useMatchFilter();
 
   const [shots, setShots] = useState<ShotResponse[]>([]);
+  const [cxgByEventId, setCxgByEventId] = useState<Record<string, number>>({});
+  const [cxgPlusByEventId, setCxgPlusByEventId] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -24,11 +27,31 @@ export default function PlayerDetailPage() {
     let cancelled = false;
     setLoading(true);
     setError(false);
+    setCxgByEventId({});
+    setCxgPlusByEventId({});
 
     getPlayerShots(playerId, { competition_id: competitionId, season_id: seasonId })
       .then((data) => {
         if (cancelled) return;
         setShots(data);
+
+        const eventIds = data.map((s) => s.event_id);
+
+        getCxgCoverage(eventIds, "cxg_event")
+          .then((coverage) => {
+            if (!cancelled) setCxgByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxgByEventId({});
+          });
+
+        getCxgCoverage(eventIds, "cxg_plus")
+          .then((coverage) => {
+            if (!cancelled) setCxgPlusByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxgPlusByEventId({});
+          });
       })
       .catch(() => {
         if (!cancelled) setError(true);
@@ -83,7 +106,23 @@ export default function PlayerDetailPage() {
         {shots.length === 0 ? (
           <p className="text-[12.5px] text-muted m-0">No shots recorded for this player in the current filters.</p>
         ) : (
-          <PitchMap shots={shots} homeTeamId={teamId} />
+          <>
+            <PitchMap
+              shots={shots}
+              homeTeamId={teamId}
+              cxgByEventId={cxgByEventId}
+              cxgPlusByEventId={cxgPlusByEventId}
+            />
+            {(() => {
+              const captions = [
+                describeCxgCoverage(shots.length, Object.keys(cxgByEventId).length, "CxG"),
+                describeCxgCoverage(shots.length, Object.keys(cxgPlusByEventId).length, "CxG+"),
+              ].filter(Boolean);
+              return captions.length > 0 ? (
+                <p className="text-[11.5px] text-muted mt-2 mb-0">{captions.join(" · ")}</p>
+              ) : null;
+            })()}
+          </>
         )}
       </Card>
     </section>

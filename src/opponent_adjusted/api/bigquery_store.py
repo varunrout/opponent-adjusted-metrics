@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import threading
+
+from cachetools import TTLCache, cached
+from cachetools.keys import hashkey
 from google.cloud import bigquery  # type: ignore[import-untyped]
 
 from opponent_adjusted.api.interfaces import (
@@ -16,14 +20,100 @@ from opponent_adjusted.api.interfaces import (
 PROJECT = "oam-varun-260819"
 DATASET = "oam_core"
 
+# oam_core's silver tables each carry multiple full lineage-versioned copies
+# of every row under one data_version — confirmed live: matches 1830 raw
+# rows / 610 distinct, competitions 15/5, shots+events+matches joined for
+# one match returned 147 raw rows for 49 distinct shots — all exactly 3x,
+# one copy per silver_schema_version (statsbomb_silver_v1, _v1_1, _v1_2).
+# None of the nine queries below filtered on this before, so every one of
+# them was returning/aggregating 3x-inflated results in production (shot
+# counts, goals, total_xg on Matches/Players/Teams all off by 3x) — this
+# wasn't a hypothetical, it was live on every guest-visible Explore-zone
+# page. Mirrors pipelines/silver/contracts.py's SILVER_SCHEMA_VERSION
+# constant (same value, not imported — the API layer stays decoupled from
+# the pipelines package deliberately, per this branch's own read-only
+# boundary against ingestion/features/modeling/pipelines).
+SILVER_SCHEMA_VERSION = "statsbomb_silver_v1_2"
+
+_client_instance: bigquery.Client | None = None
+
+# Per docs/dashboard_design_spec_v2.md §5 ("match/player/team aggregates
+# don't need to be query-fresh to the second") and Hard gate 4: the Explore
+# zone is guest-visible and genuinely dynamic, so repeat visits to the same
+# competition/season previously re-billed BigQuery on every request — the
+# real cost incident this session (34 unfiltered/repeat oam_core queries,
+# 6.1GB, ~£2.5) came from exactly this pattern.
+#
+# 300s (5 minutes): long enough that a visitor re-browsing the same filter
+# within a session, or two visitors hitting the same competition/season,
+# gets served from cache instead of re-billing BigQuery; short enough that
+# newly-published match/shot data shows up within one refresh cycle rather
+# than requiring a redeploy to bust a stale cache. oam_core's own data is
+# append-only-ish silver output that doesn't change second-to-second, so
+# there's no real staleness cost to this window.
+CACHE_TTL_SECONDS = 300
+# Bounds per-method memory use; not a hard requirement from the design doc,
+# just enough headroom for realistic distinct filter combinations (a handful
+# of competitions x seasons x teams) within one TTL window without unbounded
+# growth if this ever got hit by scripted/adversarial traffic.
+CACHE_MAXSIZE = 256
+
+# cachetools.TTLCache is not thread-safe on its own, and FastAPI serves
+# concurrent requests (a sync route handler runs in a threadpool) — a single
+# shared lock, passed to every `cached(..., lock=_cache_lock)` below, is
+# cachetools' own documented pattern for making `cached` safe under
+# concurrent access. The lock only guards the cache dict's own get/set, not
+# the BigQuery call itself (see cachetools' implementation) — a burst of
+# concurrent first-time requests for the same uncached key can still each
+# reach BigQuery once before the cache populates, which is an accepted,
+# standard tradeoff of this pattern, not a bug.
+_cache_lock = threading.Lock()
+
+_competitions_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_matches_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_match_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_lineups_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_player_seasons_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_player_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_team_seasons_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_team_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+
+
+def _ignore_self_key(self, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003
+    """Cache key that excludes `self`.
+
+    BigQueryServingStore is stateless and dependencies.get_store() builds a
+    fresh instance per request, so keying on instance identity (cachetools'
+    default) would mean every request misses — the cache would never hit
+    across requests at all. Every argument that changes the underlying
+    query (competition_id, season_id, team_id, match_id, player_id) still
+    flows into the key via *args/**kwargs.
+    """
+    return hashkey(*args, **kwargs)
+
 
 def _client() -> bigquery.Client:
-    return bigquery.Client(project=PROJECT)
+    """Return a shared, lazily-constructed BigQuery client (module-level singleton).
+
+    Mirrors the lazy-init pattern in dependencies.py's _init_firebase_admin.
+    Building a fresh bigquery.Client() on every call is wasteful once a
+    single request can fan out into several BigQuery-backed calls in quick
+    succession (e.g. the Analysis page firing six near-simultaneous
+    requests, each of which previously built its own client) —
+    bigquery_analysis_store.py imports this same function, so it benefits
+    automatically.
+    """
+    global _client_instance
+    if _client_instance is None:
+        _client_instance = bigquery.Client(project=PROJECT)
+    return _client_instance
 
 
 class BigQueryServingStore:
     """Read-only ServingStore backed by the oam_core BigQuery dataset."""
 
+    @cached(cache=_competitions_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_competitions(self) -> list[CompetitionRecord]:
         client = _client()
         query = f"""
@@ -39,8 +129,16 @@ class BigQueryServingStore:
                 match_updated_360,
                 match_available_360
             FROM `{PROJECT}.{DATASET}.competitions`
+            WHERE silver_schema_version = @silver_schema_version
         """
-        rows = client.query(query).result()
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                )
+            ]
+        )
+        rows = client.query(query, job_config=job_config).result()
         return [
             CompetitionRecord(
                 competition_id=row["competition_id"],
@@ -57,6 +155,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_matches_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_matches(
         self,
         *,
@@ -65,8 +164,10 @@ class BigQueryServingStore:
         team_id: int | None = None,
     ) -> list[MatchRecord]:
         client = _client()
-        conditions: list[str] = []
-        parameters: list[bigquery.ScalarQueryParameter] = []
+        conditions: list[str] = ["silver_schema_version = @silver_schema_version"]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION)
+        ]
 
         if competition_id is not None:
             conditions.append("competition_id = @competition_id")
@@ -80,7 +181,7 @@ class BigQueryServingStore:
             conditions.append("(home_team_id = @team_id OR away_team_id = @team_id)")
             parameters.append(bigquery.ScalarQueryParameter("team_id", "INT64", team_id))
 
-        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        where_clause = f"WHERE {' AND '.join(conditions)}"
         query = f"""
             SELECT
                 match_id,
@@ -130,6 +231,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_match_cache, key=_ignore_self_key, lock=_cache_lock)
     def get_match(self, match_id: int) -> MatchRecord | None:
         client = _client()
         query = f"""
@@ -154,9 +256,15 @@ class BigQueryServingStore:
                 last_updated_360
             FROM `{PROJECT}.{DATASET}.matches`
             WHERE match_id = @match_id
+              AND silver_schema_version = @silver_schema_version
         """
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("match_id", "INT64", match_id)]
+            query_parameters=[
+                bigquery.ScalarQueryParameter("match_id", "INT64", match_id),
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                ),
+            ]
         )
         rows = list(client.query(query, job_config=job_config).result())
         if not rows:
@@ -183,6 +291,7 @@ class BigQueryServingStore:
             last_updated_360=row["last_updated_360"],
         )
 
+    @cached(cache=_lineups_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_lineups(self, match_id: int) -> list[LineupPlayerRecord]:
         client = _client()
         query = f"""
@@ -206,9 +315,15 @@ class BigQueryServingStore:
              AND e.data_version = m.data_version
              AND e.silver_schema_version = m.silver_schema_version
             WHERE x.match_id = @match_id
+              AND x.silver_schema_version = @silver_schema_version
         """
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("match_id", "INT64", match_id)]
+            query_parameters=[
+                bigquery.ScalarQueryParameter("match_id", "INT64", match_id),
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                ),
+            ]
         )
         rows = client.query(query, job_config=job_config).result()
         return [
@@ -225,6 +340,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_shots_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_shots(self, match_id: int) -> list[ShotRecord]:
         client = _client()
         query = f"""
@@ -253,9 +369,15 @@ class BigQueryServingStore:
              AND e.data_version = m.data_version
              AND e.silver_schema_version = m.silver_schema_version
             WHERE s.match_id = @match_id
+              AND s.silver_schema_version = @silver_schema_version
         """
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("match_id", "INT64", match_id)]
+            query_parameters=[
+                bigquery.ScalarQueryParameter("match_id", "INT64", match_id),
+                bigquery.ScalarQueryParameter(
+                    "silver_schema_version", "STRING", SILVER_SCHEMA_VERSION
+                ),
+            ]
         )
         rows = client.query(query, job_config=job_config).result()
         return [
@@ -279,6 +401,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_player_seasons_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_player_seasons(
         self,
         *,
@@ -286,8 +409,10 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[PlayerSeasonRecord]:
         client = _client()
-        conditions: list[str] = []
-        parameters: list[bigquery.ScalarQueryParameter] = []
+        conditions: list[str] = ["s.silver_schema_version = @silver_schema_version"]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION)
+        ]
 
         if competition_id is not None:
             conditions.append("s.competition_id = @competition_id")
@@ -298,11 +423,12 @@ class BigQueryServingStore:
             conditions.append("s.season_id = @season_id")
             parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
 
-        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        where_clause = f"WHERE {' AND '.join(conditions)}"
         query = f"""
             SELECT
                 s.player_id AS player_id,
                 ANY_VALUE(e.player_name) AS player_name,
+                ANY_VALUE(s.team_id) AS team_id,
                 ANY_VALUE(e.team_name) AS team_name,
                 COUNT(*) AS shots,
                 COUNTIF(s.outcome_name = 'Goal') AS goals,
@@ -322,6 +448,7 @@ class BigQueryServingStore:
             PlayerSeasonRecord(
                 player_id=row["player_id"],
                 player_name=row["player_name"],
+                team_id=row["team_id"],
                 team_name=row["team_name"],
                 shots=row["shots"],
                 goals=row["goals"],
@@ -330,6 +457,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_player_shots_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_player_shots(
         self,
         player_id: int,
@@ -338,9 +466,13 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[ShotRecord]:
         client = _client()
-        conditions: list[str] = ["s.player_id = @player_id"]
+        conditions: list[str] = [
+            "s.player_id = @player_id",
+            "s.silver_schema_version = @silver_schema_version",
+        ]
         parameters: list[bigquery.ScalarQueryParameter] = [
-            bigquery.ScalarQueryParameter("player_id", "INT64", player_id)
+            bigquery.ScalarQueryParameter("player_id", "INT64", player_id),
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION),
         ]
 
         if competition_id is not None:
@@ -399,6 +531,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_team_seasons_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_team_seasons(
         self,
         *,
@@ -406,8 +539,10 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[TeamSeasonRecord]:
         client = _client()
-        conditions: list[str] = []
-        parameters: list[bigquery.ScalarQueryParameter] = []
+        conditions: list[str] = ["s.silver_schema_version = @silver_schema_version"]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION)
+        ]
 
         if competition_id is not None:
             conditions.append("s.competition_id = @competition_id")
@@ -418,7 +553,7 @@ class BigQueryServingStore:
             conditions.append("s.season_id = @season_id")
             parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
 
-        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        where_clause = f"WHERE {' AND '.join(conditions)}"
         query = f"""
             SELECT
                 s.team_id AS team_id,
@@ -448,6 +583,7 @@ class BigQueryServingStore:
             for row in rows
         ]
 
+    @cached(cache=_team_shots_cache, key=_ignore_self_key, lock=_cache_lock)
     def list_team_shots(
         self,
         team_id: int,
@@ -456,9 +592,13 @@ class BigQueryServingStore:
         season_id: int | None = None,
     ) -> list[ShotRecord]:
         client = _client()
-        conditions: list[str] = ["s.team_id = @team_id"]
+        conditions: list[str] = [
+            "s.team_id = @team_id",
+            "s.silver_schema_version = @silver_schema_version",
+        ]
         parameters: list[bigquery.ScalarQueryParameter] = [
-            bigquery.ScalarQueryParameter("team_id", "INT64", team_id)
+            bigquery.ScalarQueryParameter("team_id", "INT64", team_id),
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION),
         ]
 
         if competition_id is not None:

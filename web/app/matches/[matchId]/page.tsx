@@ -7,7 +7,8 @@ import { MetricTile } from "@/components/ui/MetricTile";
 import { PitchMap } from "@/components/ui/PitchMap";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
-import { getMatch, getMatchShots, ApiError } from "@/lib/api";
+import { getMatch, getMatchShots, getCxgCoverage, ApiError } from "@/lib/api";
+import { describeCxgCoverage } from "@/lib/analysis-helpers";
 import type { MatchDetailResponse, ShotResponse, LineupPlayerResponse } from "@/lib/types";
 
 export default function MatchDetailPage() {
@@ -16,6 +17,8 @@ export default function MatchDetailPage() {
 
   const [match, setMatch] = useState<MatchDetailResponse | null>(null);
   const [shots, setShots] = useState<ShotResponse[]>([]);
+  const [cxgByEventId, setCxgByEventId] = useState<Record<string, number>>({});
+  const [cxgPlusByEventId, setCxgPlusByEventId] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState(false);
@@ -25,12 +28,32 @@ export default function MatchDetailPage() {
     setLoading(true);
     setMissing(false);
     setError(false);
+    setCxgByEventId({});
+    setCxgPlusByEventId({});
 
     Promise.all([getMatch(matchId), getMatchShots(matchId)])
       .then(([matchData, shotsData]) => {
         if (cancelled) return;
         setMatch(matchData);
         setShots(shotsData);
+
+        const eventIds = shotsData.map((s) => s.event_id);
+
+        getCxgCoverage(eventIds, "cxg_event")
+          .then((coverage) => {
+            if (!cancelled) setCxgByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxgByEventId({});
+          });
+
+        getCxgCoverage(eventIds, "cxg_plus")
+          .then((coverage) => {
+            if (!cancelled) setCxgPlusByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxgPlusByEventId({});
+          });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -107,7 +130,21 @@ export default function MatchDetailPage() {
 
       <div className="grid gap-4 items-start mb-4" style={{ gridTemplateColumns: "2fr 1fr" }}>
         <Card title="Shot map">
-          <PitchMap shots={shots} homeTeamId={homeTeamId} />
+          <PitchMap
+            shots={shots}
+            homeTeamId={homeTeamId}
+            cxgByEventId={cxgByEventId}
+            cxgPlusByEventId={cxgPlusByEventId}
+          />
+          {(() => {
+            const captions = [
+              describeCxgCoverage(shots.length, Object.keys(cxgByEventId).length, "CxG"),
+              describeCxgCoverage(shots.length, Object.keys(cxgPlusByEventId).length, "CxG+"),
+            ].filter(Boolean);
+            return captions.length > 0 ? (
+              <p className="text-[11.5px] text-muted mt-2 mb-0">{captions.join(" · ")}</p>
+            ) : null;
+          })()}
         </Card>
 
         <div className="grid grid-cols-1 gap-3.5">

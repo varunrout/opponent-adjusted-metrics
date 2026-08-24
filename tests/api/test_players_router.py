@@ -10,6 +10,7 @@ def test_list_players_returns_expected_shape(client):
 
     mbappe = next(p for p in body if p["player_id"] == 3010)
     assert mbappe["player_name"] == "Kylian Mbappé"
+    assert mbappe["team_id"] == 771
     assert mbappe["team_name"] == "France"
     assert mbappe["shots"] == 2
     assert mbappe["goals"] == 1
@@ -17,6 +18,7 @@ def test_list_players_returns_expected_shape(client):
     assert set(mbappe.keys()) == {
         "player_id",
         "player_name",
+        "team_id",
         "team_name",
         "shots",
         "goals",

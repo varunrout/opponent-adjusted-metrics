@@ -7,6 +7,7 @@ export function StoryCard({ story }: { story: StoryInfo }) {
         {story.category}
       </span>
       <p className="text-[13px] mt-1.5 mb-0">{story.headline}</p>
+      {story.takeaway && <p className="text-[11.5px] text-muted mt-1.5 mb-0">{story.takeaway}</p>}
     </div>
   );
 }
