@@ -1,0 +1,297 @@
+{
+  "run_id": "cxg-v2-model-20260822T164932Z",
+  "final_model_kind": "ridge",
+  "final_spec": {
+    "log_gap": true,
+    "collapse_archetype": false
+  },
+  "best_ridge_C": 0.1,
+  "ridge_val_log_loss": 0.29602317815807183,
+  "plain_val_log_loss": null,
+  "plain_fit_error": "Singular matrix",
+  "metrics": [
+    {
+      "track": "cxg_plus",
+      "split": "validation",
+      "model": "v2",
+      "n": 590,
+      "log_loss": 0.29602317815807183,
+      "brier_score": 0.08780459938786478,
+      "roc_auc": 0.7945834879141577,
+      "materialized_at": "2026-08-22T16:49:32.639322+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "split": "validation",
+      "model": "statsbomb_xg",
+      "n": 590,
+      "log_loss": 0.29501438519470335,
+      "brier_score": 0.08679207753328812,
+      "roc_auc": 0.7952398618760881,
+      "materialized_at": "2026-08-22T16:49:32.639322+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "split": "test",
+      "model": "v2",
+      "n": 590,
+      "log_loss": 0.2565740474669478,
+      "brier_score": 0.07164086952889481,
+      "roc_auc": 0.8302417582417583,
+      "materialized_at": "2026-08-22T16:49:32.639322+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "split": "test",
+      "model": "statsbomb_xg",
+      "n": 590,
+      "log_loss": 0.2429527397197946,
+      "brier_score": 0.06653782235731101,
+      "roc_auc": 0.8475604395604396,
+      "materialized_at": "2026-08-22T16:49:32.639322+00:00"
+    }
+  ],
+  "zone_displacement_interpretability": {
+    "main_effect": [
+      {
+        "feature": "nearest_defender_zone_displacement",
+        "coefficient": -0.026801514636447168,
+        "std_error": null,
+        "p_value": null
+      }
+    ],
+    "interaction_terms": [
+      {
+        "feature": "defensive_profile_cluster_cluster_1:nearest_defender_zone_displacement",
+        "coefficient": 0.2153273666221028,
+        "std_error": null,
+        "p_value": null
+      },
+      {
+        "feature": "defensive_profile_cluster_cluster_2:nearest_defender_zone_displacement",
+        "coefficient": -0.09154393343145806,
+        "std_error": null,
+        "p_value": null
+      },
+      {
+        "feature": "defensive_profile_cluster_cluster_3:nearest_defender_zone_displacement",
+        "coefficient": -0.2116726635855607,
+        "std_error": null,
+        "p_value": null
+      },
+      {
+        "feature": "defensive_profile_cluster_null_cluster:nearest_defender_zone_displacement",
+        "coefficient": -0.21178452792737268,
+        "std_error": null,
+        "p_value": null
+      }
+    ]
+  },
+  "divergence_overall": {
+    "n": 590,
+    "mean_divergence": -0.002107498255739549,
+    "pearson_corr": 0.8784760339753311
+  },
+  "grid_results": [
+    {
+      "collapse_archetype": false,
+      "log_gap": false,
+      "C": 0.01,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.29784994473788806,
+      "brier_score": 0.08676912285580997,
+      "roc_auc": 0.7796581147798294
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": false,
+      "C": 0.1,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.29667559596859816,
+      "brier_score": 0.08794209288739077,
+      "roc_auc": 0.7922433720498844
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": false,
+      "C": 1.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.30271908607858267,
+      "brier_score": 0.09001209240932488,
+      "roc_auc": 0.7894466482120944
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": false,
+      "C": 10.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.3068701911753571,
+      "brier_score": 0.09089620227447354,
+      "roc_auc": 0.7821123826374817
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": false,
+      "C": 100.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.30780959916536615,
+      "brier_score": 0.09114468272598117,
+      "roc_auc": 0.7812562426871379
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": true,
+      "C": 0.01,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.2968350151337694,
+      "brier_score": 0.08646545139607233,
+      "roc_auc": 0.7828829085927913
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": true,
+      "C": 0.1,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.29602317815807183,
+      "brier_score": 0.08780459938786478,
+      "roc_auc": 0.7945834879141577
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": true,
+      "C": 1.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.3021045340726287,
+      "brier_score": 0.08986286168367517,
+      "roc_auc": 0.790331326160783
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": true,
+      "C": 10.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.30661659276729236,
+      "brier_score": 0.09078174727716136,
+      "roc_auc": 0.7819126166490683
+    },
+    {
+      "collapse_archetype": false,
+      "log_gap": true,
+      "C": 100.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.3072232507138978,
+      "brier_score": 0.09096907972726201,
+      "roc_auc": 0.7823121486258953
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": false,
+      "C": 0.01,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.2981951468340211,
+      "brier_score": 0.08690482003045844,
+      "roc_auc": 0.7792015068063126
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": false,
+      "C": 0.1,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.2971171904328204,
+      "brier_score": 0.08800037114598495,
+      "roc_auc": 0.7902742501640935
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": false,
+      "C": 1.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.30261781772720625,
+      "brier_score": 0.08978222592325284,
+      "roc_auc": 0.7870209183527868
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": false,
+      "C": 10.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.30678822649285203,
+      "brier_score": 0.09062779432563622,
+      "roc_auc": 0.7800291087583118
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": false,
+      "C": 100.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.3069896969114896,
+      "brier_score": 0.09072985867016914,
+      "roc_auc": 0.7815416226705858
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": true,
+      "C": 0.01,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.2971563897643444,
+      "brier_score": 0.08659125611967168,
+      "roc_auc": 0.7815986986672755
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": true,
+      "C": 0.1,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.29642951345801344,
+      "brier_score": 0.08785082973908977,
+      "roc_auc": 0.7931280499985731
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": true,
+      "C": 1.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.3020058944151996,
+      "brier_score": 0.08963836304688402,
+      "roc_auc": 0.7889044262435433
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": true,
+      "C": 10.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.3063318206284259,
+      "brier_score": 0.09049639086279448,
+      "roc_auc": 0.7807710967152764
+    },
+    {
+      "collapse_archetype": true,
+      "log_gap": true,
+      "C": 100.0,
+      "kind": "ridge",
+      "n": 590,
+      "log_loss": 0.30639998581743066,
+      "brier_score": 0.09059852191275596,
+      "roc_auc": 0.7826260666076882
+    }
+  ]
+}

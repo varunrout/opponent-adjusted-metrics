@@ -1,0 +1,52 @@
+[
+  {
+    "competition_name": "FIFA World Cup",
+    "season_name": "2018",
+    "competition_id": 43,
+    "season_id": 3,
+    "total_rows": 22092,
+    "distinct_shots": 1640,
+    "player_id_nonnull_rows": 22092,
+    "player_id_nonnull_rate": 1.0
+  },
+  {
+    "competition_name": "FIFA World Cup",
+    "season_name": "2022",
+    "competition_id": 43,
+    "season_id": 106,
+    "total_rows": 20327,
+    "distinct_shots": 1436,
+    "player_id_nonnull_rows": 20327,
+    "player_id_nonnull_rate": 1.0
+  },
+  {
+    "competition_name": "Premier League",
+    "season_name": "2015/2016",
+    "competition_id": 2,
+    "season_id": 27,
+    "total_rows": 126489,
+    "distinct_shots": 9835,
+    "player_id_nonnull_rows": 126489,
+    "player_id_nonnull_rate": 1.0
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "season_name": "2020",
+    "competition_id": 55,
+    "season_id": 43,
+    "total_rows": 17159,
+    "distinct_shots": 1247,
+    "player_id_nonnull_rows": 17159,
+    "player_id_nonnull_rate": 1.0
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "season_name": "2024",
+    "competition_id": 55,
+    "season_id": 282,
+    "total_rows": 19288,
+    "distinct_shots": 1305,
+    "player_id_nonnull_rows": 19288,
+    "player_id_nonnull_rate": 1.0
+  }
+]

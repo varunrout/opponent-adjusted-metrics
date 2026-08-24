@@ -1,0 +1,11 @@
+[
+  {
+    "n_points": 2779,
+    "mean_distance": 1.4680615513964774,
+    "median_distance": 0.8587251611863662,
+    "p90_distance": 2.9104214890159485,
+    "max_distance": 30.22912260331507,
+    "shots_compared": 200,
+    "shots_missing_one_side": 0
+  }
+]

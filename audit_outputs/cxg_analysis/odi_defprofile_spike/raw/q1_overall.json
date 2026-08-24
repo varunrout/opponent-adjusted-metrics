@@ -1,0 +1,8 @@
+[
+  {
+    "total_rows": 205355,
+    "distinct_shots": 15463,
+    "player_id_nonnull_rows": 205355,
+    "player_id_nonnull_rate": 1.0
+  }
+]
