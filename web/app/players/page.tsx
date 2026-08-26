@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "@/components/ui/PageHead";
-import { Card } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { ClickableRow } from "@/components/ui/ClickableRow";
 import { TeamLink } from "@/components/ui/EntityLink";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import { getPlayers } from "@/lib/api";
 import type { PlayerSeasonResponse } from "@/lib/types";
+
+const DEFAULT_MIN_SHOTS = 10;
+
+type PlayerRow = PlayerSeasonResponse & { xgPerShot: number; goalsMinusXg: number };
 
 export default function PlayersPage() {
   const { competitionId, seasonId } = useMatchFilter();
   const [players, setPlayers] = useState<PlayerSeasonResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [minShots, setMinShots] = useState(DEFAULT_MIN_SHOTS);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,59 +37,102 @@ export default function PlayersPage() {
     return () => {
       cancelled = true;
     };
-  }, [competitionId, seasonId]);
+  }, [competitionId, seasonId, attempt]);
+
+  const rows: PlayerRow[] = useMemo(
+    () =>
+      players
+        .filter((p) => p.shots >= minShots)
+        .map((p) => ({
+          ...p,
+          xgPerShot: p.shots > 0 ? p.total_xg / p.shots : 0,
+          goalsMinusXg: p.goals - p.total_xg,
+        })),
+    [players, minShots]
+  );
+
+  const columns: DataTableColumn<PlayerRow>[] = [
+    { key: "rank", label: "#", width: "32px", render: (_row, index) => index + 1 },
+    {
+      key: "player_name",
+      label: "Player",
+      width: "1fr",
+      sortable: true,
+      render: (row) => row.player_name ?? "Unknown",
+    },
+    {
+      key: "team_name",
+      label: "Team",
+      width: "1fr",
+      render: (row) => (
+        <TeamLink teamId={row.team_id} name={row.team_name ?? "Unknown team"} className="text-muted" />
+      ),
+    },
+    { key: "shots", label: "Shots", width: "70px", align: "right", sortable: true },
+    { key: "goals", label: "Goals", width: "70px", align: "right", sortable: true },
+    {
+      key: "total_xg",
+      label: "xG",
+      width: "80px",
+      align: "right",
+      sortable: true,
+      render: (row) => row.total_xg.toFixed(2),
+    },
+    {
+      key: "xgPerShot",
+      label: "xG/shot",
+      width: "80px",
+      align: "right",
+      sortable: true,
+      render: (row) => row.xgPerShot.toFixed(2),
+    },
+    {
+      key: "goalsMinusXg",
+      label: "G−xG",
+      width: "80px",
+      align: "right",
+      sortable: true,
+      render: (row) => (
+        <span style={{ color: row.goalsMinusXg >= 0 ? "var(--green)" : "var(--red)" }}>
+          {row.goalsMinusXg >= 0 ? "+" : ""}
+          {row.goalsMinusXg.toFixed(2)}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <section>
-      <PageHead title="Players" crumb={`${players.length} player${players.length === 1 ? "" : "s"}`} />
+      <PageHead
+        title="Players"
+        crumb={`${rows.length} player${rows.length === 1 ? "" : "s"} · min. ${minShots} shots`}
+      />
 
-      {loading && (
-        <div className="bg-card border border-border rounded overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="px-4 py-[10px] border-b border-border last:border-b-0">
-              <Skeleton style={{ height: 14 }} />
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="flex items-center gap-2 mb-3">
+        <label htmlFor="min-shots" className="text-[12px] text-muted">
+          Minimum shots
+        </label>
+        <input
+          id="min-shots"
+          type="number"
+          min={0}
+          value={minShots}
+          onChange={(e) => setMinShots(Math.max(0, Number(e.target.value) || 0))}
+          className="w-16 bg-card border border-border text-text rounded px-2 py-1 text-[12px] font-data"
+        />
+      </div>
 
-      {!loading && error && (
-        <Card>
-          <p className="text-[12.5px] text-muted m-0">Couldn&apos;t load players. Try again shortly.</p>
-        </Card>
-      )}
-
-      {!loading && !error && players.length === 0 && (
-        <Card>
-          <p className="text-[12.5px] text-muted m-0">No players found for the current filters.</p>
-        </Card>
-      )}
-
-      {!loading && !error && players.length > 0 && (
-        <div className="bg-card border border-border rounded overflow-hidden">
-          {players.map((player, i) => (
-            <ClickableRow
-              key={player.player_id}
-              href={`/players/${player.player_id}`}
-              className="flex items-center justify-between gap-3 px-4 py-[10px] border-b border-border last:border-b-0 text-[12.5px] hover:bg-card-hi cursor-pointer"
-            >
-              <span className="w-6 text-muted font-data">{i + 1}</span>
-              <div className="flex-1 min-w-0">
-                <span className="text-text">{player.player_name ?? "Unknown"}</span>
-                <span className="text-muted mx-1.5">·</span>
-                <TeamLink
-                  teamId={player.team_id}
-                  name={player.team_name ?? "Unknown team"}
-                  className="text-muted"
-                />
-              </div>
-              <div className="font-data text-text2 w-16 text-right">{player.shots}</div>
-              <div className="font-data text-text2 w-16 text-right">{player.goals}</div>
-              <div className="font-data text-text2 w-20 text-right">{player.total_xg.toFixed(2)}</div>
-            </ClickableRow>
-          ))}
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.player_id}
+        rowHref={(row) => `/players/${row.player_id}`}
+        loading={loading}
+        error={error}
+        onRetry={() => setAttempt((n) => n + 1)}
+        emptyMessage="No players found for the current filters."
+        pageSize={50}
+      />
     </section>
   );
 }

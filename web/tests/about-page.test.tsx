@@ -31,6 +31,6 @@ describe("AboutPage", () => {
     render(<AboutPage />);
     expect(screen.getByText(/not scored live/)).toBeInTheDocument();
     expect(screen.getByText(/trails the StatsBomb xG baseline/)).toBeInTheDocument();
-    expect(screen.getByText(/oam_serving/).length).not.toBe(0);
+    expect(screen.getAllByText(/oam_serving/).length).toBeGreaterThan(0);
   });
 });

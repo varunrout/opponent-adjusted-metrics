@@ -2,19 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { PageHead } from "@/components/ui/PageHead";
-import { Card } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { ClickableRow } from "@/components/ui/ClickableRow";
 import { TeamLink } from "@/components/ui/EntityLink";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import { getMatches } from "@/lib/api";
 import type { MatchResponse } from "@/lib/types";
+
+function resultTone(match: MatchResponse, side: "home" | "away"): string {
+  if (match.home_score == null || match.away_score == null || match.home_score === match.away_score) {
+    return "text-text";
+  }
+  const homeWon = match.home_score > match.away_score;
+  const sideWon = side === "home" ? homeWon : !homeWon;
+  return sideWon ? "text-text" : "text-text2";
+}
 
 export default function MatchesPage() {
   const { competitionId, seasonId } = useMatchFilter();
   const [matches, setMatches] = useState<MatchResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,56 +41,76 @@ export default function MatchesPage() {
     return () => {
       cancelled = true;
     };
-  }, [competitionId, seasonId]);
+  }, [competitionId, seasonId, attempt]);
+
+  const columns: DataTableColumn<MatchResponse>[] = [
+    {
+      key: "match_date",
+      label: "Date",
+      width: "100px",
+      sortable: true,
+      render: (m) => m.match_date ?? "",
+    },
+    {
+      key: "home_team_name",
+      label: "Home",
+      width: "1fr",
+      render: (m) => (
+        <TeamLink
+          teamId={m.home_team_id}
+          name={m.home_team_name ?? "TBD"}
+          className={resultTone(m, "home")}
+        />
+      ),
+    },
+    {
+      key: "score",
+      label: "Score",
+      width: "70px",
+      align: "center",
+      render: (m) => `${m.home_score ?? "-"} : ${m.away_score ?? "-"}`,
+    },
+    {
+      key: "away_team_name",
+      label: "Away",
+      width: "1fr",
+      render: (m) => (
+        <TeamLink
+          teamId={m.away_team_id}
+          name={m.away_team_name ?? "TBD"}
+          className={resultTone(m, "away")}
+        />
+      ),
+    },
+    {
+      key: "competition_stage",
+      label: "Stage",
+      width: "140px",
+      render: (m) => m.competition_stage ?? "",
+    },
+    {
+      key: "stadium",
+      label: "Venue",
+      width: "140px",
+      render: (m) => m.stadium ?? "",
+    },
+  ];
 
   return (
     <section>
       <PageHead title="Matches" crumb={`${matches.length} match${matches.length === 1 ? "" : "es"}`} />
 
-      {loading && (
-        <div className="bg-card border border-border rounded overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="px-4 py-[10px] border-b border-border last:border-b-0">
-              <Skeleton style={{ height: 14 }} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!loading && error && (
-        <Card>
-          <p className="text-[12.5px] text-muted m-0">Couldn&apos;t load matches. Try again shortly.</p>
-        </Card>
-      )}
-
-      {!loading && !error && matches.length === 0 && (
-        <Card>
-          <p className="text-[12.5px] text-muted m-0">No matches found for the current filters.</p>
-        </Card>
-      )}
-
-      {!loading && !error && matches.length > 0 && (
-        <div className="bg-card border border-border rounded overflow-hidden">
-          {matches.map((match) => (
-            <ClickableRow
-              key={match.match_id}
-              href={`/matches/${match.match_id}`}
-              className="flex items-center justify-between gap-3 px-4 py-[10px] border-b border-border last:border-b-0 text-[12.5px] hover:bg-card-hi cursor-pointer"
-            >
-              <div className="flex-1 min-w-0">
-                <TeamLink teamId={match.home_team_id} name={match.home_team_name ?? "TBD"} className="text-text" />
-                <span className="text-muted mx-1.5">vs</span>
-                <TeamLink teamId={match.away_team_id} name={match.away_team_name ?? "TBD"} className="text-text" />
-              </div>
-              <div className="font-data text-text2 w-16 text-center">
-                {match.home_score ?? "-"} : {match.away_score ?? "-"}
-              </div>
-              <div className="text-muted w-24 text-right">{match.match_date ?? ""}</div>
-              <div className="text-muted w-32 text-right truncate">{match.competition_stage ?? ""}</div>
-            </ClickableRow>
-          ))}
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={matches}
+        rowKey={(m) => m.match_id}
+        rowHref={(m) => `/matches/${m.match_id}`}
+        loading={loading}
+        error={error}
+        onRetry={() => setAttempt((n) => n + 1)}
+        emptyMessage="No matches found for the current filters."
+        pageSize={50}
+      />
     </section>
   );
 }
