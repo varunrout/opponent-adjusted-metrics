@@ -38,7 +38,7 @@ export function ModelCard({ model }: { model: ModelInfo }) {
       {model.comparisonNote && (
         <p className="text-[11.5px] text-muted mt-1.5 mb-0">
           {model.comparisonNote}{" "}
-          <Link href="/stories" className="text-teal hover:underline">
+          <Link href="/stories/cxg-v3-honest-comparison" className="text-teal hover:underline">
             See Stories for the full comparison →
           </Link>
         </p>

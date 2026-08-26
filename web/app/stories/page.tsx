@@ -8,7 +8,7 @@ export default function StoriesPage() {
       <PageHead title="Stories" crumb="Writeups" />
       <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
         {STORIES.map((story) => (
-          <StoryCard key={story.headline} story={story} />
+          <StoryCard key={story.slug} story={story} />
         ))}
       </div>
     </section>

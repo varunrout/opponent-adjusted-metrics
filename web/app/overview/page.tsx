@@ -9,21 +9,11 @@ import { ClickableRow } from "@/components/ui/ClickableRow";
 import { TeamLink } from "@/components/ui/EntityLink";
 import { StoryCard } from "@/components/ui/StoryCard";
 import { STORIES } from "@/lib/stories-data";
+import { CXG_COMPARISON } from "@/lib/cxg-results";
 import { getMatches } from "@/lib/api";
 import type { MatchResponse } from "@/lib/types";
 
 const GITHUB_URL = "https://github.com/varunrout/opponent-adjusted-metrics";
-
-// Six-row CxG vs StatsBomb comparison, per docs/dashboard_design_spec_v2.md §11.
-// Numbers copied verbatim — do not recompute or round differently here.
-const CXG_COMPARISON = [
-  { track: "Event-wide (cxg_event)", metric: "log_loss", cxg: "0.3003", xg: "0.2597" },
-  { track: "Event-wide (cxg_event)", metric: "Brier", cxg: "0.0852", xg: "0.0718" },
-  { track: "Event-wide (cxg_event)", metric: "AUC", cxg: "0.7148", xg: "0.7972" },
-  { track: "CxG+", metric: "log_loss", cxg: "0.2555", xg: "0.2430" },
-  { track: "CxG+", metric: "Brier", cxg: "0.0713", xg: "0.0665" },
-  { track: "CxG+", metric: "AUC", cxg: "0.8313", xg: "0.8476" },
-];
 
 const featuredStory = STORIES.find((s) => s.slug === "cxg-v3-honest-comparison") ?? STORIES[0];
 

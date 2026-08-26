@@ -26,10 +26,10 @@ describe("ModelCard", () => {
     expect(screen.queryByRole("link", { name: /See Stories/ })).not.toBeInTheDocument();
   });
 
-  it("links to the Stories tab (not a specific story) next to the comparisonNote", () => {
+  it("links to the specific CxG v3 comparison story next to the comparisonNote", () => {
     render(<ModelCard model={EVALUATED_MODEL} />);
     const link = screen.getByRole("link", { name: /See Stories for the full comparison/ });
-    expect(link).toHaveAttribute("href", "/stories");
+    expect(link).toHaveAttribute("href", "/stories/cxg-v3-honest-comparison");
   });
 
   it("renders the evaluated status label distinctly from promoted/training/planned", () => {
