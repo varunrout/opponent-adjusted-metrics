@@ -8,8 +8,15 @@ from opponent_adjusted.api.cxg_coverage import (
     TRACK_TABLE_PREFIXES,
     CxgCoverageResponse,
     CxgCoverageStore,
+    CxgMatchScopeRow,
+    CxgMatchScopeStore,
 )
-from opponent_adjusted.api.dependencies import Role, get_cxg_coverage_store, get_role
+from opponent_adjusted.api.dependencies import (
+    Role,
+    get_cxg_coverage_store,
+    get_cxg_match_scope_store,
+    get_role,
+)
 
 router = APIRouter(prefix="/v1/cxg", tags=["cxg"])
 
@@ -37,3 +44,24 @@ def get_cxg_coverage(
     ids = [event_id.strip() for event_id in event_ids.split(",") if event_id.strip()]
     values = store.get_cxg_for_events(ids, track=track)
     return CxgCoverageResponse(track=track, values=values)
+
+
+@router.get("/matches", response_model=list[CxgMatchScopeRow])
+def get_cxg_matches(
+    track: str,
+    store: CxgMatchScopeStore = Depends(get_cxg_match_scope_store),
+    role: Role = Depends(get_role),
+) -> list[CxgMatchScopeRow]:
+    """Return the matches that carry CxG v3 test-split predictions for `track`.
+
+    Per content_spec_v3.md §9.3/§2.2a: this is how the Explore-zone "CxG
+    matches only" scope toggle knows which of the 610 matches to show.
+    Guest-accessible, same as /coverage — this is Explore-zone content, not
+    the admin-only Analysis tab.
+    """
+    if track not in TRACK_TABLE_PREFIXES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"track must be one of {sorted(TRACK_TABLE_PREFIXES)}",
+        )
+    return store.list_covered_matches(track=track)

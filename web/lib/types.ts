@@ -240,3 +240,15 @@ export type CxgCoverageResponse = {
   track: string;
   values: Record<string, number>;
 };
+
+// --- /v1/cxg/matches (guest-accessible) ----------------------------------
+
+export type CxgMatchScopeRow = {
+  match_id: number;
+  split: string;
+  has_360_match: boolean;
+  event_shot_count: number;
+  plus_shot_count: number;
+  event_goal_count: number;
+  plus_goal_count: number;
+};

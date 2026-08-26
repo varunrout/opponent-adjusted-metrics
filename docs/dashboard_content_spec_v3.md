@@ -104,10 +104,33 @@ Four filter groups. Current state and required state:
 
 | Group | Today | Required |
 |---|---|---|
+| **CxG scope** | **Does not exist** | New toggle, **default ON**. See §2.2a `[BACKEND]` (§9.3) |
 | Competition | Works `[LIVE]` | Keep |
 | Season | Works, filtered by competition `[LIVE]` | Keep |
 | **Team** | **Hardcoded `<option>All teams</option>` — dead** | Populate from `getTeams({competition_id, season_id})` `[LIVE-NEW-WIRE]`; on change, set `team_id` in `MatchFilterProvider` |
 | **Metric** | **4 static `<div>` pills, not interactive — dead** | Make `xG` / `CxG` real radio-style toggles `[CLIENT]`; keep `CxA` / `CxT` disabled with "soon" |
+
+### 2.2a CxG scope toggle — defaults the whole Explore zone to CxG-covered matches
+
+Two states, sitting at the top of the sidebar above Competition:
+
+- **"CxG matches only" (default, ON)** — Matches, Players and Teams are restricted to the 92 matches that carry CxG predictions. Every page then shows the xG-versus-CxG comparison, which is the point of the project.
+- **"All matches" (OFF)** — the full 610. Nothing is hidden, it's one click away.
+
+Scope persists across Explore navigation (same `MatchFilterProvider` state as the other filters) and belongs in the URL so a scoped view is shareable.
+
+**Why a toggle and not a hard restriction.** The 92 test matches are a *random ~15% sample of matches*, not a coherent slice. Confirmed live (26 Aug 2026): Premier League 2015/16 contributes 61 of its 380 matches, Euro 2024 contributes 11, World Cup 2018 contributes 8, World Cup 2022 and Euro 2020 six each. Inside that scope there are 2,427 shots, 604 players with at least one shot but **only 60 with 10 or more**, and 48 teams averaging two to four matches each.
+
+That sample is fine for Matches and workable for Players. It breaks Teams. A team's "Season shot record" computed over three randomly-drawn matches is not a season record, and presenting it as one would be exactly the kind of quiet misrepresentation this project avoids everywhere else.
+
+**So the toggle carries labelling obligations, not just a filter:**
+
+- When scope is ON, **Teams pages must relabel**: "Season shot record" becomes "CxG sample · N matches", and the page states plainly that these are not full-season totals. Same for any team-level aggregate.
+- When scope is ON, **Players must lower its minimum-shots default** from 10 to 5 (60 players at the 10 threshold is too thin to rank; 152 at 5 is usable), and show the threshold in the crumb as it already does.
+- The page header always states which scope is active and how many matches it covers.
+- When scope is OFF, everything behaves exactly as it does today, and CxG appears only where coverage exists, per §8.1.
+
+**What the toggle does not do:** it never changes what a CxG number *means*, and it never fabricates coverage. It only changes which matches are in the list. A shot outside the v3 test split still has no CxG in either state.
 
 **Metric toggle semantics (important — this is the flagship control):**
 

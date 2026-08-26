@@ -4,6 +4,7 @@ import type {
   CompetitionResponse,
   CxgCoefficientResponse,
   CxgCoverageResponse,
+  CxgMatchScopeRow,
   CxgModelResultResponse,
   FeatureCorrelationResponse,
   FeatureInventoryResponse,
@@ -200,6 +201,10 @@ export function getCxgModelCoefficients(
 export function getCxgCoverage(eventIds: string[], track: string): Promise<CxgCoverageResponse> {
   const qs = `?track=${encodeURIComponent(track)}&event_ids=${encodeURIComponent(eventIds.join(","))}`;
   return apiFetch<CxgCoverageResponse>(`/v1/cxg/coverage${qs}`);
+}
+
+export function getCxgMatches(track: string): Promise<CxgMatchScopeRow[]> {
+  return apiFetch<CxgMatchScopeRow[]>(`/v1/cxg/matches?track=${encodeURIComponent(track)}`);
 }
 
 export { ApiError };

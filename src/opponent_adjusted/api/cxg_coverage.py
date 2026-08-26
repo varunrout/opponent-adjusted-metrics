@@ -37,12 +37,21 @@ from pydantic import BaseModel, ConfigDict
 from opponent_adjusted.api.bigquery_store import CACHE_TTL_SECONDS, PROJECT, _client
 
 ML_DATASET = "oam_ml"
+ANALYSIS_DATASET = "oam_analysis"
 
 # Real BigQuery track values, per §4a/§11 — NOT "event_wide".
 TRACK_TABLE_PREFIXES = {
     "cxg_event": "cxg_event_v3",
     "cxg_plus": "cxg_plus_v3",
 }
+
+# The one split this whole module treats as "covered". Defined once and
+# reused by both the per-shot coverage lookup below and the per-match scope
+# lookup (§9.3 GET /v1/cxg/matches) — the two must never disagree about
+# what "covered" means, per content_spec_v3.md §9.3.
+COVERAGE_SPLIT = "test"
+
+MATCH_SPLITS_TABLE = "cxg_match_splits_v1"
 
 # Genuinely guest-visible (Matches/Players/Teams are Explore-zone, per
 # design_spec_v2.md §5/§7), unlike the admin-only Analysis tab — so this
@@ -85,7 +94,7 @@ class BigQueryCxgCoverageStore:
         query = f"""
             SELECT event_id, v3_predicted_prob
             FROM `{PROJECT}.{ML_DATASET}.{prefix}_predictions`
-            WHERE split = 'test'
+            WHERE split = '{COVERAGE_SPLIT}'
         """
         rows = client.query(query).result()
         return {row["event_id"]: row["v3_predicted_prob"] for row in rows}
@@ -102,3 +111,74 @@ class CxgCoverageResponse(BaseModel):
 
     track: str
     values: dict[str, float]
+
+
+# --- Per-match scope (§9.3 GET /v1/cxg/matches) -----------------------------
+#
+# Answers "which matches carry CxG predictions at all" — a question the
+# *_predictions tables above can't answer themselves, since they key on
+# event_id only, with no match_id. oam_analysis.cxg_match_splits_v1 is a
+# small (610-row, one-per-match) table purpose-built for this.
+
+_match_scope_cache: TTLCache = TTLCache(maxsize=8, ttl=CACHE_TTL_SECONDS)
+_match_scope_lock = threading.Lock()
+
+
+class CxgMatchScopeRow(BaseModel):
+    """One row of oam_analysis.cxg_match_splits_v1, filtered to COVERAGE_SPLIT."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    match_id: int
+    split: str
+    has_360_match: bool
+    event_shot_count: int
+    plus_shot_count: int
+    event_goal_count: int
+    plus_goal_count: int
+
+
+class CxgMatchScopeStore(Protocol):
+    """Read-only contract for "which matches have CxG coverage" lookups."""
+
+    def list_covered_matches(self, *, track: str) -> list[CxgMatchScopeRow]:
+        """Return one row per match with test-split CxG coverage on the given
+        track. For track="cxg_plus" this is further filtered to matches with
+        360 data (has_360_match = TRUE) — CxG+ has no prediction otherwise."""
+
+
+class BigQueryCxgMatchScopeStore:
+    """CxgMatchScopeStore backed by oam_analysis.cxg_match_splits_v1."""
+
+    @cached(cache=_match_scope_cache, key=_track_cache_key, lock=_match_scope_lock)
+    def _get_track_matches(self, track: str) -> list[CxgMatchScopeRow]:
+        if track not in TRACK_TABLE_PREFIXES:
+            raise ValueError(f"Unknown track: {track!r}")
+        client = _client()
+        # Only cxg_plus needs the 360 filter — cxg_event has no such
+        # constraint (8 features, no tracking data required).
+        plus_filter = "AND has_360_match = TRUE" if track == "cxg_plus" else ""
+        query = f"""
+            SELECT match_id, split, has_360_match,
+                   event_shot_count, plus_shot_count,
+                   event_goal_count, plus_goal_count
+            FROM `{PROJECT}.{ANALYSIS_DATASET}.{MATCH_SPLITS_TABLE}`
+            WHERE split = '{COVERAGE_SPLIT}'
+            {plus_filter}
+        """
+        rows = client.query(query).result()
+        return [
+            CxgMatchScopeRow(
+                match_id=row["match_id"],
+                split=row["split"],
+                has_360_match=row["has_360_match"],
+                event_shot_count=row["event_shot_count"],
+                plus_shot_count=row["plus_shot_count"],
+                event_goal_count=row["event_goal_count"],
+                plus_goal_count=row["plus_goal_count"],
+            )
+            for row in rows
+        ]
+
+    def list_covered_matches(self, *, track: str) -> list[CxgMatchScopeRow]:
+        return self._get_track_matches(track)
