@@ -32,7 +32,15 @@ Written down so no page in this spec invents a field that isn't real.
 - **610 matches**, **1,457 players**, 3 competitions, 5 seasons
 - Competitions: Premier League (`competition_id=2`), FIFA World Cup (`43`), UEFA Euro (`55`)
 - Seasons: 2015/2016 (`season_id=27`), 2018 (`3`), 2020 (`43`), 2022 (`106`), 2024 (`282`)
-- CxG coverage: **v3 test split only** — a minority of shots, both tracks (`cxg_event`, `cxg_plus`)
+- CxG coverage: **v3 test split only, by deliberate dashboard choice, not by data availability** — the prediction tables actually hold all three splits. Confirmed against live BigQuery (26 Aug 2026):
+
+  | Track | train | validation | test (shown today) | total in table |
+  |---|---|---|---|---|
+  | `cxg_event` | 10,890 | 2,420 | 2,427 | 15,737 |
+  | `cxg_plus` | 2,780 | 590 | 590 | 3,960 |
+
+  The dashboard surfaces 2,427 of 15,737 available `cxg_event` predictions and 590 of 3,960 `cxg_plus` predictions — the `split = 'test'` filter in `cxg_coverage.py` is correct and must not change (showing train-split predictions as if they were honest out-of-sample results would be misleading), but the real ceiling is 6.5× larger. See §12 for the open decision on widening coverage with per-split labelling. Both `cxg_event_v3_predictions` and `cxg_plus_v3_predictions` also already carry `statsbomb_xg` and `is_goal` columns — an xG-vs-CxG comparison over these tables needs no join back to `oam_core`.
+- `oam_features` contains **9 tables** and is currently **read by zero application code** — neither the FastAPI backend nor any dashboard page queries it. Not scoped into this document's build; noted here so no future page assumes it's already wired.
 
 ### 1.2 Endpoints available (all GET, all real)
 
@@ -340,6 +348,7 @@ Over the covered shot set:
 - **Biggest disagreements table** — shots ranked by `|CxG − xG|`, each row clickable to its shot detail. *Where does this model disagree with the industry standard, and was it right?*
 - **Calibration strip** — shots bucketed by predicted probability, actual goal rate per bucket, for both CxG and StatsBomb. This is the honest visual companion to the Brier scores in `/models`.
 - **Permanent disclosure banner**, `--amber`: v3 test split only, not scored live, trails the StatsBomb baseline, link to `/models`.
+- **Source note:** both prediction tables already carry `statsbomb_xg` and `is_goal` alongside the CxG probability, so the scatter/calibration/disagreements views above need no join back to `oam_core` — they read entirely from `oam_ml.{cxg_event_v3,cxg_plus_v3}_predictions WHERE split = 'test'`.
 
 ### 5.4 Module 4 — Leaderboard Builder `[CLIENT]` · **viewer+**
 
@@ -458,7 +467,27 @@ One `COUNT`/`SUM` query against `oam_core.shots` + `oam_core.matches`, filtered 
 
 Justification: the alternative is three full result-set fetches on the landing page to display four numbers.
 
-### 9.2 Everything else: nothing
+### 9.2 `GET /v1/shots/{event_id}/opponent-context` `[BACKEND]` — future, not built in this pass
+
+`oam_analysis.cxg_analysis_opponent_adjusted_v1` exists — confirmed live (26 Aug 2026): **3,960 rows across 166 matches and 835 players**, keyed by `event_id`/`match_id`/`player_id`/`team_id`. Nothing in the codebase reads this table today, even though it is the literal content of "opponent-adjusted" in the project's name.
+
+Columns available: `nearest_defender_odi`, `mean_backline_odi`, `gk_odi`, `defensive_profile_cluster`, `nearest_defender_role`, `nearest_defender_zone_displacement`, `nearest_defender_gap`, `nearest_defender_style_archetype` (3,557 of 3,960 non-null), `has_360_frame` (3,960 non-null, i.e. present on every row).
+
+Proposed shape:
+
+```
+{ event_id: str, match_id: int, player_id: int, team_id: int,
+  nearest_defender_odi: float | null, mean_backline_odi: float | null, gk_odi: float | null,
+  defensive_profile_cluster: str | null, nearest_defender_role: str | null,
+  nearest_defender_zone_displacement: float | null, nearest_defender_gap: float | null,
+  nearest_defender_style_archetype: str | null, has_360_frame: bool }
+```
+
+Likely usage: a per-shot detail panel (e.g. the shot-detail drawer specced in §4.2) showing what defensive context the model actually saw for that shot, rather than only the resulting CxG number.
+
+**Cost note:** the table is small (3,960 rows total) and would be queried filtered by `event_id`s or `match_id`, matching the existing `ServingStore` filter-by-key pattern — cheap, no unfiltered-scan risk. Not built in this pass; specced here so a future prompt has a concrete target instead of rediscovering the table.
+
+### 9.3 Everything else: nothing
 
 Table headers, sorting, pagination, search, the xG race chart, shot drawers, radars, body-part breakdowns, all four Playground modules, club/national splitting, top-scorers-within-team, `G−xG`, `xG/shot` — **all `[CLIENT]` or `[LIVE-NEW-WIRE]`.**
 
@@ -525,3 +554,4 @@ Four things this spec deliberately does not decide:
 2. **Story authoring format** — MDX files (real articles, needs `@next/mdx`) vs a `body` string in `stories-data.ts` (no new dependency, painful past ~500 words).
 3. **Whether `viewer` gating is worth it** — it gives signing in a purpose and matches v2's stated intent, but it does add a friction point on a public portfolio piece where maximum reach may matter more than tiering.
 4. **Overview live strip cost** — `getMatches({})` unfiltered on the landing page is the one query every visitor triggers. It is TTL-cached, but if the link is shared widely this is the first thing to watch on the £10/month budget.
+5. **Widening CxG coverage beyond the test split.** Confirmed live (26 Aug 2026): the v3 prediction tables hold train/validation/test for both tracks, and the dashboard shows only test (2,427 of 15,737 `cxg_event` rows; 590 of 3,960 `cxg_plus` rows — see §1.1). Showing the full 15,737/3,960 rows would make CxG coverage 6.5× larger overnight with no new model work. **Not decided, and not done in this pass**, because of a real methodological caveat: the model saw every training-split row during fitting, so a train-split prediction is not an honest out-of-sample result — showing it next to test-split predictions without a per-split label would let a visitor mistake a memorized fit for a generalization result. Any future widening must label each shot's split (e.g. a `Badge` reading "train — seen during fitting" vs "test — held out") rather than silently merging all rows into one undifferentiated coverage count. Coverage gain vs. cost of building that per-split labelling UI is the actual open question here — not whether the data exists.
