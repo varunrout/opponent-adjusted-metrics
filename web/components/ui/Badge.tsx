@@ -1,6 +1,8 @@
 import type { ModelStatus } from "@/lib/models-data";
 
-const STATUS_STYLES: Record<ModelStatus, { background: string; color: string }> = {
+export type BadgeStatus = ModelStatus | "experimental";
+
+const STATUS_STYLES: Record<BadgeStatus, { background: string; color: string }> = {
   promoted: { background: "rgba(20,184,166,.15)", color: "var(--teal)" },
   training: { background: "rgba(227,160,8,.15)", color: "var(--amber)" },
   // Deliberately neutral, not teal/green — "evaluated" means real results
@@ -11,9 +13,16 @@ const STATUS_STYLES: Record<ModelStatus, { background: string; color: string }> 
   // a plain text2-toned badge rather than borrowing either.
   evaluated: { background: "rgba(151,161,173,.14)", color: "var(--text2)" },
   planned: { background: "var(--card-hi)", color: "var(--muted)" },
+  // Per docs/dashboard_content_spec_v3.md §8.1: every CxG value/coverage
+  // caption needs a *visible* disclosure badge, not a hover-only <title>
+  // (which fails entirely on touch devices). --amber is the design
+  // system's "warning / experimental" token (globals design tokens, v3
+  // §1.4) — same styling as "training" is deliberate, both are pre-
+  // production states, just distinguished by label text.
+  experimental: { background: "rgba(227,160,8,.15)", color: "var(--amber)" },
 };
 
-export function Badge({ status, label }: { status: ModelStatus; label: string }) {
+export function Badge({ status, label }: { status: BadgeStatus; label: string }) {
   const style = STATUS_STYLES[status];
   return (
     <span className="text-[10px] px-2 py-0.5 rounded font-medium" style={style}>

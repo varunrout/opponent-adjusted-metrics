@@ -87,6 +87,27 @@ describe("PitchMap", () => {
   });
 });
 
+describe("PitchMap legend", () => {
+  it("is hidden by default", () => {
+    render(<PitchMap shots={shots} homeTeamId={10} />);
+    expect(screen.queryByTestId("pitch-map-legend")).not.toBeInTheDocument();
+  });
+
+  it("shows home/away colour, goal, and dot-size explanation when showLegend is set", () => {
+    render(<PitchMap shots={shots} homeTeamId={10} showLegend />);
+    const legend = screen.getByTestId("pitch-map-legend");
+    expect(legend).toHaveTextContent("Home");
+    expect(legend).toHaveTextContent("Away");
+    expect(legend).toHaveTextContent("Filled = goal");
+    expect(legend).toHaveTextContent("Dot size = xG");
+  });
+
+  it("labels dot size as CxG when sizeBy is cxg", () => {
+    render(<PitchMap shots={shots} homeTeamId={10} showLegend sizeBy="cxg" />);
+    expect(screen.getByTestId("pitch-map-legend")).toHaveTextContent("Dot size = CxG");
+  });
+});
+
 describe("PitchMap sizeBy (display-mode toggle, per content_spec_v3.md §2.2)", () => {
   it("defaults to sizing by xG when sizeBy is omitted", () => {
     const { container } = render(<PitchMap shots={shots} homeTeamId={10} cxgByEventId={{ "evt-1": 0.9 }} />);

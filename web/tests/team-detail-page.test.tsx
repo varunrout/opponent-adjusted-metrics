@@ -84,6 +84,9 @@ describe("TeamDetailPage", () => {
     expect(screen.getByText("+0.60")).toBeInTheDocument();
     // CxG coverage caption (1 of 2 shots covered)
     expect(screen.getByText(/1 of 2 shots have CxG coverage/)).toBeInTheDocument();
+    // Visible disclosure badge next to it, not just a hover title (v3 §8.1 —
+    // hover-only disclosure fails entirely on touch devices).
+    expect(screen.getByText("Experimental")).toBeInTheDocument();
     // Top scorer
     expect(screen.getByText("Scorer A")).toBeInTheDocument();
     // Shot map renders markers

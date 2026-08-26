@@ -5,6 +5,7 @@ import { useParams, notFound } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PitchMap } from "@/components/ui/PitchMap";
+import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
 import { getMatch, getMatchShots, getCxgCoverage, ApiError } from "@/lib/api";
@@ -138,6 +139,7 @@ export default function MatchDetailPage() {
             cxgByEventId={cxgByEventId}
             cxgPlusByEventId={cxgPlusByEventId}
             sizeBy={metricMode}
+            showLegend
           />
           {(() => {
             const captions = [
@@ -145,7 +147,10 @@ export default function MatchDetailPage() {
               describeCxgCoverage(shots.length, Object.keys(cxgPlusByEventId).length, "CxG+"),
             ].filter(Boolean);
             return captions.length > 0 ? (
-              <p className="text-[11.5px] text-muted mt-2 mb-0">{captions.join(" · ")}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge status="experimental" label="Experimental" />
+                <p className="text-[11.5px] text-muted m-0">{captions.join(" · ")}</p>
+              </div>
             ) : null;
           })()}
         </Card>

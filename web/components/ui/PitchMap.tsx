@@ -18,6 +18,7 @@ export function PitchMap({
   cxgByEventId,
   cxgPlusByEventId,
   sizeBy = "xg",
+  showLegend = false,
 }: {
   shots?: ShotResponse[];
   homeTeamId?: number | null;
@@ -28,9 +29,11 @@ export function PitchMap({
   // uncovered shots render at reduced opacity with a dashed stroke rather
   // than falling back to xG (never substitute xG and label it CxG).
   sizeBy?: "xg" | "cxg";
+  showLegend?: boolean;
 }) {
   return (
-    <svg viewBox="0 0 120 80" className="w-full h-auto block rounded-md">
+    <div>
+      <svg viewBox="0 0 120 80" className="w-full h-auto block rounded-md">
       <rect x="0" y="0" width="120" height="80" fill="#123b25" />
       <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.4" fill="none">
         <rect x="0.4" y="0.4" width="119.2" height="79.2" />
@@ -80,6 +83,34 @@ export function PitchMap({
             </circle>
           );
         })}
-    </svg>
+      </svg>
+      {showLegend && (
+        <div
+          data-testid="pitch-map-legend"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-[11px] text-muted"
+        >
+          <LegendSwatch color={HOME_COLOR} label="Home" />
+          <LegendSwatch color={AWAY_COLOR} label="Away" />
+          <span className="flex items-center gap-1.5">
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+              <circle cx="5" cy="5" r="4" fill="var(--muted)" fillOpacity={0.9} />
+            </svg>
+            Filled = goal
+          </span>
+          <span>Dot size = {sizeBy === "cxg" ? "CxG" : "xG"}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LegendSwatch({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+        <circle cx="5" cy="5" r="4" fill={color} />
+      </svg>
+      {label}
+    </span>
   );
 }

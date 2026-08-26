@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PitchMap } from "@/components/ui/PitchMap";
+import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ClickableRow } from "@/components/ui/ClickableRow";
 import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
@@ -167,9 +168,13 @@ export default function TeamDetailPage() {
             cxgByEventId={cxgByEventId}
             cxgPlusByEventId={cxgPlusByEventId}
             sizeBy={metricMode}
+            showLegend
           />
           {coverageCaptions.length > 0 && (
-            <p className="text-[11.5px] text-muted mt-2 mb-0">{coverageCaptions.join(" · ")}</p>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge status="experimental" label="Experimental" />
+              <p className="text-[11.5px] text-muted m-0">{coverageCaptions.join(" · ")}</p>
+            </div>
           )}
         </Card>
 
