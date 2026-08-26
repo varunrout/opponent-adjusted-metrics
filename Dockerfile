@@ -26,8 +26,12 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root
 
 # Now the actual application code, then install the project itself (editable,
-# into the same venv) so `opponent_adjusted` is importable.
+# into the same venv) so `opponent_adjusted` is importable. README.md is
+# needed too: pyproject.toml declares it as the package readme, and Poetry's
+# root install (no --no-root this time) reads it — omitting it fails the
+# build with "Readme path /app/README.md does not exist."
 COPY src ./src
+COPY README.md ./
 RUN poetry install --only main
 
 

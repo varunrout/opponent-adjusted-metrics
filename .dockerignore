@@ -42,4 +42,10 @@ audit_outputs/
 data/
 configs/
 scripts/
-README.md
+
+# NOT excluded: README.md. pyproject.toml declares it as the package readme,
+# and Poetry's root install (`poetry install --only main`, no --no-root)
+# reads it during the image build -- excluding it fails the build with
+# "Readme path /app/README.md does not exist." It's a few hundred bytes of
+# harmless text, not a secrets risk, so keeping it in the build context is
+# the simpler fix over restructuring pyproject.toml's package-mode.
