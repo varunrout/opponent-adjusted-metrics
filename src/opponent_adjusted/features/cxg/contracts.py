@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-SourceType = Literal["event", "360"]
+SourceType = Literal["event", "360", "opponent_adjusted"]
 
 CXG_CONTEXT_TAXONOMY_ID = "cxg_context_taxonomy_v3"
 
@@ -471,3 +471,125 @@ def contextual_candidate_names() -> tuple[str, ...]:
 def cxg_event_contextual_allowlist() -> tuple[str, ...]:
     """Return the event-only contextual candidates permitted for CxG."""
     return event_candidate_names()
+
+
+# ---------------------------------------------------------------------------
+# opponent_adjusted family (registered 2026-08-21, CxG+ Phase 1/2 extension).
+#
+# Distinct from `defensive_360`/`goalkeeper_360`/`line_shape_360`: those are
+# direct per-shot geometric measurements (positions, distances, occlusion
+# proxies read straight off a freeze-frame). `opponent_adjusted` candidates
+# are derived quality/structure signals computed over a trailing window
+# (ODI: rolling defensive performance of the specific players facing the
+# shot) or a fitted clustering model (defensive_profile_cluster: a shape
+# archetype label), not direct measurements of the shot instant itself.
+#
+# Deliberately NOT folded into `contextual_candidate_names()` /
+# `event_candidate_names()` / `three_sixty_candidate_names()`: those three
+# combiners are pinned by frozen tests (`test_contracts.py`,
+# `test_three_sixty_context.py`: 75 event / 75 three_sixty / 150 combined)
+# that predate this family and must not change. Use
+# `opponent_adjusted_candidate_names()` directly instead.
+#
+# Population: the 360-eligible cohort only (3,960 shots), same population as
+# every other 360-family feature -- see
+# `oam_analysis.cxg_odi_features_v1` / `cxg_defensive_profile_clusters_v1`.
+# ---------------------------------------------------------------------------
+
+OPPONENT_ADJUSTED_FAMILIES: tuple[FeatureFamily, ...] = (
+    FeatureFamily(
+        "opponent_adjusted",
+        "Opponent-Adjusted Defensive Quality & Structure",
+        "opponent_adjusted",
+        (
+            "nearest_defender_odi",
+            "mean_backline_odi",
+            "gk_odi",
+            "defensive_profile_cluster",
+        ),
+        (
+            "derived_quality_signal_not_raw_geometry",
+            "population_360_eligible_cohort_only",
+            "not_included_in_contextual_candidate_names_combiner",
+        ),
+    ),
+)
+
+OPPONENT_ADJUSTED_FAMILY_CANDIDATE_COUNTS = {
+    "opponent_adjusted": 4,
+}
+
+
+def opponent_adjusted_families() -> tuple[FeatureFamily, ...]:
+    """Return the opponent-adjustment-derived candidate families."""
+    return OPPONENT_ADJUSTED_FAMILIES
+
+
+def opponent_adjusted_candidate_names() -> tuple[str, ...]:
+    """Return all opponent_adjusted candidates in taxonomy order."""
+    return tuple(candidate for family in OPPONENT_ADJUSTED_FAMILIES for candidate in family.candidates)
+
+
+# ---------------------------------------------------------------------------
+# defender_style family (registered 2026-08-22, CxG+ Phase B).
+#
+# `nearest_defender_style_archetype` is the archetype STRING of the shot's
+# nearest freeze-frame defender, from the K-Means action-mix clustering in
+# `opponent_adjusted.analysis.defstyle` (backing tables
+# `oam_analysis.cxg_defender_style_clusters_v1` /
+# `cxg_defender_style_cluster_profile_v1`).
+#
+# Registered as its own family rather than appended to
+# OPPONENT_ADJUSTED_FAMILIES above, for two reasons:
+#   1. That family is under concurrent development; widening its candidate
+#      tuple (and OPPONENT_ADJUSTED_FAMILY_CANDIDATE_COUNTS alongside it)
+#      would collide with in-flight work for no analytical benefit.
+#   2. It is a genuinely different construct. The `opponent_adjusted`
+#      candidates describe the defensive SITUATION facing a shot -- a
+#      trailing-window quality signal (ODI) or the shape archetype of the
+#      whole defensive block (defensive_profile_cluster, a per-SHOT label).
+#      This one describes a persistent property of an INDIVIDUAL player,
+#      fitted once over their entire career-to-date event history and then
+#      looked up, so its population, grain and refresh cadence all differ.
+#
+# Like OPPONENT_ADJUSTED_FAMILIES, deliberately NOT folded into
+# `contextual_candidate_names()` / `event_candidate_names()` /
+# `three_sixty_candidate_names()`: those combiners are pinned by frozen
+# tests. Use `defender_style_candidate_names()` directly.
+#
+# Exposure: the Gold column carries the archetype string ONLY. `player_id`
+# stays in the internal `cxg_defender_style_clusters_v1` lookup and is never
+# published to a shot-level, model-facing table -- see
+# `analysis/defstyle/contracts.py`.
+# ---------------------------------------------------------------------------
+
+DEFENDER_STYLE_FAMILIES: tuple[FeatureFamily, ...] = (
+    FeatureFamily(
+        "defender_style",
+        "Nearest-Defender Playing-Style Archetype",
+        "opponent_adjusted",
+        ("nearest_defender_style_archetype",),
+        (
+            "categorical_archetype_label_not_numeric",
+            "player_level_model_looked_up_per_shot",
+            "no_player_or_team_identity_exposed",
+            "min_30_defensive_actions_else_null_with_reason",
+            "population_360_eligible_cohort_only",
+            "not_included_in_contextual_candidate_names_combiner",
+        ),
+    ),
+)
+
+DEFENDER_STYLE_FAMILY_CANDIDATE_COUNTS = {
+    "defender_style": 1,
+}
+
+
+def defender_style_families() -> tuple[FeatureFamily, ...]:
+    """Return the defender playing-style candidate families."""
+    return DEFENDER_STYLE_FAMILIES
+
+
+def defender_style_candidate_names() -> tuple[str, ...]:
+    """Return all defender_style candidates in taxonomy order."""
+    return tuple(candidate for family in DEFENDER_STYLE_FAMILIES for candidate in family.candidates)

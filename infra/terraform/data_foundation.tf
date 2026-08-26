@@ -72,6 +72,10 @@ locals {
       friendly_name = "OAM ML"
       description   = "Model registry metadata and evaluation results."
     }
+    oam_analysis = {
+      friendly_name = "OAM Analysis"
+      description   = "EDA, null-profile, summary-stat, distribution, and univariate-target analysis tables, plus chart registries. Discovered as a management gap: this dataset already existed live (created programmatically by the analysis materializer) but was never declared in Terraform -- adding it here so it's under IaC management, matching the other 3 datasets."
+    }
     oam_serving = {
       friendly_name = "OAM Serving"
       description   = "Curated production serving aggregates."

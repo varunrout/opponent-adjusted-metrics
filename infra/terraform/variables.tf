@@ -14,3 +14,9 @@ variable "name_prefix" {
   type        = string
   default     = "oam"
 }
+
+variable "pipeline_data_version" {
+  description = "Pinned StatsBomb source commit SHA / data_version used across the ingest -> transform pipeline."
+  type        = string
+  default     = "b0bc9f22dd77c206ddedc1d742893b3bbe64baec"
+}
