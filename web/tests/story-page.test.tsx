@@ -10,7 +10,9 @@ describe("StoryPage", () => {
       screen.getByText("CxG v3 against StatsBomb xG: an honest comparison")
     ).toBeInTheDocument();
     expect(screen.getByText(/0.3003/)).toBeInTheDocument();
-    expect(screen.getByText(/zone displacement/)).toBeInTheDocument();
+    // Mentioned in two separate paragraphs (the caveat, then what it would
+    // take to close the gap), so this must be an All-variant query.
+    expect(screen.getAllByText(/zone displacement/).length).toBeGreaterThan(0);
   });
 
   it("renders a body for every story, with no stubs left", () => {
