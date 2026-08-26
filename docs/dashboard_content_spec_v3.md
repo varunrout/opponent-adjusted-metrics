@@ -306,13 +306,37 @@ Same table treatment as Players: headers, sortable, `xG/shot`, `G−xG`, paginat
 
 This is the answer to "it's a dashboard with a playground." It is also the fix for a structural problem: **the `viewer` role currently grants exactly nothing that `guest` doesn't already have** — it exists in the type union and in `require_admin`'s rejection path, and nowhere else. Signing in is currently pointless. Gating the comparison modules behind viewer gives signing in a reason to exist, and matches v2 §10's own "Comparison card — Viewer-tier feature, not yet built".
 
-**Critical property: all four modules are `[CLIENT]`. Zero new endpoints. Zero new BigQuery cost.** Everything below is computed in the browser from responses the app already knows how to fetch.
-
 **Layout:** module switcher as a tab strip across the top; selected module fills the canvas; sidebar filters apply throughout.
+
+### 5.0 Scope rule — the Playground is CxG-covered matches only
+
+**This is the single most important rule in this section, and it overrides the sidebar's normal behaviour.**
+
+The Explore zone browses all 610 matches, which is correct — it's a general football browser and xG exists for every shot. The Playground is not that. It exists to let someone interrogate *the model*, and the model only has predictions for the test split. Letting a visitor pick any of 610 matches means most picks land on a match with zero CxG, and every CxG panel renders empty. That reads as broken, not as honestly out-of-scope.
+
+So the Playground restricts its entity pickers to matches that actually carry CxG predictions:
+
+| Track | Matches | Shots | Goals |
+|---|---|---|---|
+| `cxg_event` (8 features) | **92** | 2,427 | 246 |
+| `cxg_plus` (24 features) | **23** | 590 | — |
+
+Confirmed against live BigQuery (26 Aug 2026) from `oam_analysis.cxg_match_splits_v1`, which holds exactly 610 rows — one per match — with a `split` label per match (`test` 92, `validation` 92, `train` 426) plus `has_360_match`, `event_shot_count`, `plus_shot_count`, `event_goal_count`, `plus_goal_count`.
+
+Rules that follow from this:
+
+- **Never show train-split or validation-split matches in the Playground.** Not greyed out, not with a "no CxG" label — absent. The Playground's match universe is the 92 test matches.
+- **Switching to the `cxg_plus` track narrows the universe further, to the 23 matches with 360 data.** The picker must re-filter, and if the currently-selected match isn't in the CxG+ set, say so plainly and offer the nearest valid choice rather than rendering an empty panel.
+- **State the scope on the page, permanently:** *"Playground scope: 92 matches with CxG predictions (v3 test split) — 23 of them also have CxG+."* A visitor should never have to work out why this looks smaller than Matches.
+- **The sidebar's competition/season filters still apply**, but *within* the 92, and the result count must reflect that intersection.
+
+This is also the answer to "why is the Playground smaller than the rest of the site" — it's smaller because the model is smaller, and saying so is the honest framing this project already applies everywhere else.
+
+**Cost note:** this needs one new endpoint (§9.3) reading a 610-row table. Everything else in §5.1–5.4 remains `[CLIENT]` — computed in the browser from responses the app already fetches.
 
 ### 5.1 Module 1 — Shot Explorer `[CLIENT]` · guest
 
-Load any shot set (by match, player, or team via the sidebar), then filter it live:
+Load a shot set (by match, player, or team) **from the §5.0 covered universe only**, then filter it live:
 
 | Filter | Field | Control |
 |---|---|---|
@@ -321,9 +345,10 @@ Load any shot set (by match, player, or team via the sidebar), then filter it li
 | Body part | `body_part_name` | multi-select chips |
 | Outcome | `outcome_name` | multi-select chips |
 | xG range | `statsbomb_xg` | dual-handle slider |
-| CxG coverage | — | "covered only" toggle |
 
-Output, updating on every change: `PitchMap` of the surviving shots · live counts (shots, goals, total xG, conversion %) · an xG histogram.
+Note there is deliberately **no "CxG coverage" toggle** — §5.0 already guarantees every shot in scope is covered, so the toggle would be a no-op. (An earlier draft of this spec had one; it was wrong.)
+
+Output, updating on every change: `PitchMap` of the surviving shots · live counts (shots, goals, total xG, **total CxG**, conversion %) · an xG histogram. **Every count that has an xG form also shows its CxG form**, side by side — that comparison is the entire reason this surface is scoped to covered matches.
 
 Why it matters: it makes the six unused `ShotResponse` fields visible and turns a static map into an instrument. *"Show me every headed shot inside the box in the last 15 minutes"* becomes a five-second interaction.
 
@@ -332,8 +357,12 @@ Why it matters: it makes the six unused `ShotResponse` fields visible and turns 
 Two entity pickers (player vs player, or team vs team). Fetches both via existing endpoints, renders side by side:
 
 - Mirrored shot maps, shared scale
-- Stat-by-stat delta table — shots, goals, xG, xG/shot, G−xG — with the winner's side highlighted per row
+- Stat-by-stat delta table — shots, goals, xG, **CxG**, xG/shot, **CxG/shot**, G−xG, **G−CxG** — with the winner's side highlighted per row
 - Overlaid radars
+
+Both entities are drawn from the §5.0 covered universe, so every row in that table has a CxG value — no blanks, and no "this player has xG but no CxG" asymmetry between the two sides.
+
+**G−CxG next to G−xG is the interesting column here.** It asks whether a player's overperformance survives once the defensive context of each shot is priced in — which is the project's actual thesis, stated as a number a visitor can compare.
 
 This is v2 §10's "Comparison card", built as a surface rather than a card.
 
@@ -466,6 +495,28 @@ Exhaustive. Everything else in this document is frontend-only.
 One `COUNT`/`SUM` query against `oam_core.shots` + `oam_core.matches`, filtered on `silver_schema_version` (**do not regress the lineage fix**), wrapped in the same `TTLCache` pattern as the other nine store methods. Guest-accessible via `get_role`.
 
 Justification: the alternative is three full result-set fetches on the landing page to display four numbers.
+
+### 9.3 `GET /v1/cxg/matches` `[BACKEND]` — required for §5.0, the Playground's scope
+
+Without this, the Playground cannot know which matches carry CxG predictions, and there is no other way to find out: the `*_predictions` tables key on `event_id` only, with no `match_id`, so match-level coverage cannot be derived from the existing `/v1/cxg/coverage` endpoint.
+
+`oam_analysis.cxg_match_splits_v1` answers it directly — confirmed live (26 Aug 2026): **exactly 610 rows, one per match**, with `match_id`, `split` (`test` 92 / `validation` 92 / `train` 426), `has_360_match`, `event_shot_count`, `plus_shot_count`, `event_goal_count`, `plus_goal_count`, `split_score`, `split_seed`, `run_id`, `created_at`. One `run_id` only, so no version disambiguation is needed today.
+
+Proposed shape:
+
+```
+GET /v1/cxg/matches?track=cxg_event|cxg_plus
+-> [ { match_id: int, split: str, has_360_match: bool,
+       event_shot_count: int, plus_shot_count: int,
+       event_goal_count: int, plus_goal_count: int } ]
+```
+
+- Filter to `split = 'test'` server-side, mirroring `cxg_coverage.py`'s existing rule — the two must never disagree about what "covered" means.
+- `track=cxg_plus` additionally filters to `has_360_match = TRUE`, giving the 23-match universe.
+- Guest-accessible via `get_role` (the Explore-zone pattern), and wrapped in the same `TTLCache` used by the other stores.
+- **Cost: negligible.** 610 rows, filtered, cached for 300s. This is the cheapest query in the application.
+
+Implementation note: this belongs in `cxg_coverage.py` next to `BigQueryCxgCoverageStore`, not in `bigquery_analysis_store.py` — the latter is entirely `require_admin`-gated, and this endpoint must be guest-reachable.
 
 ### 9.2 `GET /v1/shots/{event_id}/opponent-context` `[BACKEND]` — future, not built in this pass
 

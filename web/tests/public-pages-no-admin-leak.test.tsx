@@ -52,16 +52,23 @@ describe("public pages don't leak admin internals", () => {
   it("Stories page renders only public teasers, including the new dev-log category", () => {
     const { container } = render(<StoriesPage />);
     assertNoForbiddenContent(container);
-    expect(screen.getByText("Dev log")).toBeInTheDocument();
+    expect(screen.getAllByText("Dev log").length).toBeGreaterThan(0);
     // CxG v3's honest-comparison entry: headline plus its takeaway both
     // render, and the qualitative disclosure text doesn't trip the
-    // forbidden-substring check above — it's intentionally public-facing
+    // forbidden-substring check above. It's intentionally public-facing
     // honest content, not an admin internal.
-    expect(screen.getByText("CxG v3 — an honest comparison against StatsBomb xG")).toBeInTheDocument();
+    expect(
+      screen.getByText("CxG v3 against StatsBomb xG: an honest comparison")
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "CxG v3 improved over every prior version but still trails the StatsBomb baseline — and that's a legitimate, disclosed result, not a hidden one."
+        "CxG v3 beat every version of itself and still lost to StatsBomb on all six metrics. I'm publishing the numbers anyway."
       )
+    ).toBeInTheDocument();
+    // The negative-result story must stay on the public index: a rejected
+    // hypothesis is disclosure, not an internal.
+    expect(
+      screen.getByText("I built late-game context features and they failed")
     ).toBeInTheDocument();
   });
 });
