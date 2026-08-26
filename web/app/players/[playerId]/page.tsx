@@ -15,7 +15,7 @@ import type { ShotResponse } from "@/lib/types";
 export default function PlayerDetailPage() {
   const params = useParams<{ playerId: string }>();
   const playerId = params.playerId;
-  const { competitionId, seasonId } = useMatchFilter();
+  const { competitionId, seasonId, metricMode } = useMatchFilter();
 
   const [shots, setShots] = useState<ShotResponse[]>([]);
   const [cxgByEventId, setCxgByEventId] = useState<Record<string, number>>({});
@@ -112,6 +112,7 @@ export default function PlayerDetailPage() {
               homeTeamId={teamId}
               cxgByEventId={cxgByEventId}
               cxgPlusByEventId={cxgPlusByEventId}
+              sizeBy={metricMode}
             />
             {(() => {
               const captions = [

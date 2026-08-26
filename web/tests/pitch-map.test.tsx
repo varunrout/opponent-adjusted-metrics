@@ -86,3 +86,38 @@ describe("PitchMap", () => {
     expect(titles.slice(2)).toEqual([null, null]);
   });
 });
+
+describe("PitchMap sizeBy (display-mode toggle, per content_spec_v3.md §2.2)", () => {
+  it("defaults to sizing by xG when sizeBy is omitted", () => {
+    const { container } = render(<PitchMap shots={shots} homeTeamId={10} cxgByEventId={{ "evt-1": 0.9 }} />);
+    const marker = container.querySelector('[data-testid="shot-marker"]');
+    // evt-1 has statsbomb_xg 0.5 — radius should reflect xG (0.5), not the
+    // much larger covered CxG value (0.9), when sizeBy isn't "cxg".
+    expect(marker?.getAttribute("data-cxg-uncovered")).toBeNull();
+  });
+
+  it('sizes covered shots by CxG and marks uncovered shots as data-cxg-uncovered when sizeBy="cxg"', () => {
+    const { container } = render(
+      <PitchMap shots={shots} homeTeamId={10} cxgByEventId={{ "evt-1": 0.9 }} sizeBy="cxg" />
+    );
+    const markers = Array.from(container.querySelectorAll('[data-testid="shot-marker"]'));
+
+    // evt-1 is covered — not flagged uncovered.
+    expect(markers[0].getAttribute("data-cxg-uncovered")).toBeNull();
+    // evt-2/evt-3/evt-4 have no cxg_event coverage — flagged uncovered,
+    // rendered at reduced opacity with a dashed stroke, never substituting xG.
+    for (const marker of markers.slice(1)) {
+      expect(marker.getAttribute("data-cxg-uncovered")).toBe("true");
+      expect(marker.getAttribute("fill-opacity")).toBe("0.12");
+      expect(marker.getAttribute("stroke-dasharray")).toBeTruthy();
+    }
+  });
+
+  it('never flags shots as uncovered when sizeBy="xg", regardless of coverage', () => {
+    const { container } = render(<PitchMap shots={shots} homeTeamId={10} sizeBy="xg" />);
+    const markers = container.querySelectorAll('[data-testid="shot-marker"]');
+    for (const marker of Array.from(markers)) {
+      expect(marker.getAttribute("data-cxg-uncovered")).toBeNull();
+    }
+  });
+});

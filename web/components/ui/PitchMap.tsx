@@ -17,11 +17,17 @@ export function PitchMap({
   homeTeamId = null,
   cxgByEventId,
   cxgPlusByEventId,
+  sizeBy = "xg",
 }: {
   shots?: ShotResponse[];
   homeTeamId?: number | null;
   cxgByEventId?: Record<string, number>;
   cxgPlusByEventId?: Record<string, number>;
+  // Display mode only (docs/dashboard_content_spec_v3.md §2.2) — never a
+  // refetch. "cxg" sizes dots by the cxg_event track where coverage exists;
+  // uncovered shots render at reduced opacity with a dashed stroke rather
+  // than falling back to xG (never substitute xG and label it CxG).
+  sizeBy?: "xg" | "cxg";
 }) {
   return (
     <svg viewBox="0 0 120 80" className="w-full h-auto block rounded-md">
@@ -39,7 +45,6 @@ export function PitchMap({
         .filter((shot) => shot.location_x != null && shot.location_y != null)
         .map((shot) => {
           const color = shot.team_id === homeTeamId ? HOME_COLOR : AWAY_COLOR;
-          const radius = radiusForXg(shot.statsbomb_xg);
           const cxg = cxgByEventId?.[shot.event_id];
           const cxgPlus = cxgPlusByEventId?.[shot.event_id];
           const hasCxg = typeof cxg === "number";
@@ -47,17 +52,23 @@ export function PitchMap({
           const cxgParts: string[] = [];
           if (hasCxg) cxgParts.push(`CxG ${cxg!.toFixed(2)} (8 features)`);
           if (hasCxgPlus) cxgParts.push(`CxG+ ${cxgPlus!.toFixed(2)} (24 features)`);
+
+          const cxgUncovered = sizeBy === "cxg" && !hasCxg;
+          const radius = radiusForXg(sizeBy === "cxg" && hasCxg ? cxg! : shot.statsbomb_xg);
+
           return (
             <circle
               key={shot.event_id}
               data-testid="shot-marker"
+              data-cxg-uncovered={cxgUncovered ? "true" : undefined}
               cx={shot.location_x as number}
               cy={shot.location_y as number}
               r={radius}
               fill={color}
-              fillOpacity={shot.is_goal ? 0.9 : 0.2}
+              fillOpacity={cxgUncovered ? 0.12 : shot.is_goal ? 0.9 : 0.2}
               stroke={shot.is_goal ? "#0b0e12" : color}
               strokeWidth={cxgParts.length > 0 ? "0.9" : "0.5"}
+              strokeDasharray={cxgUncovered ? "1,0.8" : undefined}
             >
               {cxgParts.length > 0 ? (
                 <title>

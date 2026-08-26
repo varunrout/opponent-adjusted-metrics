@@ -9,11 +9,13 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
 import { getMatch, getMatchShots, getCxgCoverage, ApiError } from "@/lib/api";
 import { describeCxgCoverage } from "@/lib/analysis-helpers";
+import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import type { MatchDetailResponse, ShotResponse, LineupPlayerResponse } from "@/lib/types";
 
 export default function MatchDetailPage() {
   const params = useParams<{ matchId: string }>();
   const matchId = params.matchId;
+  const { metricMode } = useMatchFilter();
 
   const [match, setMatch] = useState<MatchDetailResponse | null>(null);
   const [shots, setShots] = useState<ShotResponse[]>([]);
@@ -135,6 +137,7 @@ export default function MatchDetailPage() {
             homeTeamId={homeTeamId}
             cxgByEventId={cxgByEventId}
             cxgPlusByEventId={cxgPlusByEventId}
+            sizeBy={metricMode}
           />
           {(() => {
             const captions = [

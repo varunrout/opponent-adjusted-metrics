@@ -18,7 +18,7 @@ function resultTone(match: MatchResponse, side: "home" | "away"): string {
 }
 
 export default function MatchesPage() {
-  const { competitionId, seasonId } = useMatchFilter();
+  const { competitionId, seasonId, teamId } = useMatchFilter();
   const [matches, setMatches] = useState<MatchResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -28,7 +28,7 @@ export default function MatchesPage() {
     let cancelled = false;
     setLoading(true);
     setError(false);
-    getMatches({ competition_id: competitionId, season_id: seasonId })
+    getMatches({ competition_id: competitionId, season_id: seasonId, team_id: teamId })
       .then((data) => {
         if (!cancelled) setMatches(data);
       })
@@ -41,7 +41,7 @@ export default function MatchesPage() {
     return () => {
       cancelled = true;
     };
-  }, [competitionId, seasonId, attempt]);
+  }, [competitionId, seasonId, teamId, attempt]);
 
   const columns: DataTableColumn<MatchResponse>[] = [
     {

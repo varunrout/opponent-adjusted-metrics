@@ -17,7 +17,7 @@ import type { MatchResponse, ShotResponse } from "@/lib/types";
 export default function TeamDetailPage() {
   const params = useParams<{ teamId: string }>();
   const teamId = params.teamId;
-  const { competitionId, seasonId } = useMatchFilter();
+  const { competitionId, seasonId, metricMode } = useMatchFilter();
 
   const [shots, setShots] = useState<ShotResponse[]>([]);
   const [matches, setMatches] = useState<MatchResponse[]>([]);
@@ -166,6 +166,7 @@ export default function TeamDetailPage() {
             homeTeamId={numericTeamId}
             cxgByEventId={cxgByEventId}
             cxgPlusByEventId={cxgPlusByEventId}
+            sizeBy={metricMode}
           />
           {coverageCaptions.length > 0 && (
             <p className="text-[11.5px] text-muted mt-2 mb-0">{coverageCaptions.join(" · ")}</p>
