@@ -1,0 +1,24 @@
+  File "C:\Users\USER\anaconda3\Lib\site-packages\joblib\externals\loky\backend\context.py", line 257, in _count_physical_cores
+  File "C:\Users\USER\anaconda3\Lib\subprocess.py", line 548, in run
+  File "C:\Users\USER\anaconda3\Lib\subprocess.py", line 1026, in __init__
+=== event: sealed test evaluation (ONE TIME) ===
+  frozen config: 'deeper trees' (n_estimators=200, max_depth=6, num_leaves=31, learning_rate=0.05, min_child_samples=50, subsample=0.8, colsample_bytree=0.8)
+  fit pool (train+validation) n=515923, test n=92799
+  dumb_baseline: log_loss=0.09296 brier=0.01836 roc_auc=None
+  v1: log_loss=0.07483 brier=0.01739 roc_auc=0.8635493292459553
+  frozen_tree: log_loss=0.06536 brier=0.01634 roc_auc=0.9152592477755437
+wrote 3 row(s) -> oam-varun-260819.oam_ml.cxa_event_test_v1_metrics
+wrote 20 row(s) -> oam-varun-260819.oam_ml.cxa_event_test_v1_calibration
+wrote 92799 row(s) -> oam-varun-260819.oam_ml.cxa_event_test_v1_predictions
+
+=== plus: sealed test evaluation (ONE TIME) ===
+  frozen config: 'stronger regularization (higher min_child_samples)' (n_estimators=200, max_depth=4, num_leaves=15, learning_rate=0.05, min_child_samples=100, subsample=0.8, colsample_bytree=0.8)
+  fit pool (train+validation) n=114573, test n=18570
+  fit-pool median reception_nearest_opponent_distance_m (imputation value): 6.538
+  dumb_baseline: log_loss=0.10791 brier=0.02206 roc_auc=None
+  v1: log_loss=0.07610 brier=0.01897 roc_auc=0.9025510471753202
+  frozen_tree: log_loss=0.05673 brier=0.01481 roc_auc=0.9565022617871899
+wrote 3 row(s) -> oam-varun-260819.oam_ml.cxa_plus_test_v1_metrics
+wrote 20 row(s) -> oam-varun-260819.oam_ml.cxa_plus_test_v1_calibration
+wrote 18570 row(s) -> oam-varun-260819.oam_ml.cxa_plus_test_v1_predictions
+

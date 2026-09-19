@@ -85,12 +85,14 @@ WHERE m.split IN UNNEST(@splits)
 """
 
 
-def load_track(client: bigquery.Client, track: str) -> pd.DataFrame:
+def load_track(client: bigquery.Client, track: str, splits: tuple[str, ...] = TRAIN_VALIDATION_SPLITS) -> pd.DataFrame:
+    """Defaults to train+validation only, same as every prior CxA modelling script.
+    A caller may explicitly pass `splits=("train", "validation", "test")` for the
+    one-time sealed test read (step 10) -- this is the only place in this project's
+    history that is ever done, and only by materialize_cxa_test_eval_v1.py."""
     sql = EVENT_LOAD_SQL if track == "event" else PLUS_LOAD_SQL
     job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ArrayQueryParameter("splits", "STRING", list(TRAIN_VALIDATION_SPLITS))
-        ]
+        query_parameters=[bigquery.ArrayQueryParameter("splits", "STRING", list(splits))]
     )
     df = client.query(sql, job_config=job_config, location=LOCATION).to_dataframe()
     df["start_x"] = df["start_x"].clip(lower=0, upper=120)  # encoding fix 2
