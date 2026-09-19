@@ -1,0 +1,9 @@
+{
+  "hosting": {
+    "source": "web",
+    "frameworksBackend": {
+      "region": "europe-west2",
+      "maxInstances": 3
+    }
+  }
+}

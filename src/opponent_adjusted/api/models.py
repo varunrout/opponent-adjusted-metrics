@@ -40,6 +40,8 @@ class MatchResponse(BaseModel):
     away_team_name: str | None
     home_score: int | None
     away_score: int | None
+    home_xg: float | None
+    away_xg: float | None
     competition_stage: str | None
     stadium: str | None
     referee: str | None
@@ -98,6 +100,7 @@ class PlayerSeasonResponse(BaseModel):
 
     player_id: int
     player_name: str | None
+    team_id: int | None
     team_name: str | None
     shots: int
     goals: int

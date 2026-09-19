@@ -1,11 +1,22 @@
 import type {
+  BivariateResponse,
+  ChartsResponse,
   CompetitionResponse,
+  CxgCoefficientResponse,
+  CxgCoverageResponse,
+  CxgModelResultResponse,
+  FeatureCorrelationResponse,
+  FeatureInventoryResponse,
   MatchDetailResponse,
   MatchResponse,
   MeResponse,
+  OpponentContextResponse,
+  PcaResponse,
   PlayerSeasonResponse,
+  ShotFreezeFrameResponse,
   ShotResponse,
   TeamSeasonResponse,
+  UnivariateTargetResponse,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -56,6 +67,22 @@ export function getMatch(matchId: number | string): Promise<MatchDetailResponse>
 
 export function getMatchShots(matchId: number | string): Promise<ShotResponse[]> {
   return apiFetch<ShotResponse[]>(`/v1/matches/${matchId}/shots`);
+}
+
+// Real StatsBomb 360 positions (teammates/opponents/GK) for one shot, from
+// oam_core.three_sixty_frames/three_sixty_players — 404 when the shot has
+// no 360 frame (most shots; only 166 of 610 matches carry one), which this
+// resolves to null rather than letting it surface as a page-level error.
+export function getShotFreezeFrame(
+  matchId: number | string,
+  eventId: string
+): Promise<ShotFreezeFrameResponse | null> {
+  return apiFetch<ShotFreezeFrameResponse>(`/v1/matches/${matchId}/shots/${eventId}/freeze-frame`).catch(
+    (err) => {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  );
 }
 
 export function getPlayers(filters: {
@@ -118,9 +145,118 @@ export function getTeamShots(
   return apiFetch<ShotResponse[]>(`/v1/teams/${teamId}/shots${qs ? `?${qs}` : ""}`);
 }
 
+export function getTeamShotsFaced(
+  teamId: number | string,
+  filters: { competition_id?: number | null; season_id?: number | null }
+): Promise<ShotResponse[]> {
+  const params = new URLSearchParams();
+  if (filters.competition_id != null) {
+    params.set("competition_id", String(filters.competition_id));
+  }
+  if (filters.season_id != null) {
+    params.set("season_id", String(filters.season_id));
+  }
+  const qs = params.toString();
+  return apiFetch<ShotResponse[]>(`/v1/teams/${teamId}/shots-faced${qs ? `?${qs}` : ""}`);
+}
+
 export function getMe(idToken?: string | null): Promise<MeResponse> {
   const headers: HeadersInit | undefined = idToken ? { Authorization: `Bearer ${idToken}` } : undefined;
   return apiFetch<MeResponse>("/v1/me", headers ? { headers } : undefined);
+}
+
+// --- /v1/analysis/* (admin-gated: requires a Firebase ID token with role
+// "admin"; missing/non-admin tokens surface as a 403 ApiError) -----------
+
+function authHeaders(idToken?: string | null): RequestInit | undefined {
+  return idToken ? { headers: { Authorization: `Bearer ${idToken}` } } : undefined;
+}
+
+export function getAnalysisFeatures(
+  idToken: string | null | undefined,
+  family?: string
+): Promise<FeatureInventoryResponse[]> {
+  const qs = family ? `?family=${encodeURIComponent(family)}` : "";
+  return apiFetch<FeatureInventoryResponse[]>(`/v1/analysis/features${qs}`, authHeaders(idToken));
+}
+
+export function getAnalysisCorrelation(
+  idToken: string | null | undefined,
+  family?: string
+): Promise<FeatureCorrelationResponse[]> {
+  const qs = family ? `?family=${encodeURIComponent(family)}` : "";
+  return apiFetch<FeatureCorrelationResponse[]>(`/v1/analysis/correlation${qs}`, authHeaders(idToken));
+}
+
+export function getAnalysisUnivariate(
+  idToken: string | null | undefined,
+  family?: string
+): Promise<UnivariateTargetResponse[]> {
+  const qs = family ? `?family=${encodeURIComponent(family)}` : "";
+  return apiFetch<UnivariateTargetResponse[]>(`/v1/analysis/univariate${qs}`, authHeaders(idToken));
+}
+
+export function getAnalysisBivariate(idToken: string | null | undefined): Promise<BivariateResponse> {
+  return apiFetch<BivariateResponse>("/v1/analysis/bivariate", authHeaders(idToken));
+}
+
+export function getAnalysisPca(idToken: string | null | undefined): Promise<PcaResponse> {
+  return apiFetch<PcaResponse>("/v1/analysis/pca", authHeaders(idToken));
+}
+
+export function getAnalysisCharts(
+  idToken: string | null | undefined,
+  runId?: string
+): Promise<ChartsResponse> {
+  const qs = runId ? `?run_id=${encodeURIComponent(runId)}` : "";
+  return apiFetch<ChartsResponse>(`/v1/analysis/charts${qs}`, authHeaders(idToken));
+}
+
+export function getCxgModelResults(
+  idToken: string | null | undefined
+): Promise<CxgModelResultResponse[]> {
+  return apiFetch<CxgModelResultResponse[]>("/v1/analysis/cxg-models", authHeaders(idToken));
+}
+
+export function getCxgModelCoefficients(
+  idToken: string | null | undefined,
+  modelKey: string
+): Promise<CxgCoefficientResponse[]> {
+  return apiFetch<CxgCoefficientResponse[]>(
+    `/v1/analysis/cxg-models/${encodeURIComponent(modelKey)}/coefficients`,
+    authHeaders(idToken)
+  );
+}
+
+// --- /v1/models/* (public mirror of /v1/analysis/cxg-models*; no admin
+// gate, no auth header — powers the public Models page. Deliberate
+// divergence from the admin-only Analysis tab's identical-shaped data:
+// see routers/models.py's own docstring for why. Same response types as
+// the admin versions above; don't conflate the two endpoints.) ----------
+
+export function getPublicCxgModelResults(): Promise<CxgModelResultResponse[]> {
+  return apiFetch<CxgModelResultResponse[]>("/v1/models/cxg-models");
+}
+
+export function getPublicCxgModelCoefficients(modelKey: string): Promise<CxgCoefficientResponse[]> {
+  return apiFetch<CxgCoefficientResponse[]>(
+    `/v1/models/cxg-models/${encodeURIComponent(modelKey)}/coefficients`
+  );
+}
+
+// --- /v1/cxg/coverage (guest-accessible Explore-zone endpoint; no auth) --
+
+export function getCxgCoverage(eventIds: string[], track: string): Promise<CxgCoverageResponse> {
+  const qs = `?track=${encodeURIComponent(track)}&event_ids=${encodeURIComponent(eventIds.join(","))}`;
+  return apiFetch<CxgCoverageResponse>(`/v1/cxg/coverage${qs}`);
+}
+
+// --- /v1/cxg/opponent-context (guest-accessible Explore-zone endpoint) --
+
+export function getShotOpponentContext(eventIds: string[]): Promise<OpponentContextResponse[]> {
+  if (eventIds.length === 0) return Promise.resolve([]);
+  const qs = `?event_ids=${encodeURIComponent(eventIds.join(","))}`;
+  return apiFetch<OpponentContextResponse[]>(`/v1/cxg/opponent-context${qs}`);
 }
 
 export { ApiError };

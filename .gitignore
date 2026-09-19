@@ -30,7 +30,9 @@ env/
 .venv/
 
 # Poetry
-poetry.lock
+# NOTE: poetry.lock is deliberately NOT ignored. This is an application, not a
+# library, and the Dockerfile does `COPY pyproject.toml poetry.lock ./` -- with
+# the lock file untracked, a fresh clone or CI build cannot build the image.
 
 # IDE
 .vscode/
@@ -40,8 +42,18 @@ poetry.lock
 *~
 .DS_Store
 
-# Environment variables
+# Environment variables -- never commit any of these. web/.env.production in
+# particular holds the real Firebase web config used for production builds;
+# web/.gitignore's `.env*.local` pattern does NOT match it, which is how it
+# ended up unignored and one careless `git add .` away from being committed.
 .env
+.env.*
+!.env.example
+
+# Node / frontend build output at repo root (created by `firebase deploy`,
+# which installs its own toolchain here)
+node_modules/
+.firebase/
 
 # Downloaded/raw data
 /data/

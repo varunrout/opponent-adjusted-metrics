@@ -333,3 +333,35 @@ This phase touches real auth infrastructure. I will create the Firebase project,
 Stop after phase 5. End with a short summary, any deviations, and an explicit list of what I still need to do manually in the Firebase console before this works end to end in a live environment.
 ```
 
+## Phase 6 build scope — Analysis tab, Track A only
+
+Analysis splits into two tracks, and only one of them is buildable right now:
+
+- **Track A — a research browser over real analysis output.** `oam_analysis` already has real EDA/correlation/PCA/bivariate output and a rendered chart registry from the CxG feature-engineering work — genuine research artifacts, not placeholders. This phase surfaces them: feature inventory (`cxg_feature_inventory_v1`), inter-feature correlation used for redundancy detection (`cxg_feature_correlation_v1` — this is NOT correlation-to-target, there's no `feature_family` column on it, filtering by family means joining against the inventory table), univariate target-lift (`cxg_univariate_target_v1` — the actual target-correlation table, point-biserial corr and mean-for-goals vs mean-for-non-goals), PCA (`cxg_pca_components_v1` + `cxg_pca_loadings_v1`, bundled together since neither alone tells the story), bivariate interaction/stratified output (`cxg_bivariate_candidate_pool_v1` + `cxg_bivariate_interaction_v1` + `cxg_bivariate_stratified_v1`, same reasoning), and the rendered chart registry (`cxg_rendered_chart_registry_v1`, defaulting to the latest `run_id`).
+- **Track B — build-your-own quadrant scatter of player-level metrics.** Blocked: `oam_serving` is empty, there's no player-level CxG/CxA data to plot yet. Don't attempt it — this is the "power user" workspace described in section 3, and it stays a stub until there's real per-player model output to explore.
+
+This is also the first phase where role enforcement actually restricts access, not just resolves a role that nothing checks. Every `/v1/analysis/*` route is admin-only: guest and viewer get 403, matching the role table in section 7 (Analysis is admin-only there already).
+
+- API: new `src/opponent_adjusted/api/routers/analysis.py`, six endpoints — `GET /v1/analysis/features?family=`, `GET /v1/analysis/correlation?family=`, `GET /v1/analysis/univariate?family=`, `GET /v1/analysis/bivariate`, `GET /v1/analysis/pca`, `GET /v1/analysis/charts?run_id=` (defaults to the latest run in the chart registry if omitted). Reads its own dataset (`oam_analysis`, not `oam_core`) through a dedicated `AnalysisStore` Protocol, kept separate from the existing `ServingStore` rather than overloading it with unrelated methods. Every route depends on a new `require_admin` dependency, not the existing unenforced `get_role`.
+- Web: `/analysis` replaces its placeholder with two real panels — a feature-family browser (pick a family, see inventory + inter-feature correlation + univariate target-lift together) and a rendered-chart gallery (pick a `run_id`, defaulting to latest, chart cards referencing their stored `html_uri`/`png_uri` in Cloud Storage). No new pitch or chart component — Track B's quadrant scatter isn't part of this.
+
+## Appendix — prompt for Claude Code (phase 6)
+
+```
+Continue in the feature/dashboard-scaffold worktree (oam-dashboard), rebased on main. Still no changes under ingestion, features, modeling, or pipelines — this phase is read-only against oam_analysis, a new dataset this branch hasn't touched before.
+
+Read docs/dashboard_design_spec.md's "Phase 6 build scope — Analysis tab, Track A only" section first.
+
+This phase is Track A only: a research browser over oam_analysis's real EDA/correlation/PCA/bivariate output and its rendered chart registry. Track B (build-your-own quadrant scatter of player-level metrics) is explicitly out of scope — oam_serving is empty, there's no player-level CxG/CxA data to plot, do not attempt it.
+
+1. API: add src/opponent_adjusted/api/routers/analysis.py, admin-only — this is the first router where the role dependency actually gates access (403 for guest/viewer), not just a stub. Six endpoints reading from oam_analysis: GET /v1/analysis/features?family=, GET /v1/analysis/correlation?family=, GET /v1/analysis/univariate?family=, GET /v1/analysis/bivariate, GET /v1/analysis/pca, GET /v1/analysis/charts?run_id= (default to the latest run_id in cxg_rendered_chart_registry_v1 if none given). New Record/Response types following the existing interfaces.py/models.py pattern. Keep this as its own small Protocol for the oam_analysis read layer rather than overloading the existing ServingStore (which reads oam_core) with unrelated methods.
+
+2. Web: replace the /analysis PlaceholderPanel with two real panels: a feature-family browser (select a family, see inventory + correlation-to-target + univariate target-lift together) and a rendered-chart gallery (pick a run_id, defaulting to latest, show chart cards linking to their stored html_uri/png_uri in Cloud Storage). No new pitch/scatter component — don't build Track B's quadrant scatter.
+
+3. Tests: router tests for all six endpoints via a fake analysis store (no real BigQuery in tests, same pattern as every prior phase), and a role-gating test asserting guest/viewer get 403 and admin gets 200 on every /v1/analysis/* route.
+
+Stop after phase 6. End with a short summary and any deviations, not a full narration.
+```
+
+Status (phase 6): shipped and verified — 236/236 backend tests (including a role-gating matrix across all six `/v1/analysis/*` routes × guest/viewer/admin, plus family-filter, bivariate/PCA bundling, and latest-run-defaulting coverage), 14/14 web tests, ruff and black clean, `next build` clean (13/13 routes, `/analysis` included). Pushed to `feature/dashboard-scaffold`, not yet merged.
+

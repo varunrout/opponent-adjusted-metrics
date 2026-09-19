@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Montserrat, Inconsolata } from "next/font/google";
 import "./globals.css";
 import { RoleProvider } from "@/components/shell/RoleProvider";
 import { RoleGate } from "@/components/shell/RoleGate";
 import { TopBar } from "@/components/shell/TopBar";
-import { Sidebar } from "@/components/shell/Sidebar";
+import { AppShell } from "@/components/shell/AppShell";
 import { MatchFilterProvider } from "@/components/shell/MatchFilterProvider";
 
 const montserrat = Montserrat({
@@ -31,14 +32,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${montserrat.variable} ${inconsolata.variable}`}>
       <body className="font-ui">
         <RoleProvider defaultRole="guest">
-          <MatchFilterProvider>
-            <RoleGate />
-            <TopBar />
-            <div className="flex" style={{ minHeight: "calc(100vh - 56px)" }}>
-              <Sidebar />
-              <main className="flex-1 px-7 py-6 overflow-hidden">{children}</main>
-            </div>
-          </MatchFilterProvider>
+          <Suspense fallback={null}>
+            <MatchFilterProvider>
+              <RoleGate />
+              <TopBar />
+              <AppShell>{children}</AppShell>
+            </MatchFilterProvider>
+          </Suspense>
         </RoleProvider>
       </body>
     </html>

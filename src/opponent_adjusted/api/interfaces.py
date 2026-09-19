@@ -44,6 +44,12 @@ class MatchRecord:
     match_status_360: str | None
     last_updated: str | None
     last_updated_360: str | None
+    # Defaulted (rather than inserted above, positionally) so every existing
+    # keyword-based MatchRecord(...) construction — including test fixtures —
+    # keeps working unchanged; a frozen dataclass requires defaulted fields
+    # to come after all non-defaulted ones.
+    home_xg: float | None = None
+    away_xg: float | None = None
 
 
 @dataclass(frozen=True)
@@ -87,6 +93,7 @@ class PlayerSeasonRecord:
 
     player_id: int
     player_name: str | None
+    team_id: int | None
     team_name: str | None
     shots: int
     goals: int
@@ -161,3 +168,12 @@ class ServingStore(Protocol):
         season_id: int | None = None,
     ) -> list[ShotRecord]:
         """Return a team's shots joined to events for player_name/minute/period, optionally filtered by competition_id/season_id."""
+
+    def list_team_shots_faced(
+        self,
+        team_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        """Return shots taken AGAINST team_id (by opponents, in matches team_id played), optionally filtered by competition_id/season_id."""

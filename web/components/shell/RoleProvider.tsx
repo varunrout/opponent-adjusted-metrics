@@ -19,6 +19,29 @@ type RoleContextValue = {
 
 const RoleContext = createContext<RoleContextValue | undefined>(undefined);
 
+// If GET /v1/me hangs (slow/unresponsive backend), roleResolved must still
+// settle to true so any page gating on it (e.g. /analysis) doesn't spin on
+// its loading skeleton forever with zero requests firing. This races the
+// real call against a fixed timeout and falls back to the existing guest
+// path on either a rejection or a timeout.
+const ME_TIMEOUT_MS = 9000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 export function RoleProvider({
   children,
   defaultRole = "admin",
@@ -49,11 +72,12 @@ export function RoleProvider({
       }
       try {
         const idToken = await firebaseUser.getIdToken();
-        const me = await getMe(idToken);
+        const me = await withTimeout(getMe(idToken), ME_TIMEOUT_MS);
         setRole(me.role);
       } catch {
-        // Never let a role-resolution failure (network error, 401, etc.)
-        // crash the app — fall back to guest.
+        // Never let a role-resolution failure (network error, 401, a
+        // hung/timed-out backend, etc.) crash the app or leave
+        // roleResolved stuck at false — fall back to guest.
         setRole("guest");
       } finally {
         setRoleResolved(true);

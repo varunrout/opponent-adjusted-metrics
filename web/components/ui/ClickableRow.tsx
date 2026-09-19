@@ -12,10 +12,12 @@ import type { KeyboardEvent, ReactNode } from "react";
 export function ClickableRow({
   href,
   className,
+  style,
   children,
 }: {
   href: string;
   className?: string;
+  style?: React.CSSProperties;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -32,7 +34,7 @@ export function ClickableRow({
   }
 
   return (
-    <div role="link" tabIndex={0} onClick={navigate} onKeyDown={onKeyDown} className={className}>
+    <div role="link" tabIndex={0} onClick={navigate} onKeyDown={onKeyDown} className={className} style={style}>
       {children}
     </div>
   );
