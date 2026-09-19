@@ -1,0 +1,13 @@
+{
+  "total": 3960,
+  "assigned": 3557,
+  "no_freeze_frame_defender_resolved": 98,
+  "defender_not_in_cluster_table": 27,
+  "below_min_action_threshold": 278,
+  "by_archetype": {
+    "deep_block_clearer": 1530,
+    "duel_dominant_contester": 238,
+    "high_volume_presser": 1268,
+    "unresolved_5050_annotation_density": 521
+  }
+}

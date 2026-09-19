@@ -1,0 +1,16 @@
+[
+  {
+    "has_360_frame": false,
+    "total_rows": 150146,
+    "distinct_shots": 11596,
+    "player_id_nonnull_rows": 150146,
+    "player_id_nonnull_rate": 1.0
+  },
+  {
+    "has_360_frame": true,
+    "total_rows": 55209,
+    "distinct_shots": 3867,
+    "player_id_nonnull_rows": 55209,
+    "player_id_nonnull_rate": 1.0
+  }
+]

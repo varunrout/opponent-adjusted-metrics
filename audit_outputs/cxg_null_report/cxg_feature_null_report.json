@@ -1,0 +1,2959 @@
+{
+  "generated_at": "2026-08-20T14:23:38.047774+00:00",
+  "project": "oam-varun-260819",
+  "dataset": "oam_features",
+  "tables": {
+    "cxg_shot_base_features": {
+      "row_count": 15737,
+      "column_count": 14,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "team_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "player_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "shot_x_sb",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "shot_y_sb",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "outcome_name",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "is_goal",
+          "type": "BOOLEAN",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "has_360_frame",
+          "type": "BOOLEAN",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "event_context_valid",
+          "type": "BOOLEAN",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "silver_schema_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        }
+      ],
+      "summary": {
+        "complete_columns": 14,
+        "partial_null_columns": 0,
+        "all_null_columns": 0
+      }
+    },
+    "cxg_shot_geometry_features": {
+      "row_count": 15737,
+      "column_count": 8,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "phase_location",
+          "type": "STRING",
+          "null_count": 1096,
+          "non_null_count": 14641,
+          "null_pct": 6.964478617271398,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "visible_goal_angle_delta",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "visible_goal_angle_proxy",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        }
+      ],
+      "summary": {
+        "complete_columns": 5,
+        "partial_null_columns": 3,
+        "all_null_columns": 0
+      }
+    },
+    "cxg_event_context_features": {
+      "row_count": 15737,
+      "column_count": 45,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "actions_per_second",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "attackers_in_box",
+          "type": "FLOAT",
+          "null_count": 15617,
+          "non_null_count": 120,
+          "null_pct": 99.2374658448243,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "attackers_in_box_delta",
+          "type": "FLOAT",
+          "null_count": 15664,
+          "non_null_count": 73,
+          "null_pct": 99.53612505560146,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "avg_action_interval_s",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_actions_before_shot",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_exit_reentry",
+          "type": "BOOLEAN",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_numerical_balance",
+          "type": "FLOAT",
+          "null_count": 15617,
+          "non_null_count": 120,
+          "null_pct": 99.2374658448243,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_numerical_balance_delta",
+          "type": "FLOAT",
+          "null_count": 15664,
+          "non_null_count": 73,
+          "null_pct": 99.53612505560146,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "direct_vs_second_phase",
+          "type": "STRING",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "final_third_actions_before_shot",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "final_third_entry_to_shot_s",
+          "type": "FLOAT",
+          "null_count": 193,
+          "non_null_count": 15544,
+          "null_pct": 1.2264090995742518,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "first_box_entry_to_shot_s",
+          "type": "FLOAT",
+          "null_count": 3902,
+          "non_null_count": 11835,
+          "null_pct": 24.79506894579653,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "game_state",
+          "type": "STRING",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "high_turnover_shot",
+          "type": "BOOLEAN",
+          "null_count": 9599,
+          "non_null_count": 6138,
+          "null_pct": 60.996377962762914,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "last_action_interval_s",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "last_box_entry_to_shot_s",
+          "type": "FLOAT",
+          "null_count": 3902,
+          "non_null_count": 11835,
+          "null_pct": 24.79506894579653,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "late_game_leading",
+          "type": "BOOLEAN",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "late_game_trailing",
+          "type": "BOOLEAN",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "manpower_diff",
+          "type": "FLOAT",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "match_minute",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "max_box_numerical_advantage",
+          "type": "FLOAT",
+          "null_count": 15121,
+          "non_null_count": 616,
+          "null_pct": 96.0856580034314,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "opp_attacking_actions_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "opp_shots_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "pace_to_goal",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "phase_control_score",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "phase_control_state",
+          "type": "STRING",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "phase_directness_bucket",
+          "type": "STRING",
+          "null_count": 1144,
+          "non_null_count": 14593,
+          "null_pct": 7.269492279341678,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "recorded_event_path_length_sb",
+          "type": "FLOAT",
+          "null_count": 1096,
+          "non_null_count": 14641,
+          "null_pct": 6.964478617271398,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "recorded_receipt_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "regulation_time_remaining",
+          "type": "FLOAT",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "score_diff",
+          "type": "FLOAT",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "set_piece_category",
+          "type": "STRING",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "set_piece_phase",
+          "type": "STRING",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "team_attacking_actions_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "team_shots_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "territorial_dominance_last_5m",
+          "type": "FLOAT",
+          "null_count": 17,
+          "non_null_count": 15720,
+          "null_pct": 0.10802567198322426,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "time_since_max_box_advantage",
+          "type": "FLOAT",
+          "null_count": 15121,
+          "non_null_count": 616,
+          "null_pct": 96.0856580034314,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "time_to_control",
+          "type": "FLOAT",
+          "null_count": 7405,
+          "non_null_count": 8332,
+          "null_pct": 47.05471182563385,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "transition_proxy",
+          "type": "BOOLEAN",
+          "null_count": 9599,
+          "non_null_count": 6138,
+          "null_pct": 60.996377962762914,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "unique_attackers_involved",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        }
+      ],
+      "summary": {
+        "complete_columns": 10,
+        "partial_null_columns": 35,
+        "all_null_columns": 0
+      }
+    },
+    "cxg_buildup_features": {
+      "row_count": 15737,
+      "column_count": 33,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "actions_since_restart",
+          "type": "FLOAT",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "counterpress_regain_proxy",
+          "type": "BOOLEAN",
+          "null_count": 9599,
+          "non_null_count": 6138,
+          "null_pct": 60.996377962762914,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "deep_regain",
+          "type": "BOOLEAN",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "event_possession_share_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "goalward_progress_sb",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "high_regain",
+          "type": "BOOLEAN",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "max_single_action_progress_sb",
+          "type": "FLOAT",
+          "null_count": 1142,
+          "non_null_count": 14595,
+          "null_pct": 7.2567833767554175,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_action_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_age_s",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_carry_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_directness_proxy",
+          "type": "FLOAT",
+          "null_count": 1096,
+          "non_null_count": 14641,
+          "null_pct": 6.964478617271398,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_directness_score",
+          "type": "FLOAT",
+          "null_count": 1144,
+          "non_null_count": 14593,
+          "null_pct": 7.269492279341678,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_dribble_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_pass_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_goal_distance",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_type",
+          "type": "STRING",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_x",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_y",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_zone",
+          "type": "STRING",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_distance_to_shot",
+          "type": "FLOAT",
+          "null_count": 1100,
+          "non_null_count": 14637,
+          "null_pct": 6.989896422443922,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_progress_sb",
+          "type": "FLOAT",
+          "null_count": 10549,
+          "non_null_count": 5188,
+          "null_pct": 67.03310669123721,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_time_gap_s",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_type",
+          "type": "STRING",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "progressive_actions_n",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "regain_to_box_entry_s",
+          "type": "FLOAT",
+          "null_count": 11250,
+          "non_null_count": 4487,
+          "null_pct": 71.48757704772193,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "restart_vs_live_regain",
+          "type": "STRING",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "same_player_previous_action",
+          "type": "BOOLEAN",
+          "null_count": 1098,
+          "non_null_count": 14639,
+          "null_pct": 6.97718751985766,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "seconds_since_restart",
+          "type": "FLOAT",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        }
+      ],
+      "summary": {
+        "complete_columns": 6,
+        "partial_null_columns": 27,
+        "all_null_columns": 0
+      }
+    },
+    "cxg_defensive_360_features": {
+      "row_count": 3960,
+      "column_count": 54,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "actor_space",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "central_defenders_between_ball_and_goal",
+          "type": "FLOAT",
+          "null_count": 3840,
+          "non_null_count": 120,
+          "null_pct": 96.96969696969697,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_behind_ball_at_regain",
+          "type": "FLOAT",
+          "null_count": 2659,
+          "non_null_count": 1301,
+          "null_pct": 67.14646464646464,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_between_ball_and_goal",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_goal_side",
+          "type": "FLOAT",
+          "null_count": 3840,
+          "non_null_count": 120,
+          "null_pct": 96.96969696969697,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_goal_side_delta",
+          "type": "FLOAT",
+          "null_count": 3887,
+          "non_null_count": 73,
+          "null_pct": 98.15656565656565,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_in_box",
+          "type": "FLOAT",
+          "null_count": 3840,
+          "non_null_count": 120,
+          "null_pct": 96.96969696969697,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_in_box_delta",
+          "type": "FLOAT",
+          "null_count": 3887,
+          "non_null_count": 73,
+          "null_pct": 98.15656565656565,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_within_3m",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_within_5m",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defenders_within_8m",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_centroid_delta",
+          "type": "FLOAT",
+          "null_count": 352,
+          "non_null_count": 3608,
+          "null_pct": 8.88888888888889,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_centroid_x",
+          "type": "FLOAT",
+          "null_count": 103,
+          "non_null_count": 3857,
+          "null_pct": 2.601010101010101,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_centroid_y",
+          "type": "FLOAT",
+          "null_count": 103,
+          "non_null_count": 3857,
+          "null_pct": 2.601010101010101,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_hull_area",
+          "type": "FLOAT",
+          "null_count": 116,
+          "non_null_count": 3844,
+          "null_pct": 2.9292929292929295,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_hull_area_delta",
+          "type": "FLOAT",
+          "null_count": 366,
+          "non_null_count": 3594,
+          "null_pct": 9.242424242424242,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_layer_bypass_proxy_last_3_actions",
+          "type": "FLOAT",
+          "null_count": 397,
+          "non_null_count": 3563,
+          "null_pct": 10.025252525252524,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_layer_bypass_proxy_last_action",
+          "type": "FLOAT",
+          "null_count": 1025,
+          "non_null_count": 2935,
+          "null_pct": 25.88383838383838,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_length",
+          "type": "FLOAT",
+          "null_count": 103,
+          "non_null_count": 3857,
+          "null_pct": 2.601010101010101,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_length_delta",
+          "type": "FLOAT",
+          "null_count": 352,
+          "non_null_count": 3608,
+          "null_pct": 8.88888888888889,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_recovery_slope",
+          "type": "FLOAT",
+          "null_count": 569,
+          "non_null_count": 3391,
+          "null_pct": 14.36868686868687,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_reset_index",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "goal_mouth_defender_count",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "local_defensive_density",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "local_density_delta",
+          "type": "FLOAT",
+          "null_count": 459,
+          "non_null_count": 3501,
+          "null_pct": 11.59090909090909,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "local_density_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 459,
+          "non_null_count": 3501,
+          "null_pct": 11.59090909090909,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "nearest_defender_distance",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "nearest_defender_distance_delta",
+          "type": "FLOAT",
+          "null_count": 459,
+          "non_null_count": 3501,
+          "null_pct": 11.59090909090909,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "nearest_defender_distance_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 459,
+          "non_null_count": 3501,
+          "null_pct": 11.59090909090909,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "pre_shot_receiver_space",
+          "type": "FLOAT",
+          "null_count": 1375,
+          "non_null_count": 2585,
+          "null_pct": 34.72222222222222,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "pressures_faced_possession",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "pressures_last_10s",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "pressures_last_5s",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "previous_action_under_pressure",
+          "type": "BOOLEAN",
+          "null_count": 3171,
+          "non_null_count": 789,
+          "null_pct": 80.07575757575758,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "rest_defence_count_at_regain",
+          "type": "FLOAT",
+          "null_count": 2659,
+          "non_null_count": 1301,
+          "null_pct": 67.14646464646464,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "rest_defence_count_at_shot",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "rest_defence_recovery_delta",
+          "type": "FLOAT",
+          "null_count": 2659,
+          "non_null_count": 1301,
+          "null_pct": 67.14646464646464,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "rest_defence_reset_fraction",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "shooter_space_change",
+          "type": "FLOAT",
+          "null_count": 1375,
+          "non_null_count": 2585,
+          "null_pct": 34.72222222222222,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "shooter_space_previous_linked_event",
+          "type": "FLOAT",
+          "null_count": 833,
+          "non_null_count": 3127,
+          "null_pct": 21.035353535353536,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "shot_within_10s_regain",
+          "type": "BOOLEAN",
+          "null_count": 2485,
+          "non_null_count": 1475,
+          "null_pct": 62.752525252525245,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "shot_within_15s_regain",
+          "type": "BOOLEAN",
+          "null_count": 2485,
+          "non_null_count": 1475,
+          "null_pct": 62.752525252525245,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "shot_within_5s_regain",
+          "type": "BOOLEAN",
+          "null_count": 2485,
+          "non_null_count": 1475,
+          "null_pct": 62.752525252525245,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "successful_under_pressure_actions_n",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "time_since_last_pressure_s",
+          "type": "FLOAT",
+          "null_count": 1479,
+          "non_null_count": 2481,
+          "null_pct": 37.348484848484844,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "time_since_shooter_max_linkable_space",
+          "type": "FLOAT",
+          "null_count": 833,
+          "non_null_count": 3127,
+          "null_pct": 21.035353535353536,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "transition_space_decay",
+          "type": "FLOAT",
+          "null_count": 459,
+          "non_null_count": 3501,
+          "null_pct": 11.59090909090909,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "under_pressure_action_share",
+          "type": "FLOAT",
+          "null_count": 281,
+          "non_null_count": 3679,
+          "null_pct": 7.095959595959596,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "under_pressure_actions_n",
+          "type": "FLOAT",
+          "null_count": 51,
+          "non_null_count": 3909,
+          "null_pct": 1.2878787878787878,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        }
+      ],
+      "summary": {
+        "complete_columns": 5,
+        "partial_null_columns": 49,
+        "all_null_columns": 0
+      }
+    },
+    "cxg_goalkeeper_360_features": {
+      "row_count": 3960,
+      "column_count": 17,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "gk_depth",
+          "type": "FLOAT",
+          "null_count": 300,
+          "non_null_count": 3660,
+          "null_pct": 7.575757575757576,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_depth_displacement",
+          "type": "FLOAT",
+          "null_count": 1248,
+          "non_null_count": 2712,
+          "null_pct": 31.515151515151512,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_depth_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 1248,
+          "non_null_count": 2712,
+          "null_pct": 31.515151515151512,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_distance_to_goal_centre",
+          "type": "FLOAT",
+          "null_count": 300,
+          "non_null_count": 3660,
+          "null_pct": 7.575757575757576,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_distance_to_shooter",
+          "type": "FLOAT",
+          "null_count": 300,
+          "non_null_count": 3660,
+          "null_pct": 7.575757575757576,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_lateral_displacement",
+          "type": "FLOAT",
+          "null_count": 1248,
+          "non_null_count": 2712,
+          "null_pct": 31.515151515151512,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_lateral_offset",
+          "type": "FLOAT",
+          "null_count": 300,
+          "non_null_count": 3660,
+          "null_pct": 7.575757575757576,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_lateral_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 1248,
+          "non_null_count": 2712,
+          "null_pct": 31.515151515151512,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_setness_proxy",
+          "type": "FLOAT",
+          "null_count": 1248,
+          "non_null_count": 2712,
+          "null_pct": 31.515151515151512,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_total_displacement",
+          "type": "FLOAT",
+          "null_count": 1248,
+          "non_null_count": 2712,
+          "null_pct": 31.515151515151512,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_x",
+          "type": "FLOAT",
+          "null_count": 300,
+          "non_null_count": 3660,
+          "null_pct": 7.575757575757576,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "gk_y",
+          "type": "FLOAT",
+          "null_count": 300,
+          "non_null_count": 3660,
+          "null_pct": 7.575757575757576,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        }
+      ],
+      "summary": {
+        "complete_columns": 5,
+        "partial_null_columns": 12,
+        "all_null_columns": 0
+      }
+    },
+    "cxg_line_shape_360_features": {
+      "row_count": 3960,
+      "column_count": 23,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 3960,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "defensive_compactness",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_compactness_delta",
+          "type": "FLOAT",
+          "null_count": 353,
+          "non_null_count": 3607,
+          "null_pct": 8.914141414141415,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_line_depth",
+          "type": "FLOAT",
+          "null_count": 103,
+          "non_null_count": 3857,
+          "null_pct": 2.601010101010101,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_line_depth_delta",
+          "type": "FLOAT",
+          "null_count": 352,
+          "non_null_count": 3608,
+          "null_pct": 8.88888888888889,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_line_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 352,
+          "non_null_count": 3608,
+          "null_pct": 8.88888888888889,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_width",
+          "type": "FLOAT",
+          "null_count": 103,
+          "non_null_count": 3857,
+          "null_pct": 2.601010101010101,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "defensive_width_delta",
+          "type": "FLOAT",
+          "null_count": 352,
+          "non_null_count": 3608,
+          "null_pct": 8.88888888888889,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "estimated_goalface_occlusion",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "estimated_goalface_occlusion_delta",
+          "type": "FLOAT",
+          "null_count": 459,
+          "non_null_count": 3501,
+          "null_pct": 11.59090909090909,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "goal_exposure_decay",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "line_break_proxy_last_action",
+          "type": "BOOLEAN",
+          "null_count": 1025,
+          "non_null_count": 2935,
+          "null_pct": 25.88383838383838,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "line_break_proxy_possession_count",
+          "type": "FLOAT",
+          "null_count": 352,
+          "non_null_count": 3608,
+          "null_pct": 8.88888888888889,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "max_goal_exposure",
+          "type": "FLOAT",
+          "null_count": 102,
+          "non_null_count": 3858,
+          "null_pct": 2.5757575757575757,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "mean_defensive_compactness_last_3",
+          "type": "FLOAT",
+          "null_count": 352,
+          "non_null_count": 3608,
+          "null_pct": 8.88888888888889,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "min_defensive_compactness_sequence",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "regain_height_speed_interaction",
+          "type": "FLOAT",
+          "null_count": 2485,
+          "non_null_count": 1475,
+          "null_pct": 62.752525252525245,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "shot_corridor_occlusion",
+          "type": "FLOAT",
+          "null_count": 104,
+          "non_null_count": 3856,
+          "null_pct": 2.6262626262626263,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        },
+        {
+          "column": "shot_corridor_occlusion_delta",
+          "type": "FLOAT",
+          "null_count": 459,
+          "non_null_count": 3501,
+          "null_pct": 11.59090909090909,
+          "status": "expected_360_sparse_or_feature_eligibility"
+        }
+      ],
+      "summary": {
+        "complete_columns": 5,
+        "partial_null_columns": 18,
+        "all_null_columns": 0
+      }
+    },
+    "cxg_training_matrix_v1": {
+      "row_count": 15737,
+      "column_count": 164,
+      "columns": [
+        {
+          "column": "event_id",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "match_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "team_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "player_id",
+          "type": "INTEGER",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "shot_x_sb",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "shot_y_sb",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "outcome_name",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "is_goal",
+          "type": "BOOLEAN",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "has_360_frame",
+          "type": "BOOLEAN",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "event_context_valid",
+          "type": "BOOLEAN",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "data_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "silver_schema_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "feature_version",
+          "type": "STRING",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "materialized_at",
+          "type": "TIMESTAMP",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "phase_location",
+          "type": "STRING",
+          "null_count": 1096,
+          "non_null_count": 14641,
+          "null_pct": 6.964478617271398,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "visible_goal_angle_delta",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "visible_goal_angle_proxy",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "actions_per_second",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "attackers_in_box",
+          "type": "FLOAT",
+          "null_count": 15617,
+          "non_null_count": 120,
+          "null_pct": 99.2374658448243,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "attackers_in_box_delta",
+          "type": "FLOAT",
+          "null_count": 15664,
+          "non_null_count": 73,
+          "null_pct": 99.53612505560146,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "avg_action_interval_s",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_actions_before_shot",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_exit_reentry",
+          "type": "BOOLEAN",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_numerical_balance",
+          "type": "FLOAT",
+          "null_count": 15617,
+          "non_null_count": 120,
+          "null_pct": 99.2374658448243,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "box_numerical_balance_delta",
+          "type": "FLOAT",
+          "null_count": 15664,
+          "non_null_count": 73,
+          "null_pct": 99.53612505560146,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "direct_vs_second_phase",
+          "type": "STRING",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "final_third_actions_before_shot",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "final_third_entry_to_shot_s",
+          "type": "FLOAT",
+          "null_count": 193,
+          "non_null_count": 15544,
+          "null_pct": 1.2264090995742518,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "first_box_entry_to_shot_s",
+          "type": "FLOAT",
+          "null_count": 3902,
+          "non_null_count": 11835,
+          "null_pct": 24.79506894579653,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "game_state",
+          "type": "STRING",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "high_turnover_shot",
+          "type": "BOOLEAN",
+          "null_count": 9599,
+          "non_null_count": 6138,
+          "null_pct": 60.996377962762914,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "last_action_interval_s",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "last_box_entry_to_shot_s",
+          "type": "FLOAT",
+          "null_count": 3902,
+          "non_null_count": 11835,
+          "null_pct": 24.79506894579653,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "late_game_leading",
+          "type": "BOOLEAN",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "late_game_trailing",
+          "type": "BOOLEAN",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "manpower_diff",
+          "type": "FLOAT",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "match_minute",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "max_box_numerical_advantage",
+          "type": "FLOAT",
+          "null_count": 15121,
+          "non_null_count": 616,
+          "null_pct": 96.0856580034314,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "opp_attacking_actions_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "opp_shots_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "pace_to_goal",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "phase_control_score",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "phase_control_state",
+          "type": "STRING",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "phase_directness_bucket",
+          "type": "STRING",
+          "null_count": 1144,
+          "non_null_count": 14593,
+          "null_pct": 7.269492279341678,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "recorded_event_path_length_sb",
+          "type": "FLOAT",
+          "null_count": 1096,
+          "non_null_count": 14641,
+          "null_pct": 6.964478617271398,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "recorded_receipt_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "regulation_time_remaining",
+          "type": "FLOAT",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "score_diff",
+          "type": "FLOAT",
+          "null_count": 142,
+          "non_null_count": 15595,
+          "null_pct": 0.9023320836245791,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "set_piece_category",
+          "type": "STRING",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "set_piece_phase",
+          "type": "STRING",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "team_attacking_actions_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "team_shots_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "territorial_dominance_last_5m",
+          "type": "FLOAT",
+          "null_count": 17,
+          "non_null_count": 15720,
+          "null_pct": 0.10802567198322426,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "time_since_max_box_advantage",
+          "type": "FLOAT",
+          "null_count": 15121,
+          "non_null_count": 616,
+          "null_pct": 96.0856580034314,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "time_to_control",
+          "type": "FLOAT",
+          "null_count": 7405,
+          "non_null_count": 8332,
+          "null_pct": 47.05471182563385,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "transition_proxy",
+          "type": "BOOLEAN",
+          "null_count": 9599,
+          "non_null_count": 6138,
+          "null_pct": 60.996377962762914,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "unique_attackers_involved",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "actions_since_restart",
+          "type": "FLOAT",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "counterpress_regain_proxy",
+          "type": "BOOLEAN",
+          "null_count": 9599,
+          "non_null_count": 6138,
+          "null_pct": 60.996377962762914,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "deep_regain",
+          "type": "BOOLEAN",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "event_possession_share_last_5m",
+          "type": "FLOAT",
+          "null_count": 0,
+          "non_null_count": 15737,
+          "null_pct": 0.0,
+          "status": "complete"
+        },
+        {
+          "column": "goalward_progress_sb",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "high_regain",
+          "type": "BOOLEAN",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "max_single_action_progress_sb",
+          "type": "FLOAT",
+          "null_count": 1142,
+          "non_null_count": 14595,
+          "null_pct": 7.2567833767554175,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_action_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_age_s",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_carry_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_directness_proxy",
+          "type": "FLOAT",
+          "null_count": 1096,
+          "non_null_count": 14641,
+          "null_pct": 6.964478617271398,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_directness_score",
+          "type": "FLOAT",
+          "null_count": 1144,
+          "non_null_count": 14593,
+          "null_pct": 7.269492279341678,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_dribble_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_pass_count",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_goal_distance",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_type",
+          "type": "STRING",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_x",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_y",
+          "type": "FLOAT",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "possession_start_zone",
+          "type": "STRING",
+          "null_count": 158,
+          "non_null_count": 15579,
+          "null_pct": 1.0040033043146723,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_distance_to_shot",
+          "type": "FLOAT",
+          "null_count": 1100,
+          "non_null_count": 14637,
+          "null_pct": 6.989896422443922,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_progress_sb",
+          "type": "FLOAT",
+          "null_count": 10549,
+          "non_null_count": 5188,
+          "null_pct": 67.03310669123721,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_time_gap_s",
+          "type": "FLOAT",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_type",
+          "type": "STRING",
+          "null_count": 1090,
+          "non_null_count": 14647,
+          "null_pct": 6.926351909512614,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "progressive_actions_n",
+          "type": "FLOAT",
+          "null_count": 156,
+          "non_null_count": 15581,
+          "null_pct": 0.9912944017284108,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "regain_to_box_entry_s",
+          "type": "FLOAT",
+          "null_count": 11250,
+          "non_null_count": 4487,
+          "null_pct": 71.48757704772193,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "restart_vs_live_regain",
+          "type": "STRING",
+          "null_count": 496,
+          "non_null_count": 15241,
+          "null_pct": 3.151807841392896,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "same_player_previous_action",
+          "type": "BOOLEAN",
+          "null_count": 1098,
+          "non_null_count": 14639,
+          "null_pct": 6.97718751985766,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "seconds_since_restart",
+          "type": "FLOAT",
+          "null_count": 6634,
+          "non_null_count": 9103,
+          "null_pct": 42.15542987862998,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "actor_space",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "central_defenders_between_ball_and_goal",
+          "type": "FLOAT",
+          "null_count": 15617,
+          "non_null_count": 120,
+          "null_pct": 99.2374658448243,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_behind_ball_at_regain",
+          "type": "FLOAT",
+          "null_count": 14436,
+          "non_null_count": 1301,
+          "null_pct": 91.73285886763678,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_between_ball_and_goal",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_goal_side",
+          "type": "FLOAT",
+          "null_count": 15617,
+          "non_null_count": 120,
+          "null_pct": 99.2374658448243,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_goal_side_delta",
+          "type": "FLOAT",
+          "null_count": 15664,
+          "non_null_count": 73,
+          "null_pct": 99.53612505560146,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_in_box",
+          "type": "FLOAT",
+          "null_count": 15617,
+          "non_null_count": 120,
+          "null_pct": 99.2374658448243,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_in_box_delta",
+          "type": "FLOAT",
+          "null_count": 15664,
+          "non_null_count": 73,
+          "null_pct": 99.53612505560146,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_within_3m",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_within_5m",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defenders_within_8m",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_centroid_delta",
+          "type": "FLOAT",
+          "null_count": 12129,
+          "non_null_count": 3608,
+          "null_pct": 77.07313973438393,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_centroid_x",
+          "type": "FLOAT",
+          "null_count": 11880,
+          "non_null_count": 3857,
+          "null_pct": 75.49088136239436,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_centroid_y",
+          "type": "FLOAT",
+          "null_count": 11880,
+          "non_null_count": 3857,
+          "null_pct": 75.49088136239436,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_hull_area",
+          "type": "FLOAT",
+          "null_count": 11893,
+          "non_null_count": 3844,
+          "null_pct": 75.57348922920507,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_hull_area_delta",
+          "type": "FLOAT",
+          "null_count": 12143,
+          "non_null_count": 3594,
+          "null_pct": 77.16210205248777,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_layer_bypass_proxy_last_3_actions",
+          "type": "FLOAT",
+          "null_count": 12174,
+          "non_null_count": 3563,
+          "null_pct": 77.35909004257482,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_layer_bypass_proxy_last_action",
+          "type": "FLOAT",
+          "null_count": 12802,
+          "non_null_count": 2935,
+          "null_pct": 81.34968545466099,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_length",
+          "type": "FLOAT",
+          "null_count": 11880,
+          "non_null_count": 3857,
+          "null_pct": 75.49088136239436,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_length_delta",
+          "type": "FLOAT",
+          "null_count": 12129,
+          "non_null_count": 3608,
+          "null_pct": 77.07313973438393,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_recovery_slope",
+          "type": "FLOAT",
+          "null_count": 12346,
+          "non_null_count": 3391,
+          "null_pct": 78.45205566499332,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_reset_index",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "goal_mouth_defender_count",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "local_defensive_density",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "local_density_delta",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "local_density_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "nearest_defender_distance",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "nearest_defender_distance_delta",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "nearest_defender_distance_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "pre_shot_receiver_space",
+          "type": "FLOAT",
+          "null_count": 13152,
+          "non_null_count": 2585,
+          "null_pct": 83.57374340725679,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "pressures_faced_possession",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "pressures_last_10s",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "pressures_last_5s",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "previous_action_under_pressure",
+          "type": "BOOLEAN",
+          "null_count": 14948,
+          "non_null_count": 789,
+          "null_pct": 94.98633792971977,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "rest_defence_count_at_regain",
+          "type": "FLOAT",
+          "null_count": 14436,
+          "non_null_count": 1301,
+          "null_pct": 91.73285886763678,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "rest_defence_count_at_shot",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "rest_defence_recovery_delta",
+          "type": "FLOAT",
+          "null_count": 14436,
+          "non_null_count": 1301,
+          "null_pct": 91.73285886763678,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "rest_defence_reset_fraction",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "shooter_space_change",
+          "type": "FLOAT",
+          "null_count": 13152,
+          "non_null_count": 2585,
+          "null_pct": 83.57374340725679,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "shooter_space_previous_linked_event",
+          "type": "FLOAT",
+          "null_count": 12610,
+          "non_null_count": 3127,
+          "null_pct": 80.12963080637986,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "shot_within_10s_regain",
+          "type": "BOOLEAN",
+          "null_count": 14262,
+          "non_null_count": 1475,
+          "null_pct": 90.62718434263202,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "shot_within_15s_regain",
+          "type": "BOOLEAN",
+          "null_count": 14262,
+          "non_null_count": 1475,
+          "null_pct": 90.62718434263202,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "shot_within_5s_regain",
+          "type": "BOOLEAN",
+          "null_count": 14262,
+          "non_null_count": 1475,
+          "null_pct": 90.62718434263202,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "successful_under_pressure_actions_n",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "time_since_last_pressure_s",
+          "type": "FLOAT",
+          "null_count": 13256,
+          "non_null_count": 2481,
+          "null_pct": 84.23460634174239,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "time_since_shooter_max_linkable_space",
+          "type": "FLOAT",
+          "null_count": 12610,
+          "non_null_count": 3127,
+          "null_pct": 80.12963080637986,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "transition_space_decay",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "under_pressure_action_share",
+          "type": "FLOAT",
+          "null_count": 12058,
+          "non_null_count": 3679,
+          "null_pct": 76.62197369257164,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "under_pressure_actions_n",
+          "type": "FLOAT",
+          "null_count": 11828,
+          "non_null_count": 3909,
+          "null_pct": 75.16044989515154,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_depth",
+          "type": "FLOAT",
+          "null_count": 12077,
+          "non_null_count": 3660,
+          "null_pct": 76.74270826714114,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_depth_displacement",
+          "type": "FLOAT",
+          "null_count": 13025,
+          "non_null_count": 2712,
+          "null_pct": 82.76672809302916,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_depth_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 13025,
+          "non_null_count": 2712,
+          "null_pct": 82.76672809302916,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_distance_to_goal_centre",
+          "type": "FLOAT",
+          "null_count": 12077,
+          "non_null_count": 3660,
+          "null_pct": 76.74270826714114,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_distance_to_shooter",
+          "type": "FLOAT",
+          "null_count": 12077,
+          "non_null_count": 3660,
+          "null_pct": 76.74270826714114,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_lateral_displacement",
+          "type": "FLOAT",
+          "null_count": 13025,
+          "non_null_count": 2712,
+          "null_pct": 82.76672809302916,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_lateral_offset",
+          "type": "FLOAT",
+          "null_count": 12077,
+          "non_null_count": 3660,
+          "null_pct": 76.74270826714114,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_lateral_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 13025,
+          "non_null_count": 2712,
+          "null_pct": 82.76672809302916,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_setness_proxy",
+          "type": "FLOAT",
+          "null_count": 13025,
+          "non_null_count": 2712,
+          "null_pct": 82.76672809302916,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_total_displacement",
+          "type": "FLOAT",
+          "null_count": 13025,
+          "non_null_count": 2712,
+          "null_pct": 82.76672809302916,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_x",
+          "type": "FLOAT",
+          "null_count": 12077,
+          "non_null_count": 3660,
+          "null_pct": 76.74270826714114,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "gk_y",
+          "type": "FLOAT",
+          "null_count": 12077,
+          "non_null_count": 3660,
+          "null_pct": 76.74270826714114,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_compactness",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_compactness_delta",
+          "type": "FLOAT",
+          "null_count": 12130,
+          "non_null_count": 3607,
+          "null_pct": 77.07949418567706,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_line_depth",
+          "type": "FLOAT",
+          "null_count": 11880,
+          "non_null_count": 3857,
+          "null_pct": 75.49088136239436,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_line_depth_delta",
+          "type": "FLOAT",
+          "null_count": 12129,
+          "non_null_count": 3608,
+          "null_pct": 77.07313973438393,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_line_state_change_rate",
+          "type": "FLOAT",
+          "null_count": 12129,
+          "non_null_count": 3608,
+          "null_pct": 77.07313973438393,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_width",
+          "type": "FLOAT",
+          "null_count": 11880,
+          "non_null_count": 3857,
+          "null_pct": 75.49088136239436,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "defensive_width_delta",
+          "type": "FLOAT",
+          "null_count": 12129,
+          "non_null_count": 3608,
+          "null_pct": 77.07313973438393,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "estimated_goalface_occlusion",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "estimated_goalface_occlusion_delta",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "goal_exposure_decay",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "line_break_proxy_last_action",
+          "type": "BOOLEAN",
+          "null_count": 12802,
+          "non_null_count": 2935,
+          "null_pct": 81.34968545466099,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "line_break_proxy_possession_count",
+          "type": "FLOAT",
+          "null_count": 12129,
+          "non_null_count": 3608,
+          "null_pct": 77.07313973438393,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "max_goal_exposure",
+          "type": "FLOAT",
+          "null_count": 11879,
+          "non_null_count": 3858,
+          "null_pct": 75.48452691110123,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "mean_defensive_compactness_last_3",
+          "type": "FLOAT",
+          "null_count": 12129,
+          "non_null_count": 3608,
+          "null_pct": 77.07313973438393,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "min_defensive_compactness_sequence",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "regain_height_speed_interaction",
+          "type": "FLOAT",
+          "null_count": 14262,
+          "non_null_count": 1475,
+          "null_pct": 90.62718434263202,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "shot_corridor_occlusion",
+          "type": "FLOAT",
+          "null_count": 11881,
+          "non_null_count": 3856,
+          "null_pct": 75.4972358136875,
+          "status": "partial_feature_eligibility_or_source_missing"
+        },
+        {
+          "column": "shot_corridor_occlusion_delta",
+          "type": "FLOAT",
+          "null_count": 12236,
+          "non_null_count": 3501,
+          "null_pct": 77.75306602274894,
+          "status": "partial_feature_eligibility_or_source_missing"
+        }
+      ],
+      "summary": {
+        "complete_columns": 20,
+        "partial_null_columns": 144,
+        "all_null_columns": 0
+      }
+    }
+  }
+}

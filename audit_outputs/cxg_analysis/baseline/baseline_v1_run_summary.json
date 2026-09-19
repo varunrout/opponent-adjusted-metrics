@@ -1,0 +1,1001 @@
+{
+  "cxg_event": {
+    "n_predictions": 15737,
+    "n_coefficients": 6,
+    "statsbomb_xg_corr_test": 0.4346638444284824
+  },
+  "cxg_plus": {
+    "n_predictions": 3960,
+    "n_coefficients": 22,
+    "divergence_rows": 14,
+    "n_with_statsbomb_xg": 590,
+    "overall_pearson_corr": 0.7388485183566664,
+    "mean_divergence": -0.0027886324161987192
+  },
+  "calibration": {
+    "cxg_event": {
+      "validation_v1": [
+        {
+          "decile": 1,
+          "n": 242,
+          "mean_predicted": 0.019409132661734926,
+          "actual_rate": 0.008264462809917356
+        },
+        {
+          "decile": 2,
+          "n": 242,
+          "mean_predicted": 0.033675242420535746,
+          "actual_rate": 0.02066115702479339
+        },
+        {
+          "decile": 3,
+          "n": 242,
+          "mean_predicted": 0.04595143867336783,
+          "actual_rate": 0.049586776859504134
+        },
+        {
+          "decile": 4,
+          "n": 242,
+          "mean_predicted": 0.060996942389102554,
+          "actual_rate": 0.06198347107438017
+        },
+        {
+          "decile": 5,
+          "n": 242,
+          "mean_predicted": 0.08232249096215934,
+          "actual_rate": 0.049586776859504134
+        },
+        {
+          "decile": 6,
+          "n": 242,
+          "mean_predicted": 0.10729654615118368,
+          "actual_rate": 0.10743801652892562
+        },
+        {
+          "decile": 7,
+          "n": 242,
+          "mean_predicted": 0.13059817936525348,
+          "actual_rate": 0.2892561983471074
+        },
+        {
+          "decile": 8,
+          "n": 242,
+          "mean_predicted": 0.15447200410981612,
+          "actual_rate": 0.1446280991735537
+        },
+        {
+          "decile": 9,
+          "n": 242,
+          "mean_predicted": 0.18569355848783947,
+          "actual_rate": 0.1487603305785124
+        },
+        {
+          "decile": 10,
+          "n": 242,
+          "mean_predicted": 0.23472343978914972,
+          "actual_rate": 0.19834710743801653
+        }
+      ],
+      "validation_dumb": [
+        {
+          "decile": 1,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.10743801652892562
+        },
+        {
+          "decile": 2,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.10330578512396695
+        },
+        {
+          "decile": 3,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.10743801652892562
+        },
+        {
+          "decile": 4,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.10330578512396695
+        },
+        {
+          "decile": 5,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.1322314049586777
+        },
+        {
+          "decile": 6,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.1115702479338843
+        },
+        {
+          "decile": 7,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.045454545454545456
+        },
+        {
+          "decile": 8,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.045454545454545456
+        },
+        {
+          "decile": 9,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.128099173553719
+        },
+        {
+          "decile": 10,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.19421487603305784
+        }
+      ],
+      "test_v1": [
+        {
+          "decile": 1,
+          "n": 243,
+          "mean_predicted": 0.01847986790932325,
+          "actual_rate": 0.0205761316872428
+        },
+        {
+          "decile": 2,
+          "n": 243,
+          "mean_predicted": 0.032834200700263216,
+          "actual_rate": 0.037037037037037035
+        },
+        {
+          "decile": 3,
+          "n": 242,
+          "mean_predicted": 0.04557559598908244,
+          "actual_rate": 0.012396694214876033
+        },
+        {
+          "decile": 4,
+          "n": 243,
+          "mean_predicted": 0.06124295013464836,
+          "actual_rate": 0.06172839506172839
+        },
+        {
+          "decile": 5,
+          "n": 243,
+          "mean_predicted": 0.08093159385480146,
+          "actual_rate": 0.06584362139917696
+        },
+        {
+          "decile": 6,
+          "n": 242,
+          "mean_predicted": 0.10796370096635426,
+          "actual_rate": 0.09090909090909091
+        },
+        {
+          "decile": 7,
+          "n": 243,
+          "mean_predicted": 0.13261575147977786,
+          "actual_rate": 0.25925925925925924
+        },
+        {
+          "decile": 8,
+          "n": 242,
+          "mean_predicted": 0.15903964675036142,
+          "actual_rate": 0.128099173553719
+        },
+        {
+          "decile": 9,
+          "n": 243,
+          "mean_predicted": 0.18818357456723891,
+          "actual_rate": 0.11934156378600823
+        },
+        {
+          "decile": 10,
+          "n": 243,
+          "mean_predicted": 0.2345307156037451,
+          "actual_rate": 0.21810699588477367
+        }
+      ],
+      "test_dumb": [
+        {
+          "decile": 1,
+          "n": 243,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.1111111111111111
+        },
+        {
+          "decile": 2,
+          "n": 243,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.102880658436214
+        },
+        {
+          "decile": 3,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.12396694214876033
+        },
+        {
+          "decile": 4,
+          "n": 243,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.13580246913580246
+        },
+        {
+          "decile": 5,
+          "n": 243,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.09465020576131687
+        },
+        {
+          "decile": 6,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.08677685950413223
+        },
+        {
+          "decile": 7,
+          "n": 243,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.053497942386831275
+        },
+        {
+          "decile": 8,
+          "n": 242,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.045454545454545456
+        },
+        {
+          "decile": 9,
+          "n": 243,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.09465020576131687
+        },
+        {
+          "decile": 10,
+          "n": 243,
+          "mean_predicted": 0.1046831955922865,
+          "actual_rate": 0.1646090534979424
+        }
+      ]
+    },
+    "cxg_plus": {
+      "validation_v1": [
+        {
+          "decile": 1,
+          "n": 59,
+          "mean_predicted": 0.01055339464358102,
+          "actual_rate": 0.01694915254237288
+        },
+        {
+          "decile": 2,
+          "n": 59,
+          "mean_predicted": 0.020511298348799906,
+          "actual_rate": 0.01694915254237288
+        },
+        {
+          "decile": 3,
+          "n": 59,
+          "mean_predicted": 0.03035714862659939,
+          "actual_rate": 0.03389830508474576
+        },
+        {
+          "decile": 4,
+          "n": 59,
+          "mean_predicted": 0.04037136248995125,
+          "actual_rate": 0.06779661016949153
+        },
+        {
+          "decile": 5,
+          "n": 59,
+          "mean_predicted": 0.056649351084909524,
+          "actual_rate": 0.06779661016949153
+        },
+        {
+          "decile": 6,
+          "n": 59,
+          "mean_predicted": 0.07947922586776644,
+          "actual_rate": 0.01694915254237288
+        },
+        {
+          "decile": 7,
+          "n": 59,
+          "mean_predicted": 0.10283327677337557,
+          "actual_rate": 0.15254237288135594
+        },
+        {
+          "decile": 8,
+          "n": 59,
+          "mean_predicted": 0.1390347673363606,
+          "actual_rate": 0.15254237288135594
+        },
+        {
+          "decile": 9,
+          "n": 59,
+          "mean_predicted": 0.21210504556134152,
+          "actual_rate": 0.2711864406779661
+        },
+        {
+          "decile": 10,
+          "n": 59,
+          "mean_predicted": 0.42854838413424506,
+          "actual_rate": 0.3389830508474576
+        }
+      ],
+      "validation_dumb": [
+        {
+          "decile": 1,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.22033898305084745
+        },
+        {
+          "decile": 2,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.11864406779661017
+        },
+        {
+          "decile": 3,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.15254237288135594
+        },
+        {
+          "decile": 4,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.15254237288135594
+        },
+        {
+          "decile": 5,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.11864406779661017
+        },
+        {
+          "decile": 6,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.0847457627118644
+        },
+        {
+          "decile": 7,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.06779661016949153
+        },
+        {
+          "decile": 8,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.06779661016949153
+        },
+        {
+          "decile": 9,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.06779661016949153
+        },
+        {
+          "decile": 10,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.0847457627118644
+        }
+      ],
+      "test_v1": [
+        {
+          "decile": 1,
+          "n": 59,
+          "mean_predicted": 0.010088822314500805,
+          "actual_rate": 0.01694915254237288
+        },
+        {
+          "decile": 2,
+          "n": 59,
+          "mean_predicted": 0.021099849636787925,
+          "actual_rate": 0.01694915254237288
+        },
+        {
+          "decile": 3,
+          "n": 59,
+          "mean_predicted": 0.03161467532869548,
+          "actual_rate": 0.03389830508474576
+        },
+        {
+          "decile": 4,
+          "n": 59,
+          "mean_predicted": 0.044230506225373334,
+          "actual_rate": 0.0
+        },
+        {
+          "decile": 5,
+          "n": 59,
+          "mean_predicted": 0.05867982502682081,
+          "actual_rate": 0.05084745762711865
+        },
+        {
+          "decile": 6,
+          "n": 59,
+          "mean_predicted": 0.07945788905224271,
+          "actual_rate": 0.05084745762711865
+        },
+        {
+          "decile": 7,
+          "n": 59,
+          "mean_predicted": 0.10594114947948523,
+          "actual_rate": 0.1016949152542373
+        },
+        {
+          "decile": 8,
+          "n": 59,
+          "mean_predicted": 0.14014950091804093,
+          "actual_rate": 0.15254237288135594
+        },
+        {
+          "decile": 9,
+          "n": 59,
+          "mean_predicted": 0.2288712225046617,
+          "actual_rate": 0.1864406779661017
+        },
+        {
+          "decile": 10,
+          "n": 59,
+          "mean_predicted": 0.4168030872005564,
+          "actual_rate": 0.4915254237288136
+        }
+      ],
+      "test_dumb": [
+        {
+          "decile": 1,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.2711864406779661
+        },
+        {
+          "decile": 2,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.13559322033898305
+        },
+        {
+          "decile": 3,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.11864406779661017
+        },
+        {
+          "decile": 4,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.13559322033898305
+        },
+        {
+          "decile": 5,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.11864406779661017
+        },
+        {
+          "decile": 6,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.1016949152542373
+        },
+        {
+          "decile": 7,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.01694915254237288
+        },
+        {
+          "decile": 8,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.0847457627118644
+        },
+        {
+          "decile": 9,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.05084745762711865
+        },
+        {
+          "decile": 10,
+          "n": 59,
+          "mean_predicted": 0.10899280575539569,
+          "actual_rate": 0.06779661016949153
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "cxg_event": [
+      {
+        "track": "cxg_event",
+        "split": "validation",
+        "model": "dumb_baseline",
+        "n": 2420,
+        "log_loss": 0.34205219114977226,
+        "brier_score": 0.09622938627446517,
+        "roc_auc": null,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "split": "validation",
+        "model": "v1",
+        "n": 2420,
+        "log_loss": 0.3152917500112341,
+        "brier_score": 0.09185792573864483,
+        "roc_auc": 0.7015220967561611,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "split": "validation",
+        "model": "statsbomb_xg",
+        "n": 2420,
+        "log_loss": 0.2522593587150808,
+        "brier_score": 0.07181905603424052,
+        "roc_auc": 0.839467328247255,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "split": "test",
+        "model": "dumb_baseline",
+        "n": 2427,
+        "log_loss": 0.3281198025574554,
+        "brier_score": 0.09109695947756498,
+        "roc_auc": null,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "split": "test",
+        "model": "v1",
+        "n": 2427,
+        "log_loss": 0.3057536742413257,
+        "brier_score": 0.08721253171263796,
+        "roc_auc": 0.6938638574831416,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "split": "test",
+        "model": "statsbomb_xg",
+        "n": 2427,
+        "log_loss": 0.2597070320536875,
+        "brier_score": 0.07177257685969368,
+        "roc_auc": 0.7972213834930647,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      }
+    ],
+    "cxg_plus": [
+      {
+        "track": "cxg_plus",
+        "split": "validation",
+        "model": "dumb_baseline",
+        "n": 590,
+        "log_loss": 0.35399893279983063,
+        "brier_score": 0.10068445548402152,
+        "roc_auc": null,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "split": "validation",
+        "model": "v1",
+        "n": 590,
+        "log_loss": 0.29999525913745295,
+        "brier_score": 0.08770827678469445,
+        "roc_auc": 0.7821694586341714,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "split": "validation",
+        "model": "statsbomb_xg",
+        "n": 590,
+        "log_loss": 0.29501438519470335,
+        "brier_score": 0.08679207753328812,
+        "roc_auc": 0.7952398618760881,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "split": "test",
+        "model": "dumb_baseline",
+        "n": 590,
+        "log_loss": 0.34687665949820357,
+        "brier_score": 0.09803355925185472,
+        "roc_auc": null,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "split": "test",
+        "model": "v1",
+        "n": 590,
+        "log_loss": 0.26902160498295813,
+        "brier_score": 0.07801188494998634,
+        "roc_auc": 0.8292161172161172,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "split": "test",
+        "model": "statsbomb_xg",
+        "n": 590,
+        "log_loss": 0.2429527397197946,
+        "brier_score": 0.06653782235731101,
+        "roc_auc": 0.8475604395604396,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      }
+    ]
+  },
+  "coefficients": {
+    "cxg_event": [
+      {
+        "track": "cxg_event",
+        "feature": "const",
+        "coefficient": -2.4150335512132477,
+        "std_error": 0.03998425856511721,
+        "p_value": 0.0,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "feature": "shot_x_sb",
+        "coefficient": 0.7568728928686054,
+        "std_error": 0.04479721786322697,
+        "p_value": 4.853048481228243e-64,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "feature": "first_box_entry_to_shot_s",
+        "coefficient": -0.031916500780349966,
+        "std_error": 0.0388644818350261,
+        "p_value": 0.41151787439238363,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "feature": "last_action_interval_s",
+        "coefficient": -0.20013495156462457,
+        "std_error": 0.04580151344612612,
+        "p_value": 1.2446613623356434e-05,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "feature": "last_box_entry_to_shot_s",
+        "coefficient": -0.1174333206234365,
+        "std_error": 0.07294407893706559,
+        "p_value": 0.10741774952359627,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_event",
+        "feature": "regain_height_speed_interaction",
+        "coefficient": 0.12447588441467049,
+        "std_error": 0.03434648574659713,
+        "p_value": 0.0002899437544671877,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      }
+    ],
+    "cxg_plus": [
+      {
+        "track": "cxg_plus",
+        "feature": "const",
+        "coefficient": -2.9452551248094374,
+        "std_error": 0.267880213090151,
+        "p_value": 4.053839066758034e-28,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "last_action_interval_s",
+        "coefficient": -0.08067892005135652,
+        "std_error": 0.10213341145156671,
+        "p_value": 0.4295647938303657,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defenders_between_ball_and_goal",
+        "coefficient": -0.4170879708390633,
+        "std_error": 0.17584460265498153,
+        "p_value": 0.017696291923920113,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defensive_reset_index",
+        "coefficient": 0.14636281877438803,
+        "std_error": 0.08836761390114271,
+        "p_value": 0.09766213446336443,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "nearest_defender_distance_delta",
+        "coefficient": 0.05844680306678339,
+        "std_error": 0.08974719792752874,
+        "p_value": 0.5148927389078419,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "pre_shot_receiver_space",
+        "coefficient": 0.06430738413053007,
+        "std_error": 0.09778429622496582,
+        "p_value": 0.5107660701602709,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "gk_distance_to_shooter",
+        "coefficient": -0.7011726968354,
+        "std_error": 0.13628260351322866,
+        "p_value": 2.6753438638198003e-07,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defensive_line_depth",
+        "coefficient": -0.023269039814110132,
+        "std_error": 0.11164872145615337,
+        "p_value": 0.8349065428142808,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defensive_width",
+        "coefficient": -0.03490002847682327,
+        "std_error": 0.08330398819120081,
+        "p_value": 0.6752542304923763,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "estimated_goalface_occlusion",
+        "coefficient": -0.006590099010505279,
+        "std_error": 0.11808261271823511,
+        "p_value": 0.9554937865282392,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "goal_mouth_defender_count",
+        "coefficient": -0.009933139667983213,
+        "std_error": 0.10467607932829076,
+        "p_value": 0.9243989631615968,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "max_goal_exposure",
+        "coefficient": 0.43756212513754345,
+        "std_error": 0.12103552206419549,
+        "p_value": 0.00030016843018837956,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "min_defensive_compactness_sequence",
+        "coefficient": -0.24897620045691696,
+        "std_error": 0.09851032846914869,
+        "p_value": 0.011490656942091818,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "shot_corridor_occlusion",
+        "coefficient": 0.5268839821720149,
+        "std_error": 0.2072706578449435,
+        "p_value": 0.011021717646536514,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "visible_goal_angle_proxy",
+        "coefficient": 0.494639947522893,
+        "std_error": 0.08334921402082754,
+        "p_value": 2.946553415105997e-09,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "gk_odi",
+        "coefficient": -0.008299575096056992,
+        "std_error": 0.06109791293564896,
+        "p_value": 0.8919473209657149,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "mean_backline_odi",
+        "coefficient": -0.08578858655609,
+        "std_error": 0.06601584046566565,
+        "p_value": 0.1937671886778045,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "nearest_defender_odi",
+        "coefficient": 0.08731730972151998,
+        "std_error": 0.06922056431447754,
+        "p_value": 0.20715181544345296,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defensive_profile_cluster_cluster_1",
+        "coefficient": -0.04944188900178422,
+        "std_error": 0.3411750735543827,
+        "p_value": 0.8847768186152426,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defensive_profile_cluster_cluster_2",
+        "coefficient": 0.23238409073373303,
+        "std_error": 0.35413812952407103,
+        "p_value": 0.5116979010757098,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defensive_profile_cluster_cluster_3",
+        "coefficient": 1.4426798475153804,
+        "std_error": 0.3278867498766246,
+        "p_value": 1.0828412874141926e-05,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      },
+      {
+        "track": "cxg_plus",
+        "feature": "defensive_profile_cluster_null_cluster",
+        "coefficient": 2.2694353178275795,
+        "std_error": 0.4072279159771031,
+        "p_value": 2.505515363755052e-08,
+        "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+      }
+    ]
+  },
+  "divergence": [
+    {
+      "stratum_type": "defensive_profile_cluster",
+      "stratum_value": "cluster_0",
+      "n": 119,
+      "mean_divergence": -0.009545757166938711,
+      "mean_v1_prob": 0.0635589624406243,
+      "mean_statsbomb_xg": 0.07310471960756304,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "defensive_profile_cluster",
+      "stratum_value": "cluster_1",
+      "n": 178,
+      "mean_divergence": -0.005785693439897691,
+      "mean_v1_prob": 0.14109097689998998,
+      "mean_statsbomb_xg": 0.14687667033988763,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "defensive_profile_cluster",
+      "stratum_value": "cluster_2",
+      "n": 195,
+      "mean_divergence": 0.004215060900087005,
+      "mean_v1_prob": 0.08230665483752292,
+      "mean_statsbomb_xg": 0.0780915939374359,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "defensive_profile_cluster",
+      "stratum_value": "cluster_3",
+      "n": 77,
+      "mean_divergence": -0.019882374176924414,
+      "mean_v1_prob": 0.11824934969580285,
+      "mean_statsbomb_xg": 0.1381317238727273,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "defensive_profile_cluster",
+      "stratum_value": "null_cluster",
+      "n": 21,
+      "mean_divergence": 0.05854815931983169,
+      "mean_v1_prob": 0.44031176642935543,
+      "mean_statsbomb_xg": 0.3817636071095238,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_nearest_defender_odi",
+      "stratum_value": "low",
+      "n": 121,
+      "mean_divergence": 0.0090776937514963,
+      "mean_v1_prob": 0.13746867691017398,
+      "mean_statsbomb_xg": 0.1283909831586777,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_nearest_defender_odi",
+      "stratum_value": "mid",
+      "n": 121,
+      "mean_divergence": -0.00582244275312651,
+      "mean_v1_prob": 0.07468557179563383,
+      "mean_statsbomb_xg": 0.08050801454876035,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_nearest_defender_odi",
+      "stratum_value": "high",
+      "n": 121,
+      "mean_divergence": 0.012191213464043298,
+      "mean_v1_prob": 0.07530787235247306,
+      "mean_statsbomb_xg": 0.06311665888842977,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_gk_odi",
+      "stratum_value": "low",
+      "n": 125,
+      "mean_divergence": 0.0246330204527275,
+      "mean_v1_prob": 0.13467266176872753,
+      "mean_statsbomb_xg": 0.110039641316,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_gk_odi",
+      "stratum_value": "mid",
+      "n": 125,
+      "mean_divergence": -0.008163675624280869,
+      "mean_v1_prob": 0.09698564237091913,
+      "mean_statsbomb_xg": 0.1051493179952,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_gk_odi",
+      "stratum_value": "high",
+      "n": 125,
+      "mean_divergence": 0.001353485506589388,
+      "mean_v1_prob": 0.058505150438589386,
+      "mean_statsbomb_xg": 0.05715166493200001,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_mean_backline_odi",
+      "stratum_value": "low",
+      "n": 126,
+      "mean_divergence": 0.006120908222279081,
+      "mean_v1_prob": 0.11014176980323145,
+      "mean_statsbomb_xg": 0.10402086158095238,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_mean_backline_odi",
+      "stratum_value": "mid",
+      "n": 126,
+      "mean_divergence": 0.009885166286454769,
+      "mean_v1_prob": 0.08448366560391508,
+      "mean_statsbomb_xg": 0.07459849931746032,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    },
+    {
+      "stratum_type": "odi_tercile_mean_backline_odi",
+      "stratum_value": "high",
+      "n": 126,
+      "mean_divergence": 0.0061824996596991704,
+      "mean_v1_prob": 0.09349228191525473,
+      "mean_statsbomb_xg": 0.08730978225555557,
+      "materialized_at": "2026-08-22T01:43:15.442238+00:00"
+    }
+  ]
+}

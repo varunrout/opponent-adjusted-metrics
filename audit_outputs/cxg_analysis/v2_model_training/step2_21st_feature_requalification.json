@@ -1,0 +1,529 @@
+{
+  "stability": [
+    {
+      "split": "test",
+      "level": "deep_block_clearer",
+      "n": 198,
+      "goal_rate": 0.11616161616161616
+    },
+    {
+      "split": "test",
+      "level": "duel_dominant_contester",
+      "n": 41,
+      "goal_rate": 0.0975609756097561
+    },
+    {
+      "split": "test",
+      "level": "high_volume_presser",
+      "n": 200,
+      "goal_rate": 0.03
+    },
+    {
+      "split": "test",
+      "level": "unresolved_5050_annotation_density",
+      "n": 72,
+      "goal_rate": 0.041666666666666664
+    },
+    {
+      "split": "train",
+      "level": "deep_block_clearer",
+      "n": 1029,
+      "goal_rate": 0.09718172983479106
+    },
+    {
+      "split": "train",
+      "level": "duel_dominant_contester",
+      "n": 141,
+      "goal_rate": 0.06382978723404255
+    },
+    {
+      "split": "train",
+      "level": "high_volume_presser",
+      "n": 874,
+      "goal_rate": 0.06178489702517163
+    },
+    {
+      "split": "train",
+      "level": "unresolved_5050_annotation_density",
+      "n": 358,
+      "goal_rate": 0.08379888268156424
+    },
+    {
+      "split": "validation",
+      "level": "deep_block_clearer",
+      "n": 215,
+      "goal_rate": 0.11627906976744186
+    },
+    {
+      "split": "validation",
+      "level": "duel_dominant_contester",
+      "n": 32,
+      "goal_rate": 0.15625
+    },
+    {
+      "split": "validation",
+      "level": "high_volume_presser",
+      "n": 217,
+      "goal_rate": 0.07834101382488479
+    },
+    {
+      "split": "validation",
+      "level": "unresolved_5050_annotation_density",
+      "n": 56,
+      "goal_rate": 0.08928571428571429
+    }
+  ],
+  "redundancy": {
+    "continuous": [
+      {
+        "feature": "last_action_interval_s",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2293
+      },
+      {
+        "feature": "defenders_between_ball_and_goal",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "defensive_reset_index",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "nearest_defender_distance_delta",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2185
+      },
+      {
+        "feature": "pre_shot_receiver_space",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 1618
+      },
+      {
+        "feature": "gk_distance_to_shooter",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2219
+      },
+      {
+        "feature": "defensive_line_depth",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "defensive_width",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "estimated_goalface_occlusion",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "goal_mouth_defender_count",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "max_goal_exposure",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "min_defensive_compactness_sequence",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "shot_corridor_occlusion",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "visible_goal_angle_proxy",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2372
+      },
+      {
+        "feature": "nearest_defender_zone_displacement",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2402
+      },
+      {
+        "feature": "nearest_defender_gap",
+        "note": "categorical vs continuous -- not a near-duplication risk by construction, no correlation computed",
+        "n": 2402
+      }
+    ],
+    "categorical": [
+      {
+        "feature": "defensive_profile_cluster",
+        "cramers_v": 0.1030808114788435,
+        "n": 2402,
+        "redundant": false
+      },
+      {
+        "feature": "nearest_defender_role",
+        "cramers_v": 0.08293769998662427,
+        "n": 2402,
+        "redundant": false
+      },
+      {
+        "feature": "second_nearest_defender_role",
+        "cramers_v": 0.47243840375091617,
+        "n": 2402,
+        "redundant": false
+      },
+      {
+        "feature": "nearest_defender_style_archetype",
+        "cramers_v": 0.06387419017195127,
+        "n": 2211,
+        "redundant": false
+      }
+    ]
+  },
+  "confirmed_pairs": [],
+  "all_new_pairs": [
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "last_action_interval_s",
+      "n_train": 2293,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.42107563033554607,
+      "interaction_p_fdr": 0.6577642452990192,
+      "lr_stat": 2.8147617586889737,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.38929010844529777,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "defenders_between_ball_and_goal",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.3584594190761005,
+      "interaction_p_fdr": 0.6089439222826316,
+      "lr_stat": 3.223313215211874,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.3483875614625453,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "defensive_reset_index",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.10117448302723547,
+      "interaction_p_fdr": 0.3821502179743187,
+      "lr_stat": 6.224720881845315,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": 1.3950763384102212,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "nearest_defender_distance_delta",
+      "n_train": 2185,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.8005387330774307,
+      "interaction_p_fdr": 0.892198409487384,
+      "lr_stat": 1.002947564589931,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": 0.11060407017949948,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "pre_shot_receiver_space",
+      "n_train": 1618,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.7572777230580064,
+      "interaction_p_fdr": 0.8817605588746392,
+      "lr_stat": 1.1821952243133182,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.12380026160683577,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "gk_distance_to_shooter",
+      "n_train": 2219,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.11132931399810722,
+      "interaction_p_fdr": 0.3918527406718464,
+      "lr_stat": 6.005780822249108,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.11754341166958154,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "defensive_line_depth",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.4765479038264735,
+      "interaction_p_fdr": 0.6980334609399371,
+      "lr_stat": 2.4930528141835566,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": 0.0459260270312233,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "defensive_width",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.7034646220594771,
+      "interaction_p_fdr": 0.8490090266235069,
+      "lr_stat": 1.4088369182215956,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.01515642529063948,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "estimated_goalface_occlusion",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.39632013807024913,
+      "interaction_p_fdr": 0.6502127265215024,
+      "lr_stat": 2.9697021414083338,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.9049578740454,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "goal_mouth_defender_count",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.3036313768131487,
+      "interaction_p_fdr": 0.5693088315246538,
+      "lr_stat": 3.6353168322837064,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.20225284956084122,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "max_goal_exposure",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.41759054159017495,
+      "interaction_p_fdr": 0.6577642452990192,
+      "lr_stat": 2.8361067548948995,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": 1.9402636285000334,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "min_defensive_compactness_sequence",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.2664202311548431,
+      "interaction_p_fdr": 0.5500127566458826,
+      "lr_stat": 3.9544925138470717,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.0015096806495496471,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "shot_corridor_occlusion",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.15100452359524047,
+      "interaction_p_fdr": 0.4376485718289963,
+      "lr_stat": 5.3015087030908035,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.8522543188501944,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "visible_goal_angle_proxy",
+      "n_train": 2372,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.3317573257481691,
+      "interaction_p_fdr": 0.5954618667274829,
+      "lr_stat": 3.416477760239104,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": 2.2380393174373263,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "nearest_defender_zone_displacement",
+      "n_train": 2402,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.5409809244705279,
+      "interaction_p_fdr": 0.7533835155694485,
+      "lr_stat": 2.1544249704411413,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.018281003208716895,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "nearest_defender_gap",
+      "n_train": 2402,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.5985438048388296,
+      "interaction_p_fdr": 0.7955329051655331,
+      "lr_stat": 1.8759716148624648,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": -0.0032463960464230884,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "defensive_profile_cluster",
+      "n_train": 2402,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.2885796233101923,
+      "interaction_p_fdr": 0.5500127566458826,
+      "lr_stat": 14.19258525125224,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": null,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "nearest_defender_role",
+      "n_train": 2402,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.1255023871884492,
+      "interaction_p_fdr": 0.4015198188076638,
+      "lr_stat": 17.68785058272033,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": null,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "second_nearest_defender_role",
+      "n_train": 2402,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.5750506740799175,
+      "interaction_p_fdr": 0.7741066766460427,
+      "lr_stat": 7.59856849005655,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": null,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    },
+    {
+      "track": "cxg_plus",
+      "tier": 1,
+      "feature_a": "second_nearest_defender_style_archetype",
+      "feature_b": "nearest_defender_style_archetype",
+      "n_train": 2211,
+      "interaction_coef": null,
+      "interaction_se": null,
+      "interaction_p_raw": 0.11855059422261638,
+      "interaction_p_fdr": 0.39456297448953015,
+      "lr_stat": 14.107549284939068,
+      "main_effect_a_coef": null,
+      "main_effect_b_coef": null,
+      "validated_on_val_split": null,
+      "fit_status": "ok",
+      "materialized_at": "2026-08-22T16:39:46.794130+00:00"
+    }
+  ]
+}
