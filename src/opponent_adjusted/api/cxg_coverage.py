@@ -182,3 +182,97 @@ class BigQueryCxgMatchScopeStore:
 
     def list_covered_matches(self, *, track: str) -> list[CxgMatchScopeRow]:
         return self._get_track_matches(track)
+
+
+# --- Per-shot opponent-adjusted context (content_spec_v3.md §9.2) ----------
+#
+# oam_analysis.cxg_analysis_opponent_adjusted_v1 exists live (confirmed
+# 3,960 rows across 166 matches / 835 players) but nothing in the codebase
+# read it before this. It carries the defender-role/distance/archetype
+# context the model actually saw for a shot — the shot-detail modal's
+# CxG+ feature list, and Player detail's defender-archetype breakdown,
+# both need it. Note: this table has aggregate distances/roles/archetypes
+# only — no raw 360 x/y positions for teammates, other defenders, or an
+# assist passer, so it cannot power a full freeze-frame visualization.
+
+OPPONENT_CONTEXT_TABLE = "cxg_analysis_opponent_adjusted_v1"
+
+# Whole table cached at once (same reasoning as _get_track_coverage above):
+# 3,960 rows total, identical for every visitor, so one full-table fetch per
+# TTL window plus an in-memory event_id lookup beats trying to cache per
+# distinct event_ids combination, which would almost never repeat.
+_opponent_context_cache: TTLCache = TTLCache(maxsize=1, ttl=CACHE_TTL_SECONDS)
+_opponent_context_lock = threading.Lock()
+
+
+def _no_arg_cache_key(self) -> tuple:  # noqa: ANN001
+    return hashkey()
+
+
+class OpponentContextResponse(BaseModel):
+    """API response shape for one shot's opponent-adjusted defensive context."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    event_id: str
+    match_id: int
+    player_id: int
+    team_id: int
+    nearest_defender_odi: float | None
+    mean_backline_odi: float | None
+    gk_odi: float | None
+    defensive_profile_cluster: int | None
+    nearest_defender_role: str | None
+    nearest_defender_zone_displacement: float | None
+    nearest_defender_gap: float | None
+    nearest_defender_style_archetype: str | None
+    has_360_frame: bool
+
+
+class OpponentContextStore(Protocol):
+    """Read-only contract for per-shot opponent-adjusted context lookups."""
+
+    def get_opponent_context(self, event_ids: list[str]) -> list[OpponentContextResponse]:
+        """Return one row per event_id that has opponent-adjusted context.
+        event_ids with no row (not covered) are simply absent from the
+        result — never a placeholder."""
+
+
+class BigQueryOpponentContextStore:
+    """OpponentContextStore backed by oam_analysis.cxg_analysis_opponent_adjusted_v1."""
+
+    @cached(cache=_opponent_context_cache, key=_no_arg_cache_key, lock=_opponent_context_lock)
+    def _get_all_context(self) -> dict[str, OpponentContextResponse]:
+        client = _client()
+        query = f"""
+            SELECT
+                event_id, match_id, player_id, team_id,
+                nearest_defender_odi, mean_backline_odi, gk_odi,
+                defensive_profile_cluster, nearest_defender_role,
+                nearest_defender_zone_displacement, nearest_defender_gap,
+                nearest_defender_style_archetype, has_360_frame
+            FROM `{PROJECT}.{ANALYSIS_DATASET}.{OPPONENT_CONTEXT_TABLE}`
+        """
+        rows = client.query(query).result()
+        return {
+            row["event_id"]: OpponentContextResponse(
+                event_id=row["event_id"],
+                match_id=row["match_id"],
+                player_id=row["player_id"],
+                team_id=row["team_id"],
+                nearest_defender_odi=row["nearest_defender_odi"],
+                mean_backline_odi=row["mean_backline_odi"],
+                gk_odi=row["gk_odi"],
+                defensive_profile_cluster=row["defensive_profile_cluster"],
+                nearest_defender_role=row["nearest_defender_role"],
+                nearest_defender_zone_displacement=row["nearest_defender_zone_displacement"],
+                nearest_defender_gap=row["nearest_defender_gap"],
+                nearest_defender_style_archetype=row["nearest_defender_style_archetype"],
+                has_360_frame=row["has_360_frame"],
+            )
+            for row in rows
+        }
+
+    def get_opponent_context(self, event_ids: list[str]) -> list[OpponentContextResponse]:
+        all_context = self._get_all_context()
+        return [all_context[event_id] for event_id in event_ids if event_id in all_context]

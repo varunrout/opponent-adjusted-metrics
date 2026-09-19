@@ -78,6 +78,7 @@ _player_seasons_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_
 _player_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
 _team_seasons_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
 _team_shots_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
+_team_shots_faced_cache: TTLCache = TTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL_SECONDS)
 
 
 def _ignore_self_key(self, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003
@@ -164,45 +165,61 @@ class BigQueryServingStore:
         team_id: int | None = None,
     ) -> list[MatchRecord]:
         client = _client()
-        conditions: list[str] = ["silver_schema_version = @silver_schema_version"]
+        conditions: list[str] = ["m.silver_schema_version = @silver_schema_version"]
         parameters: list[bigquery.ScalarQueryParameter] = [
             bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION)
         ]
 
         if competition_id is not None:
-            conditions.append("competition_id = @competition_id")
+            conditions.append("m.competition_id = @competition_id")
             parameters.append(
                 bigquery.ScalarQueryParameter("competition_id", "INT64", competition_id)
             )
         if season_id is not None:
-            conditions.append("season_id = @season_id")
+            conditions.append("m.season_id = @season_id")
             parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
         if team_id is not None:
-            conditions.append("(home_team_id = @team_id OR away_team_id = @team_id)")
+            conditions.append("(m.home_team_id = @team_id OR m.away_team_id = @team_id)")
             parameters.append(bigquery.ScalarQueryParameter("team_id", "INT64", team_id))
 
         where_clause = f"WHERE {' AND '.join(conditions)}"
+        # home_xg/away_xg: per-match, per-side xG totals, needed by the Matches
+        # list's score column (diverging bar, not the raw score string). A
+        # cheap aggregate join (610 matches, grouped shots), not a per-shot
+        # fetch at list scale.
         query = f"""
+            WITH shot_xg AS (
+                SELECT match_id, team_id, SUM(statsbomb_xg) AS total_xg
+                FROM `{PROJECT}.{DATASET}.shots`
+                WHERE silver_schema_version = @silver_schema_version
+                GROUP BY match_id, team_id
+            )
             SELECT
-                match_id,
-                competition_id,
-                season_id,
-                match_date,
-                kick_off,
-                home_team_id,
-                home_team_name,
-                away_team_id,
-                away_team_name,
-                home_score,
-                away_score,
-                competition_stage,
-                stadium,
-                referee,
-                match_status,
-                match_status_360,
-                last_updated,
-                last_updated_360
-            FROM `{PROJECT}.{DATASET}.matches`
+                m.match_id AS match_id,
+                m.competition_id AS competition_id,
+                m.season_id AS season_id,
+                m.match_date AS match_date,
+                m.kick_off AS kick_off,
+                m.home_team_id AS home_team_id,
+                m.home_team_name AS home_team_name,
+                m.away_team_id AS away_team_id,
+                m.away_team_name AS away_team_name,
+                m.home_score AS home_score,
+                m.away_score AS away_score,
+                home_xg.total_xg AS home_xg,
+                away_xg.total_xg AS away_xg,
+                m.competition_stage AS competition_stage,
+                m.stadium AS stadium,
+                m.referee AS referee,
+                m.match_status AS match_status,
+                m.match_status_360 AS match_status_360,
+                m.last_updated AS last_updated,
+                m.last_updated_360 AS last_updated_360
+            FROM `{PROJECT}.{DATASET}.matches` m
+            LEFT JOIN shot_xg home_xg
+              ON m.match_id = home_xg.match_id AND m.home_team_id = home_xg.team_id
+            LEFT JOIN shot_xg away_xg
+              ON m.match_id = away_xg.match_id AND m.away_team_id = away_xg.team_id
             {where_clause}
         """
         job_config = bigquery.QueryJobConfig(query_parameters=parameters)
@@ -220,6 +237,8 @@ class BigQueryServingStore:
                 away_team_name=row["away_team_name"],
                 home_score=row["home_score"],
                 away_score=row["away_score"],
+                home_xg=row["home_xg"],
+                away_xg=row["away_xg"],
                 competition_stage=row["competition_stage"],
                 stadium=row["stadium"],
                 referee=row["referee"],
@@ -235,28 +254,41 @@ class BigQueryServingStore:
     def get_match(self, match_id: int) -> MatchRecord | None:
         client = _client()
         query = f"""
+            WITH shot_xg AS (
+                SELECT match_id, team_id, SUM(statsbomb_xg) AS total_xg
+                FROM `{PROJECT}.{DATASET}.shots`
+                WHERE silver_schema_version = @silver_schema_version
+                  AND match_id = @match_id
+                GROUP BY match_id, team_id
+            )
             SELECT
-                match_id,
-                competition_id,
-                season_id,
-                match_date,
-                kick_off,
-                home_team_id,
-                home_team_name,
-                away_team_id,
-                away_team_name,
-                home_score,
-                away_score,
-                competition_stage,
-                stadium,
-                referee,
-                match_status,
-                match_status_360,
-                last_updated,
-                last_updated_360
-            FROM `{PROJECT}.{DATASET}.matches`
-            WHERE match_id = @match_id
-              AND silver_schema_version = @silver_schema_version
+                m.match_id AS match_id,
+                m.competition_id AS competition_id,
+                m.season_id AS season_id,
+                m.match_date AS match_date,
+                m.kick_off AS kick_off,
+                m.home_team_id AS home_team_id,
+                m.home_team_name AS home_team_name,
+                m.away_team_id AS away_team_id,
+                m.away_team_name AS away_team_name,
+                m.home_score AS home_score,
+                m.away_score AS away_score,
+                home_xg.total_xg AS home_xg,
+                away_xg.total_xg AS away_xg,
+                m.competition_stage AS competition_stage,
+                m.stadium AS stadium,
+                m.referee AS referee,
+                m.match_status AS match_status,
+                m.match_status_360 AS match_status_360,
+                m.last_updated AS last_updated,
+                m.last_updated_360 AS last_updated_360
+            FROM `{PROJECT}.{DATASET}.matches` m
+            LEFT JOIN shot_xg home_xg
+              ON m.match_id = home_xg.match_id AND m.home_team_id = home_xg.team_id
+            LEFT JOIN shot_xg away_xg
+              ON m.match_id = away_xg.match_id AND m.away_team_id = away_xg.team_id
+            WHERE m.match_id = @match_id
+              AND m.silver_schema_version = @silver_schema_version
         """
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
@@ -282,6 +314,8 @@ class BigQueryServingStore:
             away_team_name=row["away_team_name"],
             home_score=row["home_score"],
             away_score=row["away_score"],
+            home_xg=row["home_xg"],
+            away_xg=row["away_xg"],
             competition_stage=row["competition_stage"],
             stadium=row["stadium"],
             referee=row["referee"],
@@ -632,6 +666,85 @@ class BigQueryServingStore:
               ON s.event_id = e.event_id
              AND s.data_version = e.data_version
              AND s.silver_schema_version = e.silver_schema_version
+            {where_clause}
+        """
+        job_config = bigquery.QueryJobConfig(query_parameters=parameters)
+        rows = client.query(query, job_config=job_config).result()
+        return [
+            ShotRecord(
+                event_id=row["event_id"],
+                match_id=row["match_id"],
+                team_id=row["team_id"],
+                player_id=row["player_id"],
+                player_name=row["player_name"],
+                minute=row["minute"],
+                period=row["period"],
+                location_x=row["location_x"],
+                location_y=row["location_y"],
+                end_x=row["end_x"],
+                end_y=row["end_y"],
+                statsbomb_xg=row["statsbomb_xg"],
+                outcome_name=row["outcome_name"],
+                body_part_name=row["body_part_name"],
+                is_goal=row["outcome_name"] == "Goal",
+            )
+            for row in rows
+        ]
+
+    @cached(cache=_team_shots_faced_cache, key=_ignore_self_key, lock=_cache_lock)
+    def list_team_shots_faced(
+        self,
+        team_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        client = _client()
+        conditions: list[str] = [
+            "s.team_id != @team_id",
+            "(m.home_team_id = @team_id OR m.away_team_id = @team_id)",
+            "s.silver_schema_version = @silver_schema_version",
+        ]
+        parameters: list[bigquery.ScalarQueryParameter] = [
+            bigquery.ScalarQueryParameter("team_id", "INT64", team_id),
+            bigquery.ScalarQueryParameter("silver_schema_version", "STRING", SILVER_SCHEMA_VERSION),
+        ]
+
+        if competition_id is not None:
+            conditions.append("s.competition_id = @competition_id")
+            parameters.append(
+                bigquery.ScalarQueryParameter("competition_id", "INT64", competition_id)
+            )
+        if season_id is not None:
+            conditions.append("s.season_id = @season_id")
+            parameters.append(bigquery.ScalarQueryParameter("season_id", "INT64", season_id))
+
+        where_clause = f"WHERE {' AND '.join(conditions)}"
+        query = f"""
+            SELECT
+                s.event_id AS event_id,
+                s.match_id AS match_id,
+                s.team_id AS team_id,
+                s.player_id AS player_id,
+                e.player_name AS player_name,
+                e.minute AS minute,
+                e.period AS period,
+                s.location_x AS location_x,
+                s.location_y AS location_y,
+                s.end_x AS end_x,
+                s.end_y AS end_y,
+                s.statsbomb_xg AS statsbomb_xg,
+                s.outcome_name AS outcome_name,
+                s.body_part_name AS body_part_name
+            FROM `{PROJECT}.{DATASET}.shots` s
+            JOIN `{PROJECT}.{DATASET}.events` e
+              ON s.event_id = e.event_id
+             AND s.data_version = e.data_version
+             AND s.silver_schema_version = e.silver_schema_version
+            JOIN `{PROJECT}.{DATASET}.matches` m
+              ON s.match_id = m.match_id
+             AND s.data_version = m.data_version
+             AND s.silver_schema_version = m.silver_schema_version
             {where_clause}
         """
         job_config = bigquery.QueryJobConfig(query_parameters=parameters)

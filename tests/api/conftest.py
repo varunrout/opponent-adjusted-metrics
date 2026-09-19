@@ -203,6 +203,25 @@ class FakeServingStore:
         shots = self._filtered_shots(competition_id=competition_id, season_id=season_id)
         return [s for s in shots if s.team_id == team_id]
 
+    def list_team_shots_faced(
+        self,
+        team_id: int,
+        *,
+        competition_id: int | None = None,
+        season_id: int | None = None,
+    ) -> list[ShotRecord]:
+        matches_by_id = {m.match_id: m for m in self._matches}
+        shots = self._filtered_shots(competition_id=competition_id, season_id=season_id)
+        result = []
+        for shot in shots:
+            match = matches_by_id.get(shot.match_id)
+            if match is None:
+                continue
+            plays_in_match = team_id in (match.home_team_id, match.away_team_id)
+            if plays_in_match and shot.team_id != team_id:
+                result.append(shot)
+        return result
+
 
 FAKE_COMPETITIONS = [
     CompetitionRecord(

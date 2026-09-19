@@ -226,13 +226,41 @@ docker info
 The `oam-containers` Artifact Registry repo already exists in
 `europe-west2` — reuse it rather than creating a new one.
 
+**`oam-containers` has tag immutability enabled** — pushing to an
+already-used tag (e.g. `:latest`) fails with `manifest invalid: cannot
+update tag latest. The repository has enabled tag immutability`. Use a
+fresh, unique tag every deploy (e.g. `incident-fix-$(date +%Y%m%d%H%M%S)`,
+or a short git SHA) and reference that exact tag in the `gcloud run deploy`
+`--image=` flag below — don't assume `:latest` will resolve to whatever you
+just pushed.
+
+If local Docker isn't available (no Docker Desktop running, or not
+installed on this machine), build server-side instead — no local Docker
+needed, same image:
+
+```bash
+gcloud builds submit \
+  --tag europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:<unique-tag> \
+  . --project=oam-varun-260819
+```
+
+Otherwise, with local Docker:
+
 ```bash
 gcloud auth configure-docker europe-west2-docker.pkg.dev
 
-docker build -t europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:latest .
+docker build -t europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:<unique-tag> .
 
-docker push europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:latest
+docker push europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:<unique-tag>
 ```
+
+**Never deploy this service with `gcloud run deploy oam-dashboard-api
+--source .`** — run from the wrong directory (e.g. `web/`, which Cloud
+Run's buildpacks will happily auto-detect as a Next.js app), it silently
+builds and deploys the *frontend* on top of this backend service. This is
+exactly what caused the 2026-09-15 incident in §6 below. Always build
+explicitly via this repo's own `Dockerfile` (§5.2 above) and deploy with an
+explicit `--image=` flag (§5.4 below) — never `--source`.
 
 ### 5.3 IAM grants (from §1.1 — run before or right after the first deploy;
 
@@ -256,7 +284,7 @@ gcloud iam service-accounts add-iam-policy-binding \
 
 ```bash
 gcloud run deploy oam-dashboard-api \
-  --image=europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:latest \
+  --image=europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:<unique-tag> \
   --project=oam-varun-260819 \
   --region=europe-west2 \
   --service-account=oam-pipeline-sa@oam-varun-260819.iam.gserviceaccount.com \
@@ -361,3 +389,74 @@ the budget's Pub/Sub notification, which is out of scope here.
       regress per §1.1's `serviceAccountTokenCreator` finding
 - [ ] Confirm the budget alert exists: `gcloud billing budgets list
       --billing-account=0149E9-7FA8A6-2B88CB`
+
+---
+
+## 6. Incident record — 2026-09-15/18: backend service overwritten by a frontend build
+
+**What happened.** `oam-dashboard-api`'s Cloud Run service started serving
+the Next.js frontend (full HTML pages, `x-powered-by: Next.js`, no
+`/openapi.json`) instead of the FastAPI backend, at its own URL
+(`https://oam-dashboard-api-482195222855.europe-west2.run.app`). Every
+data-driven page on the live site (Matches/Players/Teams/Models/Analysis,
+the shot-detail modal) failed with "Couldn't load this data" from
+2026-09-15 01:29:56 UTC until the fix on 2026-09-18.
+
+**Root cause, confirmed via `gcloud run revisions list --service
+oam-dashboard-api --region europe-west2`:** the active revision
+(`oam-dashboard-api-00004-tqt`, deployed 2026-09-15 01:29:56 UTC) was built
+from Cloud Run's auto-generated `cloud-run-source-deploy` Artifact Registry
+repo — the signature of a `gcloud run deploy oam-dashboard-api --source .`
+run from the wrong directory (most likely `web/`, or a working directory
+containing the Next.js `package.json`, which Cloud Run's buildpacks
+auto-detect and build without confirmation). All prior, correct revisions
+(`-00001` through `-00003`, last good one 2026-08-26) were built from the
+`oam-containers` repo via this repo's own `Dockerfile`, per §5.2.
+`web/.env.production`'s `NEXT_PUBLIC_API_BASE_URL` was never wrong — it
+already pointed at the right URL; the *service behind that URL* was wrong.
+
+**Fix applied** (backend only — the frontend's env var was already correct,
+so it needed no rebuild or redeploy once the backend was restored):
+
+```bash
+gcloud builds submit \
+  --tag europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:incident-fix-20260918144957 \
+  . --project=oam-varun-260819
+
+gcloud run deploy oam-dashboard-api \
+  --image=europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:incident-fix-20260918144957 \
+  --project=oam-varun-260819 \
+  --region=europe-west2 \
+  --service-account=oam-pipeline-sa@oam-varun-260819.iam.gserviceaccount.com \
+  --allow-unauthenticated \
+  --min-instances=0 \
+  --max-instances=3 \
+  --memory=512Mi \
+  --cpu=1
+```
+
+Resulting active revision: `oam-dashboard-api-00005-9cm`, deployed
+2026-09-18 13:54:21 UTC. Verified immediately after: `/openapi.json` returns
+real FastAPI OpenAPI JSON, `/v1/matches` returns 610 real match rows,
+`/health` returns `{"status":"ok"}`, and the live site
+(`https://oam-varun-260819.web.app`) was confirmed in-browser: Matches (166
+under "CxG matches only" / 610 under "All matches", coverage strip "610 of
+610 · 100%"), Players, and Teams all load real data, and the shot-detail
+modal on a covered shot (`/matches/3794686`) renders real 360 freeze-frame
+dots (4 teammates, 9 opponents, 1 GK).
+
+**Prevention, applied in this same pass:**
+1. §5.2 above now documents the `oam-containers` repo's tag-immutability
+   restriction (a unique tag is required every deploy — `:latest` cannot be
+   overwritten) and explicitly calls out never to use `gcloud run deploy
+   oam-dashboard-api --source .` for this service.
+2. This incident record, so a future "why is the site broken" investigation
+   starts here instead of re-deriving the diagnosis from scratch.
+
+**Not done, and deliberately out of scope for this fix:** putting the Cloud
+Run service under Terraform (`infra/terraform/services.tf` still only
+enables the `run.googleapis.com` API, no `google_cloud_run_v2_service`
+resource) would prevent a stray `--source` deploy from being possible at
+all via drift detection/`terraform plan`, but that's a real, separate
+infra task — this incident's fix was the redeploy plus the documentation
+above, not IaC migration.

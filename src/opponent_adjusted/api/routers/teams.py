@@ -32,3 +32,19 @@ def list_team_shots(
 ) -> list[ShotResponse]:
     records = store.list_team_shots(team_id, competition_id=competition_id, season_id=season_id)
     return [ShotResponse.model_validate(record) for record in records]
+
+
+@router.get("/{team_id}/shots-faced", response_model=list[ShotResponse])
+def list_team_shots_faced(
+    team_id: int,
+    competition_id: int | None = None,
+    season_id: int | None = None,
+    store: ServingStore = Depends(get_store),
+    role: Role = Depends(get_role),
+) -> list[ShotResponse]:
+    """Return shots taken against team_id (by opponents, in matches team_id played) —
+    the defensive counterpart to /shots, used for goals/xG/CxG conceded."""
+    records = store.list_team_shots_faced(
+        team_id, competition_id=competition_id, season_id=season_id
+    )
+    return [ShotResponse.model_validate(record) for record in records]

@@ -36,6 +36,7 @@ _ALL_CACHES = [
     "_player_shots_cache",
     "_team_seasons_cache",
     "_team_shots_cache",
+    "_team_shots_faced_cache",
 ]
 
 
@@ -120,4 +121,9 @@ def test_list_team_seasons_filters_by_silver_schema_version(isolated_client_and_
 
 def test_list_team_shots_filters_by_silver_schema_version(isolated_client_and_caches):
     BigQueryServingStore().list_team_shots(99)
+    _assert_filters_on_silver_schema_version(isolated_client_and_caches)
+
+
+def test_list_team_shots_faced_filters_by_silver_schema_version(isolated_client_and_caches):
+    BigQueryServingStore().list_team_shots_faced(99)
     _assert_filters_on_silver_schema_version(isolated_client_and_caches)

@@ -10,11 +10,14 @@ from opponent_adjusted.api.cxg_coverage import (
     CxgCoverageStore,
     CxgMatchScopeRow,
     CxgMatchScopeStore,
+    OpponentContextResponse,
+    OpponentContextStore,
 )
 from opponent_adjusted.api.dependencies import (
     Role,
     get_cxg_coverage_store,
     get_cxg_match_scope_store,
+    get_opponent_context_store,
     get_role,
 )
 
@@ -65,3 +68,22 @@ def get_cxg_matches(
             detail=f"track must be one of {sorted(TRACK_TABLE_PREFIXES)}",
         )
     return store.list_covered_matches(track=track)
+
+
+@router.get("/opponent-context", response_model=list[OpponentContextResponse])
+def get_opponent_context(
+    event_ids: str,
+    store: OpponentContextStore = Depends(get_opponent_context_store),
+    role: Role = Depends(get_role),
+) -> list[OpponentContextResponse]:
+    """Return opponent-adjusted defensive context for the given comma-separated
+    event_ids, from oam_analysis.cxg_analysis_opponent_adjusted_v1.
+
+    Not admin-gated — same Explore-zone reasoning as /coverage. event_ids
+    with no row (not covered) are simply absent from the response, never a
+    placeholder. Called with a single event_id by the shot-detail modal's
+    lazy per-click fetch, and in bulk by pages needing an aggregate view
+    (e.g. Player detail's defender-archetype breakdown).
+    """
+    ids = [event_id.strip() for event_id in event_ids.split(",") if event_id.strip()]
+    return store.get_opponent_context(ids)

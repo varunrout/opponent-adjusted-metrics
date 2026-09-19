@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OAM — layout skeleton</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E12; --surface:#12161B; --card:#171C22; --card-hi:#1c222a; --border:#262D35;
+    --text:#EDEFF2; --text2:#97A1AD; --muted:#7C8894;
+    --teal:#14B8A6; --violet:#8B5CF6; --amber:#E3A008; --green:#22C55E; --red:#EF4444;
+    --radius:10px;
+    --font-ui:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-data:"Inconsolata","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--font-ui);
+    font-size:14px;
+  }
+  a{color:inherit; text-decoration:none;}
+
+  /* top bar */
+  .topbar{
+    height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 20px; background:var(--surface); border-bottom:1px solid var(--border);
+    position:sticky; top:0; z-index:10;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .mark{width:26px; height:26px; border-radius:6px; background:var(--teal); display:flex; align-items:center; justify-content:center; font-weight:700; color:#04231f; font-size:13px;}
+  .brand .name{font-size:13px; color:var(--text2);}
+  nav.primary{display:flex; align-items:center; gap:4px; flex:1; margin-left:32px;}
+  nav.primary a{
+    padding:8px 12px; border-radius:8px; color:var(--text2); font-size:13px; cursor:pointer;
+  }
+  nav.primary a.secondary{color:var(--muted);}
+  nav.primary a:hover{background:var(--card);}
+  nav.primary a.active{background:var(--card); color:var(--text);}
+  nav.primary .divider{width:1px; height:18px; background:var(--border); margin:0 6px;}
+  .topbar-right{display:flex; align-items:center; gap:12px;}
+  select#roleSwitch{
+    background:var(--card); color:var(--text2); border:1px solid var(--border); border-radius:8px;
+    padding:6px 10px; font-size:12px;
+  }
+  .avatar{width:28px; height:28px; border-radius:50%; background:var(--violet); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#1c1030;}
+
+  /* body layout */
+  .shell{display:flex; min-height:calc(100vh - 56px);}
+  aside.sidebar{
+    width:220px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--border);
+    padding:18px 16px;
+  }
+  .filter-group{margin-bottom:20px;}
+  .filter-group label{display:block; font-size:11px; color:var(--muted); margin-bottom:6px; letter-spacing:.02em;}
+  .filter-group select, .filter-group input[type=text]{
+    width:100%; background:var(--card); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:7px 9px; font-size:12.5px;
+  }
+  .metric-pills{display:flex; flex-direction:column; gap:6px;}
+  .metric-pill{
+    display:flex; align-items:center; justify-content:space-between; padding:7px 9px;
+    border-radius:8px; border:1px solid var(--border); font-size:12.5px; color:var(--text2); cursor:pointer;
+  }
+  .metric-pill.on{border-color:var(--teal); color:var(--text); background:rgba(20,184,166,.08);}
+  .metric-pill.disabled{opacity:.45; cursor:not-allowed;}
+  .soon-tag{font-size:9.5px; background:var(--card-hi); color:var(--muted); padding:1px 6px; border-radius:4px;}
+
+  main.content{flex:1; padding:24px 28px; overflow:hidden;}
+  .page-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+  .page-head h1{font-size:18px; font-weight:600; margin:0;}
+  .page-head .crumb{font-size:12.5px; color:var(--muted);}
+
+  .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px;}
+  .grid-2{display:grid; grid-template-columns:2fr 1fr; gap:16px; align-items:start;}
+  .grid-cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
+
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px;}
+  .card h3{font-size:12.5px; font-weight:500; color:var(--text2); margin:0 0 10px;}
+
+  .tile .label{font-size:11px; color:var(--muted); margin:0;}
+  .tile .value{font-family:var(--font-data); font-size:22px; font-weight:600; margin:4px 0 0;}
+  .tile .delta{font-family:var(--font-data); font-size:11.5px; margin:3px 0 0;}
+  .delta.pos{color:var(--green);} .delta.neg{color:var(--red);}
+
+  /* pitch */
+  .pitch-wrap svg{width:100%; height:auto; display:block; border-radius:6px;}
+
+  .list-row{display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+  .list-row:last-child{border-bottom:none;}
+  .list-row{font-family:var(--font-data);}
+  .list-row .rank{width:20px; color:var(--muted);}
+  .list-row .bar-wrap{flex:1; height:6px; background:var(--card-hi); border-radius:3px; overflow:hidden;}
+  .list-row .bar{height:100%; background:var(--teal);}
+  .list-row .val{width:44px; text-align:right; color:var(--text2);}
+
+  .badge{font-size:10px; padding:2px 8px; border-radius:4px; font-weight:500;}
+  .badge.promoted{background:rgba(20,184,166,.15); color:var(--teal);}
+  .badge.training{background:rgba(227,160,8,.15); color:var(--amber);}
+  .badge.planned{background:var(--card-hi); color:var(--muted);}
+  .tier-chip{font-size:10px; color:var(--muted); border:1px solid var(--border); padding:1px 7px; border-radius:10px;}
+
+  .tag-violet{font-size:10px; color:var(--violet);}
+
+  /* skeleton shimmer */
+  .skel{
+    border-radius:6px; background:linear-gradient(90deg, var(--card) 25%, #1e252c 37%, var(--card) 63%);
+    background-size:400% 100%; animation:shimmer 1.4s ease infinite;
+  }
+  @keyframes shimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .skel-table-row{display:grid; grid-template-columns:70px 1fr 60px 60px; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);}
+  .skel-card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px;}
+  .skel-avatar{width:34px; height:34px; border-radius:50%;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="mark">OA</div>
+    <div class="name">Opponent-Adjusted Metrics</div>
+  </div>
+  <nav class="primary" id="primaryNav">
+    <a data-target="overview" data-roles="guest,viewer,admin" class="active">Overview</a>
+    <a data-target="matches" data-roles="guest,viewer,admin">Matches</a>
+    <a data-target="players" data-roles="guest,viewer,admin">Players</a>
+    <a data-target="teams" data-roles="guest,viewer,admin">Teams</a>
+    <a data-target="analysis" data-roles="admin">Analysis</a>
+    <div class="divider"></div>
+    <a data-target="models" data-roles="admin" class="secondary">Models</a>
+    <a data-target="stories" data-roles="guest,viewer,admin" class="secondary">Stories</a>
+    <a data-target="about" data-roles="guest,viewer,admin" class="secondary">About</a>
+  </nav>
+  <div class="topbar-right">
+    <select id="roleSwitch">
+      <option value="guest">View as: Guest</option>
+      <option value="viewer">View as: Viewer</option>
+      <option value="admin" selected>View as: Admin</option>
+    </select>
+    <div class="avatar">VR</div>
+  </div>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="filter-group">
+      <label>Competition</label>
+      <select><option>Premier League</option><option>FIFA World Cup</option><option>UEFA Euro</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Season</label>
+      <select><option>2015/2016</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Team</label>
+      <select><option>All teams</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Metric</label>
+      <div class="metric-pills">
+        <div class="metric-pill on">xG <span></span></div>
+        <div class="metric-pill">CxG</div>
+        <div class="metric-pill disabled">CxA <span class="soon-tag">soon</span></div>
+        <div class="metric-pill disabled">CxT <span class="soon-tag">soon</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <section class="panel active" id="panel-overview">
+      <div class="page-head">
+        <div>
+          <h1>Overview</h1>
+          <div class="crumb">Premier League &middot; 2015/2016</div>
+        </div>
+      </div>
+
+      <div class="grid-4">
+        <div class="card tile"><p class="label">Team CxG</p><p class="value">1.82</p><p class="delta pos">+0.24 vs xG</p></div>
+        <div class="card tile"><p class="label">Team CxA</p><div class="skel" style="height:22px; width:60%; margin-top:4px;"></div></div>
+        <div class="card tile"><p class="label">Shots</p><p class="value">14</p><p class="delta" style="color:var(--muted);">6 on target</p></div>
+        <div class="card tile"><p class="label">Big chances</p><p class="value">5</p><p class="delta pos">+2 vs season avg</p></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card pitch-wrap">
+          <h3>Shot map</h3>
+          <svg viewBox="0 0 120 80">
+            <rect x="0" y="0" width="120" height="80" fill="#123b25"></rect>
+            <g stroke="rgba(255,255,255,0.35)" stroke-width="0.4" fill="none">
+              <rect x="0.4" y="0.4" width="119.2" height="79.2"></rect>
+              <line x1="60" y1="0" x2="60" y2="80"></line>
+              <circle cx="60" cy="40" r="9.15"></circle>
+              <rect x="0" y="18" width="18" height="44"></rect>
+              <rect x="102" y="18" width="18" height="44"></rect>
+              <rect x="0" y="30" width="6" height="20"></rect>
+              <rect x="114" y="30" width="6" height="20"></rect>
+            </g>
+            <circle cx="112" cy="39" r="4.4" fill="#14B8A6" fill-opacity="0.9" stroke="#0b0e12" stroke-width="0.5"></circle>
+            <circle cx="99" cy="47" r="2.2" fill="#14B8A6" fill-opacity="0.2" stroke="#14B8A6" stroke-width="0.5"></circle>
+            <circle cx="104" cy="30" r="1.9" fill="#14B8A6" fill-opacity="0.2" stroke="#14B8A6" stroke-width="0.5"></circle>
+            <circle cx="9" cy="43" r="2.6" fill="#F97316" fill-opacity="0.2" stroke="#F97316" stroke-width="0.5"></circle>
+            <circle cx="7" cy="40" r="4.9" fill="#F97316" fill-opacity="0.9" stroke="#0b0e12" stroke-width="0.5"></circle>
+          </svg>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div class="card">
+            <h3>Leaderboard — CxG per 90</h3>
+            <div class="list-row"><span class="rank">1</span><div class="bar-wrap"><div class="bar" style="width:88%;"></div></div><span class="val">0.71</span></div>
+            <div class="list-row"><span class="rank">2</span><div class="bar-wrap"><div class="bar" style="width:74%;"></div></div><span class="val">0.58</span></div>
+            <div class="list-row"><span class="rank">3</span><div class="bar-wrap"><div class="bar" style="width:61%;"></div></div><span class="val">0.49</span></div>
+            <div class="list-row"><span class="rank">4</span><div class="skel" style="height:6px; flex:1;"></div><span class="val">&nbsp;</span></div>
+            <div class="list-row"><span class="rank">5</span><div class="skel" style="height:6px; flex:1;"></div><span class="val">&nbsp;</span></div>
+          </div>
+
+          <div class="card">
+            <h3>Profile radar</h3>
+            <svg width="100%" height="90" viewBox="0 0 90 90">
+              <polygon points="45,8 75,28 63,68 27,68 15,28" fill="none" stroke="var(--border)" stroke-width="1"></polygon>
+              <polygon points="45,20 62,32 55,58 35,58 28,32" fill="rgba(139,92,246,0.25)" stroke="#8B5CF6" stroke-width="1.5"></polygon>
+            </svg>
+          </div>
+
+          <div class="card">
+            <span class="tag-violet">Methodology</span>
+            <p style="font-size:13px; margin:6px 0 0;">Why CxG moves the number on late-game shots</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-models">
+      <div class="page-head"><div><h1>Models</h1><div class="crumb">Registry</div></div></div>
+      <div class="grid-cards">
+        <div class="skel-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;">CxG</span><span class="badge promoted">Promoted</span>
+          </div>
+          <div style="margin-top:8px;"><span class="tier-chip">Core</span></div>
+          <p style="font-size:11.5px; color:var(--muted); margin:10px 0 0;">Brier 0.071 &middot; 13 feature families</p>
+        </div>
+        <div class="skel-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;">CxG+</span><span class="badge training">In training</span>
+          </div>
+          <div style="margin-top:8px;"><span class="tier-chip">Spatial</span></div>
+          <div class="skel" style="height:12px; width:70%; margin-top:12px;"></div>
+        </div>
+        <div class="skel-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;">CxA</span><span class="badge planned">Planned</span>
+          </div>
+          <div style="margin-top:8px;"><span class="tier-chip">Core</span></div>
+          <div class="skel" style="height:12px; width:60%; margin-top:12px;"></div>
+        </div>
+        <div class="skel-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;">CxT</span><span class="badge planned">Planned</span>
+          </div>
+          <div style="margin-top:8px;"><span class="tier-chip">Core</span></div>
+          <div class="skel" style="height:12px; width:60%; margin-top:12px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-stories">
+      <div class="page-head"><div><h1>Stories</h1><div class="crumb">Writeups</div></div></div>
+      <div class="grid-cards">
+        <div class="skel-card"><span class="tag-violet">Methodology</span><p style="font-size:13px; margin:6px 0 0;">How CxG adjusts for late-game context</p></div>
+        <div class="skel-card"><span class="tag-violet">Case study</span><p style="font-size:13px; margin:6px 0 0;">A player beating xG by 0.3 per 90 — real or variance</p></div>
+        <div class="skel-card"><span class="tag-violet">Release notes</span><p style="font-size:13px; margin:6px 0 0;">CxG v1 — what changed and why</p></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-generic">
+      <div class="page-head"><div><h1 id="genericTitle">Matches</h1><div class="crumb">Not yet built</div></div></div>
+      <div id="genericBody"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const nav = document.getElementById('primaryNav');
+  const roleSwitch = document.getElementById('roleSwitch');
+  const panels = document.querySelectorAll('.panel');
+  const genericTitle = document.getElementById('genericTitle');
+  const genericBody = document.getElementById('genericBody');
+
+  function skelTableRows(n){
+    let out = '<div class="card">';
+    for(let i=0;i<n;i++){
+      out += '<div class="skel-table-row"><div class="skel" style="height:12px;"></div><div class="skel" style="height:12px;"></div><div class="skel" style="height:12px;"></div><div class="skel" style="height:12px;"></div></div>';
+    }
+    out += '</div>';
+    return out;
+  }
+  function skelCardGrid(n){
+    let out = '<div class="grid-cards">';
+    for(let i=0;i<n;i++){
+      out += '<div class="skel-card"><div class="skel skel-avatar" style="margin-bottom:10px;"></div><div class="skel" style="height:11px; width:70%; margin-bottom:6px;"></div><div class="skel" style="height:11px; width:45%;"></div></div>';
+    }
+    out += '</div>';
+    return out;
+  }
+  function skelBlock(){
+    return '<div class="card" style="height:260px;"><div class="skel" style="height:100%;"></div></div>';
+  }
+  function skelText(){
+    return '<div class="card"><div class="skel" style="height:11px; width:90%; margin-bottom:10px;"></div><div class="skel" style="height:11px; width:80%; margin-bottom:10px;"></div><div class="skel" style="height:11px; width:60%;"></div></div>';
+  }
+
+  const genericTemplates = {
+    matches: () => skelTableRows(7),
+    players: () => skelCardGrid(8),
+    teams: () => skelCardGrid(6),
+    analysis: () => skelBlock(),
+    about: () => skelText()
+  };
+
+  function showPanel(target){
+    panels.forEach(p => p.classList.remove('active'));
+    if(['overview','models','stories'].includes(target)){
+      document.getElementById('panel-' + target).classList.add('active');
+    } else {
+      genericTitle.textContent = target.charAt(0).toUpperCase() + target.slice(1);
+      genericBody.innerHTML = genericTemplates[target] ? genericTemplates[target]() : '';
+      document.getElementById('panel-generic').classList.add('active');
+    }
+  }
+
+  nav.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if(!link) return;
+    if(link.style.display === 'none') return;
+    nav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    showPanel(link.dataset.target);
+  });
+
+  function applyRole(role){
+    let activeHidden = false;
+    nav.querySelectorAll('a').forEach(a => {
+      const allowed = a.dataset.roles.split(',').includes(role);
+      a.style.display = allowed ? '' : 'none';
+      if(!allowed && a.classList.contains('active')) activeHidden = true;
+    });
+    if(activeHidden){
+      nav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+      const overviewLink = nav.querySelector('[data-target="overview"]');
+      overviewLink.classList.add('active');
+      showPanel('overview');
+    }
+  }
+
+  roleSwitch.addEventListener('change', (e) => applyRole(e.target.value));
+  applyRole('admin');
+</script>
+
+</body>
+</html>

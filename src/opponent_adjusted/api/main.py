@@ -11,6 +11,7 @@ from opponent_adjusted.api.routers import (
     cxg_coverage,
     matches,
     me,
+    models,
     players,
     shots,
     teams,
@@ -36,6 +37,7 @@ app.include_router(competitions.router)
 app.include_router(cxg_coverage.router)
 app.include_router(matches.router)
 app.include_router(me.router)
+app.include_router(models.router)
 app.include_router(players.router)
 app.include_router(shots.router)
 app.include_router(teams.router)

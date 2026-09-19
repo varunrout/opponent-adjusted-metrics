@@ -26,6 +26,7 @@ _ALL_CACHES = [
     "_player_shots_cache",
     "_team_seasons_cache",
     "_team_shots_cache",
+    "_team_shots_faced_cache",
 ]
 
 
@@ -42,6 +43,8 @@ def _make_match_row(match_id: int):
         "away_team_name": "Away",
         "home_score": 1,
         "away_score": 0,
+        "home_xg": 1.4,
+        "away_xg": 0.6,
         "competition_stage": "Group",
         "stadium": "Stadium",
         "referee": "Ref",

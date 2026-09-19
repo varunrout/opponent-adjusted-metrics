@@ -15,9 +15,12 @@ from opponent_adjusted.api.bigquery_store import BigQueryServingStore
 from opponent_adjusted.api.cxg_coverage import (
     BigQueryCxgCoverageStore,
     BigQueryCxgMatchScopeStore,
+    BigQueryOpponentContextStore,
     CxgCoverageStore,
     CxgMatchScopeStore,
+    OpponentContextStore,
 )
+from opponent_adjusted.api.freeze_frame import BigQueryFreezeFrameStore, FreezeFrameStore
 from opponent_adjusted.api.interfaces import ServingStore
 
 logger = logging.getLogger(__name__)
@@ -155,3 +158,13 @@ def get_cxg_coverage_store() -> CxgCoverageStore:
 def get_cxg_match_scope_store() -> CxgMatchScopeStore:
     """FastAPI dependency provider for the CxG match-scope store; overridable in tests."""
     return BigQueryCxgMatchScopeStore()
+
+
+def get_opponent_context_store() -> OpponentContextStore:
+    """FastAPI dependency provider for the opponent-adjusted context store; overridable in tests."""
+    return BigQueryOpponentContextStore()
+
+
+def get_freeze_frame_store() -> FreezeFrameStore:
+    """FastAPI dependency provider for the per-shot 360 freeze-frame store; overridable in tests."""
+    return BigQueryFreezeFrameStore()
