@@ -1,0 +1,15 @@
+[
+{"track":"event","feature":"const","coefficient":-9.703,"std_error":0.0791,"p_value":0.0},
+{"track":"event","feature":"play_pattern_Counter","coefficient":2.7618,"std_error":0.0691,"p_value":0.0},
+{"track":"event","feature":"is_through_ball","coefficient":1.9654,"std_error":0.0716,"p_value":0.0},
+{"track":"event","feature":"pass_bodypart_NoTouch","coefficient":0.8586,"std_error":0.2344,"p_value":0.0002},
+{"track":"event","feature":"pass_technique_Outswinging","coefficient":0.8044,"std_error":0.0832,"p_value":0.0},
+{"track":"event","feature":"pass_type_FreeKick","coefficient":0.713,"std_error":0.0624,"p_value":0.0},
+{"track":"event","feature":"is_cross","coefficient":0.564,"std_error":0.0353,"p_value":0.0},
+{"track":"event","feature":"is_cut_back","coefficient":0.5112,"std_error":0.085,"p_value":0.0},
+{"track":"event","feature":"play_pattern_Corner","coefficient":0.2352,"std_error":0.0491,"p_value":0.0},
+{"track":"event","feature":"pass_type_Corner","coefficient":-0.165,"std_error":0.0744,"p_value":0.0266},
+{"track":"event","feature":"is_switch","coefficient":-0.0631,"std_error":0.0514,"p_value":0.22},
+{"track":"event","feature":"end_x","coefficient":0.0343,"std_error":0.0011,"p_value":0.0},
+{"track":"event","feature":"start_x","coefficient":0.0327,"std_error":0.001,"p_value":0.0}
+]
