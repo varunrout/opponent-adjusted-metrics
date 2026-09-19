@@ -1,4 +1,5 @@
 import type { ShotResponse } from "@/lib/types";
+import { PitchBackground } from "@/components/ui/PitchBackground";
 
 const HOME_COLOR = "#3B82F6";
 const AWAY_COLOR = "#F97316";
@@ -19,6 +20,7 @@ export function PitchMap({
   cxgPlusByEventId,
   sizeBy = "xg",
   showLegend = false,
+  onShotClick,
 }: {
   shots?: ShotResponse[];
   homeTeamId?: number | null;
@@ -30,20 +32,14 @@ export function PitchMap({
   // than falling back to xG (never substitute xG and label it CxG).
   sizeBy?: "xg" | "cxg";
   showLegend?: boolean;
+  // When set, each shot dot becomes clickable (opens the shared
+  // ShotDetailModal) instead of only exposing its data via a hover <title>.
+  onShotClick?: (shot: ShotResponse) => void;
 }) {
   return (
     <div>
       <svg viewBox="0 0 120 80" className="w-full h-auto block rounded-md">
-      <rect x="0" y="0" width="120" height="80" fill="#123b25" />
-      <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.4" fill="none">
-        <rect x="0.4" y="0.4" width="119.2" height="79.2" />
-        <line x1="60" y1="0" x2="60" y2="80" />
-        <circle cx="60" cy="40" r="9.15" />
-        <rect x="0" y="18" width="18" height="44" />
-        <rect x="102" y="18" width="18" height="44" />
-        <rect x="0" y="30" width="6" height="20" />
-        <rect x="114" y="30" width="6" height="20" />
-      </g>
+      <PitchBackground />
       {shots
         .filter((shot) => shot.location_x != null && shot.location_y != null)
         .map((shot) => {
@@ -72,6 +68,11 @@ export function PitchMap({
               stroke={shot.is_goal ? "#0b0e12" : color}
               strokeWidth={cxgParts.length > 0 ? "0.9" : "0.5"}
               strokeDasharray={cxgUncovered ? "1,0.8" : undefined}
+              onClick={onShotClick ? () => onShotClick(shot) : undefined}
+              role={onShotClick ? "button" : undefined}
+              tabIndex={onShotClick ? 0 : undefined}
+              style={onShotClick ? { cursor: "pointer" } : undefined}
+              aria-label={onShotClick ? `Shot detail for ${shot.player_name ?? "unknown player"}` : undefined}
             >
               {cxgParts.length > 0 ? (
                 <title>

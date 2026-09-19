@@ -43,6 +43,14 @@ export function ModelCard({ model }: { model: ModelInfo }) {
           </Link>
         </p>
       )}
+
+      {model.detailModelKey && (
+        <p className="text-[11.5px] mt-1.5 mb-0">
+          <Link href={`/models/${model.detailModelKey}`} className="text-teal hover:underline">
+            View full results &amp; coefficients →
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

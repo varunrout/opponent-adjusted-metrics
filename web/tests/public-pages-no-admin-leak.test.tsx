@@ -1,7 +1,33 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import ModelsPage from "@/app/models/page";
 import StoriesPage from "@/app/stories/page";
+
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ modelKey: "event_v3" }),
+}));
+
+vi.mock("@/lib/api", () => ({
+  getPublicCxgModelResults: vi.fn().mockResolvedValue([
+    {
+      model_key: "event_v3",
+      track: "cxg_event",
+      split: "test",
+      model: "v3",
+      n: 2427,
+      log_loss: 0.3003,
+      brier_score: 0.0852,
+      roc_auc: 0.7148,
+      is_frozen: true,
+      is_current: true,
+    },
+  ]),
+  getPublicCxgModelCoefficients: vi.fn().mockResolvedValue([
+    { model_key: "event_v3", track: "cxg_event", feature: "const", coefficient: -2.46, std_error: null, p_value: null },
+  ]),
+}));
+
+import ModelDetailPage from "@/app/models/[modelKey]/page";
 
 // Models and Stories are guest-visible (see nav-config.ts and
 // docs/dashboard_content_ideation.md). Both pages currently render only
@@ -47,6 +73,14 @@ describe("public pages don't leak admin internals", () => {
     expect(screen.getAllByText("Evaluated").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Test log_loss").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Trails the StatsBomb xG baseline/).length).toBeGreaterThan(0);
+  });
+
+  it("Model detail page renders no admin gate and no sign-in requirement", async () => {
+    const { container } = render(<ModelDetailPage />);
+    await waitFor(() => expect(screen.getByText("Model: event_v3")).toBeInTheDocument());
+    assertNoForbiddenContent(container);
+    expect(container.textContent?.toLowerCase()).not.toContain("sign in");
+    expect(container.textContent?.toLowerCase()).not.toContain("admin account");
   });
 
   it("Stories page renders only public teasers, including the new dev-log category", () => {

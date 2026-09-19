@@ -26,6 +26,8 @@ export type MatchResponse = {
   away_team_name: string | null;
   home_score: number | null;
   away_score: number | null;
+  home_xg: number | null;
+  away_xg: number | null;
   competition_stage: string | null;
   stadium: string | null;
   referee: string | null;
@@ -241,14 +243,38 @@ export type CxgCoverageResponse = {
   values: Record<string, number>;
 };
 
-// --- /v1/cxg/matches (guest-accessible) ----------------------------------
+// --- /v1/cxg/opponent-context (guest-accessible) -------------------------
 
-export type CxgMatchScopeRow = {
+export type OpponentContextResponse = {
+  event_id: string;
   match_id: number;
-  split: string;
-  has_360_match: boolean;
-  event_shot_count: number;
-  plus_shot_count: number;
-  event_goal_count: number;
-  plus_goal_count: number;
+  player_id: number;
+  team_id: number;
+  nearest_defender_odi: number | null;
+  mean_backline_odi: number | null;
+  gk_odi: number | null;
+  defensive_profile_cluster: number | null;
+  nearest_defender_role: string | null;
+  nearest_defender_zone_displacement: number | null;
+  nearest_defender_gap: number | null;
+  nearest_defender_style_archetype: string | null;
+  has_360_frame: boolean;
+};
+
+// --- /v1/matches/{id}/shots/{event_id}/freeze-frame (guest-accessible) --
+
+export type FreezeFramePlayerResponse = {
+  ordinal: number;
+  teammate: boolean | null;
+  actor: boolean | null;
+  keeper: boolean | null;
+  x: number | null;
+  y: number | null;
+};
+
+export type ShotFreezeFrameResponse = {
+  event_id: string;
+  match_id: number;
+  visible_area: number[];
+  players: FreezeFramePlayerResponse[];
 };

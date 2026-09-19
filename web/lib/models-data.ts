@@ -22,6 +22,11 @@ export type ModelInfo = {
   // not overclaim, so this is where an honest "trails the baseline" note
   // lives rather than being hidden behind a bare metric number.
   comparisonNote?: string | null;
+  // model_key for this family's current/latest frozen version, if the real
+  // results+coefficients detail page (/models/[modelKey], public, backed by
+  // /v1/models/cxg-models*) has data for it. Null for families with no
+  // real model yet (CxA/CxT).
+  detailModelKey?: string | null;
 };
 
 // Data-driven per docs/dashboard_design_spec.md section 4: the Models tab
@@ -50,6 +55,7 @@ export const MODELS: ModelInfo[] = [
     ],
     featureFamilyCount: "8 features",
     comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2597).",
+    detailModelKey: "event_v3",
   },
   {
     name: "CxG+",
@@ -63,6 +69,7 @@ export const MODELS: ModelInfo[] = [
     ],
     featureFamilyCount: "24 features",
     comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2430).",
+    detailModelKey: "plus_v3",
   },
   {
     name: "CxA",

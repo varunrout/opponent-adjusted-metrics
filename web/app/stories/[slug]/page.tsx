@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHead } from "@/components/ui/PageHead";
 import { Card } from "@/components/ui/Card";
+import { StoryFigureView } from "@/components/story/StoryFigureView";
 import { STORIES } from "@/lib/stories-data";
 
 export default function StoryPage({ params }: { params: { slug: string } }) {
@@ -24,9 +25,12 @@ export default function StoryPage({ params }: { params: { slug: string } }) {
         {story.body && story.body.length > 0 ? (
           <div className="mt-3 flex flex-col gap-3">
             {story.body.map((paragraph, i) => (
-              <p key={i} className="text-[13px] text-text2 m-0 leading-relaxed">
-                {paragraph}
-              </p>
+              <div key={i} className="flex flex-col gap-3">
+                <p className="text-[13px] text-text2 m-0 leading-relaxed">{paragraph}</p>
+                {story.figures
+                  ?.filter((figure) => figure.afterParagraph === i)
+                  .map((figure, fi) => <StoryFigureView key={fi} figure={figure} />)}
+              </div>
             ))}
           </div>
         ) : (

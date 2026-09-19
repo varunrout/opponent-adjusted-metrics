@@ -28,6 +28,8 @@ function makeMatch(overrides: Partial<MatchResponse>): MatchResponse {
     away_team_name: "Away FC",
     home_score: 1,
     away_score: 0,
+    home_xg: null,
+    away_xg: null,
     competition_stage: null,
     stadium: null,
     referee: null,

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Montserrat, Inconsolata } from "next/font/google";
 import "./globals.css";
 import { RoleProvider } from "@/components/shell/RoleProvider";
@@ -31,11 +32,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${montserrat.variable} ${inconsolata.variable}`}>
       <body className="font-ui">
         <RoleProvider defaultRole="guest">
-          <MatchFilterProvider>
-            <RoleGate />
-            <TopBar />
-            <AppShell>{children}</AppShell>
-          </MatchFilterProvider>
+          <Suspense fallback={null}>
+            <MatchFilterProvider>
+              <RoleGate />
+              <TopBar />
+              <AppShell>{children}</AppShell>
+            </MatchFilterProvider>
+          </Suspense>
         </RoleProvider>
       </body>
     </html>

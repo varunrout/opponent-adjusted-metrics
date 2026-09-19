@@ -1,3 +1,64 @@
+// Embedded analysis figures — charts/diagrams/tables placed inline at the
+// point in the prose where the numbers are actually discussed, per the
+// "blog with embedded figures" story-page format. Kept as typed data here
+// (not JSX) for the same reason `body` is plain strings: this stays a data
+// file, and the story page maps `kind` to a presentational component in
+// `components/story/`. Every number a figure shows must already appear in
+// that story's `body` prose — figures illustrate, they don't introduce.
+export type StoryFigure =
+  | {
+      kind: "split-calc";
+      afterParagraph: number;
+      title: string;
+      caption?: string;
+      shared: { label: string; value: string }[];
+      branches: { label: string; result: string }[];
+    }
+  | {
+      kind: "grouped-bars";
+      afterParagraph: number;
+      title: string;
+      caption?: string;
+      rows: {
+        label: string;
+        bars: { label: string; value: number; color: string }[];
+      }[];
+    }
+  | {
+      kind: "copies-diagram";
+      afterParagraph: number;
+      title: string;
+      caption?: string;
+      copyLabels: string[];
+      perCopyValue: number;
+      entityLabel: string;
+      totalLabel: string;
+      note: string;
+    }
+  | {
+      kind: "table";
+      afterParagraph: number;
+      title: string;
+      caption?: string;
+      columns: string[];
+      rows: string[][];
+    }
+  | {
+      kind: "pass-fail-list";
+      afterParagraph: number;
+      title: string;
+      caption?: string;
+      items: { label: string; passed: boolean }[];
+    }
+  | {
+      kind: "upload-timeline";
+      afterParagraph: number;
+      title: string;
+      caption?: string;
+      claimed: { label: string }[];
+      actual: { label: string; detail?: string }[];
+    };
+
 export type StoryInfo = {
   slug: string;
   category: string;
@@ -15,6 +76,8 @@ export type StoryInfo = {
   date?: string;
   readingTime?: string;
   body?: string[];
+  // Rendered by the story page after `body[figure.afterParagraph]`.
+  figures?: StoryFigure[];
 };
 
 export const STORIES: StoryInfo[] = [
@@ -55,6 +118,37 @@ export const STORIES: StoryInfo[] = [
       "I've left the features in the contract and the EDA charts in the appendix. They cost nothing to keep and the next person to have this idea, including future me, should be able to see it was already tried.",
       "If I revisit it, I'd question the grain rather than the intuition. Testing late-game effects as pairwise interactions on a few thousand shots may just be asking too much of the sample. The idea might still be right. This particular test of it wasn't.",
     ],
+    figures: [
+      {
+        kind: "pass-fail-list",
+        afterParagraph: 3,
+        title: "Univariate screen: 7 candidate features",
+        caption:
+          "Six of seven cleared the sign-stability and minimum-correlation thresholds on the event-wide track. Match minute was the one that didn't — later further trimmed to five for redundancy.",
+        items: [
+          { label: "Score difference", passed: true },
+          { label: "Game state", passed: true },
+          { label: "Match minute", passed: false },
+          { label: "Regulation time remaining", passed: true },
+          { label: "Manpower difference", passed: true },
+          { label: "Late-game trailing", passed: true },
+          { label: "Late-game leading", passed: true },
+        ],
+      },
+      {
+        kind: "table",
+        afterParagraph: 5,
+        title: "Bivariate test: 3 defensive-index × 5 match-context features, 15 pairs",
+        caption: "None of the fifteen pairs validated on the held-out split — including the three that looked significant on training data alone.",
+        columns: ["Pair", "Training p-value", "Held-out"],
+        rows: [
+          ["GK index × manpower difference", "0.0145", "Failed"],
+          ["Nearest-defender index × manpower difference", "0.0292", "Failed"],
+          ["Nearest-defender index × late-game leading", "0.0327", "Failed"],
+          ["Remaining 12 pairs", "Not significant on training", "Failed"],
+        ],
+      },
+    ],
   },
   {
     slug: "everything-was-3x-too-big",
@@ -73,6 +167,85 @@ export const STORIES: StoryInfo[] = [
       "Here's what actually bothers me about it. The bug was invisible because it was consistent. Nothing errored. No page broke. Every figure was plausible, every leaderboard ranked in the right order, every ratio was fine because both sides were inflated equally. If you'd asked me to eyeball the site for data problems I'd have said it was clean.",
       "I found it by accident, reading raw row counts while building something unrelated.",
       "The lesson I'm taking is that plausible is not the same as correct, and consistent wrongness is the hardest kind to spot. Now I count raw rows against distinct rows before I trust an aggregate, even when there's no reason to think anything's off.",
+    ],
+    figures: [
+      {
+        kind: "copies-diagram",
+        afterParagraph: 1,
+        title: "Root cause: 3 schema-version copies, 0 of 9 queries filtered",
+        caption:
+          "Every core table carries one full copy of every row per schema version. None of the nine serving queries filtered on it, so every aggregate summed all three.",
+        copyLabels: ["statsbomb_silver_v1", "statsbomb_silver_v1_1", "statsbomb_silver_v1_2"],
+        perCopyValue: 610,
+        entityLabel: "matches",
+        totalLabel: "rows returned by an unfiltered query",
+        note: "0 of 9 serving queries filtered on schema version",
+      },
+      {
+        kind: "grouped-bars",
+        afterParagraph: 2,
+        title: "Real vs. shown on site",
+        caption:
+          "Exactly threefold, every time — the signature of an unfiltered join over 3 identical schema-version copies.",
+        rows: [
+          {
+            label: "Matches",
+            bars: [
+              { label: "Real", value: 610, color: "var(--teal)" },
+              { label: "Shown", value: 1830, color: "var(--red)" },
+            ],
+          },
+          {
+            label: "Competitions",
+            bars: [
+              { label: "Real", value: 5, color: "var(--teal)" },
+              { label: "Shown", value: 15, color: "var(--red)" },
+            ],
+          },
+          {
+            label: "One match's shots",
+            bars: [
+              { label: "Real", value: 49, color: "var(--teal)" },
+              { label: "Shown", value: 147, color: "var(--red)" },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "same-gap-two-percentages",
+    category: "Methodology",
+    headline: "The gap to StatsBomb was 15%. It was also 17.7%. Both were right.",
+    takeaway:
+      "Two of my own reports quoted a different gap to StatsBomb xG for the same model. Neither was wrong. I'd just never written down which number was on the bottom.",
+    date: "2026-08-26",
+    readingTime: "3 min",
+    body: [
+      "I went back to check a number and found two versions of it. The original v1 report said CxG event-wide's gap to StatsBomb xG was 15%. A later report, written by me, working from the same model, said 17.7%.",
+      "Same model. Same test split. Same underlying log-loss values. Different answer.",
+      "The first report computed (v1 log-loss minus StatsBomb log-loss) divided by v1's own log-loss: (0.3058 - 0.2597) / 0.3058, which is 15.08%. The second computed the same subtraction divided by StatsBomb's log-loss instead: (0.3058 - 0.2597) / 0.2597, which is 17.72%. Both are correct arithmetic. They just answer different questions. One asks how much lower StatsBomb is, relative to my model. The other asks how much higher my model is, relative to StatsBomb.",
+      "I didn't just assume the second convention was fine because it felt right. I checked it against a number I already trusted: CxG+'s published gap of 5.6%. Running the same StatsBomb-denominator formula on CxG+'s v2 numbers reproduces 5.60% exactly. That's the convention this site has actually been using, whether I'd written it down or not.",
+      "There was a third number sitting next to these two that looked like it belonged to the same problem and didn't. A validation-split figure of 25.0% for the same model. I went looking for what it contradicted and found nothing, because the original report never published a validation-split comparison for this track at all. It wasn't a conflicting number. It was a number that hadn't existed before.",
+      "I checked whether the underlying data had quietly changed between the two reports, because that's the boring explanation and boring explanations are usually right. It hadn't. The table backing both reports carries one materialized_at timestamp, never regenerated. Bit-for-bit the same values, read twice, described two different ways.",
+      "So the fix isn't a number, it's a habit. I'm not allowed to write a bare gap percentage anymore. Every one from here gets the split it was measured on and which value sat on the bottom of the fraction. '17.7% higher log-loss than StatsBomb, relative to StatsBomb, test split' is clumsier to write than '17.7% gap.' It's also the only version of that sentence that means something on its own a year from now.",
+    ],
+    figures: [
+      {
+        kind: "split-calc",
+        afterParagraph: 2,
+        title: "Same two numbers, two denominators, two correct answers",
+        caption:
+          "The subtraction (0.3058 − 0.2597) is identical both times. Dividing by a different one of the two source numbers changes only what the percentage is relative to — not which arithmetic is right.",
+        shared: [
+          { label: "v1 log-loss", value: "0.3058" },
+          { label: "StatsBomb log-loss", value: "0.2597" },
+        ],
+        branches: [
+          { label: "(0.3058 − 0.2597) ÷ v1's own log-loss (0.3058)", result: "15.08%" },
+          { label: "(0.3058 − 0.2597) ÷ StatsBomb log-loss (0.2597)", result: "17.72%" },
+        ],
+      },
     ],
   },
   {
@@ -118,6 +291,42 @@ export const STORIES: StoryInfo[] = [
       "I've rewritten this as a publication-ordering defect, which is what I can actually prove from the diff, rather than repeating a claim about the marker being written first that the history doesn't support.",
       "That's the more useful story anyway. The original bug cost me two days. The incident note being subtly wrong for a week, and me only catching it because I sat down to write it up properly, is the thing worth remembering.",
       "One postscript. The immutability guard I added during this fix, the one that refuses to republish over a completed prefix, later broke the orchestration chain: every scheduled run failed at the Silver step whenever ingest found nothing new. That was the guard doing exactly its job. I moved the check up into the runner so it no-ops there, and left the builder's hard failure intact for anyone calling it directly.",
+    ],
+    figures: [
+      {
+        kind: "table",
+        afterParagraph: 6,
+        title: "Closure gates",
+        columns: ["Gate", "Result"],
+        rows: [
+          [
+            "Ordered-upload fix verified (code trace + empirical timestamps)",
+            "PASS — 0 objects created after _SUCCESS",
+          ],
+          ["Full test suite", "PASS — 198/198"],
+          [
+            "Fresh compliant publish, old prefix preserved",
+            "PASS — 72 objects each, old _SUCCESS still dated 2026-08-19 18:23:25 UTC",
+          ],
+          ["oam_core reconciliation", "PASS — 18/18 tables, 2,156,823 events, 15,737 shots"],
+        ],
+      },
+      {
+        kind: "upload-timeline",
+        afterParagraph: 8,
+        title: "What the incident note claimed vs. what the diff shows",
+        caption:
+          "The incident note described one defect. The diff shows a different one — real, but not the one that got written down.",
+        claimed: [
+          { label: "_SUCCESS marker written first" },
+          { label: "Everything after it undefined / unordered" },
+        ],
+        actual: [
+          { label: "parquet_files uploaded" },
+          { label: "manifest.json uploaded", detail: "12:01:50.152 UTC" },
+          { label: "_SUCCESS uploaded last", detail: "12:01:50.215 UTC" },
+        ],
+      },
     ],
   },
 ];

@@ -4,15 +4,16 @@ import type {
   CompetitionResponse,
   CxgCoefficientResponse,
   CxgCoverageResponse,
-  CxgMatchScopeRow,
   CxgModelResultResponse,
   FeatureCorrelationResponse,
   FeatureInventoryResponse,
   MatchDetailResponse,
   MatchResponse,
   MeResponse,
+  OpponentContextResponse,
   PcaResponse,
   PlayerSeasonResponse,
+  ShotFreezeFrameResponse,
   ShotResponse,
   TeamSeasonResponse,
   UnivariateTargetResponse,
@@ -66,6 +67,22 @@ export function getMatch(matchId: number | string): Promise<MatchDetailResponse>
 
 export function getMatchShots(matchId: number | string): Promise<ShotResponse[]> {
   return apiFetch<ShotResponse[]>(`/v1/matches/${matchId}/shots`);
+}
+
+// Real StatsBomb 360 positions (teammates/opponents/GK) for one shot, from
+// oam_core.three_sixty_frames/three_sixty_players — 404 when the shot has
+// no 360 frame (most shots; only 166 of 610 matches carry one), which this
+// resolves to null rather than letting it surface as a page-level error.
+export function getShotFreezeFrame(
+  matchId: number | string,
+  eventId: string
+): Promise<ShotFreezeFrameResponse | null> {
+  return apiFetch<ShotFreezeFrameResponse>(`/v1/matches/${matchId}/shots/${eventId}/freeze-frame`).catch(
+    (err) => {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  );
 }
 
 export function getPlayers(filters: {
@@ -126,6 +143,21 @@ export function getTeamShots(
   }
   const qs = params.toString();
   return apiFetch<ShotResponse[]>(`/v1/teams/${teamId}/shots${qs ? `?${qs}` : ""}`);
+}
+
+export function getTeamShotsFaced(
+  teamId: number | string,
+  filters: { competition_id?: number | null; season_id?: number | null }
+): Promise<ShotResponse[]> {
+  const params = new URLSearchParams();
+  if (filters.competition_id != null) {
+    params.set("competition_id", String(filters.competition_id));
+  }
+  if (filters.season_id != null) {
+    params.set("season_id", String(filters.season_id));
+  }
+  const qs = params.toString();
+  return apiFetch<ShotResponse[]>(`/v1/teams/${teamId}/shots-faced${qs ? `?${qs}` : ""}`);
 }
 
 export function getMe(idToken?: string | null): Promise<MeResponse> {
@@ -196,6 +228,22 @@ export function getCxgModelCoefficients(
   );
 }
 
+// --- /v1/models/* (public mirror of /v1/analysis/cxg-models*; no admin
+// gate, no auth header — powers the public Models page. Deliberate
+// divergence from the admin-only Analysis tab's identical-shaped data:
+// see routers/models.py's own docstring for why. Same response types as
+// the admin versions above; don't conflate the two endpoints.) ----------
+
+export function getPublicCxgModelResults(): Promise<CxgModelResultResponse[]> {
+  return apiFetch<CxgModelResultResponse[]>("/v1/models/cxg-models");
+}
+
+export function getPublicCxgModelCoefficients(modelKey: string): Promise<CxgCoefficientResponse[]> {
+  return apiFetch<CxgCoefficientResponse[]>(
+    `/v1/models/cxg-models/${encodeURIComponent(modelKey)}/coefficients`
+  );
+}
+
 // --- /v1/cxg/coverage (guest-accessible Explore-zone endpoint; no auth) --
 
 export function getCxgCoverage(eventIds: string[], track: string): Promise<CxgCoverageResponse> {
@@ -203,8 +251,12 @@ export function getCxgCoverage(eventIds: string[], track: string): Promise<CxgCo
   return apiFetch<CxgCoverageResponse>(`/v1/cxg/coverage${qs}`);
 }
 
-export function getCxgMatches(track: string): Promise<CxgMatchScopeRow[]> {
-  return apiFetch<CxgMatchScopeRow[]>(`/v1/cxg/matches?track=${encodeURIComponent(track)}`);
+// --- /v1/cxg/opponent-context (guest-accessible Explore-zone endpoint) --
+
+export function getShotOpponentContext(eventIds: string[]): Promise<OpponentContextResponse[]> {
+  if (eventIds.length === 0) return Promise.resolve([]);
+  const qs = `?event_ids=${encodeURIComponent(eventIds.join(","))}`;
+  return apiFetch<OpponentContextResponse[]>(`/v1/cxg/opponent-context${qs}`);
 }
 
 export { ApiError };

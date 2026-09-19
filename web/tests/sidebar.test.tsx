@@ -4,6 +4,13 @@ import { Sidebar } from "@/components/shell/Sidebar";
 import { MatchFilterProvider, useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import type { CompetitionResponse, TeamSeasonResponse } from "@/lib/types";
 
+const mockReplace = vi.fn();
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/matches",
+  useRouter: () => ({ push: vi.fn(), replace: mockReplace }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("@/lib/api", () => ({
   getCompetitions: vi.fn(),
   getTeams: vi.fn(),
@@ -33,6 +40,11 @@ const TEAMS: TeamSeasonResponse[] = [
 function ModeProbe() {
   const { metricMode } = useMatchFilter();
   return <div data-testid="metric-mode">{metricMode}</div>;
+}
+
+function ScopeProbe() {
+  const { cxgScopeOnly } = useMatchFilter();
+  return <div data-testid="cxg-scope">{cxgScopeOnly ? "cxg" : "all"}</div>;
 }
 
 describe("Sidebar", () => {
@@ -82,5 +94,40 @@ describe("Sidebar", () => {
 
     await waitFor(() => expect(screen.getByText("Leicester City")).toBeInTheDocument());
     expect(screen.getAllByText("soon")).toHaveLength(2);
+  });
+
+  it('the CxG scope toggle defaults to ON ("CxG matches only")', async () => {
+    vi.mocked(getCompetitions).mockResolvedValue(COMPETITIONS);
+    vi.mocked(getTeams).mockResolvedValue(TEAMS);
+
+    render(
+      <MatchFilterProvider>
+        <Sidebar />
+        <ScopeProbe />
+      </MatchFilterProvider>
+    );
+
+    await waitFor(() => expect(screen.getByText("Leicester City")).toBeInTheDocument());
+    expect(screen.getByTestId("cxg-scope")).toHaveTextContent("cxg");
+    expect(screen.getByText("CxG matches only")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it('clicking "All matches" flips scope state and syncs the URL', async () => {
+    vi.mocked(getCompetitions).mockResolvedValue(COMPETITIONS);
+    vi.mocked(getTeams).mockResolvedValue(TEAMS);
+    mockReplace.mockClear();
+
+    render(
+      <MatchFilterProvider>
+        <Sidebar />
+        <ScopeProbe />
+      </MatchFilterProvider>
+    );
+
+    await waitFor(() => expect(screen.getByText("Leicester City")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("All matches"));
+
+    expect(screen.getByTestId("cxg-scope")).toHaveTextContent("all");
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/matches?scope=all", { scroll: false }));
   });
 });

@@ -32,6 +32,17 @@ describe("ModelCard", () => {
     expect(link).toHaveAttribute("href", "/stories/cxg-v3-honest-comparison");
   });
 
+  it("links to the public model detail page when detailModelKey is set", () => {
+    render(<ModelCard model={{ ...EVALUATED_MODEL, detailModelKey: "event_v3" }} />);
+    const link = screen.getByRole("link", { name: /View full results & coefficients/ });
+    expect(link).toHaveAttribute("href", "/models/event_v3");
+  });
+
+  it("does not render the detail link when detailModelKey is absent", () => {
+    render(<ModelCard model={EVALUATED_MODEL} />);
+    expect(screen.queryByRole("link", { name: /View full results/ })).not.toBeInTheDocument();
+  });
+
   it("renders the evaluated status label distinctly from promoted/training/planned", () => {
     render(<ModelCard model={EVALUATED_MODEL} />);
     const badge = screen.getByText("Evaluated");

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import { PitchMap } from "@/components/ui/PitchMap";
 import type { ShotResponse } from "@/lib/types";
@@ -84,6 +84,29 @@ describe("PitchMap", () => {
 
     // evt-3/evt-4 have no coverage on either track.
     expect(titles.slice(2)).toEqual([null, null]);
+  });
+});
+
+describe("PitchMap onShotClick", () => {
+  it("calls onShotClick with the clicked shot when set", () => {
+    const onShotClick = vi.fn();
+    const { container } = render(<PitchMap shots={shots} homeTeamId={10} onShotClick={onShotClick} />);
+
+    const markers = container.querySelectorAll('[data-testid="shot-marker"]');
+    fireEvent.click(markers[0]);
+
+    expect(onShotClick).toHaveBeenCalledTimes(1);
+    expect(onShotClick).toHaveBeenCalledWith(shots[0]);
+  });
+
+  it("marks shot dots as clickable buttons only when onShotClick is provided", () => {
+    const { container: withHandler } = render(
+      <PitchMap shots={shots} homeTeamId={10} onShotClick={() => {}} />
+    );
+    expect(withHandler.querySelector('[data-testid="shot-marker"]')).toHaveAttribute("role", "button");
+
+    const { container: withoutHandler } = render(<PitchMap shots={shots} homeTeamId={10} />);
+    expect(withoutHandler.querySelector('[data-testid="shot-marker"]')).not.toHaveAttribute("role");
   });
 });
 

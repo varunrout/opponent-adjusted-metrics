@@ -8,6 +8,8 @@ import { PitchMap } from "@/components/ui/PitchMap";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
+import { ShotDetailModal } from "@/components/shot/ShotDetailModal";
+import { XgTimeline } from "@/components/shot/XgTimeline";
 import { getMatch, getMatchShots, getCxgCoverage, ApiError } from "@/lib/api";
 import { describeCxgCoverage } from "@/lib/analysis-helpers";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
@@ -25,6 +27,7 @@ export default function MatchDetailPage() {
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState(false);
+  const [selectedShot, setSelectedShot] = useState<ShotResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +114,9 @@ export default function MatchDetailPage() {
   const homeLineup = match.lineups.filter((p) => p.team_id === homeTeamId);
   const awayLineup = match.lineups.filter((p) => p.team_id === awayTeamId);
 
+  const outcomeBreakdown = deriveOutcomeBreakdown(shots, homeTeamId, awayTeamId);
+  const biggestGap = deriveBiggestGap(shots, cxgByEventId);
+
   return (
     <section>
       <div className="mb-[18px]">
@@ -140,6 +146,7 @@ export default function MatchDetailPage() {
             cxgPlusByEventId={cxgPlusByEventId}
             sizeBy={metricMode}
             showLegend
+            onShotClick={setSelectedShot}
           />
           {(() => {
             const captions = [
@@ -164,8 +171,134 @@ export default function MatchDetailPage() {
           </Card>
         </div>
       </div>
+
+      <div className="grid gap-4 items-start mb-4" style={{ gridTemplateColumns: "2fr 1fr" }}>
+        <Card title="Cumulative xG">
+          <XgTimeline
+            shots={shots}
+            homeTeamId={homeTeamId}
+            awayTeamId={awayTeamId}
+            homeLabel={match.home_team_name ?? "Home"}
+            awayLabel={match.away_team_name ?? "Away"}
+          />
+        </Card>
+
+        <Card title="Shot outcomes">
+          <OutcomeBreakdownList
+            breakdown={outcomeBreakdown}
+            homeLabel={match.home_team_name ?? "Home"}
+            awayLabel={match.away_team_name ?? "Away"}
+          />
+        </Card>
+      </div>
+
+      {biggestGap && (
+        <Card title="Biggest CxG-vs-xG gap" className="mb-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-[12.5px] text-text2 m-0">
+              <PlayerLink
+                playerId={biggestGap.shot.player_id}
+                name={biggestGap.shot.player_name ?? "Unknown player"}
+                className="text-text"
+              />{" "}
+              — xG <span className="font-data text-text">{(biggestGap.shot.statsbomb_xg ?? 0).toFixed(2)}</span> vs
+              CxG <span className="font-data" style={{ color: "var(--teal)" }}>{biggestGap.cxg.toFixed(2)}</span> (
+              {biggestGap.diff >= 0 ? "+" : ""}
+              {biggestGap.diff.toFixed(2)})
+            </p>
+            <button
+              type="button"
+              onClick={() => setSelectedShot(biggestGap.shot)}
+              className="text-[11.5px] px-2.5 py-1 rounded border border-border bg-card-hi text-text cursor-pointer"
+            >
+              Jump to shot
+            </button>
+          </div>
+        </Card>
+      )}
+
+      <ShotDetailModal
+        shot={selectedShot}
+        open={selectedShot != null}
+        onClose={() => setSelectedShot(null)}
+        cxg={selectedShot ? cxgByEventId[selectedShot.event_id] : undefined}
+        cxgPlus={selectedShot ? cxgPlusByEventId[selectedShot.event_id] : undefined}
+      />
     </section>
   );
+}
+
+type OutcomeBreakdown = { outcome: string; home: number; away: number };
+
+function deriveOutcomeBreakdown(
+  shots: ShotResponse[],
+  homeTeamId: number | null,
+  awayTeamId: number | null
+): OutcomeBreakdown[] {
+  const byOutcome = new Map<string, { home: number; away: number }>();
+  for (const shot of shots) {
+    const outcome = shot.outcome_name ?? "Unknown";
+    const entry = byOutcome.get(outcome) ?? { home: 0, away: 0 };
+    if (shot.team_id === homeTeamId) entry.home += 1;
+    else if (shot.team_id === awayTeamId) entry.away += 1;
+    byOutcome.set(outcome, entry);
+  }
+  return Array.from(byOutcome.entries())
+    .map(([outcome, counts]) => ({ outcome, ...counts }))
+    .sort((a, b) => b.home + b.away - (a.home + a.away));
+}
+
+function OutcomeBreakdownList({
+  breakdown,
+  homeLabel,
+  awayLabel,
+}: {
+  breakdown: OutcomeBreakdown[];
+  homeLabel: string;
+  awayLabel: string;
+}) {
+  if (breakdown.length === 0) {
+    return <p className="text-[12.5px] text-muted m-0">No shots recorded.</p>;
+  }
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[11px] text-muted mb-1.5">
+        <span>Outcome</span>
+        <span className="flex gap-3">
+          <span>{homeLabel}</span>
+          <span>{awayLabel}</span>
+        </span>
+      </div>
+      {breakdown.map((row) => (
+        <div
+          key={row.outcome}
+          className="flex items-center justify-between py-[6px] border-b border-border last:border-b-0 text-[12.5px]"
+        >
+          <span className="text-text">{row.outcome}</span>
+          <span className="flex gap-3 font-data">
+            <span style={{ color: "var(--home-team)" }}>{row.home}</span>
+            <span style={{ color: "var(--away-team)" }}>{row.away}</span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function deriveBiggestGap(
+  shots: ShotResponse[],
+  cxgByEventId: Record<string, number>
+): { shot: ShotResponse; cxg: number; diff: number } | null {
+  let best: { shot: ShotResponse; cxg: number; diff: number } | null = null;
+  for (const shot of shots) {
+    const cxg = cxgByEventId[shot.event_id];
+    if (cxg == null) continue;
+    const diff = cxg - (shot.statsbomb_xg ?? 0);
+    if (best == null || Math.abs(diff) > Math.abs(best.diff)) {
+      best = { shot, cxg, diff };
+    }
+  }
+  return best;
 }
 
 function LineupList({ players }: { players: LineupPlayerResponse[] }) {

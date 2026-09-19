@@ -16,8 +16,14 @@ vi.mock("@/components/shell/MatchFilterProvider", () => ({
     competitionsLoading: false,
     competitionId: null,
     seasonId: null,
+    teamId: null,
+    metricMode: "xg",
+    cxgScopeOnly: true,
     setCompetitionId: vi.fn(),
     setSeasonId: vi.fn(),
+    setTeamId: vi.fn(),
+    setMetricMode: vi.fn(),
+    setCxgScopeOnly: vi.fn(),
   }),
 }));
 

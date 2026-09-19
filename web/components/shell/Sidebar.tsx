@@ -19,10 +19,12 @@ export function Sidebar() {
     seasonId,
     teamId,
     metricMode,
+    cxgScopeOnly,
     setCompetitionId,
     setSeasonId,
     setTeamId,
     setMetricMode,
+    setCxgScopeOnly,
   } = useMatchFilter();
 
   const [teams, setTeams] = useState<TeamSeasonResponse[]>([]);
@@ -62,6 +64,33 @@ export function Sidebar() {
 
   return (
     <aside className="w-[220px] flex-shrink-0 bg-surface border-r border-border px-4 py-[18px]">
+      <FilterGroup label="CxG scope">
+        <div className="flex rounded-lg border border-border overflow-hidden text-[12px]">
+          <button
+            type="button"
+            aria-pressed={cxgScopeOnly}
+            onClick={() => setCxgScopeOnly(true)}
+            className={[
+              "flex-1 py-[7px] px-1.5",
+              cxgScopeOnly ? "bg-teal/[0.12] text-text" : "text-text2 hover:text-text",
+            ].join(" ")}
+          >
+            CxG matches only
+          </button>
+          <button
+            type="button"
+            aria-pressed={!cxgScopeOnly}
+            onClick={() => setCxgScopeOnly(false)}
+            className={[
+              "flex-1 py-[7px] px-1.5 border-l border-border",
+              !cxgScopeOnly ? "bg-teal/[0.12] text-text" : "text-text2 hover:text-text",
+            ].join(" ")}
+          >
+            All matches
+          </button>
+        </div>
+      </FilterGroup>
+
       <FilterGroup label="Competition">
         <select
           className="w-full bg-card border border-border text-text rounded-lg px-2.5 py-[7px] text-[12.5px]"

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "@/components/ui/PageHead";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { DivergingBar } from "@/components/ui/DivergingBar";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import { getTeams } from "@/lib/api";
 import type { TeamSeasonResponse } from "@/lib/types";
@@ -74,14 +75,23 @@ export default function TeamsPage() {
     {
       key: "goalsMinusXg",
       label: "G−xG",
-      width: "80px",
+      width: "140px",
       align: "right",
       sortable: true,
       render: (row) => (
-        <span style={{ color: row.goalsMinusXg >= 0 ? "var(--green)" : "var(--red)" }}>
-          {row.goalsMinusXg >= 0 ? "+" : ""}
-          {row.goalsMinusXg.toFixed(2)}
-        </span>
+        <div className="flex flex-col items-end gap-1 w-28">
+          <span style={{ color: row.goalsMinusXg >= 0 ? "var(--green)" : "var(--red)" }}>
+            {row.goalsMinusXg >= 0 ? "+" : ""}
+            {row.goalsMinusXg.toFixed(2)}
+          </span>
+          <div className="w-full">
+            <DivergingBar
+              left={{ label: "", value: row.goals, color: "var(--green)" }}
+              right={{ label: "", value: row.total_xg, color: "var(--muted)" }}
+              formatValue={() => ""}
+            />
+          </div>
+        </div>
       ),
     },
   ];
