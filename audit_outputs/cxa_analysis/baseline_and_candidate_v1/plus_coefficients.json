@@ -1,0 +1,17 @@
+[
+{"track":"plus","feature":"reception_geometry_missing","coefficient":-21.8226,"std_error":470161.4237,"p_value":1.0},
+{"track":"plus","feature":"const","coefficient":-12.3288,"std_error":0.2429,"p_value":0.0},
+{"track":"plus","feature":"play_pattern_Counter","coefficient":3.0284,"std_error":0.1659,"p_value":0.0},
+{"track":"plus","feature":"is_through_ball","coefficient":2.4112,"std_error":0.1874,"p_value":0.0},
+{"track":"plus","feature":"is_cross","coefficient":1.8458,"std_error":0.0943,"p_value":0.0},
+{"track":"plus","feature":"pass_technique_Outswinging","coefficient":1.5067,"std_error":0.2675,"p_value":0.0},
+{"track":"plus","feature":"is_switch","coefficient":-0.8222,"std_error":0.1507,"p_value":0.0},
+{"track":"plus","feature":"pass_type_FreeKick","coefficient":0.713,"std_error":0.1895,"p_value":0.0002},
+{"track":"plus","feature":"reception_opponents_within_5m","coefficient":0.4027,"std_error":0.0302,"p_value":0.0},
+{"track":"plus","feature":"play_pattern_Corner","coefficient":0.2312,"std_error":0.1136,"p_value":0.0417},
+{"track":"plus","feature":"is_cut_back","coefficient":0.1401,"std_error":0.2411,"p_value":0.561},
+{"track":"plus","feature":"end_x","coefficient":0.069,"std_error":0.0029,"p_value":0.0},
+{"track":"plus","feature":"reception_nearest_opponent_distance_m","coefficient":0.0565,"std_error":0.012,"p_value":0.0},
+{"track":"plus","feature":"pass_type_Corner","coefficient":0.0533,"std_error":0.1951,"p_value":0.7849},
+{"track":"plus","feature":"start_x","coefficient":0.0225,"std_error":0.0024,"p_value":0.0}
+]
