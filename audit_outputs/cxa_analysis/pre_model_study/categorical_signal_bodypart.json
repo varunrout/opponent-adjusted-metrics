@@ -1,0 +1,50 @@
+[
+  {
+    "bodypart": "No Touch",
+    "n": 521,
+    "n_create": 32,
+    "create_pct": 6.142
+  },
+  {
+    "bodypart": "Other",
+    "n": 2920,
+    "n_create": 66,
+    "create_pct": 2.26
+  },
+  {
+    "bodypart": "Left Foot",
+    "n": 163775,
+    "n_create": 3692,
+    "create_pct": 2.254
+  },
+  {
+    "bodypart": "Right Foot",
+    "n": 366093,
+    "n_create": 6896,
+    "create_pct": 1.884
+  },
+  {
+    "bodypart": "Head",
+    "n": 27148,
+    "n_create": 256,
+    "create_pct": 0.943
+  },
+  {
+    "bodypart": "(null)",
+    "n": 40912,
+    "n_create": 345,
+    "create_pct": 0.843
+  },
+  {
+    "bodypart": "Drop Kick",
+    "n": 2474,
+    "n_create": 13,
+    "create_pct": 0.525
+  },
+  {
+    "bodypart": "Keeper Arm",
+    "n": 4879,
+    "n_create": 3,
+    "create_pct": 0.061
+  }
+]

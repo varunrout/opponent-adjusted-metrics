@@ -1,0 +1,20 @@
+[
+  {
+    "pass_height_name": "High Pass",
+    "n": 130263,
+    "n_create": 3968,
+    "create_pct": 3.046
+  },
+  {
+    "pass_height_name": "Low Pass",
+    "n": 80136,
+    "n_create": 1316,
+    "create_pct": 1.642
+  },
+  {
+    "pass_height_name": "Ground Pass",
+    "n": 398323,
+    "n_create": 6019,
+    "create_pct": 1.511
+  }
+]

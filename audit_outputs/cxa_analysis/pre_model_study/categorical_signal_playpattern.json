@@ -1,0 +1,56 @@
+[
+  {
+    "play_pattern_name": "From Counter",
+    "n": 3939,
+    "n_create": 567,
+    "create_pct": 14.395
+  },
+  {
+    "play_pattern_name": "From Corner",
+    "n": 22128,
+    "n_create": 1870,
+    "create_pct": 8.451
+  },
+  {
+    "play_pattern_name": "From Free Kick",
+    "n": 84982,
+    "n_create": 1675,
+    "create_pct": 1.971
+  },
+  {
+    "play_pattern_name": "Regular Play",
+    "n": 260163,
+    "n_create": 4181,
+    "create_pct": 1.607
+  },
+  {
+    "play_pattern_name": "From Throw In",
+    "n": 152910,
+    "n_create": 2202,
+    "create_pct": 1.44
+  },
+  {
+    "play_pattern_name": "From Keeper",
+    "n": 14486,
+    "n_create": 196,
+    "create_pct": 1.353
+  },
+  {
+    "play_pattern_name": "From Goal Kick",
+    "n": 47999,
+    "n_create": 474,
+    "create_pct": 0.988
+  },
+  {
+    "play_pattern_name": "Other",
+    "n": 1468,
+    "n_create": 12,
+    "create_pct": 0.817
+  },
+  {
+    "play_pattern_name": "From Kick Off",
+    "n": 20647,
+    "n_create": 126,
+    "create_pct": 0.61
+  }
+]

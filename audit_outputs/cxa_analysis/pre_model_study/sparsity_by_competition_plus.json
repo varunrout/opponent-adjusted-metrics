@@ -1,0 +1,29 @@
+[
+  {
+    "competition_name": "FIFA World Cup",
+    "competition_id": 43,
+    "season_id": 106,
+    "n": 51089,
+    "n_create": 992,
+    "create_pct": 1.942,
+    "n_matches": 64
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 43,
+    "n": 41016,
+    "n_create": 891,
+    "create_pct": 2.172,
+    "n_matches": 51
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 282,
+    "n": 41038,
+    "n_create": 947,
+    "create_pct": 2.308,
+    "n_matches": 51
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "ptype": "Corner",
+    "n": 6224,
+    "n_create": 1098,
+    "create_pct": 17.641
+  },
+  {
+    "ptype": "Free Kick",
+    "n": 14676,
+    "n_create": 487,
+    "create_pct": 3.318
+  },
+  {
+    "ptype": "(null=open play)",
+    "n": 486454,
+    "n_create": 9020,
+    "create_pct": 1.854
+  },
+  {
+    "ptype": "Recovery",
+    "n": 57942,
+    "n_create": 574,
+    "create_pct": 0.991
+  },
+  {
+    "ptype": "Throw-in",
+    "n": 26011,
+    "n_create": 99,
+    "create_pct": 0.381
+  },
+  {
+    "ptype": "Interception",
+    "n": 5024,
+    "n_create": 16,
+    "create_pct": 0.318
+  },
+  {
+    "ptype": "Kick Off",
+    "n": 2780,
+    "n_create": 5,
+    "create_pct": 0.18
+  },
+  {
+    "ptype": "Goal Kick",
+    "n": 9611,
+    "n_create": 4,
+    "create_pct": 0.042
+  }
+]

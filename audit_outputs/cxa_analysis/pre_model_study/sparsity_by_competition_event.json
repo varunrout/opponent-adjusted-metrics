@@ -1,0 +1,47 @@
+[
+  {
+    "competition_name": "FIFA World Cup",
+    "competition_id": 43,
+    "season_id": 3,
+    "n": 62881,
+    "n_create": 1180,
+    "create_pct": 1.877,
+    "n_matches": 64
+  },
+  {
+    "competition_name": "FIFA World Cup",
+    "competition_id": 43,
+    "season_id": 106,
+    "n": 68515,
+    "n_create": 1039,
+    "create_pct": 1.516,
+    "n_matches": 64
+  },
+  {
+    "competition_name": "Premier League",
+    "competition_id": 2,
+    "season_id": 27,
+    "n": 368619,
+    "n_create": 7175,
+    "create_pct": 1.946,
+    "n_matches": 380
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 43,
+    "n": 54819,
+    "n_create": 926,
+    "create_pct": 1.689,
+    "n_matches": 51
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 282,
+    "n": 53888,
+    "n_create": 983,
+    "create_pct": 1.824,
+    "n_matches": 51
+  }
+]
