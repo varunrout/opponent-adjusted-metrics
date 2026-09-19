@@ -1,0 +1,126 @@
+{
+  "event": [
+    {
+      "both_true": 198,
+      "a_only": 1571,
+      "b_only": 6026,
+      "neither": 114473,
+      "a_total": 15105,
+      "b_total": 6224,
+      "feature_a": "is_cross",
+      "feature_b": "pass_type_name=Corner"
+    },
+    {
+      "both_true": 49,
+      "a_only": 15056,
+      "b_only": 2415,
+      "neither": 591202,
+      "a_total": 15105,
+      "b_total": 2464,
+      "feature_a": "is_cross",
+      "feature_b": "is_through_ball"
+    },
+    {
+      "both_true": 782,
+      "a_only": 14323,
+      "b_only": 424,
+      "neither": 593193,
+      "a_total": 15105,
+      "b_total": 1206,
+      "feature_a": "is_cross",
+      "feature_b": "is_cut_back"
+    },
+    {
+      "both_true": 0,
+      "a_only": 6224,
+      "b_only": 101,
+      "neither": 115943,
+      "a_total": 6224,
+      "b_total": 2464,
+      "feature_a": "pass_type_name=Corner",
+      "feature_b": "is_through_ball"
+    },
+    {
+      "both_true": 5,
+      "a_only": 6219,
+      "b_only": 46,
+      "neither": 115998,
+      "a_total": 6224,
+      "b_total": 1206,
+      "feature_a": "pass_type_name=Corner",
+      "feature_b": "is_cut_back"
+    },
+    {
+      "both_true": 0,
+      "a_only": 2464,
+      "b_only": 1206,
+      "neither": 605052,
+      "a_total": 2464,
+      "b_total": 1206,
+      "feature_a": "is_through_ball",
+      "feature_b": "is_cut_back"
+    }
+  ],
+  "plus": [
+    {
+      "both_true": 0,
+      "a_only": 94,
+      "b_only": 588,
+      "neither": 17376,
+      "a_total": 1094,
+      "b_total": 588,
+      "feature_a": "is_cross",
+      "feature_b": "pass_type_name=Corner"
+    },
+    {
+      "both_true": 10,
+      "a_only": 1084,
+      "b_only": 242,
+      "neither": 131807,
+      "a_total": 1094,
+      "b_total": 252,
+      "feature_a": "is_cross",
+      "feature_b": "is_through_ball"
+    },
+    {
+      "both_true": 85,
+      "a_only": 1009,
+      "b_only": 55,
+      "neither": 131994,
+      "a_total": 1094,
+      "b_total": 140,
+      "feature_a": "is_cross",
+      "feature_b": "is_cut_back"
+    },
+    {
+      "both_true": 0,
+      "a_only": 588,
+      "b_only": 13,
+      "neither": 17457,
+      "a_total": 588,
+      "b_total": 252,
+      "feature_a": "pass_type_name=Corner",
+      "feature_b": "is_through_ball"
+    },
+    {
+      "both_true": 0,
+      "a_only": 588,
+      "b_only": 4,
+      "neither": 17466,
+      "a_total": 588,
+      "b_total": 140,
+      "feature_a": "pass_type_name=Corner",
+      "feature_b": "is_cut_back"
+    },
+    {
+      "both_true": 0,
+      "a_only": 252,
+      "b_only": 140,
+      "neither": 132751,
+      "a_total": 252,
+      "b_total": 140,
+      "feature_a": "is_through_ball",
+      "feature_b": "is_cut_back"
+    }
+  ]
+}

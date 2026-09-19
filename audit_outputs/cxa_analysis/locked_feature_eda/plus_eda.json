@@ -1,0 +1,863 @@
+{
+  "numeric_distribution": [
+    {
+      "feature": "start_x",
+      "n": 133143,
+      "n_null": 0,
+      "mean": 57.674,
+      "median": 57.3,
+      "stddev": 25.748,
+      "min_val": 0.6,
+      "max_val": 120.0,
+      "p1": 6.0,
+      "p5": 13.6,
+      "p95": 99.3,
+      "p99": 113.2
+    },
+    {
+      "feature": "end_x",
+      "n": 133143,
+      "n_null": 0,
+      "mean": 59.836,
+      "median": 59.8,
+      "stddev": 26.209,
+      "min_val": 0.1,
+      "max_val": 120.0,
+      "p1": 5.3,
+      "p5": 14.7,
+      "p95": 103.1,
+      "p99": 112.8
+    },
+    {
+      "feature": "reception_nearest_opponent_distance_m",
+      "n": 133143,
+      "n_null": 154,
+      "mean": 7.312,
+      "median": 6.539,
+      "stddev": 4.634,
+      "min_val": 0.02154713981111899,
+      "max_val": 42.206669440991085,
+      "p1": 0.534,
+      "p5": 1.211,
+      "p95": 15.771,
+      "p99": 20.625
+    },
+    {
+      "feature": "reception_opponents_within_5m",
+      "n": 133143,
+      "n_null": 154,
+      "mean": 0.498,
+      "median": 0.0,
+      "stddev": 0.774,
+      "min_val": 0,
+      "max_val": 9,
+      "p1": 0.0,
+      "p5": 0.0,
+      "p95": 2.0,
+      "p99": 3.0
+    },
+    {
+      "feature": "reception_opponents_within_8m",
+      "n": 133143,
+      "n_null": 154,
+      "mean": 1.13,
+      "median": 1.0,
+      "stddev": 1.241,
+      "min_val": 0,
+      "max_val": 11,
+      "p1": 0.0,
+      "p5": 0.0,
+      "p95": 3.0,
+      "p99": 5.0
+    }
+  ],
+  "decile_histograms": [
+    {
+      "feature": "start_x",
+      "decile_edges": [
+        0.6,
+        21.8,
+        34.4,
+        43.1,
+        50.8,
+        57.4,
+        64.7,
+        72.4,
+        80.5,
+        91.4,
+        120.0
+      ]
+    },
+    {
+      "feature": "end_x",
+      "decile_edges": [
+        0.1,
+        23.8,
+        36.3,
+        44.8,
+        52.3,
+        60.1,
+        67.4,
+        75.3,
+        83.7,
+        94.8,
+        120.0
+      ]
+    },
+    {
+      "feature": "reception_nearest_opponent_distance_m",
+      "decile_edges": [
+        0.02154713981111899,
+        1.9240687991576304,
+        3.1599382252585126,
+        4.24733541449221,
+        5.368267506809047,
+        6.494910325464198,
+        7.8263963653734265,
+        9.303573269616873,
+        11.017761181250064,
+        13.592359747552486,
+        42.206669440991085
+      ]
+    },
+    {
+      "feature": "reception_opponents_within_5m",
+      "decile_edges": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        2,
+        9
+      ]
+    },
+    {
+      "feature": "reception_opponents_within_8m",
+      "decile_edges": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        3,
+        11
+      ]
+    }
+  ],
+  "categorical_levels": [
+    {
+      "feature": "is_cross",
+      "total_n": 133143,
+      "n_true": 1094,
+      "pct_true": 0.8217
+    },
+    {
+      "feature": "is_through_ball",
+      "total_n": 133143,
+      "n_true": 252,
+      "pct_true": 0.1893
+    },
+    {
+      "feature": "pass_type_Corner",
+      "total_n": 133143,
+      "n_true": 588,
+      "pct_true": 0.4416
+    },
+    {
+      "feature": "pass_type_FreeKick",
+      "total_n": 133143,
+      "n_true": 2407,
+      "pct_true": 1.8078
+    },
+    {
+      "feature": "play_pattern_Counter",
+      "total_n": 133143,
+      "n_true": 795,
+      "pct_true": 0.5971
+    },
+    {
+      "feature": "play_pattern_Corner",
+      "total_n": 133143,
+      "n_true": 3851,
+      "pct_true": 2.8924
+    },
+    {
+      "feature": "pass_technique_Outswinging",
+      "total_n": 133143,
+      "n_true": 213,
+      "pct_true": 0.16
+    },
+    {
+      "feature": "pass_technique_Straight",
+      "total_n": 133143,
+      "n_true": 25,
+      "pct_true": 0.0188
+    },
+    {
+      "feature": "is_cut_back",
+      "total_n": 133143,
+      "n_true": 140,
+      "pct_true": 0.1052
+    },
+    {
+      "feature": "is_switch",
+      "total_n": 133143,
+      "n_true": 2508,
+      "pct_true": 1.8837
+    },
+    {
+      "feature": "pass_bodypart_NoTouch",
+      "total_n": 133143,
+      "n_true": 135,
+      "pct_true": 0.1014
+    }
+  ],
+  "correlation_matrix": [
+    {
+      "feature_a": "start_x",
+      "feature_b": "end_x",
+      "r": 0.8566
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "reception_nearest_opponent_distance_m",
+      "r": -0.2216
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "reception_opponents_within_5m",
+      "r": 0.1897
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "reception_opponents_within_8m",
+      "r": 0.2588
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_cross",
+      "r": 0.169
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_through_ball",
+      "r": 0.029
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.3976
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_type_FreeKick",
+      "r": -0.0686
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0258
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.156
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.5117
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_technique_Straight",
+      "r": 0.1457
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_cut_back",
+      "r": 0.074
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_switch",
+      "r": 0.0226
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.0167
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "reception_nearest_opponent_distance_m",
+      "r": -0.4284
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "reception_opponents_within_5m",
+      "r": 0.3269
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "reception_opponents_within_8m",
+      "r": 0.3932
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_cross",
+      "r": 0.1739
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_through_ball",
+      "r": 0.0744
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.3317
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_type_FreeKick",
+      "r": -0.0083
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "play_pattern_Counter",
+      "r": 0.0107
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.1298
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.0957
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.0461
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_cut_back",
+      "r": 0.0609
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_switch",
+      "r": 0.0676
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.017
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "reception_opponents_within_5m",
+      "r": -0.6423
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "reception_opponents_within_8m",
+      "r": -0.7065
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "is_cross",
+      "r": -0.0916
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "is_through_ball",
+      "r": -0.0407
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "pass_type_Corner",
+      "r": -0.0926
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "pass_type_FreeKick",
+      "r": 0.1477
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0504
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "play_pattern_Corner",
+      "r": -0.0063
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.1785
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "pass_technique_Straight",
+      "r": 0.1604
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "is_cut_back",
+      "r": -0.0324
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "is_switch",
+      "r": 0.0572
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0124
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "reception_opponents_within_8m",
+      "r": 0.7622
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "is_cross",
+      "r": 0.1784
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "is_through_ball",
+      "r": 0.0455
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "pass_type_Corner",
+      "r": 0.3135
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "pass_type_FreeKick",
+      "r": -0.1121
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "play_pattern_Counter",
+      "r": 0.043
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.0697
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.3332
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.1056
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "is_cut_back",
+      "r": 0.0564
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "is_switch",
+      "r": 0.0021
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.0109
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "is_cross",
+      "r": 0.1819
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "is_through_ball",
+      "r": 0.0391
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "pass_type_Corner",
+      "r": 0.3217
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "pass_type_FreeKick",
+      "r": -0.1211
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "play_pattern_Counter",
+      "r": 0.0447
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.0727
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.3979
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.0986
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "is_cut_back",
+      "r": 0.0729
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "is_switch",
+      "r": -0.023
+    },
+    {
+      "feature_a": "reception_opponents_within_8m",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.011
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "is_through_ball",
+      "r": 0.0152
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_type_Corner",
+      "r": -0.0133
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_type_FreeKick",
+      "r": 0.1324
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "play_pattern_Counter",
+      "r": 0.0037
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.0414
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.0902
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.0257
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "is_cut_back",
+      "r": 0.2153
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "is_switch",
+      "r": 0.1153
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.003
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_type_Corner",
+      "r": -0.0049
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_type_FreeKick",
+      "r": 0.0381
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "play_pattern_Counter",
+      "r": 0.0437
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.0038
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.5792
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.1649
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "is_cut_back",
+      "r": -0.0014
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "is_switch",
+      "r": 0.0003
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0015
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "pass_type_FreeKick",
+      "r": -0.0719
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0208
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.7829
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.2004
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "pass_technique_Straight",
+      "r": 0.0481
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "is_cut_back",
+      "r": -0.0027
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "is_switch",
+      "r": 0.3743
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": NaN
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0444
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "play_pattern_Corner",
+      "r": -0.0919
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.1562
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.0375
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "is_cut_back",
+      "r": 0.0051
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "is_switch",
+      "r": 0.1474
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": NaN
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "play_pattern_Corner",
+      "r": -0.0134
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.1319
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.0376
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "is_cut_back",
+      "r": 0.0035
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "is_switch",
+      "r": -0.0079
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.0069
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.5584
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "pass_technique_Straight",
+      "r": 0.159
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "is_cut_back",
+      "r": 0.0151
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "is_switch",
+      "r": 0.0661
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0029
+    },
+    {
+      "feature_a": "pass_technique_Outswinging",
+      "feature_b": "pass_technique_Straight",
+      "r": -0.1444
+    },
+    {
+      "feature_a": "pass_technique_Outswinging",
+      "feature_b": "is_cut_back",
+      "r": NaN
+    },
+    {
+      "feature_a": "pass_technique_Outswinging",
+      "feature_b": "is_switch",
+      "r": 0.3502
+    },
+    {
+      "feature_a": "pass_technique_Outswinging",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": NaN
+    },
+    {
+      "feature_a": "pass_technique_Straight",
+      "feature_b": "is_cut_back",
+      "r": NaN
+    },
+    {
+      "feature_a": "pass_technique_Straight",
+      "feature_b": "is_switch",
+      "r": 0.2063
+    },
+    {
+      "feature_a": "pass_technique_Straight",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": NaN
+    },
+    {
+      "feature_a": "is_cut_back",
+      "feature_b": "is_switch",
+      "r": -0.0045
+    },
+    {
+      "feature_a": "is_cut_back",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0011
+    },
+    {
+      "feature_a": "is_switch",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0046
+    }
+  ],
+  "flagged_new_correlations": [
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.5117
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "reception_opponents_within_5m",
+      "r": -0.6423
+    },
+    {
+      "feature_a": "reception_nearest_opponent_distance_m",
+      "feature_b": "reception_opponents_within_8m",
+      "r": -0.7065
+    },
+    {
+      "feature_a": "reception_opponents_within_5m",
+      "feature_b": "reception_opponents_within_8m",
+      "r": 0.7622
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.5792
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.7829
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.5584
+    }
+  ]
+}

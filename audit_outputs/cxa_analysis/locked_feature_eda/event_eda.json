@@ -1,0 +1,467 @@
+{
+  "numeric_distribution": [
+    {
+      "feature": "start_x",
+      "n": 608722,
+      "n_null": 0,
+      "mean": 59.275,
+      "median": 58.7,
+      "stddev": 27.708,
+      "min_val": 0.1,
+      "max_val": 120.9,
+      "p1": 5.8,
+      "p5": 11.4,
+      "p95": 105.9,
+      "p99": 119.0
+    },
+    {
+      "feature": "end_x",
+      "n": 608722,
+      "n_null": 0,
+      "mean": 66.457,
+      "median": 66.4,
+      "stddev": 27.196,
+      "min_val": 0.1,
+      "max_val": 120.0,
+      "p1": 7.1,
+      "p5": 20.5,
+      "p95": 110.8,
+      "p99": 117.2
+    }
+  ],
+  "decile_histograms": [
+    {
+      "feature": "start_x",
+      "decile_edges": [
+        0.1,
+        20.7,
+        34.5,
+        43.7,
+        51.8,
+        58.8,
+        66.4,
+        75.0,
+        84.1,
+        95.9,
+        120.9
+      ]
+    },
+    {
+      "feature": "end_x",
+      "decile_edges": [
+        0.1,
+        29.5,
+        42.2,
+        50.8,
+        58.0,
+        66.5,
+        74.2,
+        82.6,
+        91.8,
+        104.3,
+        120.0
+      ]
+    }
+  ],
+  "categorical_levels": [
+    {
+      "feature": "is_cross",
+      "total_n": 608722,
+      "n_true": 15105,
+      "pct_true": 2.4814
+    },
+    {
+      "feature": "is_through_ball",
+      "total_n": 608722,
+      "n_true": 2464,
+      "pct_true": 0.4048
+    },
+    {
+      "feature": "pass_type_Corner",
+      "total_n": 608722,
+      "n_true": 6224,
+      "pct_true": 1.0225
+    },
+    {
+      "feature": "pass_type_FreeKick",
+      "total_n": 608722,
+      "n_true": 14676,
+      "pct_true": 2.411
+    },
+    {
+      "feature": "play_pattern_Counter",
+      "total_n": 608722,
+      "n_true": 3939,
+      "pct_true": 0.6471
+    },
+    {
+      "feature": "play_pattern_Corner",
+      "total_n": 608722,
+      "n_true": 22128,
+      "pct_true": 3.6352
+    },
+    {
+      "feature": "pass_technique_Outswinging",
+      "total_n": 608722,
+      "n_true": 1949,
+      "pct_true": 0.3202
+    },
+    {
+      "feature": "is_switch",
+      "total_n": 608722,
+      "n_true": 17389,
+      "pct_true": 2.8566
+    },
+    {
+      "feature": "is_cut_back",
+      "total_n": 608722,
+      "n_true": 1206,
+      "pct_true": 0.1981
+    },
+    {
+      "feature": "pass_bodypart_NoTouch",
+      "total_n": 608722,
+      "n_true": 521,
+      "pct_true": 0.0856
+    }
+  ],
+  "correlation_matrix": [
+    {
+      "feature_a": "start_x",
+      "feature_b": "end_x",
+      "r": 0.7725
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_cross",
+      "r": 0.2657
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_through_ball",
+      "r": 0.0317
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4812
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_type_FreeKick",
+      "r": -0.0367
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0205
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.2041
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.3995
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_switch",
+      "r": 0.053
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_cut_back",
+      "r": 0.0917
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.0187
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_cross",
+      "r": 0.2643
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_through_ball",
+      "r": 0.0824
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.3807
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_type_FreeKick",
+      "r": 0.1063
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "play_pattern_Counter",
+      "r": 0.0055
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.1693
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.1266
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_switch",
+      "r": 0.0984
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "is_cut_back",
+      "r": 0.0713
+    },
+    {
+      "feature_a": "end_x",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.0149
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "is_through_ball",
+      "r": -0.002
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_type_Corner",
+      "r": 0.0336
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_type_FreeKick",
+      "r": 0.202
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0015
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.0582
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.052
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "is_switch",
+      "r": 0.133
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "is_cut_back",
+      "r": 0.1786
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0046
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_type_Corner",
+      "r": -0.0067
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_type_FreeKick",
+      "r": 0.0104
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "play_pattern_Counter",
+      "r": 0.041
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "play_pattern_Corner",
+      "r": -0.0044
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.4448
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "is_switch",
+      "r": -0.0081
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "is_cut_back",
+      "r": -0.0028
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0002
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "pass_type_FreeKick",
+      "r": -0.0855
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0203
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.8308
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.1233
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "is_switch",
+      "r": 0.3687
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "is_cut_back",
+      "r": 0.0044
+    },
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": NaN
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "play_pattern_Counter",
+      "r": -0.0324
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "play_pattern_Corner",
+      "r": -0.103
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.0614
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "is_switch",
+      "r": 0.1327
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "is_cut_back",
+      "r": -0.0051
+    },
+    {
+      "feature_a": "pass_type_FreeKick",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": NaN
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "play_pattern_Corner",
+      "r": -0.0157
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "pass_technique_Outswinging",
+      "r": -0.0876
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "is_switch",
+      "r": -0.0108
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "is_cut_back",
+      "r": 0.0024
+    },
+    {
+      "feature_a": "play_pattern_Counter",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.0047
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "pass_technique_Outswinging",
+      "r": 0.4371
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "is_switch",
+      "r": 0.0957
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "is_cut_back",
+      "r": 0.0156
+    },
+    {
+      "feature_a": "play_pattern_Corner",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0005
+    },
+    {
+      "feature_a": "pass_technique_Outswinging",
+      "feature_b": "is_switch",
+      "r": 0.1735
+    },
+    {
+      "feature_a": "pass_technique_Outswinging",
+      "feature_b": "is_cut_back",
+      "r": NaN
+    },
+    {
+      "feature_a": "pass_technique_Outswinging",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.0103
+    },
+    {
+      "feature_a": "is_switch",
+      "feature_b": "is_cut_back",
+      "r": -0.0076
+    },
+    {
+      "feature_a": "is_switch",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": -0.005
+    },
+    {
+      "feature_a": "is_cut_back",
+      "feature_b": "pass_bodypart_NoTouch",
+      "r": 0.0011
+    }
+  ],
+  "flagged_new_correlations": [
+    {
+      "feature_a": "pass_type_Corner",
+      "feature_b": "play_pattern_Corner",
+      "r": 0.8308
+    }
+  ]
+}
