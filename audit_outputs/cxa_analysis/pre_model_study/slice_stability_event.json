@@ -1,0 +1,29 @@
+[
+  {
+    "competition_id": 2,
+    "avg_startx_create": 94.9,
+    "avg_startx_nocreate": 59.1,
+    "pct_cross_create": 19.48,
+    "pct_cross_nocreate": 2.25,
+    "pct_tb_create": 4.64,
+    "pct_tb_nocreate": 0.36
+  },
+  {
+    "competition_id": 43,
+    "avg_startx_create": 96.74,
+    "avg_startx_nocreate": 57.73,
+    "pct_cross_create": 24.97,
+    "pct_cross_nocreate": 2.03,
+    "pct_tb_create": 2.61,
+    "pct_tb_nocreate": 0.21
+  },
+  {
+    "competition_id": 55,
+    "avg_startx_create": 96.04,
+    "avg_startx_nocreate": 57.92,
+    "pct_cross_create": 20.85,
+    "pct_cross_nocreate": 1.86,
+    "pct_tb_create": 4.77,
+    "pct_tb_nocreate": 0.4
+  }
+]

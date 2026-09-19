@@ -1,0 +1,38 @@
+[
+  {
+    "track": "cxa_event_v1",
+    "y_create": false,
+    "y_goal": false,
+    "n": 597419
+  },
+  {
+    "track": "cxa_event_v1",
+    "y_create": true,
+    "y_goal": false,
+    "n": 10265
+  },
+  {
+    "track": "cxa_event_v1",
+    "y_create": true,
+    "y_goal": true,
+    "n": 1038
+  },
+  {
+    "track": "cxa_plus_v1",
+    "y_create": false,
+    "y_goal": false,
+    "n": 130313
+  },
+  {
+    "track": "cxa_plus_v1",
+    "y_create": true,
+    "y_goal": false,
+    "n": 2567
+  },
+  {
+    "track": "cxa_plus_v1",
+    "y_create": true,
+    "y_goal": true,
+    "n": 263
+  }
+]

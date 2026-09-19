@@ -1,0 +1,32 @@
+[
+  {
+    "technique": "Outswinging",
+    "n": 1949,
+    "n_create": 482,
+    "create_pct": 24.731
+  },
+  {
+    "technique": "Straight",
+    "n": 455,
+    "n_create": 109,
+    "create_pct": 23.956
+  },
+  {
+    "technique": "Through Ball",
+    "n": 2464,
+    "n_create": 482,
+    "create_pct": 19.562
+  },
+  {
+    "technique": "Inswinging",
+    "n": 2272,
+    "n_create": 344,
+    "create_pct": 15.141
+  },
+  {
+    "technique": "(null=regular)",
+    "n": 601582,
+    "n_create": 9886,
+    "create_pct": 1.643
+  }
+]

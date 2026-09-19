@@ -1,0 +1,16 @@
+[
+  {
+    "competition_id": 43,
+    "dist_create": 3.56,
+    "dist_nocreate": 7.59,
+    "opp5_create": 1.72,
+    "opp5_nocreate": 0.46
+  },
+  {
+    "competition_id": 55,
+    "dist_create": 3.76,
+    "dist_nocreate": 7.27,
+    "opp5_create": 1.7,
+    "opp5_nocreate": 0.48
+  }
+]

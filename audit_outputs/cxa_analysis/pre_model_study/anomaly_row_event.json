@@ -1,0 +1,21 @@
+[
+  {
+    "pass_event_id": "4b222484-3ad0-41b7-b789-930ead1b17bb",
+    "match_id": 3788766,
+    "competition_id": 55,
+    "season_id": 43,
+    "pass_outcome_name": "Incomplete",
+    "is_completed": false,
+    "y_create": true,
+    "y_goal": false,
+    "passer_team_id": 914,
+    "passer_player_id": 7480,
+    "start_x": 98.7,
+    "start_y": 14.0,
+    "end_x": 112.0,
+    "end_y": 43.8,
+    "minute": 28,
+    "second": 49,
+    "possession_id": 67
+  }
+]

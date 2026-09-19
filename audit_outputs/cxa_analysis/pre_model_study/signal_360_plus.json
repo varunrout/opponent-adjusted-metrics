@@ -1,0 +1,26 @@
+[
+  {
+    "y_create": false,
+    "n": 130313,
+    "null_nearest": 154,
+    "avg_nearest_opp_dist": 7.391,
+    "med_nearest_opp_dist": 6.624,
+    "avg_opp_5m": 0.472,
+    "avg_opp_8m": 1.083,
+    "avg_teammates_visible": 7.666,
+    "avg_opponents_visible": 7.94,
+    "avg_frame_player_count": 15.606
+  },
+  {
+    "y_create": true,
+    "n": 2830,
+    "null_nearest": 0,
+    "avg_nearest_opp_dist": 3.689,
+    "med_nearest_opp_dist": 2.809,
+    "avg_opp_5m": 1.706,
+    "avg_opp_8m": 3.248,
+    "avg_teammates_visible": 6.23,
+    "avg_opponents_visible": 8.931,
+    "avg_frame_player_count": 15.161
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "is_completed": true,
+    "n": 480053,
+    "n_create": 11302,
+    "create_pct": 2.3543
+  },
+  {
+    "is_completed": false,
+    "n": 128669,
+    "n_create": 1,
+    "create_pct": 0.0008
+  }
+]
