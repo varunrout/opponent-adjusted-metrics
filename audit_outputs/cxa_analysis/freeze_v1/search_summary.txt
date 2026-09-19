@@ -1,0 +1,18 @@
+  [event] cfg 0 (baseline (untuned, from candidate comparison)): val_log_loss=0.06570 val_roc_auc=0.91158
+  [event] cfg 1 (more trees, lower learning rate): val_log_loss=0.06563 val_roc_auc=0.91196
+  [event] cfg 2 (fewer trees, higher learning rate): val_log_loss=0.06581 val_roc_auc=0.91119
+  [event] cfg 3 (deeper trees): val_log_loss=0.06551 val_roc_auc=0.91270
+  [event] cfg 4 (shallower trees): val_log_loss=0.06583 val_roc_auc=0.91099
+  [event] cfg 5 (stronger regularization (higher min_child_samples)): val_log_loss=0.06568 val_roc_auc=0.91182
+  [event] cfg 6 (no subsampling): val_log_loss=0.06566 val_roc_auc=0.91185
+  [event] cfg 7 (more trees + deeper (combined)): val_log_loss=0.06553 val_roc_auc=0.91264
+  -> chosen: cfg 3 (deeper trees)
+  [plus] cfg 0 (baseline (untuned, from candidate comparison)): val_log_loss=0.05892 val_roc_auc=0.94816
+  [plus] cfg 1 (more trees, lower learning rate): val_log_loss=0.05897 val_roc_auc=0.94828
+  [plus] cfg 2 (fewer trees, higher learning rate): val_log_loss=0.05954 val_roc_auc=0.94717
+  [plus] cfg 3 (deeper trees): val_log_loss=0.05941 val_roc_auc=0.94631
+  [plus] cfg 4 (shallower trees): val_log_loss=0.05914 val_roc_auc=0.94779
+  [plus] cfg 5 (stronger regularization (higher min_child_samples)): val_log_loss=0.05879 val_roc_auc=0.94860
+  [plus] cfg 6 (no subsampling): val_log_loss=0.05903 val_roc_auc=0.94826
+  [plus] cfg 7 (more trees + deeper (combined)): val_log_loss=0.05930 val_roc_auc=0.94645
+  -> chosen: cfg 5 (stronger regularization (higher min_child_samples))
