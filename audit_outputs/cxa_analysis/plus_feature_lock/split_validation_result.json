@@ -1,0 +1,278 @@
+{
+  "is_cross": {
+    "train": {
+      "split": "train",
+      "n_true": 796,
+      "n_true_create": 463,
+      "rate_true": 0.5816582914572864,
+      "n_false": 94287,
+      "n_false_create": 1528,
+      "rate_false": 0.01620583961733855,
+      "lift": 35.891894847273015
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 154,
+      "n_true_create": 78,
+      "rate_true": 0.5064935064935064,
+      "n_false": 19336,
+      "n_false_create": 342,
+      "rate_false": 0.01768721555647497,
+      "lift": 28.636135794030526
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "is_through_ball": {
+    "train": {
+      "split": "train",
+      "n_true": 163,
+      "n_true_create": 81,
+      "rate_true": 0.49693251533742333,
+      "n_false": 94920,
+      "n_false_create": 1910,
+      "rate_false": 0.02012220817530552,
+      "lift": 24.695724793627342
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 45,
+      "n_true_create": 24,
+      "rate_true": 0.5333333333333333,
+      "n_false": 19445,
+      "n_false_create": 396,
+      "rate_false": 0.020365132424787862,
+      "lift": 26.18855218855219
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "pass_type_name=Corner": {
+    "train": {
+      "split": "train",
+      "n_true": 387,
+      "n_true_create": 172,
+      "rate_true": 0.4444444444444444,
+      "n_false": 94696,
+      "n_false_create": 1819,
+      "rate_false": 0.019208836698487792,
+      "lift": 23.137499236454705
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 91,
+      "n_true_create": 42,
+      "rate_true": 0.46153846153846156,
+      "n_false": 19399,
+      "n_false_create": 378,
+      "rate_false": 0.019485540491777927,
+      "lift": 23.686202686202687
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "play_pattern_name=From Counter": {
+    "train": {
+      "split": "train",
+      "n_true": 540,
+      "n_true_create": 89,
+      "rate_true": 0.1648148148148148,
+      "n_false": 94543,
+      "n_false_create": 1902,
+      "rate_false": 0.020117829982124535,
+      "lift": 8.19247478287962
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 138,
+      "n_true_create": 25,
+      "rate_true": 0.18115942028985507,
+      "n_false": 19352,
+      "n_false_create": 395,
+      "rate_false": 0.02041132699462588,
+      "lift": 8.875435699871582
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "pass_technique_name=Outswinging": {
+    "train": {
+      "split": "train",
+      "n_true": 142,
+      "n_true_create": 95,
+      "rate_true": 0.6690140845070423,
+      "n_false": 94941,
+      "n_false_create": 1896,
+      "rate_false": 0.019970297342560117,
+      "lift": 33.500456855054374
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 29,
+      "n_true_create": 18,
+      "rate_true": 0.6206896551724138,
+      "n_false": 19461,
+      "n_false_create": 402,
+      "rate_false": 0.02065669801140743,
+      "lift": 30.047864127637673
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "is_cut_back": {
+    "train": {
+      "split": "train",
+      "n_true": 102,
+      "n_true_create": 53,
+      "rate_true": 0.5196078431372549,
+      "n_false": 94981,
+      "n_false_create": 1938,
+      "rate_false": 0.020404080816163232,
+      "lift": 25.465878508266055
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 21,
+      "n_true_create": 10,
+      "rate_true": 0.47619047619047616,
+      "n_false": 19469,
+      "n_false_create": 410,
+      "rate_false": 0.021059119626072216,
+      "lift": 22.612078977932637
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "is_switch": {
+    "train": {
+      "split": "train",
+      "n_true": 1744,
+      "n_true_create": 112,
+      "rate_true": 0.06422018348623854,
+      "n_false": 93339,
+      "n_false_create": 1879,
+      "rate_false": 0.02013092062267648,
+      "lift": 3.190126506877072
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 383,
+      "n_true_create": 26,
+      "rate_true": 0.06788511749347259,
+      "n_false": 19107,
+      "n_false_create": 394,
+      "rate_false": 0.020620714921233057,
+      "lift": 3.2920836039283774
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "pass_body_part_name=No Touch": {
+    "train": {
+      "split": "train",
+      "n_true": 101,
+      "n_true_create": 7,
+      "rate_true": 0.06930693069306931,
+      "n_false": 94982,
+      "n_false_create": 1984,
+      "rate_false": 0.020888168284517065,
+      "lift": 3.31799944107314
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 22,
+      "n_true_create": 1,
+      "rate_true": 0.045454545454545456,
+      "n_false": 19468,
+      "n_false_create": 419,
+      "rate_false": 0.021522498459009658,
+      "lift": 2.1119548709047518
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "reception_nearest_opponent_distance_m": {
+    "train": {
+      "split": "train",
+      "dist_create": 3.6492002104781682,
+      "dist_nocreate": 7.401062077713759,
+      "dist_gap": 3.7518618672355903,
+      "opp5_create": 1.707182320441991,
+      "opp5_nocreate": 0.4701536674803457,
+      "opp5_lift": 3.6311156086288703
+    },
+    "validation": {
+      "split": "validation",
+      "dist_create": 3.8155054058122624,
+      "dist_nocreate": 7.322831913998484,
+      "dist_gap": 3.5073265081862215,
+      "opp5_create": 1.6547619047619042,
+      "opp5_nocreate": 0.48594693984765,
+      "opp5_lift": 3.4052316602316526
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_gap_above_threshold": true
+    },
+    "min_validation_gap_threshold_m": 1.0
+  },
+  "reception_opponents_within_5m": {
+    "train": {
+      "split": "train",
+      "dist_create": 3.6492002104781682,
+      "dist_nocreate": 7.401062077713759,
+      "dist_gap": 3.7518618672355903,
+      "opp5_create": 1.707182320441991,
+      "opp5_nocreate": 0.4701536674803457,
+      "opp5_lift": 3.6311156086288703
+    },
+    "validation": {
+      "split": "validation",
+      "dist_create": 3.8155054058122624,
+      "dist_nocreate": 7.322831913998484,
+      "dist_gap": 3.5073265081862215,
+      "opp5_create": 1.6547619047619042,
+      "opp5_nocreate": 0.48594693984765,
+      "opp5_lift": 3.4052316602316526
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  }
+}
