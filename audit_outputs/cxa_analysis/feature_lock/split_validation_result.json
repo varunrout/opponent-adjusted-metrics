@@ -1,0 +1,114 @@
+{
+  "pass_technique_name=Outswinging": {
+    "train": {
+      "split": "train",
+      "n_true": 1326,
+      "n_true_create": 328,
+      "rate_true": 0.2473604826546003,
+      "n_false": 421620,
+      "n_false_create": 7519,
+      "rate_false": 0.017833594231772686,
+      "lift": 13.870478347763344
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 322,
+      "n_true_create": 79,
+      "rate_true": 0.2453416149068323,
+      "n_false": 92655,
+      "n_false_create": 1641,
+      "rate_false": 0.017710862878419945,
+      "lift": 13.852606538203867
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "is_switch": {
+    "train": {
+      "split": "train",
+      "n_true": 12141,
+      "n_true_create": 553,
+      "rate_true": 0.04554814265711227,
+      "n_false": 410805,
+      "n_false_create": 7294,
+      "rate_false": 0.01775538272416353,
+      "lift": 2.565314607109269
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 2604,
+      "n_true_create": 106,
+      "rate_true": 0.040706605222734255,
+      "n_false": 90373,
+      "n_false_create": 1614,
+      "rate_false": 0.017859316388744426,
+      "lift": 2.2792924620781676
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "is_cut_back": {
+    "train": {
+      "split": "train",
+      "n_true": 861,
+      "n_true_create": 206,
+      "rate_true": 0.23925667828106853,
+      "n_false": 422085,
+      "n_false_create": 7641,
+      "rate_false": 0.018102988734496606,
+      "lift": 13.21641866931878
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 181,
+      "n_true_create": 37,
+      "rate_true": 0.20441988950276244,
+      "n_false": 92796,
+      "n_false_create": 1683,
+      "rate_false": 0.01813655761024182,
+      "lift": 11.27115155454447
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  },
+  "pass_body_part_name=No Touch": {
+    "train": {
+      "split": "train",
+      "n_true": 359,
+      "n_true_create": 22,
+      "rate_true": 0.06128133704735376,
+      "n_false": 422587,
+      "n_false_create": 7825,
+      "rate_false": 0.018516897112310603,
+      "lift": 3.309481965345697
+    },
+    "validation": {
+      "split": "validation",
+      "n_true": 91,
+      "n_true_create": 5,
+      "rate_true": 0.054945054945054944,
+      "n_false": 92886,
+      "n_false_create": 1715,
+      "rate_false": 0.018463492883749974,
+      "lift": 2.975875436516836
+    },
+    "checks": {
+      "direction_holds_train": true,
+      "direction_holds_validation": true,
+      "validation_lift_above_threshold": true
+    },
+    "min_validation_lift_threshold": 2.0
+  }
+}
