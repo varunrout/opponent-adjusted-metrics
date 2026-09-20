@@ -1,0 +1,14 @@
+[
+  {
+    "is_completed": true,
+    "n": 11302,
+    "n_goal": 1038,
+    "goal_pct": 9.184
+  },
+  {
+    "is_completed": false,
+    "n": 1,
+    "n_goal": 0,
+    "goal_pct": 0.0
+  }
+]

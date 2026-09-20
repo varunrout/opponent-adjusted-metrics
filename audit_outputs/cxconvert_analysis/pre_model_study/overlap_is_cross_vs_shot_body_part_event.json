@@ -1,0 +1,58 @@
+[
+  {
+    "is_cross": false,
+    "shot_body_part_name": "Head",
+    "n": 1316,
+    "n_goal": 117,
+    "goal_pct": 8.891
+  },
+  {
+    "is_cross": false,
+    "shot_body_part_name": "Left Foot",
+    "n": 2745,
+    "n_goal": 216,
+    "goal_pct": 7.869
+  },
+  {
+    "is_cross": false,
+    "shot_body_part_name": "Other",
+    "n": 13,
+    "n_goal": 2,
+    "goal_pct": 15.385
+  },
+  {
+    "is_cross": false,
+    "shot_body_part_name": "Right Foot",
+    "n": 4879,
+    "n_goal": 380,
+    "goal_pct": 7.788
+  },
+  {
+    "is_cross": true,
+    "shot_body_part_name": "Head",
+    "n": 1160,
+    "n_goal": 146,
+    "goal_pct": 12.586
+  },
+  {
+    "is_cross": true,
+    "shot_body_part_name": "Left Foot",
+    "n": 416,
+    "n_goal": 57,
+    "goal_pct": 13.702
+  },
+  {
+    "is_cross": true,
+    "shot_body_part_name": "Other",
+    "n": 26,
+    "n_goal": 3,
+    "goal_pct": 11.538
+  },
+  {
+    "is_cross": true,
+    "shot_body_part_name": "Right Foot",
+    "n": 748,
+    "n_goal": 117,
+    "goal_pct": 15.642
+  }
+]

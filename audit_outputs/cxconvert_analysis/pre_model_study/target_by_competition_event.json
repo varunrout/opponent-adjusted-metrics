@@ -1,0 +1,47 @@
+[
+  {
+    "competition_name": "FIFA World Cup",
+    "competition_id": 43,
+    "season_id": 3,
+    "n": 1180,
+    "n_goal": 96,
+    "goal_pct": 8.136,
+    "n_matches": 64
+  },
+  {
+    "competition_name": "FIFA World Cup",
+    "competition_id": 43,
+    "season_id": 106,
+    "n": 1039,
+    "n_goal": 110,
+    "goal_pct": 10.587,
+    "n_matches": 64
+  },
+  {
+    "competition_name": "Premier League",
+    "competition_id": 2,
+    "season_id": 27,
+    "n": 7175,
+    "n_goal": 669,
+    "goal_pct": 9.324,
+    "n_matches": 380
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 43,
+    "n": 926,
+    "n_goal": 93,
+    "goal_pct": 10.043,
+    "n_matches": 51
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 282,
+    "n": 983,
+    "n_goal": 70,
+    "goal_pct": 7.121,
+    "n_matches": 51
+  }
+]

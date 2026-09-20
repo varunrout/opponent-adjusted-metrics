@@ -1,0 +1,42 @@
+[
+  {
+    "y_goal": false,
+    "n": 2567,
+    "avg_start_x": 96.277,
+    "avg_pass_end_x": 101.252,
+    "avg_pass_length": 23.163,
+    "avg_reception_nearest_opp_m": 3.772,
+    "avg_reception_opp_5m": 1.671,
+    "avg_reception_opp_8m": 3.198,
+    "avg_reception_opp_visible": 8.989,
+    "avg_reception_teammates_visible": 6.298,
+    "avg_reception_frame_count": 15.286,
+    "avg_shot_x": 104.544,
+    "avg_shot_end_z": 2.148,
+    "null_end_z": 896,
+    "avg_statsbomb_xg": 0.0786,
+    "avg_gk_distance_m": 13.265,
+    "avg_defenders_5m": 2.372,
+    "avg_defenders_8m": 4.092
+  },
+  {
+    "y_goal": true,
+    "n": 263,
+    "avg_start_x": 98.929,
+    "avg_pass_end_x": 106.894,
+    "avg_pass_length": 22.477,
+    "avg_reception_nearest_opp_m": 2.883,
+    "avg_reception_opp_5m": 2.046,
+    "avg_reception_opp_8m": 3.745,
+    "avg_reception_opp_visible": 8.373,
+    "avg_reception_teammates_visible": 5.567,
+    "avg_reception_frame_count": 13.939,
+    "avg_shot_x": 109.164,
+    "avg_shot_end_z": 0.948,
+    "null_end_z": 0,
+    "avg_statsbomb_xg": 0.2181,
+    "avg_gk_distance_m": 8.376,
+    "avg_defenders_5m": 2.605,
+    "avg_defenders_8m": 4.38
+  }
+]

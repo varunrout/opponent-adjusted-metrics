@@ -1,0 +1,44 @@
+[
+  {
+    "level": "Right Foot",
+    "n": 1686,
+    "n_goal": 150,
+    "goal_pct": 8.897
+  },
+  {
+    "level": "Left Foot",
+    "n": 982,
+    "n_goal": 101,
+    "goal_pct": 10.285
+  },
+  {
+    "level": null,
+    "n": 86,
+    "n_goal": 8,
+    "goal_pct": 9.302
+  },
+  {
+    "level": "Head",
+    "n": 50,
+    "n_goal": 3,
+    "goal_pct": 6.0
+  },
+  {
+    "level": "Other",
+    "n": 15,
+    "n_goal": 0,
+    "goal_pct": 0.0
+  },
+  {
+    "level": "No Touch",
+    "n": 9,
+    "n_goal": 1,
+    "goal_pct": 11.111
+  },
+  {
+    "level": "Drop Kick",
+    "n": 2,
+    "n_goal": 0,
+    "goal_pct": 0.0
+  }
+]

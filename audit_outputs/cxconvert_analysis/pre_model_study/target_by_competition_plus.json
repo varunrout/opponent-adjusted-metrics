@@ -1,0 +1,29 @@
+[
+  {
+    "competition_name": "FIFA World Cup",
+    "competition_id": 43,
+    "season_id": 106,
+    "n": 992,
+    "n_goal": 104,
+    "goal_pct": 10.484,
+    "n_matches": 64
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 43,
+    "n": 891,
+    "n_goal": 91,
+    "goal_pct": 10.213,
+    "n_matches": 51
+  },
+  {
+    "competition_name": "UEFA Euro",
+    "competition_id": 55,
+    "season_id": 282,
+    "n": 947,
+    "n_goal": 68,
+    "goal_pct": 7.181,
+    "n_matches": 51
+  }
+]
