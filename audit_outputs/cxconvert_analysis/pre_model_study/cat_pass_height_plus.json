@@ -1,0 +1,20 @@
+[
+  {
+    "level": "Ground Pass",
+    "n": 1555,
+    "n_goal": 132,
+    "goal_pct": 8.489
+  },
+  {
+    "level": "High Pass",
+    "n": 989,
+    "n_goal": 98,
+    "goal_pct": 9.909
+  },
+  {
+    "level": "Low Pass",
+    "n": 286,
+    "n_goal": 33,
+    "goal_pct": 11.538
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "shot_first_time": false,
+    "pass_technique_name": null,
+    "n": 7288,
+    "n_goal": 511,
+    "goal_pct": 7.012
+  },
+  {
+    "shot_first_time": false,
+    "pass_technique_name": "Inswinging",
+    "n": 311,
+    "n_goal": 27,
+    "goal_pct": 8.682
+  },
+  {
+    "shot_first_time": false,
+    "pass_technique_name": "Outswinging",
+    "n": 412,
+    "n_goal": 23,
+    "goal_pct": 5.583
+  },
+  {
+    "shot_first_time": false,
+    "pass_technique_name": "Straight",
+    "n": 87,
+    "n_goal": 6,
+    "goal_pct": 6.897
+  },
+  {
+    "shot_first_time": false,
+    "pass_technique_name": "Through Ball",
+    "n": 263,
+    "n_goal": 88,
+    "goal_pct": 33.46
+  },
+  {
+    "shot_first_time": true,
+    "pass_technique_name": null,
+    "n": 2598,
+    "n_goal": 321,
+    "goal_pct": 12.356
+  },
+  {
+    "shot_first_time": true,
+    "pass_technique_name": "Inswinging",
+    "n": 33,
+    "n_goal": 3,
+    "goal_pct": 9.091
+  },
+  {
+    "shot_first_time": true,
+    "pass_technique_name": "Outswinging",
+    "n": 70,
+    "n_goal": 3,
+    "goal_pct": 4.286
+  },
+  {
+    "shot_first_time": true,
+    "pass_technique_name": "Straight",
+    "n": 22,
+    "n_goal": 1,
+    "goal_pct": 4.545
+  },
+  {
+    "shot_first_time": true,
+    "pass_technique_name": "Through Ball",
+    "n": 219,
+    "n_goal": 55,
+    "goal_pct": 25.114
+  }
+]

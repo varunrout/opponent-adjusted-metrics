@@ -1,0 +1,32 @@
+[
+  {
+    "level": null,
+    "n": 9886,
+    "n_goal": 832,
+    "goal_pct": 8.416
+  },
+  {
+    "level": "Outswinging",
+    "n": 482,
+    "n_goal": 26,
+    "goal_pct": 5.394
+  },
+  {
+    "level": "Through Ball",
+    "n": 482,
+    "n_goal": 143,
+    "goal_pct": 29.668
+  },
+  {
+    "level": "Inswinging",
+    "n": 344,
+    "n_goal": 30,
+    "goal_pct": 8.721
+  },
+  {
+    "level": "Straight",
+    "n": 109,
+    "n_goal": 7,
+    "goal_pct": 6.422
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "level": "Regular Play",
+    "n": 4181,
+    "n_goal": 378,
+    "goal_pct": 9.041
+  },
+  {
+    "level": "From Throw In",
+    "n": 2202,
+    "n_goal": 190,
+    "goal_pct": 8.629
+  },
+  {
+    "level": "From Corner",
+    "n": 1870,
+    "n_goal": 147,
+    "goal_pct": 7.861
+  },
+  {
+    "level": "From Free Kick",
+    "n": 1675,
+    "n_goal": 160,
+    "goal_pct": 9.552
+  },
+  {
+    "level": "From Counter",
+    "n": 567,
+    "n_goal": 87,
+    "goal_pct": 15.344
+  },
+  {
+    "level": "From Goal Kick",
+    "n": 474,
+    "n_goal": 41,
+    "goal_pct": 8.65
+  },
+  {
+    "level": "From Keeper",
+    "n": 196,
+    "n_goal": 22,
+    "goal_pct": 11.224
+  },
+  {
+    "level": "From Kick Off",
+    "n": 126,
+    "n_goal": 13,
+    "goal_pct": 10.317
+  },
+  {
+    "level": "Other",
+    "n": 12,
+    "n_goal": 0,
+    "goal_pct": 0.0
+  }
+]

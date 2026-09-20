@@ -1,0 +1,30 @@
+[
+  {
+    "shot_one_on_one": false,
+    "shot_open_goal": false,
+    "n": 10673,
+    "n_goal": 854,
+    "goal_pct": 8.001
+  },
+  {
+    "shot_one_on_one": false,
+    "shot_open_goal": true,
+    "n": 77,
+    "n_goal": 46,
+    "goal_pct": 59.74
+  },
+  {
+    "shot_one_on_one": true,
+    "shot_open_goal": false,
+    "n": 534,
+    "n_goal": 127,
+    "goal_pct": 23.783
+  },
+  {
+    "shot_one_on_one": true,
+    "shot_open_goal": true,
+    "n": 19,
+    "n_goal": 11,
+    "goal_pct": 57.895
+  }
+]

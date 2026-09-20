@@ -1,0 +1,14 @@
+[
+  {
+    "y_goal": false,
+    "n": 10265,
+    "avg_dist_to_goal_center_native": 18.76,
+    "avg_dist_to_goal_center_m": 16.415
+  },
+  {
+    "y_goal": true,
+    "n": 1038,
+    "avg_dist_to_goal_center_native": 12.754,
+    "avg_dist_to_goal_center_m": 11.16
+  }
+]

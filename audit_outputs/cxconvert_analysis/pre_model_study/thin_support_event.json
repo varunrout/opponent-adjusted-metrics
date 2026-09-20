@@ -1,0 +1,13 @@
+[
+  {
+    "n": 11303,
+    "n_follows_dribble": 7,
+    "n_non_open_play": 0,
+    "n_open_goal": 96,
+    "n_notouch": 32,
+    "n_technique_straight": 109,
+    "n_null_gk": 6,
+    "n_cut_back": 282,
+    "n_pass_type_tagged": 2283
+  }
+]
