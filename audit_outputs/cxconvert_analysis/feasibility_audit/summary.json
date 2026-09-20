@@ -1,0 +1,27 @@
+{
+  "key_pass_id_shot_join": {"event_creates": 11303, "distinct_shots_matched": 11303, "unmatched": 0, "duplicate_key_pass_id_shots": 0},
+  "class_balance": {
+    "event": {"n_creates": 11303, "n_goals": 1038, "goal_pct": 9.183},
+    "plus": {"n_creates": 2830, "n_goals": 263, "goal_pct": 9.293}
+  },
+  "shot_type_name_population": {"open_play_pct": 100.0, "note": "constant for this population -- shots with a key_pass_id are always Open Play"},
+  "shot_freeze_frame_coverage": {
+    "event_shots_with_frame": 11303, "event_total_shots": 11303,
+    "shots_with_exactly_one_opposing_gk": 11297, "shots_with_zero_gk": 6, "shots_with_multiple_gk": 0,
+    "null_xy_in_freeze_frame_rows": 0
+  },
+  "general_360_at_shot_event_plus_track": {"total_shots": 2830, "shots_with_360_frame": 2768},
+  "split_coverage": {
+    "event": {"n_creates": 11303, "unmatched_to_split_table": 0, "distinct_matches": 610},
+    "plus": {"n_creates": 2830, "unmatched_to_split_table": 0, "distinct_matches": 166}
+  },
+  "split_balance": {
+    "event": {"train": {"matches":426,"rows":7847,"goals":738,"goal_pct":9.405}, "validation": {"matches":92,"rows":1720,"goals":159,"goal_pct":9.244}, "test": {"matches":92,"rows":1736,"goals":141,"goal_pct":8.122}},
+    "plus": {"train": {"matches":119,"rows":1991,"goals":181,"goal_pct":9.091}, "validation": {"matches":24,"rows":420,"goals":46,"goal_pct":10.952}, "test": {"matches":23,"rows":419,"goals":36,"goal_pct":8.592}}
+  },
+  "materialized_tables": {
+    "cxconvert_event_v1_training_matrix": {"rows": 11303, "y_goal_positive": 1038},
+    "cxconvert_plus_v1_training_matrix": {"rows": 2830, "y_goal_positive": 263}
+  },
+  "validation_script_result": "all checks passed for both tracks (row count, grain, 1:1 join, split coverage)"
+}
