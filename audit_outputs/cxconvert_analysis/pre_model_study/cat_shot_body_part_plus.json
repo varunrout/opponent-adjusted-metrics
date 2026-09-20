@@ -1,0 +1,26 @@
+[
+  {
+    "level": "Right Foot",
+    "n": 1354,
+    "n_goal": 116,
+    "goal_pct": 8.567
+  },
+  {
+    "level": "Left Foot",
+    "n": 809,
+    "n_goal": 80,
+    "goal_pct": 9.889
+  },
+  {
+    "level": "Head",
+    "n": 649,
+    "n_goal": 64,
+    "goal_pct": 9.861
+  },
+  {
+    "level": "Other",
+    "n": 18,
+    "n_goal": 3,
+    "goal_pct": 16.667
+  }
+]

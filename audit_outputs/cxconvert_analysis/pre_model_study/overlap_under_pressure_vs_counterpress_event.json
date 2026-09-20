@@ -1,0 +1,14 @@
+[
+  {
+    "shot_under_pressure": false,
+    "shot_counterpress": false,
+    "n": 8435,
+    "n_goal": 795
+  },
+  {
+    "shot_under_pressure": true,
+    "shot_counterpress": false,
+    "n": 2868,
+    "n_goal": 243
+  }
+]

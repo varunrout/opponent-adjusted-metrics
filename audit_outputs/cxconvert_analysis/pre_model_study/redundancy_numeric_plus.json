@@ -1,0 +1,10 @@
+[
+  {
+    "corr_pass_end_x_receiver_x": 1.0,
+    "corr_receiver_x_shot_x": 0.7947,
+    "corr_receptiondist_gkdist": 0.593,
+    "corr_receptionopp5m_shotdef5m": 0.7447,
+    "corr_gkdist_def5m": -0.441,
+    "corr_xg_gkdist": -0.5592
+  }
+]

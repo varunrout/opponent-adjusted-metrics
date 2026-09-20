@@ -1,0 +1,44 @@
+[
+  {
+    "level": null,
+    "n": 2294,
+    "n_goal": 235,
+    "goal_pct": 10.244
+  },
+  {
+    "level": "Corner",
+    "n": 265,
+    "n_goal": 11,
+    "goal_pct": 4.151
+  },
+  {
+    "level": "Recovery",
+    "n": 145,
+    "n_goal": 9,
+    "goal_pct": 6.207
+  },
+  {
+    "level": "Free Kick",
+    "n": 101,
+    "n_goal": 8,
+    "goal_pct": 7.921
+  },
+  {
+    "level": "Throw-in",
+    "n": 20,
+    "n_goal": 0,
+    "goal_pct": 0.0
+  },
+  {
+    "level": "Interception",
+    "n": 4,
+    "n_goal": 0,
+    "goal_pct": 0.0
+  },
+  {
+    "level": "Kick Off",
+    "n": 1,
+    "n_goal": 0,
+    "goal_pct": 0.0
+  }
+]

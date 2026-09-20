@@ -1,0 +1,44 @@
+[
+  {
+    "level": "Normal",
+    "n": 2364,
+    "n_goal": 211,
+    "goal_pct": 8.926
+  },
+  {
+    "level": "Half Volley",
+    "n": 283,
+    "n_goal": 25,
+    "goal_pct": 8.834
+  },
+  {
+    "level": "Volley",
+    "n": 120,
+    "n_goal": 17,
+    "goal_pct": 14.167
+  },
+  {
+    "level": "Diving Header",
+    "n": 20,
+    "n_goal": 4,
+    "goal_pct": 20.0
+  },
+  {
+    "level": "Lob",
+    "n": 18,
+    "n_goal": 4,
+    "goal_pct": 22.222
+  },
+  {
+    "level": "Overhead Kick",
+    "n": 14,
+    "n_goal": 1,
+    "goal_pct": 7.143
+  },
+  {
+    "level": "Backheel",
+    "n": 11,
+    "n_goal": 1,
+    "goal_pct": 9.091
+  }
+]
