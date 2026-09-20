@@ -1,0 +1,16 @@
+[
+  {
+    "corr_pass_end_x_shot_x": 0.7887,
+    "corr_pass_end_y_shot_y": 0.8904,
+    "corr_shot_x_shot_end_x": 0.3231,
+    "corr_shot_y_shot_end_y": 0.3128,
+    "corr_gkdist_def5m": -0.4439,
+    "corr_gkdist_def8m": -0.4548,
+    "corr_def5m_def8m": 0.7714,
+    "corr_defvis_framecount": 0.9442,
+    "corr_startx_passendx": 0.6658,
+    "corr_passlength_startx": -0.1608,
+    "corr_xg_gkdist": -0.5566,
+    "corr_xg_def5m": 0.1522
+  }
+]

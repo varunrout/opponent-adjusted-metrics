@@ -1,0 +1,14 @@
+[
+  {
+    "level": false,
+    "n": 10821,
+    "n_goal": 895,
+    "goal_pct": 8.271
+  },
+  {
+    "level": true,
+    "n": 482,
+    "n_goal": 143,
+    "goal_pct": 29.668
+  }
+]
