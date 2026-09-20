@@ -30,12 +30,13 @@ export type ModelInfo = {
   // set; CxA/CxA+ below intentionally leave it unset (no such story exists
   // yet) so their comparisonNote renders as plain text, no dangling link.
   comparisonStoryHref?: string | null;
-  // model_key for this family's current/latest frozen version, if the real
-  // results+coefficients detail page (/models/[modelKey], public, backed by
-  // /v1/models/cxg-models*) has data for it. Null for families with no
-  // real model yet (CxT), or whose detail page isn't built yet (CxA — see
-  // its own comment below: /models/[modelKey] is CxG-specific today, not
-  // generic off this array, so wiring a CxA detailModelKey here would 404).
+  // Path segment appended after "/models/" for the "View full results..."
+  // link. CxG/CxG+ point at /models/[modelKey] (event_v3 etc., backed by
+  // /v1/models/cxg-models*). CxA/CxA+ point at /models/cxa/[track]
+  // (event/plus, backed by /v1/models/cxa-models* — a separate route and
+  // page component per docs/analysis/cxa_detail_page_v1.md's own
+  // architecture decision, NOT a generalization of /models/[modelKey]).
+  // Null for families with no real model yet (CxT).
   detailModelKey?: string | null;
   // Per docs/dashboard_design_spec_v2.md's existing "Experimental" disclosure
   // pattern (Badge status="experimental", already used on Match/Player/Team
@@ -120,11 +121,7 @@ export const MODELS: ModelInfo[] = [
     featureFamilyCount: "10 P_create + 15 P_convert features",
     comparisonNote:
       "Combined CxA (create x convert) -- chance-creating passes only, ~2% of all passes; undefined, not zero, elsewhere.",
-    // No detail page yet: /models/[modelKey] is hardcoded to CxG's own
-    // REAL_MODEL_KEYS and fetch functions today, not generic off this array
-    // — wiring detailModelKey here would 404 or render the wrong model's
-    // data. Deferred, see docs/analysis/cxa_dashboard_models_page_v1.md.
-    detailModelKey: null,
+    detailModelKey: "cxa/event",
   },
   {
     name: "CxA+",
@@ -140,7 +137,7 @@ export const MODELS: ModelInfo[] = [
     featureFamilyCount: "11 P_create + 12 P_convert features",
     comparisonNote:
       "Combined CxA (create x convert) -- chance-creating passes only, ~2% of all passes; undefined, not zero, elsewhere.",
-    detailModelKey: null,
+    detailModelKey: "cxa/plus",
     experimentalNote:
       "2,830 total chance-creating passes, 419 in test, zero Premier League rows.",
   },
