@@ -1,0 +1,1271 @@
+{
+  "numeric_distribution": [
+    {
+      "feature": "start_x",
+      "n": 9567,
+      "n_null": 0,
+      "mean": 95.467,
+      "median": 98.0,
+      "stddev": 18.808,
+      "min_val": 5.7,
+      "max_val": 120.0,
+      "p1": 34.7,
+      "p5": 59.2,
+      "p95": 120.0,
+      "p99": 120.0
+    },
+    {
+      "feature": "pass_end_x",
+      "n": 9567,
+      "n_null": 0,
+      "mean": 100.865,
+      "median": 104.3,
+      "stddev": 12.274,
+      "min_val": 20.5,
+      "max_val": 120.0,
+      "p1": 59.6,
+      "p5": 78.0,
+      "p95": 115.0,
+      "p99": 117.0
+    },
+    {
+      "feature": "shot_x_sb",
+      "n": 9567,
+      "n_null": 0,
+      "mean": 104.56,
+      "median": 106.1,
+      "stddev": 8.2,
+      "min_val": 43.7,
+      "max_val": 119.5,
+      "p1": 84.8,
+      "p5": 90.2,
+      "p95": 115.3,
+      "p99": 117.4
+    },
+    {
+      "feature": "shot_dist_to_goal_m",
+      "n": 9567,
+      "n_null": 0,
+      "mean": 15.947,
+      "median": 15.303,
+      "stddev": 7.183,
+      "min_val": 1.1508828133220148,
+      "max_val": 68.67635259862014,
+      "p1": 3.962,
+      "p5": 5.963,
+      "p95": 27.866,
+      "p99": 32.623
+    },
+    {
+      "feature": "shot_gk_distance_m",
+      "n": 9567,
+      "n_null": 5,
+      "mean": 13.133,
+      "median": 11.891,
+      "stddev": 7.12,
+      "min_val": 0.3127399079107102,
+      "max_val": 63.360124536257025,
+      "p1": 1.838,
+      "p5": 3.553,
+      "p95": 25.611,
+      "p99": 30.571
+    },
+    {
+      "feature": "shot_defenders_within_5m",
+      "n": 9567,
+      "n_null": 0,
+      "mean": 2.304,
+      "median": 2.0,
+      "stddev": 1.398,
+      "min_val": 0,
+      "max_val": 9,
+      "p1": 0.0,
+      "p5": 1.0,
+      "p95": 5.0,
+      "p99": 7.0
+    },
+    {
+      "feature": "shot_defenders_within_8m",
+      "n": 9567,
+      "n_null": 0,
+      "mean": 3.967,
+      "median": 4.0,
+      "stddev": 1.904,
+      "min_val": 0,
+      "max_val": 11,
+      "p1": 1.0,
+      "p5": 1.0,
+      "p95": 8.0,
+      "p99": 9.0
+    }
+  ],
+  "decile_histograms": [
+    {
+      "feature": "start_x",
+      "decile_edges": [
+        5.7,
+        70.9,
+        82.3,
+        88.4,
+        93.1,
+        97.9,
+        102.1,
+        106.8,
+        111.9,
+        119.0,
+        120.0
+      ]
+    },
+    {
+      "feature": "pass_end_x",
+      "decile_edges": [
+        20.5,
+        84.8,
+        91.7,
+        96.4,
+        100.1,
+        104.3,
+        106.9,
+        109.2,
+        111.0,
+        113.0,
+        120.0
+      ]
+    },
+    {
+      "feature": "shot_x_sb",
+      "decile_edges": [
+        43.7,
+        93.1,
+        97.0,
+        100.1,
+        103.3,
+        106.1,
+        108.4,
+        110.2,
+        112.0,
+        113.9,
+        119.5
+      ]
+    },
+    {
+      "feature": "shot_dist_to_goal_m",
+      "decile_edges": [
+        1.1508828133220148,
+        7.134872546163667,
+        9.124366416360097,
+        10.94064954653059,
+        13.154134331076294,
+        15.300495294270709,
+        17.695779864137098,
+        19.953069939234915,
+        22.501284685546295,
+        25.4691142611988,
+        68.67635259862014
+      ]
+    },
+    {
+      "feature": "shot_gk_distance_m",
+      "decile_edges": [
+        0.3127399079107102,
+        4.862499999999995,
+        6.565276079495827,
+        8.10914452948029,
+        9.821540103262828,
+        11.909897144811966,
+        14.358385180792435,
+        17.003565067361603,
+        19.72030996206703,
+        22.962219105522014,
+        63.360124536257025
+      ]
+    },
+    {
+      "feature": "shot_defenders_within_5m",
+      "decile_edges": [
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        3,
+        3,
+        4,
+        9
+      ]
+    },
+    {
+      "feature": "shot_defenders_within_8m",
+      "decile_edges": [
+        0,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        7,
+        11
+      ]
+    }
+  ],
+  "bounds_checks": [
+    {
+      "feature": "start_x",
+      "n_out_of_bounds": 0,
+      "min_val": 5.7,
+      "max_val": 120.0
+    },
+    {
+      "feature": "pass_end_x",
+      "n_out_of_bounds": 0,
+      "min_val": 20.5,
+      "max_val": 120.0
+    },
+    {
+      "feature": "shot_x_sb",
+      "n_out_of_bounds": 0,
+      "min_val": 43.7,
+      "max_val": 119.5
+    },
+    {
+      "feature": "shot_dist_to_goal_m",
+      "n_negative": 0,
+      "min_val": 1.1508828133220148,
+      "max_val": 68.67635259862014
+    },
+    {
+      "feature": "shot_gk_distance_m",
+      "n_negative": 0,
+      "min_val": 0.3127399079107102,
+      "max_val": 63.360124536257025
+    },
+    {
+      "feature": "shot_defenders_within_5m",
+      "n_negative": 0,
+      "min_val": 0,
+      "max_val": 9
+    },
+    {
+      "feature": "shot_defenders_within_8m",
+      "n_negative": 0,
+      "min_val": 0,
+      "max_val": 11
+    }
+  ],
+  "categorical_levels": [
+    {
+      "feature": "is_through_ball",
+      "total_n": 9567,
+      "n_true": 406,
+      "pct_true": 4.2438
+    },
+    {
+      "feature": "shot_one_on_one",
+      "total_n": 9567,
+      "n_true": 457,
+      "pct_true": 4.7768
+    },
+    {
+      "feature": "is_cross",
+      "total_n": 9567,
+      "n_true": 2000,
+      "pct_true": 20.9052
+    },
+    {
+      "feature": "shot_first_time",
+      "total_n": 9567,
+      "n_true": 2495,
+      "pct_true": 26.0792
+    },
+    {
+      "feature": "shot_open_goal",
+      "total_n": 9567,
+      "n_true": 84,
+      "pct_true": 0.878
+    },
+    {
+      "feature": "shot_technique_Lob",
+      "total_n": 9567,
+      "n_true": 62,
+      "pct_true": 0.6481
+    },
+    {
+      "feature": "shot_technique_DivingHeader",
+      "total_n": 9567,
+      "n_true": 67,
+      "pct_true": 0.7003
+    },
+    {
+      "feature": "shot_technique_Backheel",
+      "total_n": 9567,
+      "n_true": 46,
+      "pct_true": 0.4808
+    },
+    {
+      "feature": "shot_technique_Volley",
+      "total_n": 9567,
+      "n_true": 463,
+      "pct_true": 4.8396
+    },
+    {
+      "feature": "is_cut_back",
+      "total_n": 9567,
+      "n_true": 243,
+      "pct_true": 2.54
+    },
+    {
+      "feature": "pass_type_Corner",
+      "total_n": 9567,
+      "n_true": 922,
+      "pct_true": 9.6373
+    }
+  ],
+  "correlation_matrix": [
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_end_x",
+      "r": 0.6736
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_x_sb",
+      "r": 0.3951
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_dist_to_goal_m",
+      "r": -0.4592
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_gk_distance_m",
+      "r": -0.3576
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_defenders_within_5m",
+      "r": 0.2647
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_defenders_within_8m",
+      "r": 0.3785
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_through_ball",
+      "r": -0.1984
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_one_on_one",
+      "r": -0.1304
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_cross",
+      "r": 0.3046
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_first_time",
+      "r": 0.2362
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_open_goal",
+      "r": 0.0605
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.097
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.04
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.0613
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.1055
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "is_cut_back",
+      "r": 0.1797
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.7409
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_x_sb",
+      "r": 0.7866
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_dist_to_goal_m",
+      "r": -0.7806
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_gk_distance_m",
+      "r": -0.7384
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_defenders_within_5m",
+      "r": 0.3213
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_defenders_within_8m",
+      "r": 0.3662
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "is_through_ball",
+      "r": 0.0643
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_one_on_one",
+      "r": 0.0809
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "is_cross",
+      "r": 0.3895
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_first_time",
+      "r": 0.2469
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_open_goal",
+      "r": 0.099
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.0291
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.0691
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.0687
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.1462
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "is_cut_back",
+      "r": 0.1045
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4771
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_dist_to_goal_m",
+      "r": -0.9381
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_gk_distance_m",
+      "r": -0.9302
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_defenders_within_5m",
+      "r": 0.4018
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_defenders_within_8m",
+      "r": 0.4055
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "is_through_ball",
+      "r": 0.1055
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_one_on_one",
+      "r": 0.2032
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "is_cross",
+      "r": 0.3726
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_first_time",
+      "r": 0.113
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_open_goal",
+      "r": 0.1341
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.0148
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.0633
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.0761
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.1245
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "is_cut_back",
+      "r": 0.085
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4768
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_gk_distance_m",
+      "r": 0.9644
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_defenders_within_5m",
+      "r": -0.4881
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_defenders_within_8m",
+      "r": -0.5198
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "is_through_ball",
+      "r": -0.0859
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_one_on_one",
+      "r": -0.1681
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "is_cross",
+      "r": -0.4433
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_first_time",
+      "r": -0.1365
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_open_goal",
+      "r": -0.1479
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_technique_Lob",
+      "r": 0.022
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": -0.0778
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_technique_Backheel",
+      "r": -0.0787
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_technique_Volley",
+      "r": -0.1395
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "is_cut_back",
+      "r": -0.0924
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "pass_type_Corner",
+      "r": -0.5018
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_defenders_within_5m",
+      "r": -0.4447
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_defenders_within_8m",
+      "r": -0.4554
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "is_through_ball",
+      "r": -0.1861
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_one_on_one",
+      "r": -0.2168
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "is_cross",
+      "r": -0.3881
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_first_time",
+      "r": -0.1454
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_open_goal",
+      "r": -0.1137
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.0463
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": -0.0652
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_technique_Backheel",
+      "r": -0.0748
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_technique_Volley",
+      "r": -0.1236
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "is_cut_back",
+      "r": -0.0825
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "pass_type_Corner",
+      "r": -0.4511
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_defenders_within_8m",
+      "r": 0.7713
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "is_through_ball",
+      "r": -0.0843
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_one_on_one",
+      "r": -0.0291
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "is_cross",
+      "r": 0.1141
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_first_time",
+      "r": -0.179
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_open_goal",
+      "r": 0.0284
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.025
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.0275
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.0227
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_technique_Volley",
+      "r": -0.0096
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "is_cut_back",
+      "r": -0.018
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4073
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "is_through_ball",
+      "r": -0.114
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "shot_one_on_one",
+      "r": -0.063
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "is_cross",
+      "r": 0.12
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "shot_first_time",
+      "r": -0.1226
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "shot_open_goal",
+      "r": 0.0205
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.0465
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.0515
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.0361
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.008
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "is_cut_back",
+      "r": 0.0189
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4842
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "shot_one_on_one",
+      "r": 0.2276
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "is_cross",
+      "r": -0.0904
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "shot_first_time",
+      "r": 0.0934
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "shot_open_goal",
+      "r": 0.0191
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "shot_technique_Lob",
+      "r": 0.151
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": -0.0115
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "shot_technique_Backheel",
+      "r": -0.0146
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.0153
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "is_cut_back",
+      "r": -0.034
+    },
+    {
+      "feature_a": "is_through_ball",
+      "feature_b": "pass_type_Corner",
+      "r": -0.1131
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "is_cross",
+      "r": 0.0198
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "shot_first_time",
+      "r": -0.133
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "shot_open_goal",
+      "r": 0.063
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "shot_technique_Lob",
+      "r": 0.0796
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.04
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "shot_technique_Backheel",
+      "r": -0.0014
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "shot_technique_Volley",
+      "r": -0.0414
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "is_cut_back",
+      "r": -0.0362
+    },
+    {
+      "feature_a": "shot_one_on_one",
+      "feature_b": "pass_type_Corner",
+      "r": -0.1512
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "shot_first_time",
+      "r": 0.1402
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "shot_open_goal",
+      "r": 0.0563
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.0351
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.074
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.072
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.1476
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "is_cut_back",
+      "r": 0.2095
+    },
+    {
+      "feature_a": "is_cross",
+      "feature_b": "pass_type_Corner",
+      "r": -0.2398
+    },
+    {
+      "feature_a": "shot_first_time",
+      "feature_b": "shot_open_goal",
+      "r": 0.0513
+    },
+    {
+      "feature_a": "shot_first_time",
+      "feature_b": "shot_technique_Lob",
+      "r": 0.0262
+    },
+    {
+      "feature_a": "shot_first_time",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": -0.0499
+    },
+    {
+      "feature_a": "shot_first_time",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.0964
+    },
+    {
+      "feature_a": "shot_first_time",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.3342
+    },
+    {
+      "feature_a": "shot_first_time",
+      "feature_b": "is_cut_back",
+      "r": 0.1916
+    },
+    {
+      "feature_a": "shot_first_time",
+      "feature_b": "pass_type_Corner",
+      "r": -0.1376
+    },
+    {
+      "feature_a": "shot_open_goal",
+      "feature_b": "shot_technique_Lob",
+      "r": -0.0076
+    },
+    {
+      "feature_a": "shot_open_goal",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": 0.0055
+    },
+    {
+      "feature_a": "shot_open_goal",
+      "feature_b": "shot_technique_Backheel",
+      "r": 0.0259
+    },
+    {
+      "feature_a": "shot_open_goal",
+      "feature_b": "shot_technique_Volley",
+      "r": 0.0049
+    },
+    {
+      "feature_a": "shot_open_goal",
+      "feature_b": "is_cut_back",
+      "r": -0.001
+    },
+    {
+      "feature_a": "shot_open_goal",
+      "feature_b": "pass_type_Corner",
+      "r": 0.0212
+    },
+    {
+      "feature_a": "shot_technique_Lob",
+      "feature_b": "shot_technique_DivingHeader",
+      "r": -0.0068
+    },
+    {
+      "feature_a": "shot_technique_Lob",
+      "feature_b": "shot_technique_Backheel",
+      "r": -0.0056
+    },
+    {
+      "feature_a": "shot_technique_Lob",
+      "feature_b": "shot_technique_Volley",
+      "r": -0.0182
+    },
+    {
+      "feature_a": "shot_technique_Lob",
+      "feature_b": "is_cut_back",
+      "r": -0.013
+    },
+    {
+      "feature_a": "shot_technique_Lob",
+      "feature_b": "pass_type_Corner",
+      "r": -0.0782
+    },
+    {
+      "feature_a": "shot_technique_DivingHeader",
+      "feature_b": "shot_technique_Backheel",
+      "r": -0.0058
+    },
+    {
+      "feature_a": "shot_technique_DivingHeader",
+      "feature_b": "shot_technique_Volley",
+      "r": -0.0189
+    },
+    {
+      "feature_a": "shot_technique_DivingHeader",
+      "feature_b": "is_cut_back",
+      "r": 0.0103
+    },
+    {
+      "feature_a": "shot_technique_DivingHeader",
+      "feature_b": "pass_type_Corner",
+      "r": -0.0081
+    },
+    {
+      "feature_a": "shot_technique_Backheel",
+      "feature_b": "shot_technique_Volley",
+      "r": -0.0157
+    },
+    {
+      "feature_a": "shot_technique_Backheel",
+      "feature_b": "is_cut_back",
+      "r": -0.0016
+    },
+    {
+      "feature_a": "shot_technique_Backheel",
+      "feature_b": "pass_type_Corner",
+      "r": 0.0483
+    },
+    {
+      "feature_a": "shot_technique_Volley",
+      "feature_b": "is_cut_back",
+      "r": -0.0085
+    },
+    {
+      "feature_a": "shot_technique_Volley",
+      "feature_b": "pass_type_Corner",
+      "r": 0.0298
+    },
+    {
+      "feature_a": "is_cut_back",
+      "feature_b": "pass_type_Corner",
+      "r": -0.0452
+    }
+  ],
+  "flagged_duplicate_pairs": [
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_dist_to_goal_m",
+      "r": -0.9381
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_gk_distance_m",
+      "r": -0.9302
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_gk_distance_m",
+      "r": 0.9644
+    }
+  ],
+  "flagged_moderate_pairs": [
+    {
+      "feature_a": "start_x",
+      "feature_b": "shot_dist_to_goal_m",
+      "r": -0.4592
+    },
+    {
+      "feature_a": "start_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.7409
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_x_sb",
+      "r": 0.7866
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_dist_to_goal_m",
+      "r": -0.7806
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "shot_gk_distance_m",
+      "r": -0.7384
+    },
+    {
+      "feature_a": "pass_end_x",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4771
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_defenders_within_5m",
+      "r": 0.4018
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "shot_defenders_within_8m",
+      "r": 0.4055
+    },
+    {
+      "feature_a": "shot_x_sb",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4768
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_defenders_within_5m",
+      "r": -0.4881
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "shot_defenders_within_8m",
+      "r": -0.5198
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "is_cross",
+      "r": -0.4433
+    },
+    {
+      "feature_a": "shot_dist_to_goal_m",
+      "feature_b": "pass_type_Corner",
+      "r": -0.5018
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_defenders_within_5m",
+      "r": -0.4447
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "shot_defenders_within_8m",
+      "r": -0.4554
+    },
+    {
+      "feature_a": "shot_gk_distance_m",
+      "feature_b": "pass_type_Corner",
+      "r": -0.4511
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "shot_defenders_within_8m",
+      "r": 0.7713
+    },
+    {
+      "feature_a": "shot_defenders_within_5m",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4073
+    },
+    {
+      "feature_a": "shot_defenders_within_8m",
+      "feature_b": "pass_type_Corner",
+      "r": 0.4842
+    }
+  ],
+  "interactions": [
+    {
+      "both_true": 2,
+      "a_only": 1998,
+      "b_only": 60,
+      "neither": 7507,
+      "a_total": 2000,
+      "b_total": 62,
+      "feature_a": "is_cross",
+      "feature_b": "shot_technique=Lob"
+    },
+    {
+      "both_true": 16,
+      "a_only": 441,
+      "b_only": 68,
+      "neither": 9042,
+      "a_total": 457,
+      "b_total": 84,
+      "feature_a": "shot_one_on_one",
+      "feature_b": "shot_open_goal"
+    },
+    {
+      "both_true": 185,
+      "a_only": 2310,
+      "b_only": 221,
+      "neither": 6851,
+      "a_total": 2495,
+      "b_total": 406,
+      "feature_a": "shot_first_time",
+      "feature_b": "is_through_ball"
+    },
+    {
+      "both_true": 179,
+      "a_only": 1821,
+      "b_only": 64,
+      "neither": 7503,
+      "a_total": 2000,
+      "b_total": 243,
+      "feature_a": "is_cross",
+      "feature_b": "is_cut_back"
+    },
+    {
+      "both_true": 48,
+      "a_only": 874,
+      "b_only": 222,
+      "neither": 795,
+      "a_total": 922,
+      "b_total": 2000,
+      "feature_a": "pass_type=Corner",
+      "feature_b": "is_cross"
+    },
+    {
+      "both_true": 10,
+      "a_only": 912,
+      "b_only": 7,
+      "neither": 1010,
+      "a_total": 922,
+      "b_total": 84,
+      "feature_a": "pass_type=Corner",
+      "feature_b": "shot_open_goal"
+    }
+  ]
+}
