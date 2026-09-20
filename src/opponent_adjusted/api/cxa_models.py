@@ -68,6 +68,24 @@ def _track_cache_key(self, track: str) -> tuple:  # noqa: ANN001
     return hashkey(track)
 
 
+# list_model_summaries() and get_explainability() each run several sequential
+# BigQuery queries (frozen-config reads + metrics/coverage/importance table
+# scans). Uncached, list_model_summaries() was measured live at ~20s per call
+# (10 queries x ~2s round-trip each) -- a real, user-visible latency problem
+# for a page load, found and fixed during this task's own verification pass,
+# not assumed away. Same TTL/cache-per-arguments pattern as _coverage_cache
+# above; these hold small, single-digit-row payloads (model comparison rows,
+# not per-pass data), so a maxsize of a few entries is ample.
+_summaries_cache: TTLCache = TTLCache(maxsize=1, ttl=CACHE_TTL_SECONDS)
+_summaries_lock = threading.Lock()
+_explainability_cache: TTLCache = TTLCache(maxsize=8, ttl=CACHE_TTL_SECONDS)
+_explainability_lock = threading.Lock()
+
+
+def _no_args_cache_key(self) -> tuple:  # noqa: ANN001
+    return hashkey("list_model_summaries")
+
+
 class CxaStageMetric(BaseModel):
     """One row from a P_create or P_convert `oam_ml.*_test_v1_metrics` table."""
 
@@ -96,14 +114,54 @@ class CxaCoverage(BaseModel):
 
 
 class CxaModelSummary(BaseModel):
-    """One track's full comparison payload for the public Models page."""
+    """One track's full comparison payload for the public Models page AND the
+    detail page (`/models/cxa/[track]`) -- the detail page reads the same endpoint,
+    it just also fetches `/v1/models/cxa-models/{track}/explainability` for the
+    importance/coefficient panels this summary doesn't carry."""
 
     model_config = ConfigDict(from_attributes=True)
 
     track: str  # "event" | "plus"
+    p_create_model_family: str  # "lightgbm_tree" for both tracks, read live, not hardcoded
+    p_create_feature_list: list[str]
+    p_convert_model_family: str  # "lightgbm_tree" (event) | "logistic_mle" (plus)
+    p_convert_feature_list: list[str]
     stage_metrics: list[CxaStageMetric]
     coverage: CxaCoverage
     combined_score_caveat: str
+
+
+class CxaFeatureImportance(BaseModel):
+    """One row from a tree-family sub-model's `oam_ml.*_explainability_v1` table."""
+
+    stage: str  # "p_create" | "p_convert"
+    feature: str
+    importance_split: int
+    importance_gain: float
+
+
+class CxaCoefficient(BaseModel):
+    """One row from a logistic-family sub-model's `oam_ml.*_explainability_v1`
+    table. Today this is only ever CxA+'s P_convert -- every other sub-model is
+    tree-family and has no coefficients, only feature importances."""
+
+    stage: str  # "p_create" | "p_convert"
+    feature: str
+    coefficient: float | None
+    std_error: float | None
+    p_value: float | None
+
+
+class CxaExplainability(BaseModel):
+    """Explainability payload for one track -- feature importances for whichever
+    stages are tree-family, coefficients for whichever are logistic-family. Never
+    both for the same stage (a sub-model is one family or the other)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    track: str
+    feature_importances: list[CxaFeatureImportance]
+    coefficients: list[CxaCoefficient]
 
 
 class CxaCoverageValues(BaseModel):
@@ -136,15 +194,29 @@ class CxaModelStore(Protocol):
         absent from the result -- never a placeholder, same discipline as
         CxgCoverageStore.get_cxg_for_events."""
 
+    def get_explainability(self, track: str) -> CxaExplainability:
+        """Return feature importances (tree-family stages) and coefficients
+        (logistic-family stages) for both of this track's sub-models."""
+
 
 class BigQueryCxaModelStore:
     """CxaModelStore backed by `oam_ml`'s test-metrics tables and `oam_serving`'s
     combined tables."""
 
+    def _read_frozen_config(self, client, table: str) -> dict:
+        rows = list(client.query(f"SELECT model_family, feature_list FROM `{PROJECT}.{ML_DATASET}.{table}`").result())
+        if len(rows) != 1:
+            raise RuntimeError(f"expected exactly 1 row in {table}, found {len(rows)}")
+        return {"model_family": rows[0]["model_family"], "feature_list": list(rows[0]["feature_list"])}
+
+    @cached(cache=_summaries_cache, key=_no_args_cache_key, lock=_summaries_lock)
     def list_model_summaries(self) -> list[CxaModelSummary]:
         client = _client()
         summaries: list[CxaModelSummary] = []
         for track in TRACKS:
+            p_create_frozen = self._read_frozen_config(client, f"cxa_{track}_frozen_v1_config")
+            p_convert_frozen = self._read_frozen_config(client, f"cxconvert_{track}_frozen_v1_config")
+
             stage_rows: list[CxaStageMetric] = []
             for stage, table in (
                 ("p_create", f"cxa_{track}_test_v1_metrics"),
@@ -190,6 +262,10 @@ class BigQueryCxaModelStore:
             summaries.append(
                 CxaModelSummary(
                     track=track,
+                    p_create_model_family=p_create_frozen["model_family"],
+                    p_create_feature_list=p_create_frozen["feature_list"],
+                    p_convert_model_family=p_convert_frozen["model_family"],
+                    p_convert_feature_list=p_convert_frozen["feature_list"],
                     stage_metrics=stage_rows,
                     coverage=coverage,
                     combined_score_caveat=COMBINED_SCORE_CAVEAT,
@@ -225,3 +301,38 @@ class BigQueryCxaModelStore:
     def get_cxa_for_passes(self, pass_event_ids: list[str], *, track: str) -> dict[str, CxaCoverageValues]:
         coverage = self._get_track_coverage(track)
         return {pid: coverage[pid] for pid in pass_event_ids if pid in coverage}
+
+    @cached(cache=_explainability_cache, key=_track_cache_key, lock=_explainability_lock)
+    def get_explainability(self, track: str) -> CxaExplainability:
+        if track not in TRACKS:
+            raise ValueError(f"Unknown track: {track!r}")
+        client = _client()
+        p_create_frozen = self._read_frozen_config(client, f"cxa_{track}_frozen_v1_config")
+        p_convert_frozen = self._read_frozen_config(client, f"cxconvert_{track}_frozen_v1_config")
+
+        importances: list[CxaFeatureImportance] = []
+        coefficients: list[CxaCoefficient] = []
+
+        for stage, family, table in (
+            ("p_create", p_create_frozen["model_family"], f"cxa_{track}_explainability_v1"),
+            ("p_convert", p_convert_frozen["model_family"], f"cxconvert_{track}_explainability_v1"),
+        ):
+            rows = client.query(f"SELECT * FROM `{PROJECT}.{ML_DATASET}.{table}`").result()
+            if family == "lightgbm_tree":
+                importances.extend(
+                    CxaFeatureImportance(
+                        stage=stage, feature=r["feature"],
+                        importance_split=r["importance_split"], importance_gain=r["importance_gain"],
+                    )
+                    for r in rows
+                )
+            else:
+                coefficients.extend(
+                    CxaCoefficient(
+                        stage=stage, feature=r["feature"], coefficient=r["coefficient"],
+                        std_error=r["std_error"], p_value=r["p_value"],
+                    )
+                    for r in rows
+                )
+
+        return CxaExplainability(track=track, feature_importances=importances, coefficients=coefficients)

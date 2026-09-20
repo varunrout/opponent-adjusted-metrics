@@ -3,6 +3,7 @@ import type {
   ChartsResponse,
   CompetitionResponse,
   CxaCoverageResponse,
+  CxaExplainability,
   CxaModelSummary,
   CxgCoefficientResponse,
   CxgCoverageResponse,
@@ -269,6 +270,10 @@ export function getShotOpponentContext(eventIds: string[]): Promise<OpponentCont
 
 export function getPublicCxaModelSummaries(): Promise<CxaModelSummary[]> {
   return apiFetch<CxaModelSummary[]>("/v1/models/cxa-models");
+}
+
+export function getPublicCxaExplainability(track: string): Promise<CxaExplainability> {
+  return apiFetch<CxaExplainability>(`/v1/models/cxa-models/${encodeURIComponent(track)}/explainability`);
 }
 
 // --- /v1/cxa/coverage (guest-accessible; not yet called anywhere — see

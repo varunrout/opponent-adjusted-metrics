@@ -271,9 +271,40 @@ export type CxaCoverage = {
 
 export type CxaModelSummary = {
   track: string; // "event" | "plus"
+  p_create_model_family: string; // "lightgbm_tree" for both tracks
+  p_create_feature_list: string[];
+  p_convert_model_family: string; // "lightgbm_tree" (event) | "logistic_mle" (plus)
+  p_convert_feature_list: string[];
   stage_metrics: CxaStageMetric[];
   coverage: CxaCoverage;
   combined_score_caveat: string;
+};
+
+// --- /v1/models/cxa-models/{track}/explainability (public) ---------------
+// Feature importances for tree-family stages, coefficients for logistic-family
+// stages -- never both for the same stage. Today only CxA+'s P_convert is
+// logistic; every other stage (both tracks' P_create, event-only's P_convert) is
+// tree-family and appears in feature_importances only.
+
+export type CxaFeatureImportance = {
+  stage: "p_create" | "p_convert";
+  feature: string;
+  importance_split: number;
+  importance_gain: number;
+};
+
+export type CxaCoefficient = {
+  stage: "p_create" | "p_convert";
+  feature: string;
+  coefficient: number | null;
+  std_error: number | null;
+  p_value: number | null;
+};
+
+export type CxaExplainability = {
+  track: string;
+  feature_importances: CxaFeatureImportance[];
+  coefficients: CxaCoefficient[];
 };
 
 // --- /v1/cxa/coverage (guest-accessible) ---------------------------------

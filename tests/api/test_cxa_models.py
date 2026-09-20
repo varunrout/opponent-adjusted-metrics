@@ -22,17 +22,23 @@ def _row(values: dict):
     return row
 
 
+def _clear_all_caches():
+    cxa_models._coverage_cache.clear()
+    cxa_models._summaries_cache.clear()
+    cxa_models._explainability_cache.clear()
+
+
 @pytest.fixture(autouse=True)
 def isolated_client_and_cache():
     from opponent_adjusted.api import bigquery_store
 
-    cxa_models._coverage_cache.clear()
+    _clear_all_caches()
     original_client = bigquery_store._client_instance
     mock_client = MagicMock()
     bigquery_store._client_instance = mock_client
     yield mock_client
     bigquery_store._client_instance = original_client
-    cxa_models._coverage_cache.clear()
+    _clear_all_caches()
 
 
 def test_get_cxa_for_passes_returns_only_covered_ids_and_no_placeholder(isolated_client_and_cache):
@@ -100,6 +106,8 @@ def test_track_coverage_is_cached_across_calls(isolated_client_and_cache):
 def test_list_model_summaries_keeps_stages_separate_and_includes_coverage(isolated_client_and_cache):
     mock_client = isolated_client_and_cache
 
+    p_create_frozen_row = [_row({"model_family": "lightgbm_tree", "feature_list": ["f1", "f2"]})]
+    p_convert_frozen_row = [_row({"model_family": "logistic_mle", "feature_list": ["g1"]})]
     p_create_rows = [
         _row({"model": "dumb_baseline", "split": "test", "n": 100, "log_loss": 0.3, "brier_score": None, "roc_auc": None}),
         _row({"model": "frozen_tree", "split": "test", "n": 100, "log_loss": 0.06, "brier_score": 0.02, "roc_auc": 0.91}),
@@ -107,13 +115,14 @@ def test_list_model_summaries_keeps_stages_separate_and_includes_coverage(isolat
     p_convert_rows = [
         _row({"model": "frozen_candidate", "split": "test", "n": 10, "log_loss": 0.25, "brier_score": 0.07, "roc_auc": 0.76}),
     ]
-    coverage_row = _row({"population_n": 100, "chance_creating_n": 10})
+    coverage_row = [_row({"population_n": 100, "chance_creating_n": 10})]
 
-    # 2 tracks x (p_create query + p_convert query + coverage query) = 6 calls,
-    # cycling through the 3 canned results per track.
+    # 2 tracks x (p_create frozen config + p_convert frozen config + p_create
+    # metrics + p_convert metrics + coverage) = 10 calls, cycling through the
+    # same 5 canned results per track.
     mock_client.query.return_value.result.side_effect = [
-        p_create_rows, p_convert_rows, [coverage_row],
-        p_create_rows, p_convert_rows, [coverage_row],
+        p_create_frozen_row, p_convert_frozen_row, p_create_rows, p_convert_rows, coverage_row,
+        p_create_frozen_row, p_convert_frozen_row, p_create_rows, p_convert_rows, coverage_row,
     ]
 
     store = cxa_models.BigQueryCxaModelStore()
@@ -127,8 +136,53 @@ def test_list_model_summaries_keeps_stages_separate_and_includes_coverage(isolat
         assert all(m.stage in ("p_create", "p_convert") for m in summary.stage_metrics)
         frozen = [m for m in summary.stage_metrics if m.is_frozen]
         assert {m.model for m in frozen} == {"frozen_tree", "frozen_candidate"}
+        assert summary.p_create_model_family == "lightgbm_tree"
+        assert summary.p_create_feature_list == ["f1", "f2"]
+        assert summary.p_convert_model_family == "logistic_mle"
+        assert summary.p_convert_feature_list == ["g1"]
         assert summary.coverage.population_n == 100
         assert summary.coverage.chance_creating_n == 10
         assert summary.coverage.coverage_pct == 10.0
         assert summary.combined_score_caveat == cxa_models.COMBINED_SCORE_CAVEAT
         assert "~2%" in summary.combined_score_caveat
+
+
+def test_get_explainability_splits_tree_importances_from_logistic_coefficients(isolated_client_and_cache):
+    mock_client = isolated_client_and_cache
+
+    p_create_frozen_row = [_row({"model_family": "lightgbm_tree", "feature_list": ["f1"]})]
+    p_convert_frozen_row = [_row({"model_family": "logistic_mle", "feature_list": ["g1"]})]
+    p_create_importance_rows = [
+        _row({"feature": "f1", "importance_split": 42, "importance_gain": 12.5}),
+    ]
+    p_convert_coefficient_rows = [
+        _row({"feature": "g1", "coefficient": 0.5, "std_error": 0.1, "p_value": 0.01}),
+    ]
+
+    mock_client.query.return_value.result.side_effect = [
+        p_create_frozen_row, p_convert_frozen_row, p_create_importance_rows, p_convert_coefficient_rows,
+    ]
+
+    store = cxa_models.BigQueryCxaModelStore()
+    result = store.get_explainability("event")
+
+    assert result.track == "event"
+    # Tree-family stage (p_create) -> feature_importances only, never a fake
+    # coefficients row for a model that has no coefficients.
+    assert len(result.feature_importances) == 1
+    assert result.feature_importances[0].stage == "p_create"
+    assert result.feature_importances[0].feature == "f1"
+    # Logistic-family stage (p_convert here, in this canned example) -> coefficients only.
+    assert len(result.coefficients) == 1
+    assert result.coefficients[0].stage == "p_convert"
+    assert result.coefficients[0].feature == "g1"
+
+
+def test_get_explainability_unknown_track_raises_without_querying(isolated_client_and_cache):
+    mock_client = isolated_client_and_cache
+    store = cxa_models.BigQueryCxaModelStore()
+
+    with pytest.raises(ValueError):
+        store.get_explainability("not_a_real_track")
+
+    mock_client.query.assert_not_called()
