@@ -1,0 +1,356 @@
+{
+  "track": "plus",
+  "train_n": 1991,
+  "val_n": 420,
+  "train_positive": 181,
+  "val_positive": 46,
+  "dumb_baseline": {
+    "train_rate": 0.09090909090909091,
+    "train": {
+      "n": 1991,
+      "log_loss": 0.30463609734923813,
+      "brier_score": 0.08264462809917354,
+      "roc_auc": null
+    },
+    "validation": {
+      "n": 420,
+      "log_loss": 0.347498070941768,
+      "brier_score": 0.09787485242030694,
+      "roc_auc": null
+    }
+  },
+  "xy_baseline": {
+    "train": {
+      "n": 1991,
+      "log_loss": 0.28809375662362463,
+      "brier_score": 0.08007925583483454,
+      "roc_auc": 0.6701520100119044
+    },
+    "validation": {
+      "n": 420,
+      "log_loss": 0.3320379748843868,
+      "brier_score": 0.09556020249561843,
+      "roc_auc": 0.6475238316670542
+    }
+  },
+  "gk_distance_imputation": {
+    "train_median": 11.682114802123799,
+    "n_null_train": 0,
+    "n_null_val": 0,
+    "flag_included_in_design_matrix": false
+  },
+  "lgb_params": {
+    "n_estimators": 200,
+    "max_depth": 4,
+    "num_leaves": 15,
+    "learning_rate": 0.05,
+    "min_child_samples": 100,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "random_state": 42,
+    "verbosity": -1
+  },
+  "candidate": {
+    "logistic": {
+      "train": {
+        "n": 1991,
+        "log_loss": 0.26630688491962223,
+        "brier_score": 0.0740400572787369,
+        "roc_auc": 0.7482341808858093
+      },
+      "validation": {
+        "n": 420,
+        "log_loss": 0.31605591269642486,
+        "brier_score": 0.09193061582032559,
+        "roc_auc": 0.7282608695652174
+      },
+      "coefficients": [
+        {
+          "feature": "const",
+          "coefficient": -1.3119670013020401,
+          "std_error": 1.4766660627007748,
+          "p_value": 0.3742903513317509
+        },
+        {
+          "feature": "is_through_ball",
+          "coefficient": 0.993457975734015,
+          "std_error": 0.3240217503424956,
+          "p_value": 0.0021692699304639443
+        },
+        {
+          "feature": "shot_one_on_one",
+          "coefficient": 0.10650266018332694,
+          "std_error": 0.34215542225865475,
+          "p_value": 0.7555955008476318
+        },
+        {
+          "feature": "is_cross",
+          "coefficient": -0.06166229522211821,
+          "std_error": 0.21190461852812065,
+          "p_value": 0.7710583530226296
+        },
+        {
+          "feature": "shot_first_time",
+          "coefficient": 0.22145712952631486,
+          "std_error": 0.1953120657580027,
+          "p_value": 0.25685200939546826
+        },
+        {
+          "feature": "start_x",
+          "coefficient": 0.009329308182028777,
+          "std_error": 0.00795481647725865,
+          "p_value": 0.24088108990381973
+        },
+        {
+          "feature": "pass_end_x",
+          "coefficient": -0.009414499220075269,
+          "std_error": 0.01551943905429701,
+          "p_value": 0.544098971153095
+        },
+        {
+          "feature": "shot_gk_distance_m",
+          "coefficient": -0.13641208174829778,
+          "std_error": 0.02335018687314196,
+          "p_value": 5.157395992556115e-09
+        },
+        {
+          "feature": "reception_nearest_opponent_distance_m",
+          "coefficient": 0.08522277389315959,
+          "std_error": 0.04543438880968867,
+          "p_value": 0.060691977922803966
+        },
+        {
+          "feature": "reception_opponents_within_5m",
+          "coefficient": 0.10853709645556558,
+          "std_error": 0.07375662720430472,
+          "p_value": 0.14114048811613603
+        },
+        {
+          "feature": "shot_open_goal",
+          "coefficient": 2.1799041590856345,
+          "std_error": 0.5572247673419434,
+          "p_value": 9.15071097405781e-05
+        },
+        {
+          "feature": "is_cut_back",
+          "coefficient": 0.01104348517646847,
+          "std_error": 0.4380830465901606,
+          "p_value": 0.979888532014481
+        },
+        {
+          "feature": "pass_type_Corner",
+          "coefficient": -1.6315930022518523,
+          "std_error": 0.48099020218945787,
+          "p_value": 0.0006934536654556115
+        }
+      ]
+    },
+    "tree": {
+      "train": {
+        "n": 1991,
+        "log_loss": 0.19964239700623573,
+        "brier_score": 0.05731136170131368,
+        "roc_auc": 0.9119837611794512
+      },
+      "validation": {
+        "n": 420,
+        "log_loss": 0.33506374385440374,
+        "brier_score": 0.09513148587885373,
+        "roc_auc": 0.6911764705882353
+      },
+      "feature_importance": {
+        "is_through_ball": 0,
+        "shot_one_on_one": 0,
+        "is_cross": 0,
+        "shot_first_time": 21,
+        "start_x": 277,
+        "pass_end_x": 168,
+        "shot_x_sb": 135,
+        "shot_dist_to_goal_m": 290,
+        "shot_gk_distance_m": 164,
+        "reception_nearest_opponent_distance_m": 222,
+        "reception_opponents_within_5m": 41,
+        "shot_open_goal": 0,
+        "is_cut_back": 0,
+        "pass_type_Corner": 34
+      }
+    }
+  },
+  "calibration": {
+    "logistic": [
+      {
+        "decile": 0,
+        "n": 42,
+        "mean_predicted": 0.015616523135002254,
+        "mean_actual": 0.0
+      },
+      {
+        "decile": 1,
+        "n": 42,
+        "mean_predicted": 0.026187533411627644,
+        "mean_actual": 0.023809523809523808
+      },
+      {
+        "decile": 2,
+        "n": 42,
+        "mean_predicted": 0.035508130264113646,
+        "mean_actual": 0.07142857142857142
+      },
+      {
+        "decile": 3,
+        "n": 42,
+        "mean_predicted": 0.04387075616660107,
+        "mean_actual": 0.047619047619047616
+      },
+      {
+        "decile": 4,
+        "n": 42,
+        "mean_predicted": 0.05469874352830578,
+        "mean_actual": 0.14285714285714285
+      },
+      {
+        "decile": 5,
+        "n": 42,
+        "mean_predicted": 0.07533054815858532,
+        "mean_actual": 0.047619047619047616
+      },
+      {
+        "decile": 6,
+        "n": 42,
+        "mean_predicted": 0.09811648474151971,
+        "mean_actual": 0.14285714285714285
+      },
+      {
+        "decile": 7,
+        "n": 42,
+        "mean_predicted": 0.12271661448250347,
+        "mean_actual": 0.11904761904761904
+      },
+      {
+        "decile": 8,
+        "n": 42,
+        "mean_predicted": 0.17021995178508229,
+        "mean_actual": 0.2619047619047619
+      },
+      {
+        "decile": 9,
+        "n": 42,
+        "mean_predicted": 0.32108896988899704,
+        "mean_actual": 0.23809523809523808
+      }
+    ],
+    "tree": [
+      {
+        "decile": 0,
+        "n": 42,
+        "mean_predicted": 0.004006167891838379,
+        "mean_actual": 0.0
+      },
+      {
+        "decile": 1,
+        "n": 42,
+        "mean_predicted": 0.010903918577438929,
+        "mean_actual": 0.07142857142857142
+      },
+      {
+        "decile": 2,
+        "n": 42,
+        "mean_predicted": 0.022972132613805787,
+        "mean_actual": 0.047619047619047616
+      },
+      {
+        "decile": 3,
+        "n": 42,
+        "mean_predicted": 0.03339997414655723,
+        "mean_actual": 0.09523809523809523
+      },
+      {
+        "decile": 4,
+        "n": 42,
+        "mean_predicted": 0.046461139771105185,
+        "mean_actual": 0.07142857142857142
+      },
+      {
+        "decile": 5,
+        "n": 42,
+        "mean_predicted": 0.06182601104075631,
+        "mean_actual": 0.14285714285714285
+      },
+      {
+        "decile": 6,
+        "n": 42,
+        "mean_predicted": 0.08282934032185045,
+        "mean_actual": 0.14285714285714285
+      },
+      {
+        "decile": 7,
+        "n": 42,
+        "mean_predicted": 0.1100134367463567,
+        "mean_actual": 0.07142857142857142
+      },
+      {
+        "decile": 8,
+        "n": 42,
+        "mean_predicted": 0.15883270162960536,
+        "mean_actual": 0.14285714285714285
+      },
+      {
+        "decile": 9,
+        "n": 42,
+        "mean_predicted": 0.36738143596741324,
+        "mean_actual": 0.30952380952380953
+      }
+    ]
+  },
+  "separation_check": [
+    {
+      "feature": "is_through_ball",
+      "n_true": 81,
+      "n_true_positive": 23,
+      "n_false": 1910,
+      "n_false_positive": 158
+    },
+    {
+      "feature": "shot_one_on_one",
+      "n_true": 82,
+      "n_true_positive": 16,
+      "n_false": 1909,
+      "n_false_positive": 165
+    },
+    {
+      "feature": "is_cross",
+      "n_true": 463,
+      "n_true_positive": 67,
+      "n_false": 1528,
+      "n_false_positive": 114
+    },
+    {
+      "feature": "shot_first_time",
+      "n_true": 536,
+      "n_true_positive": 72,
+      "n_false": 1455,
+      "n_false_positive": 109
+    },
+    {
+      "feature": "shot_open_goal",
+      "n_true": 17,
+      "n_true_positive": 12,
+      "n_false": 1974,
+      "n_false_positive": 169
+    },
+    {
+      "feature": "is_cut_back",
+      "n_true": 53,
+      "n_true_positive": 8,
+      "n_false": 1938,
+      "n_false_positive": 173
+    },
+    {
+      "feature": "pass_type_Corner",
+      "n_true": 172,
+      "n_true_positive": 7,
+      "n_false": 1819,
+      "n_false_positive": 174
+    }
+  ]
+}
