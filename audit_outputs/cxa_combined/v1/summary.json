@@ -1,0 +1,44 @@
+{
+  "event": {
+    "n_total": 608722,
+    "n_convert_pop": 11303,
+    "n_nonnull_combined": 11303,
+    "combined_quality": {
+      "track": "event",
+      "n": 1736,
+      "cxa_combined_score": {
+        "n": 1736,
+        "log_loss": 0.3480596579542258,
+        "brier_score": 0.07651569598919161,
+        "roc_auc": 0.7355121278819005
+      },
+      "p_convert_alone": {
+        "n": 1736,
+        "log_loss": 0.2464607007277286,
+        "brier_score": 0.06841406513775476,
+        "roc_auc": 0.764627937481936
+      }
+    }
+  },
+  "plus": {
+    "n_total": 133143,
+    "n_convert_pop": 2830,
+    "n_nonnull_combined": 2830,
+    "combined_quality": {
+      "track": "plus",
+      "n": 419,
+      "cxa_combined_score": {
+        "n": 419,
+        "log_loss": 0.3023232455054069,
+        "brier_score": 0.07580406568258483,
+        "roc_auc": 0.7355671598491442
+      },
+      "p_convert_alone": {
+        "n": 419,
+        "log_loss": 0.24963538811598204,
+        "brier_score": 0.0704216545891811,
+        "roc_auc": 0.7938787351319988
+      }
+    }
+  }
+}
