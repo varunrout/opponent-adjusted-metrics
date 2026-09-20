@@ -12,6 +12,7 @@ from fastapi import Depends, Header, HTTPException
 from opponent_adjusted.api.analysis_interfaces import AnalysisStore
 from opponent_adjusted.api.bigquery_analysis_store import BigQueryAnalysisStore
 from opponent_adjusted.api.bigquery_store import BigQueryServingStore
+from opponent_adjusted.api.cxa_models import BigQueryCxaModelStore, CxaModelStore
 from opponent_adjusted.api.cxg_coverage import (
     BigQueryCxgCoverageStore,
     BigQueryCxgMatchScopeStore,
@@ -153,6 +154,11 @@ def get_analysis_store() -> AnalysisStore:
 def get_cxg_coverage_store() -> CxgCoverageStore:
     """FastAPI dependency provider for the CxG v3 coverage store; overridable in tests."""
     return BigQueryCxgCoverageStore()
+
+
+def get_cxa_model_store() -> CxaModelStore:
+    """FastAPI dependency provider for the CxA combined-scorer store; overridable in tests."""
+    return BigQueryCxaModelStore()
 
 
 def get_cxg_match_scope_store() -> CxgMatchScopeStore:

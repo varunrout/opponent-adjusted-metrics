@@ -37,11 +37,23 @@ export function ModelCard({ model }: { model: ModelInfo }) {
 
       {model.comparisonNote && (
         <p className="text-[11.5px] text-muted mt-1.5 mb-0">
-          {model.comparisonNote}{" "}
-          <Link href="/stories/cxg-v3-honest-comparison" className="text-teal hover:underline">
-            See Stories for the full comparison →
-          </Link>
+          {model.comparisonNote}
+          {model.comparisonStoryHref && (
+            <>
+              {" "}
+              <Link href={model.comparisonStoryHref} className="text-teal hover:underline">
+                See Stories for the full comparison →
+              </Link>
+            </>
+          )}
         </p>
+      )}
+
+      {model.experimentalNote && (
+        <div className="flex items-center gap-2 mt-1.5">
+          <Badge status="experimental" label="Experimental" />
+          <p className="text-[11.5px] text-muted m-0">{model.experimentalNote}</p>
+        </div>
       )}
 
       {model.detailModelKey && (

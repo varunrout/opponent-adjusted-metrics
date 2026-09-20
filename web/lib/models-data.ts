@@ -22,11 +22,27 @@ export type ModelInfo = {
   // not overclaim, so this is where an honest "trails the baseline" note
   // lives rather than being hidden behind a bare metric number.
   comparisonNote?: string | null;
+  // Where "See Stories for the full comparison →" (rendered alongside
+  // comparisonNote) should link. Was hardcoded to the CxG story before this
+  // field existed — extracted here because a bare hardcoded link would
+  // silently point CxA's comparisonNote at CxG's own story too, which says
+  // nothing about CxA. Only rendered when both this and comparisonNote are
+  // set; CxA/CxA+ below intentionally leave it unset (no such story exists
+  // yet) so their comparisonNote renders as plain text, no dangling link.
+  comparisonStoryHref?: string | null;
   // model_key for this family's current/latest frozen version, if the real
   // results+coefficients detail page (/models/[modelKey], public, backed by
   // /v1/models/cxg-models*) has data for it. Null for families with no
-  // real model yet (CxA/CxT).
+  // real model yet (CxT), or whose detail page isn't built yet (CxA — see
+  // its own comment below: /models/[modelKey] is CxG-specific today, not
+  // generic off this array, so wiring a CxA detailModelKey here would 404).
   detailModelKey?: string | null;
+  // Per docs/dashboard_design_spec_v2.md's existing "Experimental" disclosure
+  // pattern (Badge status="experimental", already used on Match/Player/Team
+  // pages for CxG+ 360-coverage captions) — when set, ModelCard renders the
+  // same badge + caption treatment for this card specifically. Optional;
+  // most entries don't need it.
+  experimentalNote?: string | null;
 };
 
 // Data-driven per docs/dashboard_design_spec.md section 4: the Models tab
@@ -55,6 +71,7 @@ export const MODELS: ModelInfo[] = [
     ],
     featureFamilyCount: "8 features",
     comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2597).",
+    comparisonStoryHref: "/stories/cxg-v3-honest-comparison",
     detailModelKey: "event_v3",
   },
   {
@@ -69,15 +86,63 @@ export const MODELS: ModelInfo[] = [
     ],
     featureFamilyCount: "24 features",
     comparisonNote: "Trails the StatsBomb xG baseline (log_loss 0.2430).",
+    comparisonStoryHref: "/stories/cxg-v3-honest-comparison",
     detailModelKey: "plus_v3",
   },
+  // CxA = P_create x P_convert (docs/analysis/cxa_combined_scorer_design_v1.md
+  // section 1c). Two tracks, two cards (event-only, CxA+), mirroring the
+  // CxG/CxG+ split above exactly — not one merged card. Real, frozen,
+  // test-evaluated numbers per docs/analysis/cxa_p_create_test_eval_v1.md /
+  // cxa_p_convert_test_eval_v1.md (verified against live oam_ml BigQuery data
+  // while building /v1/models/cxa-models,
+  // docs/analysis/cxa_dashboard_models_page_v1.md). Status "evaluated," not
+  // "promoted" — same reasoning as CxG/CxG+ above: oam_serving now holds the
+  // combined per-pass table, but that alone doesn't mean "production," and no
+  // per-pass display exists yet either (deferred, see that doc's "what's
+  // next"). Unlike CxG, there is no single "the CxA model" log_loss/AUC to
+  // show — P_create and P_convert are separately frozen, separately
+  // evaluated models, so validationMetrics shows both stages' own test
+  // numbers, clearly labelled, never a fake unioned "combined" metric
+  // (cxa_combined_score's own log_loss/AUC is a worse y_goal predictor than
+  // P_convert alone — a real, checked finding, not something to hide by
+  // presenting a flattering combined number instead).
   {
-    name: "CxA",
-    status: "planned",
-    statusLabel: "Planned",
+    name: "CxA (event-only)",
+    status: "evaluated",
+    statusLabel: "Evaluated",
     tier: "Core",
-    validationMetrics: [],
-    featureFamilyCount: null,
+    validationMetrics: [
+      { label: "P_create test log_loss", value: "0.0654" },
+      { label: "P_create test AUC", value: "0.9153" },
+      { label: "P_convert test log_loss", value: "0.2465" },
+      { label: "P_convert test AUC", value: "0.7646" },
+    ],
+    featureFamilyCount: "10 P_create + 15 P_convert features",
+    comparisonNote:
+      "Combined CxA (create x convert) -- chance-creating passes only, ~2% of all passes; undefined, not zero, elsewhere.",
+    // No detail page yet: /models/[modelKey] is hardcoded to CxG's own
+    // REAL_MODEL_KEYS and fetch functions today, not generic off this array
+    // — wiring detailModelKey here would 404 or render the wrong model's
+    // data. Deferred, see docs/analysis/cxa_dashboard_models_page_v1.md.
+    detailModelKey: null,
+  },
+  {
+    name: "CxA+",
+    status: "evaluated",
+    statusLabel: "Evaluated",
+    tier: "Spatial",
+    validationMetrics: [
+      { label: "P_create test log_loss", value: "0.0567" },
+      { label: "P_create test AUC", value: "0.9565" },
+      { label: "P_convert test log_loss", value: "0.2496" },
+      { label: "P_convert test AUC", value: "0.7939" },
+    ],
+    featureFamilyCount: "11 P_create + 12 P_convert features",
+    comparisonNote:
+      "Combined CxA (create x convert) -- chance-creating passes only, ~2% of all passes; undefined, not zero, elsewhere.",
+    detailModelKey: null,
+    experimentalNote:
+      "2,830 total chance-creating passes, 419 in test, zero Premier League rows.",
   },
   {
     name: "CxT",
