@@ -1,0 +1,547 @@
+{
+  "locked": {
+    "is_through_ball": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 316,
+        "n_true_goal": 93,
+        "rate_true": 0.29430379746835444,
+        "n_false": 7531,
+        "n_false_goal": 645,
+        "rate_false": 0.08564599654760324,
+        "ratio": 3.43628201354136
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 90,
+        "n_true_goal": 29,
+        "rate_true": 0.32222222222222224,
+        "n_false": 1630,
+        "n_false_goal": 130,
+        "rate_false": 0.07975460122699386,
+        "ratio": 4.040170940170941
+      }
+    },
+    "shot_one_on_one": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 372,
+        "n_true_goal": 98,
+        "rate_true": 0.26344086021505375,
+        "n_false": 7475,
+        "n_false_goal": 640,
+        "rate_false": 0.08561872909698996,
+        "ratio": 3.076906922043011
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 85,
+        "n_true_goal": 18,
+        "rate_true": 0.21176470588235294,
+        "n_false": 1635,
+        "n_false_goal": 141,
+        "rate_false": 0.08623853211009175,
+        "ratio": 2.455569461827284
+      }
+    },
+    "is_cross": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 1678,
+        "n_true_goal": 232,
+        "rate_true": 0.13825983313468415,
+        "n_false": 6169,
+        "n_false_goal": 506,
+        "rate_false": 0.08202301831739342,
+        "ratio": 1.6856223529799734
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 322,
+        "n_true_goal": 49,
+        "rate_true": 0.15217391304347827,
+        "n_false": 1398,
+        "n_false_goal": 110,
+        "rate_false": 0.07868383404864092,
+        "ratio": 1.93399209486166
+      }
+    },
+    "shot_first_time": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 2013,
+        "n_true_goal": 268,
+        "rate_true": 0.13313462493790362,
+        "n_false": 5834,
+        "n_false_goal": 470,
+        "rate_false": 0.08056222146040452,
+        "ratio": 1.652568940186659
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 482,
+        "n_true_goal": 64,
+        "rate_true": 0.13278008298755187,
+        "n_false": 1238,
+        "n_false_goal": 95,
+        "rate_false": 0.07673667205169628,
+        "ratio": 1.7303341340904128
+      }
+    },
+    "start_x": {
+      "direction": "higher",
+      "train": {
+        "n_true": 738,
+        "avg_true": 98.46043360433602,
+        "n_false": 7109,
+        "avg_false": 95.1090448726963,
+        "gap": 3.351388731639716
+      },
+      "validation": {
+        "n_true": 159,
+        "avg_true": 98.29371069182386,
+        "n_false": 1561,
+        "avg_false": 95.39352978859688,
+        "gap": 2.900180903226982
+      }
+    },
+    "pass_end_x": {
+      "direction": "higher",
+      "train": {
+        "n_true": 738,
+        "avg_true": 106.41043360433612,
+        "n_false": 7109,
+        "avg_false": 100.25516950344621,
+        "gap": 6.155264100889909
+      },
+      "validation": {
+        "n_true": 159,
+        "avg_true": 106.90440251572329,
+        "n_false": 1561,
+        "avg_false": 100.40813581037811,
+        "gap": 6.496266705345178
+      }
+    },
+    "shot_x_sb": {
+      "direction": "higher",
+      "train": {
+        "n_true": 738,
+        "avg_true": 109.1371273712737,
+        "n_false": 7109,
+        "avg_false": 104.02551695034455,
+        "gap": 5.1116104209291535
+      },
+      "validation": {
+        "n_true": 159,
+        "avg_true": 109.3396226415094,
+        "n_false": 1561,
+        "avg_false": 104.34061499039079,
+        "gap": 4.999007651118603
+      }
+    },
+    "shot_dist_to_goal_m": {
+      "direction": "lower",
+      "train": {
+        "n_true": 738,
+        "avg_true": 11.176168997635786,
+        "n_false": 7109,
+        "avg_false": 16.49239000720313,
+        "gap": -5.316221009567345
+      },
+      "validation": {
+        "n_true": 159,
+        "avg_true": 11.142308495061418,
+        "n_false": 1561,
+        "avg_false": 16.210180484234204,
+        "gap": -5.067871989172787
+      }
+    },
+    "shot_gk_distance_m": {
+      "direction": "lower",
+      "train": {
+        "n_true": 738,
+        "avg_true": 8.206083472996566,
+        "n_false": 7109,
+        "avg_false": 13.710536910755076,
+        "gap": -5.50445343775851
+      },
+      "validation": {
+        "n_true": 159,
+        "avg_true": 7.780809923281484,
+        "n_false": 1561,
+        "avg_false": 13.374357865221949,
+        "gap": -5.593547941940465
+      }
+    },
+    "shot_defenders_within_5m": {
+      "direction": "higher",
+      "train": {
+        "n_true": 738,
+        "avg_true": 2.5406504065040627,
+        "n_false": 7109,
+        "avg_false": 2.2686735124490065,
+        "gap": 0.2719768940550562
+      },
+      "validation": {
+        "n_true": 159,
+        "avg_true": 2.433962264150944,
+        "n_false": 1561,
+        "avg_false": 2.338885329916716,
+        "gap": 0.09507693423422792
+      }
+    },
+    "shot_defenders_within_8m": {
+      "direction": "higher",
+      "train": {
+        "n_true": 738,
+        "avg_true": 4.239837398373986,
+        "n_false": 7109,
+        "avg_false": 3.9179912786608497,
+        "gap": 0.32184611971313615
+      },
+      "validation": {
+        "n_true": 159,
+        "avg_true": 4.251572327044028,
+        "n_false": 1561,
+        "avg_false": 4.031390134529145,
+        "gap": 0.22018219251488258
+      }
+    }
+  },
+  "needs_validation": {
+    "shot_open_goal": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 65,
+        "n_true_goal": 43,
+        "rate_true": 0.6615384615384615,
+        "n_false": 7782,
+        "n_false_goal": 695,
+        "rate_false": 0.08930866101259316,
+        "ratio": 7.407327061427781
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 19,
+        "n_true_goal": 8,
+        "rate_true": 0.42105263157894735,
+        "n_false": 1701,
+        "n_false_goal": 151,
+        "rate_false": 0.08877131099353322,
+        "ratio": 4.743116068316486
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 6.407327061427781,
+        "validation_excess": 3.7431160683164864,
+        "retention": 0.5841930702820073,
+        "promoted": true
+      }
+    },
+    "shot_technique_name=Lob": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 48,
+        "n_true_goal": 15,
+        "rate_true": 0.3125,
+        "n_false": 7799,
+        "n_false_goal": 723,
+        "rate_false": 0.09270419284523657,
+        "ratio": 3.3709370677731676
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 14,
+        "n_true_goal": 3,
+        "rate_true": 0.21428571428571427,
+        "n_false": 1706,
+        "n_false_goal": 156,
+        "rate_false": 0.0914419695193435,
+        "ratio": 2.343406593406593
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 2.3709370677731676,
+        "validation_excess": 1.343406593406593,
+        "retention": 0.5666141930407068,
+        "promoted": true
+      }
+    },
+    "shot_technique_name=Diving Header": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 56,
+        "n_true_goal": 12,
+        "rate_true": 0.21428571428571427,
+        "n_false": 7791,
+        "n_false_goal": 726,
+        "rate_false": 0.09318444358875626,
+        "ratio": 2.299586776859504
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 11,
+        "n_true_goal": 2,
+        "rate_true": 0.18181818181818182,
+        "n_false": 1709,
+        "n_false_goal": 157,
+        "rate_false": 0.09186658864833236,
+        "ratio": 1.979154603358425
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 1.299586776859504,
+        "validation_excess": 0.9791546033584251,
+        "retention": 0.7534353386732556,
+        "promoted": true
+      }
+    },
+    "shot_technique_name=Backheel": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 39,
+        "n_true_goal": 7,
+        "rate_true": 0.1794871794871795,
+        "n_false": 7808,
+        "n_false_goal": 731,
+        "rate_false": 0.0936219262295082,
+        "ratio": 1.9171489705005436
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 7,
+        "n_true_goal": 2,
+        "rate_true": 0.2857142857142857,
+        "n_false": 1713,
+        "n_false_goal": 157,
+        "rate_false": 0.09165207238762405,
+        "ratio": 3.1173794358507734
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 0.9171489705005436,
+        "validation_excess": 2.1173794358507734,
+        "retention": 2.3086537781263514,
+        "promoted": true
+      }
+    },
+    "shot_technique_name=Volley": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 383,
+        "n_true_goal": 51,
+        "rate_true": 0.13315926892950392,
+        "n_false": 7464,
+        "n_false_goal": 687,
+        "rate_false": 0.09204180064308681,
+        "ratio": 1.4467260309895449
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 80,
+        "n_true_goal": 10,
+        "rate_true": 0.125,
+        "n_false": 1640,
+        "n_false_goal": 149,
+        "rate_false": 0.09085365853658536,
+        "ratio": 1.3758389261744968
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 0.4467260309895449,
+        "validation_excess": 0.37583892617449677,
+        "retention": 0.8413186161146111,
+        "promoted": true
+      }
+    },
+    "is_cut_back": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 206,
+        "n_true_goal": 26,
+        "rate_true": 0.1262135922330097,
+        "n_false": 7641,
+        "n_false_goal": 712,
+        "rate_false": 0.0931815207433582,
+        "ratio": 1.3544916548489145
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 37,
+        "n_true_goal": 8,
+        "rate_true": 0.21621621621621623,
+        "n_false": 1683,
+        "n_false_goal": 151,
+        "rate_false": 0.08972073677956031,
+        "ratio": 2.409880078754251
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 0.35449165484891454,
+        "validation_excess": 1.409880078754251,
+        "retention": 3.977188346944715,
+        "promoted": true
+      }
+    },
+    "pass_body_part_name=No Touch": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 22,
+        "n_true_goal": 4,
+        "rate_true": 0.18181818181818182,
+        "n_false": 7825,
+        "n_false_goal": 734,
+        "rate_false": 0.09380191693290735,
+        "ratio": 1.9383205350507804
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 5,
+        "n_true_goal": 0,
+        "rate_true": 0.0,
+        "n_false": 1715,
+        "n_false_goal": 159,
+        "rate_false": 0.09271137026239067,
+        "ratio": 0.0
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": false,
+        "train_excess": 0.9383205350507804,
+        "validation_excess": 0.0,
+        "retention": 0.0,
+        "promoted": false
+      }
+    },
+    "pass_technique_name=Straight": {
+      "direction": "elevated",
+      "train": {
+        "split": "train",
+        "n_true": 68,
+        "n_true_goal": 3,
+        "rate_true": 0.04411764705882353,
+        "n_false": 7779,
+        "n_false_goal": 735,
+        "rate_false": 0.09448515233320479,
+        "ratio": 0.4669267707082833
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 21,
+        "n_true_goal": 1,
+        "rate_true": 0.047619047619047616,
+        "n_false": 1699,
+        "n_false_goal": 158,
+        "rate_false": 0.09299587992937022,
+        "ratio": 0.5120554550934298
+      },
+      "promotion_check": {
+        "direction_holds_train": false,
+        "direction_holds_validation": false,
+        "train_excess": -0.5330732292917166,
+        "validation_excess": -0.48794454490657024,
+        "retention": 0.9153424296974959,
+        "promoted": false
+      }
+    },
+    "is_switch": {
+      "direction": "suppressed",
+      "train": {
+        "split": "train",
+        "n_true": 553,
+        "n_true_goal": 35,
+        "rate_true": 0.06329113924050633,
+        "n_false": 7294,
+        "n_false_goal": 703,
+        "rate_false": 0.0963805867836578,
+        "ratio": 1.522813271181793
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 106,
+        "n_true_goal": 8,
+        "rate_true": 0.07547169811320754,
+        "n_false": 1614,
+        "n_false_goal": 151,
+        "rate_false": 0.09355638166047088,
+        "ratio": 1.2396220570012393
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 0.522813271181793,
+        "validation_excess": 0.23962205700123929,
+        "retention": 0.45833200916951805,
+        "promoted": false
+      }
+    },
+    "pass_type_name=Corner": {
+      "direction": "suppressed",
+      "train": {
+        "split": "train",
+        "n_true": 743,
+        "n_true_goal": 53,
+        "rate_true": 0.07133243606998654,
+        "n_false": 7104,
+        "n_false_goal": 685,
+        "rate_false": 0.09642454954954954,
+        "ratio": 1.35176302481727
+      },
+      "validation": {
+        "split": "validation",
+        "n_true": 179,
+        "n_true_goal": 12,
+        "rate_true": 0.0670391061452514,
+        "n_false": 1541,
+        "n_false_goal": 147,
+        "rate_false": 0.0953926022063595,
+        "ratio": 1.422939649578196
+      },
+      "promotion_check": {
+        "direction_holds_train": true,
+        "direction_holds_validation": true,
+        "train_excess": 0.35176302481727006,
+        "validation_excess": 0.4229396495781961,
+        "retention": 1.202342542391714,
+        "promoted": true
+      }
+    }
+  },
+  "shot_end_z": {
+    "train": {
+      "n_true": 738,
+      "n_null_true": 0,
+      "avg_end_z_true_nonnull": 0.9562330623306226,
+      "n_false": 7109,
+      "n_null_false": 2526,
+      "null_pct_false": 35.532423688282464,
+      "avg_end_z_false_nonnull": 2.089526511018978
+    },
+    "validation": {
+      "n_true": 159,
+      "n_null_true": 0,
+      "avg_end_z_true_nonnull": 0.9132075471698108,
+      "n_false": 1561,
+      "n_null_false": 529,
+      "null_pct_false": 33.88853299167201,
+      "avg_end_z_false_nonnull": 2.0698643410852684
+    }
+  }
+}
