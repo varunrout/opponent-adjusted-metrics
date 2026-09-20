@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from opponent_adjusted.api.routers import (
     analysis,
     competitions,
+    cxa_models,
     cxg_coverage,
     matches,
     me,
@@ -34,6 +35,7 @@ app.add_middleware(
 
 app.include_router(analysis.router)
 app.include_router(competitions.router)
+app.include_router(cxa_models.router)
 app.include_router(cxg_coverage.router)
 app.include_router(matches.router)
 app.include_router(me.router)

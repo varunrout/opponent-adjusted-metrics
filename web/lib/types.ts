@@ -243,6 +243,52 @@ export type CxgCoverageResponse = {
   values: Record<string, number>;
 };
 
+// --- /v1/models/cxa-models (public) --------------------------------------
+// CxA = P_create x P_convert. Unlike CxG, there is no single "the CxA model" —
+// P_create and P_convert are separately frozen, separately test-evaluated
+// models, kept apart here by `stage`, never unioned into one fake number
+// (docs/analysis/cxa_combined_scorer_v1.md section 3: the combined score's
+// own log_loss/AUC is demonstrably a worse y_goal predictor than P_convert
+// alone, so it is never surfaced as "the CxA model's performance").
+
+export type CxaStageMetric = {
+  stage: "p_create" | "p_convert";
+  model: string; // "dumb_baseline" | "v1" | "frozen_tree" | "frozen_candidate"
+  split: string; // always "test" from this endpoint
+  n: number;
+  log_loss: number | null;
+  brier_score: number | null;
+  roc_auc: number | null;
+  is_frozen: boolean;
+};
+
+export type CxaCoverage = {
+  split: string;
+  population_n: number;
+  chance_creating_n: number;
+  coverage_pct: number;
+};
+
+export type CxaModelSummary = {
+  track: string; // "event" | "plus"
+  stage_metrics: CxaStageMetric[];
+  coverage: CxaCoverage;
+  combined_score_caveat: string;
+};
+
+// --- /v1/cxa/coverage (guest-accessible) ---------------------------------
+
+export type CxaCoverageValues = {
+  p_create_predicted_prob: number | null;
+  p_convert_predicted_prob: number | null;
+  cxa_combined_score: number | null;
+};
+
+export type CxaCoverageResponse = {
+  track: string;
+  values: Record<string, CxaCoverageValues>;
+};
+
 // --- /v1/cxg/opponent-context (guest-accessible) -------------------------
 
 export type OpponentContextResponse = {

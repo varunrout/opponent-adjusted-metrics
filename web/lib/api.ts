@@ -2,6 +2,8 @@ import type {
   BivariateResponse,
   ChartsResponse,
   CompetitionResponse,
+  CxaCoverageResponse,
+  CxaModelSummary,
   CxgCoefficientResponse,
   CxgCoverageResponse,
   CxgModelResultResponse,
@@ -257,6 +259,25 @@ export function getShotOpponentContext(eventIds: string[]): Promise<OpponentCont
   if (eventIds.length === 0) return Promise.resolve([]);
   const qs = `?event_ids=${encodeURIComponent(eventIds.join(","))}`;
   return apiFetch<OpponentContextResponse[]>(`/v1/cxg/opponent-context${qs}`);
+}
+
+// --- /v1/models/cxa-models (public, no auth) — powers the public Models
+// page's CxA (event-only) / CxA+ cards. Not yet called by any page in this
+// task (the Models page stays static per models-data.ts, same as CxG) — this
+// function exists so a future live/detail view has it ready, mirroring how
+// getPublicCxgModelResults already exists for that same reason. -----------
+
+export function getPublicCxaModelSummaries(): Promise<CxaModelSummary[]> {
+  return apiFetch<CxaModelSummary[]>("/v1/models/cxa-models");
+}
+
+// --- /v1/cxa/coverage (guest-accessible; not yet called anywhere — see
+// docs/analysis/cxa_dashboard_models_page_v1.md's "what's next": a per-pass
+// display is a separate, deferred future task) -----------------------------
+
+export function getCxaCoverage(passEventIds: string[], track: string): Promise<CxaCoverageResponse> {
+  const qs = `?track=${encodeURIComponent(track)}&pass_event_ids=${encodeURIComponent(passEventIds.join(","))}`;
+  return apiFetch<CxaCoverageResponse>(`/v1/cxa/coverage${qs}`);
 }
 
 export { ApiError };
