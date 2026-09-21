@@ -191,3 +191,120 @@ URLs, not assumed from the code looking correct.
   **new** `READER` grant this task applied) plus the pre-existing
   self-impersonation `serviceAccountTokenCreator` binding for signed chart URLs.
 - **Budget alert:** pre-existing, confirmed in place, untouched.
+
+---
+
+## Deployment record — 2026-09-21 (second deploy): per-pass CxA display + quadrant scatter
+
+A second deploy the same day, shipping
+[`feature/cxa-pass-detail-and-quadrant-scatter`](../analysis/cxa_pass_detail_v1.md)
+(per-pass CxA display on `ShotDetailModal`) and
+[`quadrant_scatter_v1.md`](../analysis/quadrant_scatter_v1.md) (Hard gate 2's
+player-season quadrant scatter). Same runbook sections, §5.2-5.8, same pattern as
+above -- this record continues the same running log rather than starting a new file.
+
+### What was done
+
+**Part 1 -- merge.** `git merge --no-ff feature/cxa-pass-detail-and-quadrant-scatter`
+into `main`, clean, zero conflicts, exactly as predicted. `main` advanced
+`60f5c27` -> **`b696904`**, pushed. Full backend suite re-run on the merged `main`
+before deploying: **465 passed** (462 baseline + 3 new quadrant-scatter tests; the
+same pre-existing, unrelated `tests/features/cxg/test_opponent_adjusted_family.py`
+collection error excluded as every prior task has found). `npx tsc --noEmit` clean.
+
+**Part 2 -- deploy**, following §5.2-5.8. This branch touches both services (new
+backend endpoints `/v1/cxa/coverage-by-shot` and `/v1/analysis/quadrant-scatter`;
+new frontend surface on `ShotDetailModal` and a new Analysis tab), so both were
+rebuilt and redeployed.
+
+#### §5.2 -- Backend image build
+
+Built via `gcloud builds submit` (server-side Cloud Build, consistent with the
+first deploy this same day -- Docker Desktop still not running locally).
+
+- **Tag:** `b696904` (the merged `main` HEAD short SHA).
+- **Image:**
+  `europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:b696904`
+- **Digest:** `sha256:81726426e84813f424dcb677b52759ba345c236fa0fa5992f12f8f081904bb0f`
+- **Build ID:** `57ce614c-fca4-476f-8cb0-6a8920b6fea4`, duration 1m50s, `STATUS: SUCCESS`.
+
+#### §5.3 -- IAM grants: checked, all three already in place
+
+| Grant | Checked via | Result |
+|---|---|---|
+| Self-impersonation `serviceAccountTokenCreator` on `oam-pipeline-sa` | `gcloud iam service-accounts get-iam-policy oam-pipeline-sa@...` | ✅ already present |
+| `oam_ml` dataViewer for `oam-pipeline-sa` | `bq show --format=prettyjson oam_ml` | ✅ already present |
+| `oam_serving` dataViewer for `oam-pipeline-sa` | `bq show --format=prettyjson oam_serving` | ✅ already present -- the grant applied in the first deploy this same day covers the branch's new `player_season_cxg_cxa_v1` table too, since it's the same dataset, not a new one |
+| `oam_core` access for `oam-pipeline-sa` (new for this branch: `quadrant_scatter.py`'s materialization reads `oam_core.shots`/`events` directly, at query time via the API's read path too) | `bq show --format=prettyjson oam_core` | ✅ already present (`WRITER`, pre-existing since day one) |
+
+No new grants needed this pass -- checked live, not assumed, per the task's own instruction.
+
+#### §5.4 -- Backend deployed
+
+```
+gcloud run deploy oam-dashboard-api \
+  --image=europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:b696904 \
+  --project=oam-varun-260819 --region=europe-west2 \
+  --service-account=oam-pipeline-sa@oam-varun-260819.iam.gserviceaccount.com \
+  --allow-unauthenticated --min-instances=0 --max-instances=3 --memory=512Mi --cpu=1
+```
+
+**Deployed revision: `oam-dashboard-api-00008-m7g`**, 2026-09-21 18:01:03 UTC, 100%
+traffic (previous active: `oam-dashboard-api-00007-mzd`). Confirmed real backend via
+`/health` -> `{"status":"ok"}` and `/openapi.json` -> 200.
+
+#### §5.5/§5.6 -- CORS and frontend
+
+CORS unchanged (already correct from the first deploy this same day -- no new
+origin introduced by this branch). `web/.env.production` unchanged (same Cloud Run
+URL as the first deploy, still gitignored, still not committed).
+
+```
+firebase deploy --only hosting --project=oam-varun-260819
+```
+
+Deployed successfully -- build included the changed `/analysis` route (now 8.24 kB,
+up from the pre-branch size, carrying the new Quadrant scatter tab) and the shared
+`ShotDetailModal` bundle used by `/matches/[matchId]`, `/players/[playerId]`,
+`/teams/[teamId]`. **Hosting URL unchanged:** `https://oam-varun-260819.web.app`.
+
+#### §5.7 -- Budget alert
+
+Unchanged, not re-checked in depth this pass (confirmed via the first deploy's own
+check a few hours earlier the same day; no reason to expect it to have changed).
+
+#### §5.8 -- Smoke test
+
+| Item | Result |
+|---|---|
+| `GET /health` -> `{"status":"ok"}` | ✅ Pass |
+| `GET /openapi.json` -> 200 | ✅ Pass |
+| **New:** `GET /v1/cxa/coverage-by-shot?track=event&shot_event_ids=<covered id>` -> 200 with real values | ✅ Pass -- used a shot found live via `BigQueryCxaModelStore()._get_track_shot_coverage("event")` (`ccae6789-b294-4e21-96eb-64a654d5eba5`, Aron Einar Gunnarsson, Iceland vs Croatia, match 7561, 46'): returned `{"pass_event_id": "7b3b0bbf-...", "p_create_predicted_prob": 0.0887, "p_convert_predicted_prob": 0.0430, "cxa_combined_score": 0.00382}` -- not empty |
+| **New:** the same covered shot's detail modal, opened live on the production site | ✅ Pass -- navigated to `https://oam-varun-260819.web.app/matches/7561`, clicked Gunnarsson's 46' shot dot: modal rendered a "Chance-creating pass" section with the `Experimental` badge and `CxA · P(create) 0.09 · P(convert) 0.04 · combined 0.004` -- exact match to the API values above, screenshot-confirmed, not silently absent |
+| **New:** `GET /v1/analysis/quadrant-scatter` with no auth header | ✅ Pass -- returned `403`, not `200`; the admin gate holds in production, not just in the code |
+| **New:** `/analysis` page, no auth, in the browser | ✅ Pass -- redirected client-side to `/overview` (confirmed via `window.location.href`), consistent with `RoleGate` correctly keeping a guest off the admin tab |
+| **New:** Sign in as admin, open the Quadrant scatter tab, confirm real data + working X/Y selectors | ⚠️ **Not independently verified this session** -- same limitation as the first deploy's own record: no real Firebase admin login credential available to this automated session. Not assumed to pass. What WAS verified instead: the endpoint's own admin gate (403 with no auth, above), the endpoint's data correctness pre-deploy (live-queried against the real table during the build task: 822 test-split rows, 455 with both default-pairing metrics covered -- see `quadrant_scatter_v1.md` section 5), and the frontend's client-side role gate (redirect-away-from-`/analysis` behavior, above). |
+| Regression check: no new console errors tied to this branch's changes | ✅ Pass -- one unrelated 404 observed in the browser session's console log, not traceable to any endpoint this branch touches (no `coverage-by-shot` or `quadrant-scatter` request appears in the failed-request list); not investigated further as out of scope for this deploy's own regression surface |
+| Budget alert exists | ✅ Pass, unchanged (see §5.7) |
+
+**One item still not independently verified, stated plainly rather than assumed:**
+the admin-gated Quadrant scatter tab's actual rendered UI (its data table, its two
+`<select>`s, the chart itself) was not seen live in a real admin session --
+everything reachable without an interactive admin login was checked instead, same
+honesty standard as the first deploy's own record.
+
+### Final state (this deploy)
+
+- **`main`** at `b696904`, `feature/cxa-pass-detail-and-quadrant-scatter` merged, pushed.
+- **Backend:** Cloud Run service `oam-dashboard-api`, revision
+  `oam-dashboard-api-00008-m7g`, image
+  `europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:b696904`,
+  serving 100% traffic at `https://oam-dashboard-api-482195222855.europe-west2.run.app`.
+- **Frontend:** Firebase Hosting, same URL as before, `https://oam-varun-260819.web.app`,
+  rebuilt against the same `web/.env.production`.
+- **New `oam_serving` table live in production:** `player_season_cxg_cxa_v1`
+  (materialized in the build task, ahead of this deploy -- 822 test-split rows,
+  verified exactly against all four source tables' own counts).
+- **IAM:** no changes this pass -- all grants already in place from the first
+  deploy this same day.
+- **Budget alert:** unchanged.
