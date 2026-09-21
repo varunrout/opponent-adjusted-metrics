@@ -11,11 +11,21 @@ import { ClickableRow } from "@/components/ui/ClickableRow";
 import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
 import { DivergingBar } from "@/components/ui/DivergingBar";
 import { ShotDetailModal } from "@/components/shot/ShotDetailModal";
+import { CxaSummaryCard } from "@/components/analysis/CxaSummaryCard";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
-import { getTeamShots, getTeamShotsFaced, getMatches, getCxgCoverage, getCxaCoverageByShot } from "@/lib/api";
+import {
+  getTeamShots,
+  getTeamShotsFaced,
+  getMatches,
+  getCxgCoverage,
+  getCxaCoverageByShot,
+  getTeamCxa,
+} from "@/lib/api";
 import { summarizeShots } from "@/lib/shot-summary";
 import { describeCxgCoverage } from "@/lib/analysis-helpers";
-import type { CxaShotCoverageValues, MatchResponse, ShotResponse } from "@/lib/types";
+import type { CxaShotCoverageValues, MatchResponse, ShotResponse, TeamCxaResponse } from "@/lib/types";
+
+const EMPTY_CXA_ROLLUP = { n: 0, mean: null, total: null };
 
 export default function TeamDetailPage() {
   const params = useParams<{ teamId: string }>();
@@ -33,6 +43,7 @@ export default function TeamDetailPage() {
   const [selectedShot, setSelectedShot] = useState<ShotResponse | null>(null);
   const [shotsFaced, setShotsFaced] = useState<ShotResponse[]>([]);
   const [cxgByEventIdFaced, setCxgByEventIdFaced] = useState<Record<string, number>>({});
+  const [teamCxa, setTeamCxa] = useState<TeamCxaResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +127,21 @@ export default function TeamDetailPage() {
           setShotsFaced([]);
           setCxgByEventIdFaced({});
         }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [teamId, competitionId, seasonId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setTeamCxa(null);
+    getTeamCxa(teamId, { competition_id: competitionId, season_id: seasonId })
+      .then((data) => {
+        if (!cancelled) setTeamCxa(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTeamCxa(null);
       });
     return () => {
       cancelled = true;
@@ -222,6 +248,14 @@ export default function TeamDetailPage() {
     (sum, s) => sum + (cxgByEventIdFaced[s.event_id] ?? 0),
     0
   );
+  // Attack-side mirror of the defence-side coverage scoping above — added
+  // because the card below previously claimed "both opponent-adjusted" while
+  // only ever computing the adjusted number for the defence side; the attack
+  // side used raw StatsBomb xG only. cxgByEventId (the team's OWN shots) was
+  // already fetched for the shot map/modal, just never rolled up here.
+  const coveredShots = scopedShots.filter((s) => cxgByEventId[s.event_id] != null);
+  const coveredGoals = coveredShots.filter((s) => s.is_goal).length;
+  const coveredCxg = coveredShots.reduce((sum, s) => sum + (cxgByEventId[s.event_id] ?? 0), 0);
 
   return (
     <section>
@@ -291,8 +325,9 @@ export default function TeamDetailPage() {
       </div>
 
       {scopedShotsFaced.length > 0 && (
-        <Card title="Attack vs defence, both opponent-adjusted" className="mb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card title="Attack vs defence" className="mb-4">
+          <div className="text-[11px] text-muted mb-2">Raw (StatsBomb xG, full shot volume)</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <DivergingBar
               left={{ label: "Goals", value: summary.goals, color: "var(--green)" }}
               right={{ label: "Total xG created", value: summary.totalXg, color: "var(--muted)" }}
@@ -301,19 +336,39 @@ export default function TeamDetailPage() {
               left={{ label: "Goals conceded", value: goalsConceded, color: "var(--red)" }}
               right={{ label: "xG conceded", value: xgConceded, color: "var(--muted)" }}
             />
+          </div>
+
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[11px] text-muted">Opponent-adjusted (CxG)</span>
+            <Badge status="experimental" label="Experimental" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <DivergingBar
+              left={{ label: "Goals", value: coveredGoals, color: "var(--green)" }}
+              right={{ label: "Total CxG created", value: coveredCxg, color: "var(--teal)" }}
+            />
             <DivergingBar
               left={{ label: "Goals conceded", value: coveredGoalsConceded, color: "var(--red)" }}
               right={{ label: "CxG allowed", value: cxgAllowed, color: "var(--teal)" }}
             />
           </div>
-          {coveredShotsFaced.length > 0 && (
+          {(coveredShots.length > 0 || coveredShotsFaced.length > 0) && (
             <p className="text-[11px] text-muted mt-2 mb-0">
-              CxG-allowed row scoped to {coveredShotsFaced.length} CxG-covered shot
-              {coveredShotsFaced.length === 1 ? "" : "s"} faced.
+              {coveredShots.length > 0 &&
+                `Goals-vs-CxG row scoped to ${coveredShots.length} CxG-covered shot${coveredShots.length === 1 ? "" : "s"} created.`}
+              {coveredShots.length > 0 && coveredShotsFaced.length > 0 && " "}
+              {coveredShotsFaced.length > 0 &&
+                `CxG-allowed row scoped to ${coveredShotsFaced.length} CxG-covered shot${coveredShotsFaced.length === 1 ? "" : "s"} faced.`}
             </p>
           )}
         </Card>
       )}
+
+      <CxaSummaryCard
+        title="Chances created (CxA)"
+        event={teamCxa?.event ?? EMPTY_CXA_ROLLUP}
+        plus={teamCxa?.plus ?? EMPTY_CXA_ROLLUP}
+      />
 
       <Card title="Recent matches">
         {sortedMatches.length === 0 ? (

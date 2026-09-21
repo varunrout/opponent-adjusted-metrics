@@ -16,10 +16,12 @@ import type {
   MeResponse,
   OpponentContextResponse,
   PcaResponse,
+  PlayerCxaResponse,
   PlayerSeasonResponse,
   QuadrantScatterResponse,
   ShotFreezeFrameResponse,
   ShotResponse,
+  TeamCxaResponse,
   TeamSeasonResponse,
   UnivariateTargetResponse,
 } from "@/lib/types";
@@ -308,6 +310,30 @@ export function getCxaCoverageByShot(
 ): Promise<CxaShotCoverageResponse> {
   const qs = `?track=${encodeURIComponent(track)}&shot_event_ids=${encodeURIComponent(shotEventIds.join(","))}`;
   return apiFetch<CxaShotCoverageResponse>(`/v1/cxa/coverage-by-shot${qs}`);
+}
+
+// --- /v1/cxa/player-season, /v1/cxa/team-season (guest-accessible) -- CxA
+// rollups for the Players/Teams pages, reusing the same materialized table
+// as the Analysis tab's quadrant scatter (docs/analysis/cxa_players_teams_v1.md). --
+
+export function getPlayerCxa(
+  playerId: number | string,
+  filters?: { competition_id?: number | null; season_id?: number | null }
+): Promise<PlayerCxaResponse> {
+  const params = new URLSearchParams({ player_id: String(playerId) });
+  if (filters?.competition_id != null) params.set("competition_id", String(filters.competition_id));
+  if (filters?.season_id != null) params.set("season_id", String(filters.season_id));
+  return apiFetch<PlayerCxaResponse>(`/v1/cxa/player-season?${params.toString()}`);
+}
+
+export function getTeamCxa(
+  teamId: number | string,
+  filters?: { competition_id?: number | null; season_id?: number | null }
+): Promise<TeamCxaResponse> {
+  const params = new URLSearchParams({ team_id: String(teamId) });
+  if (filters?.competition_id != null) params.set("competition_id", String(filters.competition_id));
+  if (filters?.season_id != null) params.set("season_id", String(filters.season_id));
+  return apiFetch<TeamCxaResponse>(`/v1/cxa/team-season?${params.toString()}`);
 }
 
 export { ApiError };

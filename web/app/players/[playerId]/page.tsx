@@ -9,11 +9,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { DivergingBar } from "@/components/ui/DivergingBar";
 import { ShotDetailModal } from "@/components/shot/ShotDetailModal";
+import { CxaSummaryCard } from "@/components/analysis/CxaSummaryCard";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
 import {
   getPlayerShots,
   getCxgCoverage,
   getCxaCoverageByShot,
+  getPlayerCxa,
   getShotOpponentContext,
   getPlayers,
   getMatches,
@@ -23,9 +25,12 @@ import { describeCxgCoverage } from "@/lib/analysis-helpers";
 import type {
   CxaShotCoverageValues,
   OpponentContextResponse,
+  PlayerCxaResponse,
   PlayerSeasonResponse,
   ShotResponse,
 } from "@/lib/types";
+
+const EMPTY_CXA_ROLLUP = { n: 0, mean: null, total: null };
 
 export default function PlayerDetailPage() {
   const params = useParams<{ playerId: string }>();
@@ -37,6 +42,7 @@ export default function PlayerDetailPage() {
   const [cxgPlusByEventId, setCxgPlusByEventId] = useState<Record<string, number>>({});
   const [cxaByEventId, setCxaByEventId] = useState<Record<string, CxaShotCoverageValues>>({});
   const [cxaPlusByEventId, setCxaPlusByEventId] = useState<Record<string, CxaShotCoverageValues>>({});
+  const [playerCxa, setPlayerCxa] = useState<PlayerCxaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedShot, setSelectedShot] = useState<ShotResponse | null>(null);
@@ -125,6 +131,21 @@ export default function PlayerDetailPage() {
       cancelled = true;
     };
   }, [competitionId, seasonId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPlayerCxa(null);
+    getPlayerCxa(playerId, { competition_id: competitionId, season_id: seasonId })
+      .then((data) => {
+        if (!cancelled) setPlayerCxa(data);
+      })
+      .catch(() => {
+        if (!cancelled) setPlayerCxa(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [playerId, competitionId, seasonId]);
 
   // Same "CxG matches only" scope as the Matches page — match_status_360
   // === "available" is the real per-match signal for 360 coverage, already
@@ -253,6 +274,12 @@ export default function PlayerDetailPage() {
           </p>
         </Card>
       )}
+
+      <CxaSummaryCard
+        title="Chances created (CxA)"
+        event={playerCxa?.event ?? EMPTY_CXA_ROLLUP}
+        plus={playerCxa?.plus ?? EMPTY_CXA_ROLLUP}
+      />
 
       {archetypeBreakdown.length > 0 && (
         <Card title="Shots by defender-style archetype" className="mt-4">

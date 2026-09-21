@@ -381,6 +381,28 @@ export type QuadrantScatterResponse = {
   rows: PlayerSeasonQuadrantRow[];
 };
 
+// --- /v1/cxa/player-season, /v1/cxa/team-season (guest-accessible) -------
+// Convenience per-entity CxA reads over the same table as the quadrant
+// scatter above. `n=0` means `mean`/`total` are null -- never 0.
+
+export type CxaRollup = {
+  n: number;
+  mean: number | null;
+  total: number | null;
+};
+
+export type PlayerCxaResponse = {
+  player_id: number;
+  event: CxaRollup;
+  plus: CxaRollup;
+};
+
+export type TeamCxaResponse = {
+  team_id: number;
+  event: CxaRollup;
+  plus: CxaRollup;
+};
+
 // --- /v1/cxg/opponent-context (guest-accessible) -------------------------
 
 export type OpponentContextResponse = {
