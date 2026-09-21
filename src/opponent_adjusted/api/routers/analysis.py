@@ -23,8 +23,18 @@ from opponent_adjusted.api.analysis_models import (
     RenderedChartResponse,
     UnivariateTargetResponse,
 )
-from opponent_adjusted.api.dependencies import Role, get_analysis_store, require_admin
+from opponent_adjusted.api.dependencies import (
+    Role,
+    get_analysis_store,
+    get_quadrant_scatter_store,
+    require_admin,
+)
 from opponent_adjusted.api.gcs_signing import sign_gcs_uri
+from opponent_adjusted.api.quadrant_scatter import (
+    COVERAGE_SPLIT,
+    BigQueryQuadrantScatterStore,
+    QuadrantScatterResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -151,3 +161,19 @@ def list_cxg_model_coefficients(
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return [CxgCoefficientResponse.model_validate(r) for r in records]
+
+
+@router.get("/quadrant-scatter", response_model=QuadrantScatterResponse)
+def get_quadrant_scatter(
+    competition_id: int | None = None,
+    season_id: int | None = None,
+    store: BigQueryQuadrantScatterStore = Depends(get_quadrant_scatter_store),
+    role: Role = Depends(require_admin),
+) -> QuadrantScatterResponse:
+    """Track B's "build-your-own quadrant scatter" data source (Hard gate 2,
+    now unblocked -- see docs/analysis/quadrant_scatter_v1.md). Test-split only,
+    per this module's own documented decision; the frontend picks which two of
+    the row's several metrics to plot as X/Y, this endpoint just returns the
+    full row set for the requested competition/season scope."""
+    rows = store.list_player_season_rows(competition_id=competition_id, season_id=season_id)
+    return QuadrantScatterResponse(split=COVERAGE_SPLIT, rows=rows)

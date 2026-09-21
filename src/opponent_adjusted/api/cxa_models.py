@@ -63,6 +63,12 @@ _FROZEN_MODEL_NAMES = {"frozen_tree", "frozen_candidate"}
 _coverage_cache: TTLCache = TTLCache(maxsize=8, ttl=CACHE_TTL_SECONDS)
 _coverage_lock = threading.Lock()
 
+# Separate cache/lock for the shot-keyed index (built from a different WHERE
+# clause -- shot_event_id IS NOT NULL rows only -- so it can't share
+# _coverage_cache's entries without re-querying anyway).
+_shot_coverage_cache: TTLCache = TTLCache(maxsize=8, ttl=CACHE_TTL_SECONDS)
+_shot_coverage_lock = threading.Lock()
+
 
 def _track_cache_key(self, track: str) -> tuple:  # noqa: ANN001
     return hashkey(track)
@@ -182,6 +188,34 @@ class CxaCoverageResponse(BaseModel):
     values: dict[str, CxaCoverageValues]
 
 
+class CxaShotCoverageValues(BaseModel):
+    """CxA values for the pass that created a given shot, keyed by that shot's
+    `shot_event_id` (not the pass's own id) -- for the per-shot display, where
+    the shot is the thing a caller already has on screen (e.g. from
+    `ShotResponse`), not the pass. `pass_event_id` is included so a caller can
+    still identify/link the originating pass. Same no-placeholder discipline as
+    `CxaCoverageValues`: `p_convert_predicted_prob`/`cxa_combined_score` are
+    never null here (a row only exists in this index when the pass DID create
+    this shot, i.e. `cxa_combined_score IS NOT NULL`) -- but the whole shot is
+    absent from `values` when no test-split chance-creating pass produced it."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    pass_event_id: str
+    p_create_predicted_prob: float | None
+    p_convert_predicted_prob: float | None
+    cxa_combined_score: float | None
+
+
+class CxaShotCoverageResponse(BaseModel):
+    """API response shape for a per-shot CxA coverage lookup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    track: str
+    values: dict[str, CxaShotCoverageValues]
+
+
 class CxaModelStore(Protocol):
     """Read-only contract for CxA model-comparison and coverage lookups."""
 
@@ -193,6 +227,12 @@ class CxaModelStore(Protocol):
         this track's test-split combined table. ids with no row at all are simply
         absent from the result -- never a placeholder, same discipline as
         CxgCoverageStore.get_cxg_for_events."""
+
+    def get_cxa_for_shots(self, shot_event_ids: list[str], *, track: str) -> dict[str, CxaShotCoverageValues]:
+        """Return {shot_event_id: values} for whichever of the given shot ids were
+        created by a test-split chance-creating pass in this track. Shots with no
+        such pass (the overwhelming majority -- see COMBINED_SCORE_CAVEAT) are
+        simply absent, never a placeholder."""
 
     def get_explainability(self, track: str) -> CxaExplainability:
         """Return feature importances (tree-family stages) and coefficients
@@ -301,6 +341,36 @@ class BigQueryCxaModelStore:
     def get_cxa_for_passes(self, pass_event_ids: list[str], *, track: str) -> dict[str, CxaCoverageValues]:
         coverage = self._get_track_coverage(track)
         return {pid: coverage[pid] for pid in pass_event_ids if pid in coverage}
+
+    # Cached per-track, same reasoning as _get_track_coverage above -- this is a
+    # small subset of the same underlying table (only the chance-creating-pass
+    # rows, event ~92.8k test rows -> far fewer with shot_event_id set), fetched
+    # once per TTL window and looked up in memory per request.
+    @cached(cache=_shot_coverage_cache, key=_track_cache_key, lock=_shot_coverage_lock)
+    def _get_track_shot_coverage(self, track: str) -> dict[str, CxaShotCoverageValues]:
+        if track not in TRACKS:
+            raise ValueError(f"Unknown track: {track!r}")
+        client = _client()
+        query = f"""
+            SELECT shot_event_id, pass_event_id, p_create_predicted_prob,
+                   p_convert_predicted_prob, cxa_combined_score
+            FROM `{PROJECT}.{SERVING_DATASET}.cxa_{track}_combined_v1`
+            WHERE split = '{COVERAGE_SPLIT}' AND shot_event_id IS NOT NULL
+        """
+        rows = client.query(query).result()
+        return {
+            row["shot_event_id"]: CxaShotCoverageValues(
+                pass_event_id=row["pass_event_id"],
+                p_create_predicted_prob=row["p_create_predicted_prob"],
+                p_convert_predicted_prob=row["p_convert_predicted_prob"],
+                cxa_combined_score=row["cxa_combined_score"],
+            )
+            for row in rows
+        }
+
+    def get_cxa_for_shots(self, shot_event_ids: list[str], *, track: str) -> dict[str, CxaShotCoverageValues]:
+        coverage = self._get_track_shot_coverage(track)
+        return {sid: coverage[sid] for sid in shot_event_ids if sid in coverage}
 
     @cached(cache=_explainability_cache, key=_track_cache_key, lock=_explainability_lock)
     def get_explainability(self, track: str) -> CxaExplainability:

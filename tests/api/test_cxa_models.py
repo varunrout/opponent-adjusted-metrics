@@ -24,6 +24,7 @@ def _row(values: dict):
 
 def _clear_all_caches():
     cxa_models._coverage_cache.clear()
+    cxa_models._shot_coverage_cache.clear()
     cxa_models._summaries_cache.clear()
     cxa_models._explainability_cache.clear()
 
@@ -99,6 +100,65 @@ def test_track_coverage_is_cached_across_calls(isolated_client_and_cache):
     store.get_cxa_for_passes(["e1"], track="event")
     store.get_cxa_for_passes(["e1"], track="event")
     store.get_cxa_for_passes(["e1", "e2"], track="event")
+
+    assert mock_client.query.call_count == 1
+
+
+def test_get_cxa_for_shots_returns_only_shots_with_a_chance_creating_pass(isolated_client_and_cache):
+    mock_client = isolated_client_and_cache
+    mock_client.query.return_value.result.return_value = [
+        _row({
+            "shot_event_id": "shot-1",
+            "pass_event_id": "pass-1",
+            "p_create_predicted_prob": 0.62,
+            "p_convert_predicted_prob": 0.34,
+            "cxa_combined_score": 0.2108,
+        }),
+    ]
+
+    store = cxa_models.BigQueryCxaModelStore()
+    result = store.get_cxa_for_shots(["shot-1", "shot-2-no-pass"], track="event")
+
+    # Query filters shot_event_id IS NOT NULL server-side, so only real
+    # chance-creating-pass shots ever come back -- shot-2 (no such pass) is
+    # simply absent, never a placeholder.
+    assert set(result.keys()) == {"shot-1"}
+    assert result["shot-1"].pass_event_id == "pass-1"
+    assert result["shot-1"].p_create_predicted_prob == 0.62
+    assert result["shot-1"].p_convert_predicted_prob == 0.34
+    assert result["shot-1"].cxa_combined_score == 0.2108
+    query_text = mock_client.query.call_args[0][0]
+    assert "shot_event_id IS NOT NULL" in query_text
+
+
+def test_get_cxa_for_shots_unknown_track_raises_without_querying(isolated_client_and_cache):
+    mock_client = isolated_client_and_cache
+    store = cxa_models.BigQueryCxaModelStore()
+
+    with pytest.raises(ValueError):
+        store.get_cxa_for_shots(["a"], track="not_a_real_track")
+
+    mock_client.query.assert_not_called()
+
+
+def test_shot_coverage_is_cached_across_calls_and_independent_of_pass_coverage_cache(
+    isolated_client_and_cache,
+):
+    mock_client = isolated_client_and_cache
+    mock_client.query.return_value.result.return_value = [
+        _row({
+            "shot_event_id": "shot-1",
+            "pass_event_id": "pass-1",
+            "p_create_predicted_prob": 0.5,
+            "p_convert_predicted_prob": 0.4,
+            "cxa_combined_score": 0.2,
+        })
+    ]
+
+    store = cxa_models.BigQueryCxaModelStore()
+    store.get_cxa_for_shots(["shot-1"], track="event")
+    store.get_cxa_for_shots(["shot-1"], track="event")
+    store.get_cxa_for_shots(["shot-1", "shot-2"], track="event")
 
     assert mock_client.query.call_count == 1
 

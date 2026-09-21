@@ -6,7 +6,7 @@ import { DivergingBar } from "@/components/ui/DivergingBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ShotFreezeFrame } from "@/components/shot/ShotFreezeFrame";
 import { getShotOpponentContext } from "@/lib/api";
-import type { OpponentContextResponse, ShotResponse } from "@/lib/types";
+import type { CxaShotCoverageValues, OpponentContextResponse, ShotResponse } from "@/lib/types";
 
 const FEATURE_LABELS: Record<string, string> = {
   nearest_defender_role: "Nearest defender role",
@@ -28,12 +28,20 @@ export function ShotDetailModal({
   onClose,
   cxg,
   cxgPlus,
+  cxaEvent,
+  cxaPlus,
 }: {
   shot: ShotResponse | null;
   open: boolean;
   onClose: () => void;
   cxg?: number;
   cxgPlus?: number;
+  // The CxA scores of the pass that created this shot, when a test-split
+  // chance-creating pass exists for it (~2% of all passes overall -- most
+  // shots will have neither of these set). Absent, not a zero/placeholder,
+  // when this shot has no such pass on record.
+  cxaEvent?: CxaShotCoverageValues;
+  cxaPlus?: CxaShotCoverageValues;
 }) {
   const [context, setContext] = useState<OpponentContextResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -140,6 +148,17 @@ export function ShotDetailModal({
               />
             )}
 
+            {(cxaEvent != null || cxaPlus != null) && (
+              <div className="flex flex-col gap-1.5" data-testid="cxa-pass-context">
+                <div className="flex items-center gap-2 text-[11px] text-text2 mb-1">
+                  <span>Chance-creating pass</span>
+                  <Badge status="experimental" label="Experimental" />
+                </div>
+                {cxaEvent != null && <CxaTrackRow label="CxA" values={cxaEvent} color="var(--teal)" />}
+                {cxaPlus != null && <CxaTrackRow label="CxA+" values={cxaPlus} color="var(--violet)" />}
+              </div>
+            )}
+
             {loading ? (
               <Skeleton className="h-16" />
             ) : covered && context ? (
@@ -180,6 +199,31 @@ export function ShotDetailModal({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CxaTrackRow({
+  label,
+  values,
+  color,
+}: {
+  label: string;
+  values: CxaShotCoverageValues;
+  color: string;
+}) {
+  // p_convert/cxa_combined_score are contractually non-null on this type (this
+  // row only renders once the API has confirmed a chance-creating pass
+  // produced this shot), but still guarded defensively rather than asserted,
+  // matching this file's existing `!= null` style throughout.
+  return (
+    <div className="flex items-center justify-between text-[11.5px]" data-testid={`cxa-track-row-${label}`}>
+      <span className="text-text2">{label}</span>
+      <span className="font-data flex items-center gap-2.5" style={{ color }}>
+        <span>P(create) {values.p_create_predicted_prob != null ? values.p_create_predicted_prob.toFixed(2) : "—"}</span>
+        <span>P(convert) {values.p_convert_predicted_prob != null ? values.p_convert_predicted_prob.toFixed(2) : "—"}</span>
+        <span>combined {values.cxa_combined_score != null ? values.cxa_combined_score.toFixed(3) : "—"}</span>
+      </span>
     </div>
   );
 }

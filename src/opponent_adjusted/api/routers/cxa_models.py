@@ -16,6 +16,7 @@ from opponent_adjusted.api.cxa_models import (
     CxaExplainability,
     CxaModelStore,
     CxaModelSummary,
+    CxaShotCoverageResponse,
 )
 from opponent_adjusted.api.dependencies import Role, get_cxa_model_store, get_role
 
@@ -71,3 +72,23 @@ def get_cxa_coverage(
     ids = [pid.strip() for pid in pass_event_ids.split(",") if pid.strip()]
     values = store.get_cxa_for_passes(ids, track=track)
     return CxaCoverageResponse(track=track, values=values)
+
+
+@router.get("/v1/cxa/coverage-by-shot", response_model=CxaShotCoverageResponse)
+def get_cxa_coverage_by_shot(
+    track: str,
+    shot_event_ids: str,
+    store: CxaModelStore = Depends(get_cxa_model_store),
+    role: Role = Depends(get_role),
+) -> CxaShotCoverageResponse:
+    """Guest-accessible, no admin gate -- the per-shot mirror of GET
+    /v1/cxa/coverage, for the per-pass display (docs/analysis/cxa_pass_detail_v1.md):
+    a shot detail view already has the shot's event_id on screen (ShotResponse),
+    not the pass that created it, so this is keyed by shot_event_id. A
+    shot_event_id outside test-split chance-creating-pass coverage is simply
+    absent from the response's `values` dict, never a placeholder."""
+    if track not in TRACKS:
+        raise HTTPException(status_code=400, detail=f"track must be one of {sorted(TRACKS)}")
+    ids = [sid.strip() for sid in shot_event_ids.split(",") if sid.strip()]
+    values = store.get_cxa_for_shots(ids, track=track)
+    return CxaShotCoverageResponse(track=track, values=values)
