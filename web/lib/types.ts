@@ -320,6 +320,67 @@ export type CxaCoverageResponse = {
   values: Record<string, CxaCoverageValues>;
 };
 
+// --- /v1/cxa/coverage-by-shot (guest-accessible) -------------------------
+// Per-shot mirror of the above, keyed by shot_event_id instead of
+// pass_event_id -- for the per-pass CxA display on ShotDetailModal, where the
+// caller already has a ShotResponse (shot_event_id) on screen, not the pass
+// that created it. A shot with no test-split chance-creating pass behind it
+// is simply absent from `values` (see CxaCoverageValues' own null discipline
+// -- p_convert_predicted_prob/cxa_combined_score are never a placeholder).
+
+export type CxaShotCoverageValues = {
+  pass_event_id: string;
+  p_create_predicted_prob: number | null;
+  p_convert_predicted_prob: number | null;
+  cxa_combined_score: number | null;
+};
+
+export type CxaShotCoverageResponse = {
+  track: string;
+  values: Record<string, CxaShotCoverageValues>;
+};
+
+// --- /v1/analysis/quadrant-scatter (admin-only) --------------------------
+// Track B's "build-your-own quadrant scatter" data source (Hard gate 2).
+// Test-split only. A `*_mean`/`*_total`/`*_total_xg` field is null (never 0)
+// whenever its matching `*_n_shots`/`*_n_passes_created` count is 0 -- there
+// being nothing to average is a different fact than the average being zero.
+
+export type PlayerSeasonQuadrantRow = {
+  player_id: number;
+  player_name: string | null;
+  team_id: number | null;
+  team_name: string | null;
+  competition_id: number;
+  season_id: number;
+  split: string;
+
+  cxg_event_n_shots: number;
+  cxg_event_mean: number | null;
+  cxg_event_total: number | null;
+  cxg_event_total_xg: number | null;
+  cxg_event_goals: number;
+
+  cxg_plus_n_shots: number;
+  cxg_plus_mean: number | null;
+  cxg_plus_total: number | null;
+  cxg_plus_total_xg: number | null;
+  cxg_plus_goals: number;
+
+  cxa_event_n_passes_created: number;
+  cxa_event_mean: number | null;
+  cxa_event_total: number | null;
+
+  cxa_plus_n_passes_created: number;
+  cxa_plus_mean: number | null;
+  cxa_plus_total: number | null;
+};
+
+export type QuadrantScatterResponse = {
+  split: string;
+  rows: PlayerSeasonQuadrantRow[];
+};
+
 // --- /v1/cxg/opponent-context (guest-accessible) -------------------------
 
 export type OpponentContextResponse = {

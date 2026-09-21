@@ -5,6 +5,7 @@ import { PageHead } from "@/components/ui/PageHead";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useRole } from "@/components/shell/RoleProvider";
+import { QuadrantScatter } from "@/components/analysis/QuadrantScatter";
 import {
   ApiError,
   getAnalysisBivariate,
@@ -15,8 +16,15 @@ import {
   getAnalysisUnivariate,
   getCxgModelCoefficients,
   getCxgModelResults,
+  getQuadrantScatter,
 } from "@/lib/api";
-import { deriveCxgModelVersions, deriveFamilies, groupCxgResultsByTrack } from "@/lib/analysis-helpers";
+import {
+  deriveCxgModelVersions,
+  deriveFamilies,
+  groupCxgResultsByTrack,
+  QUADRANT_METRICS,
+  type QuadrantMetricKey,
+} from "@/lib/analysis-helpers";
 import type {
   BivariateResponse,
   ChartsResponse,
@@ -25,10 +33,11 @@ import type {
   FeatureCorrelationResponse,
   FeatureInventoryResponse,
   PcaResponse,
+  PlayerSeasonQuadrantRow,
   UnivariateTargetResponse,
 } from "@/lib/types";
 
-type Tab = "features" | "charts" | "cxgModels";
+type Tab = "features" | "charts" | "cxgModels" | "quadrantScatter";
 
 const fmtNum = (n: number | null | undefined, digits = 3) => (n == null ? "—" : n.toFixed(digits));
 const fmtPct = (n: number | null | undefined) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`);
@@ -62,11 +71,15 @@ export default function AnalysisPage() {
         <TabButton active={tab === "cxgModels"} onClick={() => setTab("cxgModels")}>
           Model results
         </TabButton>
+        <TabButton active={tab === "quadrantScatter"} onClick={() => setTab("quadrantScatter")}>
+          Quadrant scatter
+        </TabButton>
       </div>
 
       {tab === "features" && <FeatureBrowserPanel />}
       {tab === "charts" && <ChartGalleryPanel />}
       {tab === "cxgModels" && <CxgModelResultsPanel />}
+      {tab === "quadrantScatter" && <QuadrantScatterPanel />}
     </section>
   );
 }
@@ -818,6 +831,100 @@ function CxgModelResultsPanel() {
         </div>
       </Card>
     </div>
+  );
+}
+
+// --- Panel D: quadrant scatter (Track B, Hard gate 2) ---------------------
+// Per docs/dashboard_design_spec_v2.md sections 9/10: "build-your-own quadrant
+// scatter, originally scoped for Analysis" -- a user-selected metric pair
+// (never a fixed hardcoded chart), axes crossed at league median. Test split
+// only, same discipline as CxG's own public numbers and CxA's coverage reads.
+
+function QuadrantScatterPanel() {
+  const { user } = useRole();
+
+  const [rows, setRows] = useState<PlayerSeasonQuadrantRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+
+  const [xMetric, setXMetric] = useState<QuadrantMetricKey>("cxg_event_mean");
+  const [yMetric, setYMetric] = useState<QuadrantMetricKey>("cxa_event_mean");
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    user
+      .getIdToken()
+      .then((idToken) => getQuadrantScatter(idToken))
+      .then((data) => {
+        if (!cancelled) setRows(data.rows);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card title="Build your own">
+        <p className="text-[11px] text-muted mt-0 mb-2.5">
+          One dot per player-season (test split only, every competition/season combined — this
+          player-season table only exists at test-split grain, matching CxG&apos;s and CxA&apos;s
+          own established discipline). Pick any two metrics for the X/Y axes.
+        </p>
+        <div className="flex gap-3 flex-wrap">
+          <MetricSelect label="X axis" value={xMetric} onChange={setXMetric} />
+          <MetricSelect label="Y axis" value={yMetric} onChange={setYMetric} />
+        </div>
+      </Card>
+
+      <Card title="Quadrant scatter">
+        {loading && <Skeleton style={{ height: 300 }} />}
+        {!loading && !!error && <ErrorState error={error} />}
+        {!loading && !error && rows.length === 0 && (
+          <p className="text-[12.5px] text-muted m-0">No player-season rows found.</p>
+        )}
+        {!loading && !error && rows.length > 0 && (
+          <QuadrantScatter rows={rows} xMetric={xMetric} yMetric={yMetric} />
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function MetricSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: QuadrantMetricKey;
+  onChange: (key: QuadrantMetricKey) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-[11px] text-muted">
+      {label}
+      <select
+        className="bg-card border border-border text-text rounded-lg px-2.5 py-[7px] text-[12.5px]"
+        value={value}
+        onChange={(e) => onChange(e.target.value as QuadrantMetricKey)}
+      >
+        {QUADRANT_METRICS.map((m) => (
+          <option key={m.key} value={m.key}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

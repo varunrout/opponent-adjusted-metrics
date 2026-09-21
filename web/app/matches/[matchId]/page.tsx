@@ -10,10 +10,15 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
 import { ShotDetailModal } from "@/components/shot/ShotDetailModal";
 import { XgTimeline } from "@/components/shot/XgTimeline";
-import { getMatch, getMatchShots, getCxgCoverage, ApiError } from "@/lib/api";
+import { getMatch, getMatchShots, getCxgCoverage, getCxaCoverageByShot, ApiError } from "@/lib/api";
 import { describeCxgCoverage } from "@/lib/analysis-helpers";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
-import type { MatchDetailResponse, ShotResponse, LineupPlayerResponse } from "@/lib/types";
+import type {
+  MatchDetailResponse,
+  ShotResponse,
+  LineupPlayerResponse,
+  CxaShotCoverageValues,
+} from "@/lib/types";
 
 export default function MatchDetailPage() {
   const params = useParams<{ matchId: string }>();
@@ -24,6 +29,8 @@ export default function MatchDetailPage() {
   const [shots, setShots] = useState<ShotResponse[]>([]);
   const [cxgByEventId, setCxgByEventId] = useState<Record<string, number>>({});
   const [cxgPlusByEventId, setCxgPlusByEventId] = useState<Record<string, number>>({});
+  const [cxaByEventId, setCxaByEventId] = useState<Record<string, CxaShotCoverageValues>>({});
+  const [cxaPlusByEventId, setCxaPlusByEventId] = useState<Record<string, CxaShotCoverageValues>>({});
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState(false);
@@ -36,6 +43,8 @@ export default function MatchDetailPage() {
     setError(false);
     setCxgByEventId({});
     setCxgPlusByEventId({});
+    setCxaByEventId({});
+    setCxaPlusByEventId({});
 
     Promise.all([getMatch(matchId), getMatchShots(matchId)])
       .then(([matchData, shotsData]) => {
@@ -59,6 +68,22 @@ export default function MatchDetailPage() {
           })
           .catch(() => {
             if (!cancelled) setCxgPlusByEventId({});
+          });
+
+        getCxaCoverageByShot(eventIds, "event")
+          .then((coverage) => {
+            if (!cancelled) setCxaByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxaByEventId({});
+          });
+
+        getCxaCoverageByShot(eventIds, "plus")
+          .then((coverage) => {
+            if (!cancelled) setCxaPlusByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxaPlusByEventId({});
           });
       })
       .catch((err) => {
@@ -223,6 +248,8 @@ export default function MatchDetailPage() {
         onClose={() => setSelectedShot(null)}
         cxg={selectedShot ? cxgByEventId[selectedShot.event_id] : undefined}
         cxgPlus={selectedShot ? cxgPlusByEventId[selectedShot.event_id] : undefined}
+        cxaEvent={selectedShot ? cxaByEventId[selectedShot.event_id] : undefined}
+        cxaPlus={selectedShot ? cxaPlusByEventId[selectedShot.event_id] : undefined}
       />
     </section>
   );

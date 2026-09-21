@@ -1,0 +1,20 @@
+{
+  "materialized_at": "2026-09-21T01:51:36.444593+00:00",
+  "table": "oam-varun-260819.oam_serving.player_season_cxg_cxa_v1",
+  "n_total_rows": 3635,
+  "verification": {
+    "check": {
+      "n_rows_test": 822,
+      "sum_cxg_event_n_shots_test": 2427,
+      "sum_cxg_plus_n_shots_test": 590,
+      "sum_cxa_event_n_test": 1736,
+      "sum_cxa_plus_n_test": 419
+    },
+    "source": {
+      "cxg_event_test_n": 2427,
+      "cxg_plus_test_n": 590,
+      "cxa_event_test_n": 1736,
+      "cxa_plus_test_n": 419
+    }
+  }
+}

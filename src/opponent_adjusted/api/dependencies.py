@@ -23,6 +23,7 @@ from opponent_adjusted.api.cxg_coverage import (
 )
 from opponent_adjusted.api.freeze_frame import BigQueryFreezeFrameStore, FreezeFrameStore
 from opponent_adjusted.api.interfaces import ServingStore
+from opponent_adjusted.api.quadrant_scatter import BigQueryQuadrantScatterStore
 
 logger = logging.getLogger(__name__)
 
@@ -174,3 +175,9 @@ def get_opponent_context_store() -> OpponentContextStore:
 def get_freeze_frame_store() -> FreezeFrameStore:
     """FastAPI dependency provider for the per-shot 360 freeze-frame store; overridable in tests."""
     return BigQueryFreezeFrameStore()
+
+
+def get_quadrant_scatter_store() -> BigQueryQuadrantScatterStore:
+    """FastAPI dependency provider for the player-season CxG/CxA quadrant-scatter
+    store; overridable in tests."""
+    return BigQueryQuadrantScatterStore()

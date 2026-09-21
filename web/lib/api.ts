@@ -5,6 +5,7 @@ import type {
   CxaCoverageResponse,
   CxaExplainability,
   CxaModelSummary,
+  CxaShotCoverageResponse,
   CxgCoefficientResponse,
   CxgCoverageResponse,
   CxgModelResultResponse,
@@ -16,6 +17,7 @@ import type {
   OpponentContextResponse,
   PcaResponse,
   PlayerSeasonResponse,
+  QuadrantScatterResponse,
   ShotFreezeFrameResponse,
   ShotResponse,
   TeamSeasonResponse,
@@ -215,6 +217,17 @@ export function getAnalysisCharts(
   return apiFetch<ChartsResponse>(`/v1/analysis/charts${qs}`, authHeaders(idToken));
 }
 
+export function getQuadrantScatter(
+  idToken: string | null | undefined,
+  opts?: { competitionId?: number; seasonId?: number }
+): Promise<QuadrantScatterResponse> {
+  const params = new URLSearchParams();
+  if (opts?.competitionId != null) params.set("competition_id", String(opts.competitionId));
+  if (opts?.seasonId != null) params.set("season_id", String(opts.seasonId));
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<QuadrantScatterResponse>(`/v1/analysis/quadrant-scatter${qs}`, authHeaders(idToken));
+}
+
 export function getCxgModelResults(
   idToken: string | null | undefined
 ): Promise<CxgModelResultResponse[]> {
@@ -283,6 +296,18 @@ export function getPublicCxaExplainability(track: string): Promise<CxaExplainabi
 export function getCxaCoverage(passEventIds: string[], track: string): Promise<CxaCoverageResponse> {
   const qs = `?track=${encodeURIComponent(track)}&pass_event_ids=${encodeURIComponent(passEventIds.join(","))}`;
   return apiFetch<CxaCoverageResponse>(`/v1/cxa/coverage${qs}`);
+}
+
+// --- /v1/cxa/coverage-by-shot (guest-accessible) -- per-shot mirror of the
+// above, powers the per-pass display on ShotDetailModal (docs/analysis/
+// cxa_pass_detail_v1.md): callers already have shot_event_ids on screen. -----
+
+export function getCxaCoverageByShot(
+  shotEventIds: string[],
+  track: string
+): Promise<CxaShotCoverageResponse> {
+  const qs = `?track=${encodeURIComponent(track)}&shot_event_ids=${encodeURIComponent(shotEventIds.join(","))}`;
+  return apiFetch<CxaShotCoverageResponse>(`/v1/cxa/coverage-by-shot${qs}`);
 }
 
 export { ApiError };

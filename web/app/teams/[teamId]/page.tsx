@@ -12,10 +12,10 @@ import { TeamLink, PlayerLink } from "@/components/ui/EntityLink";
 import { DivergingBar } from "@/components/ui/DivergingBar";
 import { ShotDetailModal } from "@/components/shot/ShotDetailModal";
 import { useMatchFilter } from "@/components/shell/MatchFilterProvider";
-import { getTeamShots, getTeamShotsFaced, getMatches, getCxgCoverage } from "@/lib/api";
+import { getTeamShots, getTeamShotsFaced, getMatches, getCxgCoverage, getCxaCoverageByShot } from "@/lib/api";
 import { summarizeShots } from "@/lib/shot-summary";
 import { describeCxgCoverage } from "@/lib/analysis-helpers";
-import type { MatchResponse, ShotResponse } from "@/lib/types";
+import type { CxaShotCoverageValues, MatchResponse, ShotResponse } from "@/lib/types";
 
 export default function TeamDetailPage() {
   const params = useParams<{ teamId: string }>();
@@ -26,6 +26,8 @@ export default function TeamDetailPage() {
   const [matches, setMatches] = useState<MatchResponse[]>([]);
   const [cxgByEventId, setCxgByEventId] = useState<Record<string, number>>({});
   const [cxgPlusByEventId, setCxgPlusByEventId] = useState<Record<string, number>>({});
+  const [cxaByEventId, setCxaByEventId] = useState<Record<string, CxaShotCoverageValues>>({});
+  const [cxaPlusByEventId, setCxaPlusByEventId] = useState<Record<string, CxaShotCoverageValues>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedShot, setSelectedShot] = useState<ShotResponse | null>(null);
@@ -38,6 +40,8 @@ export default function TeamDetailPage() {
     setError(false);
     setCxgByEventId({});
     setCxgPlusByEventId({});
+    setCxaByEventId({});
+    setCxaPlusByEventId({});
 
     Promise.all([
       getTeamShots(teamId, { competition_id: competitionId, season_id: seasonId }),
@@ -64,6 +68,22 @@ export default function TeamDetailPage() {
           })
           .catch(() => {
             if (!cancelled) setCxgPlusByEventId({});
+          });
+
+        getCxaCoverageByShot(eventIds, "event")
+          .then((coverage) => {
+            if (!cancelled) setCxaByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxaByEventId({});
+          });
+
+        getCxaCoverageByShot(eventIds, "plus")
+          .then((coverage) => {
+            if (!cancelled) setCxaPlusByEventId(coverage.values);
+          })
+          .catch(() => {
+            if (!cancelled) setCxaPlusByEventId({});
           });
       })
       .catch(() => {
@@ -327,6 +347,8 @@ export default function TeamDetailPage() {
         onClose={() => setSelectedShot(null)}
         cxg={selectedShot ? cxgByEventId[selectedShot.event_id] : undefined}
         cxgPlus={selectedShot ? cxgPlusByEventId[selectedShot.event_id] : undefined}
+        cxaEvent={selectedShot ? cxaByEventId[selectedShot.event_id] : undefined}
+        cxaPlus={selectedShot ? cxaPlusByEventId[selectedShot.event_id] : undefined}
       />
     </section>
   );
