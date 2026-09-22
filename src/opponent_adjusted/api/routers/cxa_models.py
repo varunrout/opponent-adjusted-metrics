@@ -18,7 +18,17 @@ from opponent_adjusted.api.cxa_models import (
     CxaModelSummary,
     CxaShotCoverageResponse,
 )
-from opponent_adjusted.api.dependencies import Role, get_cxa_model_store, get_role
+from opponent_adjusted.api.dependencies import (
+    Role,
+    get_cxa_model_store,
+    get_quadrant_scatter_store,
+    get_role,
+)
+from opponent_adjusted.api.quadrant_scatter import (
+    BigQueryQuadrantScatterStore,
+    PlayerCxaResponse,
+    TeamCxaResponse,
+)
 
 router = APIRouter(tags=["cxa"])
 
@@ -92,3 +102,36 @@ def get_cxa_coverage_by_shot(
     ids = [sid.strip() for sid in shot_event_ids.split(",") if sid.strip()]
     values = store.get_cxa_for_shots(ids, track=track)
     return CxaShotCoverageResponse(track=track, values=values)
+
+
+@router.get("/v1/cxa/player-season", response_model=PlayerCxaResponse)
+def get_player_cxa(
+    player_id: int,
+    competition_id: int | None = None,
+    season_id: int | None = None,
+    store: BigQueryQuadrantScatterStore = Depends(get_quadrant_scatter_store),
+    role: Role = Depends(get_role),
+) -> PlayerCxaResponse:
+    """Guest-accessible, no admin gate -- reuses `/v1/analysis/quadrant-scatter`'s
+    own store and table (`oam_serving.player_season_cxg_cxa_v1`). That endpoint
+    stays admin-gated (owned by the Analysis tab's own contract), but the
+    underlying rows carry nothing sensitive -- everything in them is already
+    public elsewhere (Models pages, per-shot coverage) -- so a guest-accessible
+    per-player read of the same cached table is a convenience endpoint, not a
+    new access boundary. See docs/analysis/cxa_players_teams_v1.md."""
+    return store.get_player_cxa(player_id, competition_id=competition_id, season_id=season_id)
+
+
+@router.get("/v1/cxa/team-season", response_model=TeamCxaResponse)
+def get_team_cxa(
+    team_id: int,
+    competition_id: int | None = None,
+    season_id: int | None = None,
+    store: BigQueryQuadrantScatterStore = Depends(get_quadrant_scatter_store),
+    role: Role = Depends(get_role),
+) -> TeamCxaResponse:
+    """Guest-accessible, no admin gate -- team-grain rollup over the same
+    player-grain table (sum of every matched player-season row's own totals/
+    counts, confirmed live to never double-count a player who appears under
+    more than one team_id for the same (competition_id, season_id, split))."""
+    return store.get_team_cxa(team_id, competition_id=competition_id, season_id=season_id)

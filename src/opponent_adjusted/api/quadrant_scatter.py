@@ -91,6 +91,58 @@ class QuadrantScatterResponse(BaseModel):
     rows: list[PlayerSeasonQuadrantRow]
 
 
+class CxaRollup(BaseModel):
+    """One track's CxA rollup for a player or team, aggregated (by summing each
+    matched player-season row's own `_total`/`_n`, never re-averaging an already-
+    averaged mean) across whatever (competition_id, season_id) scope was
+    requested. `n=0` means `mean`/`total` are `None` -- there is nothing to
+    average over zero chance-creating passes, never reported as `0.0`."""
+
+    n: int
+    mean: float | None
+    total: float | None
+
+
+class PlayerCxaResponse(BaseModel):
+    """CxA rollup for one player, both tracks, guest-accessible (see
+    docs/analysis/cxa_players_teams_v1.md: the underlying data is already public
+    elsewhere -- Models pages, per-shot coverage -- so this is a convenience
+    read, not a new access boundary)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    player_id: int
+    event: CxaRollup
+    plus: CxaRollup
+
+
+class TeamCxaResponse(BaseModel):
+    """CxA rollup for one team, both tracks -- the sum of every one of that
+    team's players' own player-season `_total`/`_n` for the requested scope.
+    Algebraically identical to computing the mean directly over the team's whole
+    population of chance-creating passes (sum-of-totals / sum-of-counts), not an
+    average-of-averages."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    team_id: int
+    event: CxaRollup
+    plus: CxaRollup
+
+
+def _rollup(rows: list[PlayerSeasonQuadrantRow], track: str) -> CxaRollup:
+    n_field = f"cxa_{track}_n_passes_created"
+    total_field = f"cxa_{track}_total"
+    n = sum(getattr(r, n_field) for r in rows)
+    if n == 0:
+        return CxaRollup(n=0, mean=None, total=None)
+    # Every matched row's own total is non-None exactly when its own n > 0 (the
+    # materialization script's own invariant), so this sum only ever includes
+    # real contributions -- no row silently contributes a phantom 0.
+    total = sum(getattr(r, total_field) for r in rows if getattr(r, total_field) is not None)
+    return CxaRollup(n=n, mean=total / n, total=total)
+
+
 _scatter_cache: TTLCache = TTLCache(maxsize=32, ttl=CACHE_TTL_SECONDS)
 _scatter_lock = threading.Lock()
 
@@ -140,3 +192,29 @@ class BigQueryQuadrantScatterStore:
         job_config = bigquery.QueryJobConfig(query_parameters=parameters)
         rows = client.query(query, job_config=job_config).result()
         return [PlayerSeasonQuadrantRow.model_validate(dict(row.items())) for row in rows]
+
+    def get_player_cxa(
+        self, player_id: int, *, competition_id: int | None = None, season_id: int | None = None
+    ) -> PlayerCxaResponse:
+        """Filters the same cached table read `list_player_season_rows` already
+        does (no second BigQuery query path) down to this one player's rows --
+        the whole test-split table is small (822 rows) and already cached, so
+        filtering in Python here is cheaper than adding a second query shape."""
+        rows = self.list_player_season_rows(competition_id=competition_id, season_id=season_id)
+        matched = [r for r in rows if r.player_id == player_id]
+        return PlayerCxaResponse(
+            player_id=player_id, event=_rollup(matched, "event"), plus=_rollup(matched, "plus")
+        )
+
+    def get_team_cxa(
+        self, team_id: int, *, competition_id: int | None = None, season_id: int | None = None
+    ) -> TeamCxaResponse:
+        """Team-grain rollup over the SAME player-grain table -- confirmed live
+        (docs/analysis/cxa_players_teams_v1.md section on team grain) that no
+        (player_id, competition_id, season_id, split) key in this table ever
+        carries more than one team_id, so summing every matched player-season
+        row's own totals/counts per team_id cannot double-count a mid-season
+        transfer. No `oam_core` re-join, no new materialization."""
+        rows = self.list_player_season_rows(competition_id=competition_id, season_id=season_id)
+        matched = [r for r in rows if r.team_id == team_id]
+        return TeamCxaResponse(team_id=team_id, event=_rollup(matched, "event"), plus=_rollup(matched, "plus"))
