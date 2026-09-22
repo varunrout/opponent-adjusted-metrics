@@ -308,3 +308,109 @@ honesty standard as the first deploy's own record.
 - **IAM:** no changes this pass -- all grants already in place from the first
   deploy this same day.
 - **Budget alert:** unchanged.
+
+---
+
+## Deployment record — 2026-09-22: Players/Teams CxA rollup + attack-panel honesty fix
+
+A third deploy, a day later, shipping
+[`feature/cxa-players-teams-rollup`](../analysis/cxa_players_teams_v1.md)
+(CxA surfaced on Players/Teams via two new guest-accessible endpoints, plus the
+Teams "Attack vs defence" honesty fix). Same runbook sections, §5.2-5.8, same
+running-log pattern as the two entries above.
+
+### What was done
+
+**Merge** (done in the prior turn, confirmed here for the record): `git merge
+--no-ff feature/cxa-players-teams-rollup` into `main`, clean, zero conflicts.
+Before merging, `.claude/launch.json` was dropped from the branch (it hardcoded
+this machine's anaconda Python path for local dev QA -- not portable, and no
+generic substitute exists since the real requirement is a Python environment
+with the project's dependencies installed, not just a path). `main` advanced to
+**`041b70c`**, pushed. 468/468 backend tests passing, `tsc` clean, confirmed
+again on the merged `main` before deploying.
+
+**Deploy**, following §5.2-5.8. This branch only touches the backend (two new
+`/v1/cxa/*` routes) and two frontend pages (`players/[playerId]`,
+`teams/[teamId]`) -- both services rebuilt and redeployed per the task's own
+instruction, since a stale frontend build would miss the new pages even with a
+correct backend.
+
+#### §5.2 -- Backend image build
+
+- **Tag:** `041b70c` (merged `main` HEAD short SHA).
+- **Image:**
+  `europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:041b70c`
+- **Digest:** `sha256:d97570371b62fd60287e4e169ebfd044e008747f2214ff3bb2d326b7ab5f7090`
+- **Build ID:** `f7be34ad-e926-4396-8611-caac745488ec`, duration 2m6s, `STATUS: SUCCESS`.
+
+#### §5.3 -- IAM grants: checked, all already in place
+
+Checked live (not assumed): self-impersonation `serviceAccountTokenCreator` on
+`oam-pipeline-sa` (confirmed present, unchanged), `oam_ml` dataViewer for
+`oam-pipeline-sa` (confirmed present), `oam_serving` dataViewer for
+`oam-pipeline-sa` (confirmed present -- this branch's two new endpoints read
+the same `oam_serving.player_season_cxg_cxa_v1` table the second deploy's grant
+already covers). No new grants needed.
+
+#### §5.4 -- Backend deployed
+
+```
+gcloud run deploy oam-dashboard-api \
+  --image=europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:041b70c \
+  --project=oam-varun-260819 --region=europe-west2 \
+  --service-account=oam-pipeline-sa@oam-varun-260819.iam.gserviceaccount.com \
+  --allow-unauthenticated --min-instances=0 --max-instances=3 --memory=512Mi --cpu=1
+```
+
+**Deployed revision: `oam-dashboard-api-00009-9qn`**, 2026-09-22 22:06:16 UTC,
+100% traffic (previous active: `oam-dashboard-api-00008-m7g`). Confirmed real
+backend via `/health` -> `{"status":"ok"}`.
+
+#### §5.5/§5.6 -- CORS and frontend
+
+CORS unchanged (no new origin). `web/.env.production` unchanged, confirmed
+still pointed at the correct Cloud Run URL before building.
+
+```
+firebase deploy --only hosting --project=oam-varun-260819
+```
+
+Succeeded -- build included the changed `/players/[playerId]` (now 2.93 kB, up
+from 2.58 kB) and `/teams/[teamId]` (now 3.54 kB, up from 3.05 kB) routes.
+**Hosting URL unchanged:** `https://oam-varun-260819.web.app`.
+
+#### §5.7 -- Budget alert
+
+Unchanged, not re-checked this pass (no reason to expect drift since the last
+check a day earlier).
+
+#### §5.8 -- Smoke test
+
+| Item | Result |
+|---|---|
+| `GET /health` -> `{"status":"ok"}` | ✅ Pass |
+| **New:** `GET /v1/cxa/player-season?player_id=5515` -> 200 with real values | ✅ Pass -- `{"player_id":5515,"event":{"n":3,"mean":0.010865581742653578,"total":0.03259674522796074},"plus":{"n":0,"mean":null,"total":null}}` -- exact match to the branch's own build-doc numbers (n=3, mean≈0.010866) |
+| **New:** `GET /v1/cxa/team-season?team_id=793` -> 200 with real values | ✅ Pass -- `{"team_id":793,"event":{"n":12,"mean":0.01059841539612811,...},"plus":{"n":0,...}}` -- exact match (n=12, mean≈0.010598) |
+| **New:** Team 793's live page shows the split Raw/Opponent-adjusted "Attack vs defence" card | ✅ Pass -- read directly off the live page (after switching to "All matches" scope, since Iceland's 2018 matches carry no 360 CxG coverage): "Raw (StatsBomb xG, full shot volume)" row (Goals 2.00/Total xG created 4.72, Goals conceded 5.00/xG conceded 4.07) and "Opponent-adjusted (CxG)" row with the `Experimental` badge (Goals 1.00/Total CxG created 1.86, Goals conceded 2.00/CxG allowed 0.73) -- the old single four-bar layout is gone, replaced by the honest split |
+| **New:** "Chances created (CxA)" card renders on both a Players and a Teams page | ✅ Pass -- `/players/5515` shows `0.011 (n=3 test-split passes)`; `/teams/793` shows `0.011 (n=12 test-split passes)` -- both exact matches to the curl results above |
+| Regression check: no console errors on either live page | ✅ Pass |
+| Budget alert exists | ✅ Pass, unchanged (see §5.7) |
+
+No items skipped this pass -- everything this deploy shipped is guest-accessible
+(the two new `/v1/cxa/*` routes and both page changes), so nothing here required
+an admin login to verify, unlike the two prior deploys' own honest gaps around
+the admin-only Analysis tab.
+
+### Final state (this deploy)
+
+- **`main`** at `041b70c`, `feature/cxa-players-teams-rollup` merged, pushed.
+- **Backend:** Cloud Run service `oam-dashboard-api`, revision
+  `oam-dashboard-api-00009-9qn`, image
+  `europe-west2-docker.pkg.dev/oam-varun-260819/oam-containers/oam-dashboard-api:041b70c`,
+  serving 100% traffic at `https://oam-dashboard-api-482195222855.europe-west2.run.app`.
+- **Frontend:** Firebase Hosting, same URL as before, `https://oam-varun-260819.web.app`,
+  rebuilt against the same `web/.env.production`.
+- **IAM:** no changes this pass -- all grants already in place from the earlier
+  deploys.
+- **Budget alert:** unchanged.
